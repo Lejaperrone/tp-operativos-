@@ -8,11 +8,15 @@
  ============================================================================
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <Sockets.h>
+#include "Master.h"
 
 int main(void) {
-	puts("!!!Hello World!!!"); /* prints !!!Hello World!!! */
+	char buffer[256];
+	int socketYama = crearSocket();
+	struct sockaddr_in direccion = cargarDireccion("127.0.0.1",5000);//5000 PUERTO YAMA.
+	conectarCon(direccion, socketYama, 2);
+
+	//recv(socketYama, buffer, sizeof(buffer), 0);
+
 	return EXIT_SUCCESS;
 }
