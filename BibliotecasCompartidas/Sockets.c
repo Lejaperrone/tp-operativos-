@@ -1,5 +1,6 @@
 /*
  * Sockets.c
+
  *
  *  Created on: 16/4/2017
  *      Author: utnso
@@ -10,7 +11,15 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <unistd.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include "Sockets.h"
 
 #define mensajeIdentificacion 1
@@ -30,7 +39,8 @@ void conectarCon(struct sockaddr_in direccionServidor, int cliente,	int tipoClie
 		perror("No se pudo conectar");
 		exit(1);
 	}
-	void* paqueteId = &tipoCliente;
+	printf("conectado id:%d\n",tipoCliente);
+	//void* paqueteId = &tipoCliente;
 	//empaquetar(cliente, mensajeIdentificacion, 0, paqueteId);
 }
 
@@ -49,6 +59,7 @@ struct sockaddr_in cargarDireccion(char* direccionIP, int puerto) {
 	direccion.sin_family = AF_INET;
 	direccion.sin_addr.s_addr = inet_addr(direccionIP);
 	direccion.sin_port = htons(puerto);
+	memset(&(direccion.sin_zero), '\0', 8);
 	return direccion;
 }
 

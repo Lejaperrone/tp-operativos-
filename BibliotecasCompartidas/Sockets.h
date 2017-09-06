@@ -8,6 +8,9 @@
 #ifndef SOCKETS_H_
 #define SOCKETS_H_
 
+
+#include <netinet/in.h>
+
 struct t_tam{
 	int menu;
 	int length;
