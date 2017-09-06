@@ -3,6 +3,7 @@
 	<name>DataNode</name>
 	<comment></comment>
 	<projects>
+		<project>BibliotecasCompartidas</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

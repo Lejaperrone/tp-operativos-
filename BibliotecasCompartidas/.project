@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>Master</name>
+	<name>BibliotecasCompartidas</name>
 	<comment></comment>
 	<projects>
-		<project>BibliotecasCompartidas</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
