@@ -35,4 +35,10 @@ struct configuracionMaster{
 	char* YAMA_IP;
 }configuracionMaster;
 
+void cargarConfiguracionYama(struct configuracionYama *config);
+
+void cargarConfiguracionMaster(struct configuracionMaster *config);
+
+void cargarConfiguracionNodo(struct configuracionNodo *config);
+
 #endif /* CONFIGURACION_H_ */
