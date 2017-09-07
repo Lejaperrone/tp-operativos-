@@ -20,6 +20,26 @@
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
 
+void levantarServidorFS(int servidor, int cliente){
+	char* buffer = malloc(300);
+	struct sockaddr_in direccionCliente;
+	unsigned int tamanioDireccion = sizeof(direccionCliente);
+	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",6000);
+	int activado = 1;
+	setsockopt(servidor, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
+
+	asociarSocketA(direccionServidor, servidor);
+
+		cliente = accept(servidor, (struct sockaddr *) &direccionCliente, &tamanioDireccion);
+	while(1){
+
+	}
+
+	//falta agregar el manejo de error cuando se desconecta el fs,
+	//handshake y el protocolo de envio de mensajes
+	free(buffer);
+}
+
 int main(void) {
 
 	int sizeComando = 256;
@@ -28,7 +48,7 @@ int main(void) {
 
 	t_log* logger = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
-	levantarServidorFS(servidorFS, clienteYama);
+	//levantarServidorFS(servidorFS, clienteYama);
 
 	while (1) {
 		printf("Introduzca comando: ");
@@ -90,22 +110,3 @@ int main(void) {
 	}
 }
 
-void levantarServidorFS(int servidor, int cliente){
-	char* buffer = malloc(300);
-	struct sockaddr_in direccionCliente;
-	unsigned int tamanioDireccion = sizeof(direccionCliente);
-	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",6000);
-	int activado = 1;
-	setsockopt(servidor, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
-
-	asociarSocketA(direccionServidor, servidor);
-
-		cliente = accept(servidor, (struct sockaddr *) &direccionCliente, &tamanioDireccion);
-	while(1){
-
-	}
-
-	//falta agregar el manejo de error cuando se desconecta el fs,
-	//handshake y el protocolo de envio de mensajes
-	free(buffer);
-}
