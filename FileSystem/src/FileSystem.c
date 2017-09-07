@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <Comandos.h>
 
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
@@ -43,30 +44,6 @@ void levantarServidorFS(int servidor, int cliente){
 	free(buffer);
 }
 
-bool validarArchivo(char* path) {
-	if (access(path, R_OK) == -1) {
-		printf("No existe el archivo %s en el FileSystem\n", path);
-		return false;
-	} else {
-		printf("Existe el archivo %s en el FileSystem\n", path);
-		return true;
-	}
-}
-
-int eliminarArchivo(char* comando, int longitudKey){
-	int success = -1;
-	char* path = malloc(strlen(comando)-longitudKey);
-	memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
-	if (validarArchivo(path)){
-		success = remove(path);
-		if (success == -1)
-			printf("No se pudo eliminar el archivo");
-		else
-			printf("El archivo fue eliminado correctamente");
-	}
-	free(path);
-	return success;
-}
 
 int main(void) {
 
@@ -110,10 +87,19 @@ int main(void) {
 			log_trace(logger, "Archivo movido");
 		}
 		else if (string_starts_with(comando, "cat")) {
+			if (mostrarArchivo(comando, 4) == 1){
 			log_trace(logger, "Archivo mostrado");
+			}else{
+				log_trace(logger, "No se pudo mostrar el archivo");
+			}
 		}
 		else if (string_starts_with(comando, "mkdir")) {
-			log_trace(logger, "Directorio creado"); // avisar si ya existe
+			if (crearDirectorio(comando,6) == 1){
+
+			log_trace(logger, "Directorio creado");// avisar si ya existe
+			}else{
+				log_trace(logger, "No se pudo crear directorio");
+			}
 		}
 		else if (string_starts_with(comando, "cpfrom")) {
 			log_trace(logger, "Archivo copiado a yamafs");
@@ -128,6 +114,7 @@ int main(void) {
 			log_trace(logger, "MD5 del archivo");
 		}
 		else if (string_starts_with(comando, "ls")) {
+			listarArchivos(comando, 3);
 			log_trace(logger, "Archivos listados");
 		}
 		else if (string_starts_with(comando, "info")) {

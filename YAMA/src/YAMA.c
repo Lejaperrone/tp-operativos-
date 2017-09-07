@@ -52,8 +52,8 @@ void levantarServidorYama(){
 				if (i == servidor) {
 					// gestionar nuevas conexiones
 					addrlen = sizeof(direccionCliente);
-					if ((nuevoMaster = accept(servidor, (struct sockaddr *)&direccionCliente,
-							&addrlen)) == -1) {
+					if ((nuevoMaster = accept(servidor, (struct sockaddr *)&direccionCliente, &addrlen)) == -1)
+					{
 						perror("accept");
 					} else {
 						FD_SET(nuevoMaster, &master); // añadir al conjunto maestro
