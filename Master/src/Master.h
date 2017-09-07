@@ -20,5 +20,6 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 
+#define idMaster 2
 
 #endif /* MASTER_H_ */

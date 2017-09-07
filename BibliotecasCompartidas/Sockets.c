@@ -6,23 +6,7 @@
  *      Author: utnso
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/wait.h>
-#include <signal.h>
 #include "Sockets.h"
-
-#define mensajeIdentificacion 1
 
 int crearSocket() {
 	int sockete;
@@ -39,9 +23,8 @@ void conectarCon(struct sockaddr_in direccionServidor, int cliente,	int tipoClie
 		perror("No se pudo conectar");
 		exit(1);
 	}
-	printf("conectado id:%d\n",tipoCliente);
-	//void* paqueteId = &tipoCliente;
-	//empaquetar(cliente, mensajeIdentificacion, 0, paqueteId);
+
+	empaquetar(cliente, mensajeHandshake, 0, &tipoCliente);
 }
 
 void enviarMensajeA(int *socket, int longitud) {

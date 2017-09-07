@@ -8,7 +8,21 @@
 #ifndef SOCKETS_H_
 #define SOCKETS_H_
 
-
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include "Serializacion.h"
 #include <netinet/in.h>
 
 struct t_tam{

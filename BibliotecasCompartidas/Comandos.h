@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include <Sockets.h>
+#include "Sockets.h"
 #include <commons/log.h>
 #include <commons/string.h>
 #include <readline/readline.h>
@@ -27,7 +27,7 @@ int eliminarArchivo(char* comando, int longitudKey);
 
 void listarArchivos(char* comando, int longitudKey);
 
-void crearDirectorio(char* comando, int longitudKey);
+int crearDirectorio(char* comando, int longitudKey);
 
 int mostrarArchivo(char* comando, int longitudKey);
 

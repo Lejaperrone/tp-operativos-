@@ -18,7 +18,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <commons/log.h>
+#include "Serializacion.h"
 
+#define idMaster 2
+
+int mostrarLoggerPorPantalla=1;
 fd_set master;   // conjunto maestro de descriptores de fichero
 fd_set read_fds; // conjunto temporal de descriptores de fichero para select()
 int fdmax;        // número máximo de descriptores de fichero
@@ -32,6 +37,7 @@ int i, j;
 struct sockaddr_in direccionCliente;
 
 void levantarServidorYama();
+void conectarseConFs();
 int crearServidorAsociado(char* ip, int puerto);
 
 
