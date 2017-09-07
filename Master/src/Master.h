@@ -19,6 +19,8 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <Configuracion.h>
 
+struct configuracionMaster config;
 
 #endif /* MASTER_H_ */

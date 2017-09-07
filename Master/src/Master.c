@@ -13,7 +13,10 @@
 int main(void) {
 	char buffer[256];
 	int socketYama = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion("127.0.0.1",5000);//5000 PUERTO YAMA.
+
+	cargarConfiguracionMaster(&config);
+
+	struct sockaddr_in direccion = cargarDireccion(config.YAMA_IP,config.YAMA_PUERTO);//5000 PUERTO YAMA.
 	conectarCon(direccion, socketYama, 2);
 
 	//recv(socketYama, buffer, sizeof(buffer), 0);

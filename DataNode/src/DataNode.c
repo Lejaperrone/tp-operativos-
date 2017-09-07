@@ -11,8 +11,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <Sockets.h>
+#include <Configuracion.h>
+
+struct configuracionNodo  config;
 
 int main(void) {
+	cargarConfiguracionNodo(&config);
 	puts("!!!Hello World!!!");
 	return EXIT_SUCCESS;
 }
