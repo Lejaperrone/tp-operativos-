@@ -16,6 +16,9 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "FileSystem.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include <unistd.h>
 
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
@@ -38,6 +41,31 @@ void levantarServidorFS(int servidor, int cliente){
 	//falta agregar el manejo de error cuando se desconecta el fs,
 	//handshake y el protocolo de envio de mensajes
 	free(buffer);
+}
+
+bool validarArchivo(char* path) {
+	if (access(path, R_OK) == -1) {
+		printf("No existe el archivo %s en el FileSystem\n", path);
+		return false;
+	} else {
+		printf("Existe el archivo %s en el FileSystem\n", path);
+		return true;
+	}
+}
+
+int eliminarArchivo(char* comando, int longitudKey){
+	int success = -1;
+	char* path = malloc(strlen(comando)-longitudKey);
+	memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
+	if (validarArchivo(path)){
+		success = remove(path);
+		if (success == -1)
+			printf("No se pudo eliminar el archivo");
+		else
+			printf("El archivo fue eliminado correctamente");
+	}
+	free(path);
+	return success;
 }
 
 int main(void) {
@@ -70,7 +98,10 @@ int main(void) {
 			log_trace(logger, "Bloque eliminado");
 		}
 		else if (string_starts_with(comando, "rm")) {
-			log_trace(logger, "Archivo eliminado");
+			if (eliminarArchivo(comando, 3) != -1)
+				log_trace(logger, "archivo eliminado");
+			else
+				log_trace(logger, "No se pudo eliminar el archivo");
 		}
 		else if (string_starts_with(comando, "rename")) {
 			log_trace(logger, "Archivo renombrado");
