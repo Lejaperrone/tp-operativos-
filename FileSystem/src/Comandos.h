@@ -5,8 +5,8 @@
  *      Author: utnso
  */
 
-#ifndef COMANDOS_H_
-#define COMANDOS_H_
+#ifndef FILESYSTEM_COMANDOS_H_
+#define FILESYSTEM_COMANDOS_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -32,4 +32,4 @@ int crearDirectorio(char* comando, int longitudKey);
 int mostrarArchivo(char* comando, int longitudKey);
 
 
-#endif /* COMANDOS_H_ */
+#endif /* FILESYSTEM_COMANDOS_H_ */

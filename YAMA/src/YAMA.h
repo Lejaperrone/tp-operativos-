@@ -20,6 +20,7 @@
 #include <sys/time.h>
 #include <commons/log.h>
 #include "Serializacion.h"
+#include <Configuracion.h>
 
 #define idMaster 2
 
@@ -39,6 +40,8 @@ struct sockaddr_in direccionCliente;
 void levantarServidorYama();
 void conectarseConFs();
 int crearServidorAsociado(char* ip, int puerto);
+
+struct configuracionYama config;
 
 
 #endif /* YAMA_H_ */

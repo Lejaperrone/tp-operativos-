@@ -11,13 +11,16 @@
 #include "Master.h"
 
 int main(void) {
-	conectarseConYama();
+
+	cargarConfiguracionMaster(&config);
+
+	conectarseConYama(config.YAMA_IP,config.YAMA_PUERTO);
 
 	return EXIT_SUCCESS;
 }
 
-void conectarseConYama() {
+void conectarseConYama(char* ip, int port) {
 	int socketYama = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 5000);	//5000 PUERTO YAMA.
+	struct sockaddr_in direccion = cargarDireccion(ip, port);
 	conectarCon(direccion, socketYama, idMaster);
 }
