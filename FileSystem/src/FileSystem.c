@@ -20,9 +20,41 @@
 #include <unistd.h>
 #include "Comandos.h"
 #include <Configuracion.h>
+#include "Sockets.c"
+
+typedef struct{
+	int index;
+	char nombre[255];
+	int padre;
+} t_directory;
+
 
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
+t_directory tablaDeDirectorios[100];
+
+int getIndexDirectorio(char* ruta){
+	int index = 0, i = 0;
+	char* finalPath = "";
+	char* rutaInvertida = string_reverse(ruta);
+	char caracterActual = string_substring(rutaInvertida, index, 1);
+	while(caracterActual != "/"){
+		string_append(&finalPath, caracterActual);
+		++index;
+		caracterActual = string_substring(rutaInvertida, index, 1);
+	}
+	finalPath = string_substring(finalPath, index, 1);
+	for(i = 0; i < 100; ++i){
+		if (tablaDeDirectorios[i].nombre == finalPath){
+			return i;
+		}
+	}
+	return -1;
+}
+
+void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos){
+	getIndexDirectorio(ruta);
+}
 
 int main(void) {
 

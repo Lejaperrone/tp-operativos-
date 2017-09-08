@@ -141,10 +141,6 @@ void levantarServidorFS(int servidor, int cliente){
 
 	cliente = accept(servidor, (struct sockaddr *) &direccionCliente, &tamanioDireccion);
 
-	while(1){
-
-	}
-
 	//falta agregar el manejo de error cuando se desconecta el fs,
 	//handshake y el protocolo de envio de mensajes
 	free(buffer);

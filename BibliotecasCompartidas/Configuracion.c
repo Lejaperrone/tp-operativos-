@@ -11,7 +11,7 @@
 
 void cargarConfiguracionYama(struct configuracionYama *config){
 
-	t_config* configYama = config_create("/home/utnso/tp-2017-2c-PEQL/YAMA/src/YAMA.cfg");
+	t_config* configYama = config_create("/home/utnso/Escritorio/tp-2017-2c-PEQL/YAMA/src/YAMA.cfg");
 
 	if (config_has_property(configYama, "FS_IP")){
 		config->FS_IP= config_get_string_value(configYama,"FS_IP");
