@@ -46,7 +46,7 @@ void cargarConfiguracionMaster(struct configuracionMaster *config){
 	}
 
 	if (config_has_property(configMaster, "YAMA_PUERTO")){
-		config->YAMA_PUERTO = config_get_int_value(configMaster,"FS_PUERTO");
+		config->YAMA_PUERTO = config_get_int_value(configMaster,"YAMA_PUERTO");
 		printf("El puerto de YAMA es: %d \n",config->YAMA_PUERTO);
 	}
 }

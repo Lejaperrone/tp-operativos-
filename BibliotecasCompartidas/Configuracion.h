@@ -31,8 +31,8 @@ struct configuracionNodo{
 }configuracionNodo;
 
 struct configuracionMaster{
-	int YAMA_PUERTO;
 	char* YAMA_IP;
+	int YAMA_PUERTO;
 }configuracionMaster;
 
 void cargarConfiguracionYama(struct configuracionYama *config);

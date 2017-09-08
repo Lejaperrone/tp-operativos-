@@ -80,8 +80,10 @@ int crearServidorAsociado(char* ip, int puerto) {
 	return servidor;
 }
 
-void levantarServidorYama(){
-	servidor = crearServidorAsociado("127.0.0.1", 5000);
+
+void levantarServidorYama(char* ip, int port){
+	respuesta conexionNueva;
+	servidor = crearServidorAsociado(ip, port);
 	FD_ZERO(&master);    // borra los conjuntos maestro y temporal
 	FD_ZERO(&read_fds);
 	// añadir listener al conjunto maestro
@@ -101,42 +103,25 @@ void levantarServidorYama(){
 				if (i == servidor) {
 					// gestionar nuevas conexiones
 					addrlen = sizeof(direccionCliente);
-					if ((nuevoMaster = accept(servidor, (struct sockaddr *)&direccionCliente, &addrlen)) == -1)
-					{
+					if ((nuevoMaster = accept(servidor, (struct sockaddr *)&direccionCliente,
+							&addrlen)) == -1) {
 						perror("accept");
 					} else {
 						FD_SET(nuevoMaster, &master); // añadir al conjunto maestro
 						if (nuevoMaster > fdmax) {    // actualizar el máximo
 							fdmax = nuevoMaster;
 						}
-						printf("Nueva conexion de %s en el socket %d\n", inet_ntoa(direccionCliente.sin_addr), nuevoMaster);
+						conexionNueva = desempaquetar(nuevoMaster);
+						int idRecibido = *(int*)conexionNueva.envio;
+
+						if (idRecibido == idMaster){
+							printf("Conexion de id:%d\n",idRecibido);
+							//hacer algo despues del handshake
+						}
 					}
 				} else {
 					// gestionar datos de un cliente
-					if ((nbytes = recv(i, buf, sizeof(buf), 0)) <= 0) {
-						// error o conexión cerrada por el cliente
-						if (nbytes == 0) {
-							// conexión cerrada
-							printf("socket %d se desconecto\n", i);
-						} else {
-							perror("recv");
-						}
-						close(i); // bye!
-						FD_CLR(i, &master); // eliminar del conjunto maestro
-					} else {
-						// tenemos datos de algún cliente
-						for(j = 0; j <= fdmax; j++) {
-							// ¡enviar a to do el mundo!
-							if (FD_ISSET(j, &master)) {
-								// excepto al listener y a nosotros mismos
-								if (j != servidor && j != i) {
-									if (send(j, buf, nbytes, 0) == -1) {
-										perror("send");
-									}
-								}
-							}
-						}
-					}
+
 				}
 			}
 		}

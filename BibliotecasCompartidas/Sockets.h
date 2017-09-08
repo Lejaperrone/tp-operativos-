@@ -25,6 +25,8 @@
 #include "Serializacion.h"
 #include <netinet/in.h>
 
+#define idMaster 2
+
 struct t_tam{
 	int menu;
 	int length;
@@ -55,7 +57,7 @@ int addrlen;
 int i, j;
 struct sockaddr_in direccionCliente;
 
-void levantarServidorYama();
+void levantarServidorYama(char* ip, int port);
 
 int crearServidorAsociado(char* ip, int puerto);
 
