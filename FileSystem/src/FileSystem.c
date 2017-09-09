@@ -35,20 +35,31 @@ t_directory tablaDeDirectorios[100];
 
 int getIndexDirectorio(char* ruta){
 	int index = 0, i = 0;
-	char* finalPath = "";
-	char* rutaInvertida = string_reverse(ruta);
-	char caracterActual = string_substring(rutaInvertida, index, 1);
-	while(caracterActual != "/"){
-		string_append(&finalPath, caracterActual);
+	char* slash = "/";
+	char* finalPath = malloc(256);
+	char* rutaInvertida = strdup(string_reverse(ruta));
+	char* caracterActual = string_substring(rutaInvertida, index, 1);
+	char* comparador = malloc(256);
+	while(strcmp(caracterActual,slash)){
+		memcpy(finalPath + index, caracterActual, 1);
 		++index;
 		caracterActual = string_substring(rutaInvertida, index, 1);
 	}
-	finalPath = string_substring(finalPath, index, 1);
+	finalPath = string_reverse(finalPath);
 	for(i = 0; i < 100; ++i){
-		if (tablaDeDirectorios[i].nombre == finalPath){
-			return i;
+		memcpy(comparador, tablaDeDirectorios[i].nombre, 256);
+		printf("\n %s", comparador);
+		printf("\n %s", tablaDeDirectorios[i].nombre);
+		if (strcmp(tablaDeDirectorios[i].nombre,finalPath) == 0){
+			free(rutaInvertida);
+			free(finalPath);
+			free(comparador);
+			return tablaDeDirectorios[i].index;
 		}
 	}
+	free(rutaInvertida);
+	free(finalPath);
+	free(comparador);
 	return -1;
 }
 
