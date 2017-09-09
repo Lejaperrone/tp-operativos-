@@ -32,6 +32,7 @@ typedef struct{
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
 t_directory tablaDeDirectorios[100];
+char* rutaArchivos = "metadata/Archivos";
 
 int getIndexDirectorio(char* ruta){
 	int index = 0, i = 0;
@@ -48,8 +49,6 @@ int getIndexDirectorio(char* ruta){
 	finalPath = string_reverse(finalPath);
 	for(i = 0; i < 100; ++i){
 		memcpy(comparador, tablaDeDirectorios[i].nombre, 256);
-		printf("\n %s", comparador);
-		printf("\n %s", tablaDeDirectorios[i].nombre);
 		if (strcmp(tablaDeDirectorios[i].nombre,finalPath) == 0){
 			free(rutaInvertida);
 			free(finalPath);
@@ -63,15 +62,34 @@ int getIndexDirectorio(char* ruta){
 	return -1;
 }
 
-void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos){
-	getIndexDirectorio(ruta);
+char* buscarRutaArchivo(char* ruta){
+	int indexDirectorio = getIndexDirectorio(ruta);
+	char* numeroIndexString = string_itoa(indexDirectorio);
+	char* rutaGenerada = malloc(strlen(rutaArchivos) + strlen(numeroIndexString));
+	memcpy(rutaGenerada, rutaArchivos, strlen(rutaArchivos));
+	memcpy(rutaGenerada + strlen(rutaArchivos), numeroIndexString, strlen(numeroIndexString));
+	return rutaGenerada; //poner free despues de usar
 }
+
+void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos);
 
 int main(void) {
 
 	int sizeComando = 256;
 	int clienteYama = 0;
 	int servidorFS = crearSocket();
+
+	/*tablaDeDirectorios[0].index = 0;
+	tablaDeDirectorios[1].index = 1;
+	tablaDeDirectorios[2].index = 2;		para probar cosas
+	tablaDeDirectorios[0].padre = -1;
+	tablaDeDirectorios[1].padre = 0;
+	tablaDeDirectorios[1].padre = 1;
+	memcpy(tablaDeDirectorios[0].nombre,"hola",5);
+	memcpy(tablaDeDirectorios[1].nombre,"chau",5);
+	memcpy(tablaDeDirectorios[2].nombre,"bla",4);
+
+	printf("\n\n %s", generarRutaArchivo("hola/chau/bla"));*/
 
 	t_log* logger = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
