@@ -140,7 +140,7 @@ int main(void) {
 				log_trace(logger, "No se pudo eliminar el archivo");
 		}
 		else if (string_starts_with(comando, "rename")) {
-			if (cambiarNombre(comando, 7) = 1)
+			if (cambiarNombre(comando, 7) == 1)
 				log_trace(logger, "Renombrado");
 			else
 				log_trace(logger, "No se pudo renombrar");

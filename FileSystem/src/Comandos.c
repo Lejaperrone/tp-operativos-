@@ -140,8 +140,9 @@ int cambiarNombre(char* comando, int longitudKey){
 	int longitudNombreOriginal = 0;
 
 	char* caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
+	char* slash ="/";
 
-	while(caracterActual != "/"){
+	while(caracterActual != slash){
 
 		++longitudNombreOriginal;
 		++posicion;
