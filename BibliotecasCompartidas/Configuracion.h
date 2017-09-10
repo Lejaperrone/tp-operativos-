@@ -17,6 +17,8 @@
 struct configuracionYama{
 	int FS_PUERTO;
 	char* FS_IP;
+	int YAMA_PUERTO;
+	char* YAMA_IP;
 	int RETARDO_PLANIFICACION;
 	char* ALGORITMO_BALANCEO;
 }configuracionYama;

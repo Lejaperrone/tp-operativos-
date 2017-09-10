@@ -16,7 +16,6 @@
 struct configuracionNodo config;
 
 int main(void) {
-	puts("!!!Hello World!!!"); /* prints !!!Hello World!!! */
 
 	cargarConfiguracionNodo(&config);
 

@@ -12,7 +12,7 @@ int main(void) {
 
 	cargarConfiguracionYama(&config);
 
-	levantarServidorYama("127.0.0.1",3000);//FIXME: cambiar configuracion y agregar puerto e ip de yama
+	levantarServidorYama(config.YAMA_IP,config.YAMA_PUERTO);
 
 	return EXIT_SUCCESS;
 }

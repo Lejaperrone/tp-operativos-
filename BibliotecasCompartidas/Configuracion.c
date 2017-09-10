@@ -11,7 +11,7 @@
 
 void cargarConfiguracionYama(struct configuracionYama *config){
 
-	t_config* configYama = config_create("/home/utnso/Escritorio/tp-2017-2c-PEQL/YAMA/src/YAMA.cfg");
+	t_config* configYama = config_create("/home/utnso/tp-2017-2c-PEQL/YAMA/src/YAMA.cfg");
 
 	if (config_has_property(configYama, "FS_IP")){
 		config->FS_IP= config_get_string_value(configYama,"FS_IP");
@@ -21,6 +21,15 @@ void cargarConfiguracionYama(struct configuracionYama *config){
 	if (config_has_property(configYama, "FS_PUERTO")){
 		config->FS_PUERTO = config_get_int_value(configYama,"FS_PUERTO");
 		printf("El puerto del FileSystem es: %d \n",config->FS_PUERTO);
+	}
+	if (config_has_property(configYama, "YAMA_IP")){
+		config->YAMA_IP= config_get_string_value(configYama,"YAMA_IP");
+		printf("La IP del YAMA es %s \n",config->YAMA_IP);
+	}
+
+	if (config_has_property(configYama, "YAMA_PUERTO")){
+		config->YAMA_PUERTO = config_get_int_value(configYama,"YAMA_PUERTO");
+		printf("El puerto de YAMA es: %d \n",config->YAMA_PUERTO);
 	}
 
 	if (config_has_property(configYama, "RETARDO_PLANIFICACION")){
