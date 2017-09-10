@@ -32,46 +32,80 @@ typedef struct{
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
 t_directory tablaDeDirectorios[100];
+char* rutaArchivos = "metadata/Archivos/";
 
 int getIndexDirectorio(char* ruta){
-	int index = 0, i = 0;
-	char* slash = "/";
-	char* finalPath = malloc(256);
-	char* rutaInvertida = strdup(string_reverse(ruta));
-	char* caracterActual = string_substring(rutaInvertida, index, 1);
-	char* comparador = malloc(256);
-	while(strcmp(caracterActual,slash)){
-		memcpy(finalPath + index, caracterActual, 1);
-		++index;
-		caracterActual = string_substring(rutaInvertida, index, 1);
+	int index = 0, i = 0, j = 0, indexFinal = 0;
+	char** arrayPath = string_split(ruta, "/");
+	char* arrayComparador[100];
+	while(arrayPath[index] != NULL){ // separo por '/' la ruta en un array
+		arrayComparador[index] = malloc(strlen(arrayPath[index]));
+		memcpy(arrayComparador[index],arrayPath[index],strlen(arrayPath[index]));
+		++index; // guardo cuantas partes tiene el array
 	}
-	finalPath = string_reverse(finalPath);
-	for(i = 0; i < 100; ++i){
-		memcpy(comparador, tablaDeDirectorios[i].nombre, 256);
-		printf("\n %s", comparador);
-		printf("\n %s", tablaDeDirectorios[i].nombre);
-		if (strcmp(tablaDeDirectorios[i].nombre,finalPath) == 0){
-			free(rutaInvertida);
-			free(finalPath);
-			free(comparador);
-			return tablaDeDirectorios[i].index;
+	indexFinal = index - 1;
+	int indexDirectorios[index];
+
+	for (i = 0; i < index; ++i)
+		indexDirectorios[i] = -1; // inicializo todo en -1, si al final me queda alguno en algun lado del array, significa que la ruta que pase no existe
+
+	indexDirectorios[0] = 0;
+
+	for(i = 0; i < index; --index){
+		for(j = 0; j < 100; ++j){ // busco en la tabla que posicion coincide con el fragmento de ruta del loop
+			if (strcmp(tablaDeDirectorios[j].nombre,arrayComparador[index]) == 0){ // me fijo si el padre de ese es el mismo que aparece en el fragmento anterior de la ruta
+				if (index != 0 && strcmp(tablaDeDirectorios[tablaDeDirectorios[j].padre].nombre,arrayComparador[index-1]) == 0){ // si es asi lo guardo
+					indexDirectorios[index] = tablaDeDirectorios[j].index;
+				}
+			}
 		}
 	}
-	free(rutaInvertida);
-	free(finalPath);
-	free(comparador);
-	return -1;
+
+	for (i = 0; i < indexFinal; ++i)
+		if (indexDirectorios[i] == -1){
+			for (i = 0; i < indexFinal; ++i){
+				free(arrayComparador[i]);
+			}
+			return -1;
+		} //me fijo si quedo algun -1, si es asi no existe la ruta
+
+	for (i = 0; i < indexFinal; ++i){
+		free(arrayComparador[i]);
+	}
+	return indexDirectorios[indexFinal]; // devuelvo el index de la ruta
 }
 
-void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos){
-	getIndexDirectorio(ruta);
+char* buscarRutaArchivo(char* ruta){
+	int indexDirectorio = getIndexDirectorio(ruta);
+	char* numeroIndexString = string_itoa(indexDirectorio);
+	char* rutaGenerada = malloc(strlen(rutaArchivos) + strlen(numeroIndexString));
+	memcpy(rutaGenerada, rutaArchivos, strlen(rutaArchivos));
+	memcpy(rutaGenerada + strlen(rutaArchivos), numeroIndexString, strlen(numeroIndexString));
+	return rutaGenerada; //poner free despues de usar
 }
+
+void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos);
 
 int main(void) {
 
 	int sizeComando = 256;
 	int clienteYama = 0;
 	int servidorFS = crearSocket();
+
+	/*tablaDeDirectorios[0].index = 0;
+	tablaDeDirectorios[1].index = 1;
+	tablaDeDirectorios[2].index = 2;		//para probar cosas
+	tablaDeDirectorios[3].index = 3;
+	tablaDeDirectorios[0].padre = -1;
+	tablaDeDirectorios[1].padre = 0;
+	tablaDeDirectorios[2].padre = 1;
+	tablaDeDirectorios[3].padre = 0;
+	memcpy(tablaDeDirectorios[0].nombre,"hola",5);
+	memcpy(tablaDeDirectorios[1].nombre,"chau",5);
+	memcpy(tablaDeDirectorios[2].nombre,"bla",4);
+	memcpy(tablaDeDirectorios[3].nombre,"bla",4);
+
+	printf("\n\n %s", buscarRutaArchivo("hola/bla"));*/
 
 	t_log* logger = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
