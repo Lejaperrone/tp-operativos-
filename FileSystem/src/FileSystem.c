@@ -125,7 +125,10 @@ int main(void) {
 			log_trace(logger, "File system formateado");
 		}
 		else if (string_starts_with(comando, "rm -d")) {
-			log_trace(logger, "Directorio eliminado");
+			if (eliminarDirectorio(comando, 6) != -1)
+				log_trace(logger, "Directorio eliminado");
+			else
+				log_trace(logger, "No se pudo eliminar el directorio");
 		}
 		else if (string_starts_with(comando, "rm -b")) {
 			log_trace(logger, "Bloque eliminado");
@@ -137,7 +140,11 @@ int main(void) {
 				log_trace(logger, "No se pudo eliminar el archivo");
 		}
 		else if (string_starts_with(comando, "rename")) {
-			log_trace(logger, "Archivo renombrado");
+			if (cambiarNombre(comando, 7) == 1)
+				log_trace(logger, "Renombrado");
+			else
+				log_trace(logger, "No se pudo renombrar");
+
 		}
 		else if (string_starts_with(comando, "mv")) {
 			log_trace(logger, "Archivo movido");
@@ -154,7 +161,11 @@ int main(void) {
 
 			log_trace(logger, "Directorio creado");// avisar si ya existe
 			}else{
-				log_trace(logger, "No se pudo crear directorio");
+				if (crearDirectorio(comando,6) == 2){
+				log_trace(logger, "El directorio ya existe");
+				}else{
+					log_trace(logger, "No se pudo crear directorio");
+				}
 			}
 		}
 		else if (string_starts_with(comando, "cpfrom")) {
