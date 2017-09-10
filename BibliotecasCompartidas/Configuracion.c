@@ -74,6 +74,11 @@ void cargarConfiguracionNodo(struct configuracionNodo *config){
 		printf("El puerto del FileSystem es: %d \n",config->PUERTO_FILESYSTEM);
 	}
 
+	if (config_has_property(configNodo, "IP_NODO")){
+		config->IP_NODO= config_get_string_value(configNodo,"IP_NODO");
+		printf("La IP del Nodo es %s \n",config->IP_NODO);
+	}
+
 	if (config_has_property(configNodo, "PUERTO_WORKER")){
 		config->PUERTO_WORKER = config_get_int_value(configNodo,"PUERTO_WORKER");
 		printf("El puerto del Worker es: %d \n",config->PUERTO_WORKER);

@@ -43,5 +43,4 @@ int crearServidorAsociado(char* ip, int puerto);
 
 struct configuracionYama config;
 
-
 #endif /* YAMA_H_ */

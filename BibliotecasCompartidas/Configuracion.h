@@ -26,6 +26,7 @@ struct configuracionYama{
 struct configuracionNodo{
 	int PUERTO_FILESYSTEM;
 	char* IP_FILESYSTEM;
+	char* IP_NODO;
 	int PUERTO_WORKER;
 	char* NOMBRE_NODO;
 	int PUERTO_DATANODE;
