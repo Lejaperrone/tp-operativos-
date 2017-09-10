@@ -20,16 +20,25 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 bool validarArchivo(char* path);
 
-int eliminarArchivo(char* comando, int longitudKey);
+bool validarDirectorio(char* path);
 
-void listarArchivos(char* comando, int longitudKey);
+int eliminarArchivo(char* comando, int longitudKey);//rm
 
-int crearDirectorio(char* comando, int longitudKey);
+int eliminarDirectorio(char* comando, int longitudKey);//rm -d
 
-int mostrarArchivo(char* comando, int longitudKey);
+void listarArchivos(char* comando, int longitudKey);//ls
 
+int crearDirectorio(char* comando, int longitudKey);//mkdir
+
+int mostrarArchivo(char* comando, int longitudKey);//cat
+
+int cambiarNombre(char* comando, int longitudKey);//rename
 
 #endif /* FILESYSTEM_COMANDOS_H_ */
