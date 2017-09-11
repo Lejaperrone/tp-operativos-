@@ -147,7 +147,10 @@ int main(void) {
 
 		}
 		else if (string_starts_with(comando, "mv")) {
-			log_trace(logger, "Archivo movido");
+			if (mover(comando,3) == 1)
+				log_trace(logger, "Archivo movido");
+			else
+				log_trace(logger, "No se pudo mover el archivo");
 		}
 		else if (string_starts_with(comando, "cat")) {
 			if (mostrarArchivo(comando, 4) == 1){
@@ -185,7 +188,10 @@ int main(void) {
 			log_trace(logger, "Archivos listados");
 		}
 		else if (string_starts_with(comando, "info")) {
-			log_trace(logger, "Mostrando informacion del archivo");
+			if (informacion(comando,5) == 1)
+				log_trace(logger, "Mostrando informacion del archivo");
+			else
+				log_trace(logger, "No se pudo mostrar informacion del archivo");
 		}
 		else {
 			printf("Comando invalido\n");
