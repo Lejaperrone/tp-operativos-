@@ -9,6 +9,8 @@
  */
 
 #include "Master.h"
+#include <Configuracion.h>
+#include <Configuracion.c>
 
 int main(void) {
 

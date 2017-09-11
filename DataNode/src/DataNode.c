@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <Sockets.h>
 #include <Configuracion.h>
+#include <Configuracion.c>
 
 struct configuracionNodo  config;
 

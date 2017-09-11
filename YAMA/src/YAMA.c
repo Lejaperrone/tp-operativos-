@@ -1,6 +1,8 @@
 #include "YAMA.h"
 #include "Sockets.h"
+#include "Sockets.c"
 #include "Configuracion.h"
+#include "Configuracion.c"
 
 t_log* logger;
 

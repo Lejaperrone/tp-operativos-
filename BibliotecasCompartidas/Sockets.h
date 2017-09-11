@@ -24,6 +24,7 @@
 #include <signal.h>
 #include "Serializacion.h"
 #include <netinet/in.h>
+#include <sys/select.h>
 
 #define idMaster 2
 

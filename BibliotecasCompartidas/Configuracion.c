@@ -6,6 +6,7 @@
  */
 
 #include "Configuracion.h"
+#include <commons/config.h>
 
 //Configuracion de YAMA
 
