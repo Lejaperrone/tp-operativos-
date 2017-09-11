@@ -27,3 +27,34 @@ char* recibirRuta(char* mensaje){
 	string_trim(&comando);
 	return comando;
 }
+
+void enviarArchivo(int socketPrograma, char* rutaArchivo) {
+	FILE *archivo;
+	char* stringArchivo;
+
+	archivo = fopen(rutaArchivo, "r");
+	fseek(archivo, 0L, SEEK_SET);
+
+	char c = fgetc(archivo);
+	stringArchivo = malloc(sizeof(char));
+	int i = 0;
+
+	while (!feof(archivo)) {
+		 stringArchivo[i] = c;
+		 ++i;
+		 stringArchivo = realloc(stringArchivo, (i + 1) * sizeof(char));
+		 c= fgetc(archivo);
+	}
+	stringArchivo[i] = '\0';
+
+	fclose(archivo);
+
+	string* archivoEnviar = malloc(sizeof(string));
+	archivoEnviar->longitud = i;
+	archivoEnviar->cadena = malloc(i+1);
+	strcpy(archivoEnviar->cadena,stringArchivo);
+
+	empaquetar(socketPrograma, mensajeArchivo,sizeof(int)+i,archivo);
+
+	free(stringArchivo);
+}

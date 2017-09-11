@@ -10,6 +10,11 @@
 
 #include <stdbool.h>
 
+typedef struct string{
+	int longitud;
+	char* cadena;
+}string;
+
 typedef struct respuestaTransformacion{
 	int nodo;
 	char* ip;
@@ -17,7 +22,7 @@ typedef struct respuestaTransformacion{
 	int bloque;
 	int byteOcupado;
 	char* rutaArchivoTemp;
-};
+}respuestaTransformacion;
 
 typedef struct respuestaReduccionLocal{
 	int nodo;
@@ -25,7 +30,7 @@ typedef struct respuestaReduccionLocal{
 	int puerto;
 	char* archivoTransformacion;
 	char* archivoReduccion;
-};
+}respuestaReduccionLocal;
 
 typedef struct respuestaReduccionGlobal{
 	int nodo;
@@ -34,7 +39,7 @@ typedef struct respuestaReduccionGlobal{
 	char* archivoReduccionLocal;
 	char* archivoReduccionGlobal;
 	bool encargado;
-};
+}respuestaReduccionGlobal;
 
 typedef struct registroTablaEstados{
 	int job;

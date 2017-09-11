@@ -21,6 +21,8 @@
 #include <netinet/in.h>
 #include <Configuracion.h>
 #include <commons/string.h>
+#include <Globales.h>
+#include <Serializacion.h>
 
 #define idMaster 2
 

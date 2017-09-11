@@ -14,8 +14,10 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "Globales.h"
 
 #define mensajeHandshake 1
+#define mensajeArchivo 2
 
 typedef struct{
 	int idMensaje;
@@ -29,5 +31,8 @@ typedef struct{
 
 void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete);
 respuesta desempaquetar(int socket);
+
+void* serializarString(void* paquete,int* tamanio);
+string* deserializarString(int socket,int tamanio);
 
 #endif /* SERIALIZACION_H_ */
