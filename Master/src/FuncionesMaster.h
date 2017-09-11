@@ -20,11 +20,14 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <Configuracion.h>
+#include <commons/string.h>
 
 #define idMaster 2
 
 void conectarseConYama(char* ip, int port);
 
 void conectarseConWorkers(char* ip, int port);
+
+char* recibirRuta(char* mensaje);
 
 #endif /* FUNCIONESMASTER_H_ */

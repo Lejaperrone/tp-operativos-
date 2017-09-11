@@ -9,6 +9,14 @@
  */
 
 #include "Worker.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <Sockets.h>
+#include <Configuracion.h>
+#include <Configuracion.c>
+#include <commons/log.h>
+
+struct configuracionNodo config;
 
 int main(void) {
 	respuesta conexionConMaster;
