@@ -41,4 +41,8 @@ int mostrarArchivo(char* comando, int longitudKey);//cat
 
 int cambiarNombre(char* comando, int longitudKey);//rename
 
+int mover(char* comando, int longitudKey);//mv
+
+int informacion(char* comando, int longitudKey);//info
+
 #endif /* FILESYSTEM_COMANDOS_H_ */

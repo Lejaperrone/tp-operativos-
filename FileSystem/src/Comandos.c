@@ -162,3 +162,38 @@ int cambiarNombre(char* comando, int longitudKey){
 
 	return 0;
 }
+
+int mover(char* comando, int longitudKey){
+
+	char*  path= malloc(strlen(comando)-longitudKey);
+	memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
+
+	char* rutaNombreViejo = strtok(path, " ");
+	char* nombreNuevo = strtok(NULL, " ");
+
+
+	if (rename(rutaNombreViejo,nombreNuevo) == 0){
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
+int informacion(char* comando, int longitudKey){
+
+	char*  path= malloc(strlen(comando)-longitudKey);
+	memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
+
+	struct stat fileStat;
+		    if(stat(path,&fileStat) < 0)
+		        return 0;
+
+		    printf("Information for %s\n",path);
+		    printf("---------------------------\n");
+		    printf("File Size: \t\t%d bytes\n",(int) fileStat.st_size);
+		    printf("Number of Links: \t%d\n",fileStat.st_nlink);
+		    printf("File inode: \t\t%d\n",(int) fileStat.st_ino);
+		    printf("Number of blocks: \t%d\n", (int) fileStat.st_blocks);
+
+		    return 1;
+}
