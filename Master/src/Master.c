@@ -13,7 +13,7 @@
 struct configuracionMaster config;
 
 int main(void) {
-
+	loggerMaster = log_create("logMaster", "Master.c", 1, LOG_LEVEL_TRACE);
 	cargarConfiguracionMaster(&config);
 
 	conectarseConYama(config.YAMA_IP,config.YAMA_PUERTO);
@@ -23,7 +23,10 @@ int main(void) {
 	char* rutaDatos = recibirRuta("Ingrese ruta de los datos");
 	char* rutaAlma = recibirRuta("Ingrese ruta donde almacenar");
 
-	conectarseConWorkers("127.0.0.1", 5000);
+
+	enviarJobAYama();//antes hay que crear un job para enviarle a yama con todos esos archivos
+
+	//esperarInstruccionesDeYama();
 
 	return EXIT_SUCCESS;
 }

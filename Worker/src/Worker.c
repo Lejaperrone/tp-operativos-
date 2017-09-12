@@ -9,12 +9,6 @@
  */
 
 #include "Worker.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <Sockets.h>
-#include <Configuracion.h>
-#include <Configuracion.c>
-#include <commons/log.h>
 
 struct configuracionNodo config;
 
@@ -28,8 +22,10 @@ int main(void) {
 	socketMaster = levantarServidorWorker(config.IP_NODO,config.PUERTO_WORKER);//FIXME: CAMBIAR ARCHIVO CONFIGURACION CON IP NODO
 
 	conexionConMaster = desempaquetar(socketMaster);
-	realizarHandshake(conexionConMaster);
-
+	realizarHandshake(socketMaster, conexionConMaster);
+	while(1){
+		//para que no cierre
+	}
 	//forkear por cada tarea mandada por el master
 	return EXIT_SUCCESS;
 }
@@ -40,12 +36,13 @@ int levantarServidorWorker(char* ip, int port){
 
 }
 
-void realizarHandshake(respuesta conexion){
+void realizarHandshake(int socket, respuesta conexion){
 	if (conexion.idMensaje == 1){ //que sea mensaje handshake
 		int idMensaje = *(int*) conexion.envio;
 		if (idMensaje == idMaster){//HANDSHAKE, RECONOCIA A MASTER
-			log_trace(logger, "Conexion de Master");
+			log_trace(logger, "Conexion de Master con id:\n");
 			//logica con el master
 		}
+		close(socket);
 	}
 }

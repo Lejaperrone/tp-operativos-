@@ -69,7 +69,7 @@ respuesta desempaquetar(int socket){
 	}
 	return miRespuesta;
 }
-
+//------SERIALIZACIONES PARTICULARES------//
 void* serializarString(void* paquete,int* tamanio){
 	string* cadena = (string*)paquete;
 	int longitudInt = sizeof(int);

@@ -23,12 +23,30 @@
 #include <commons/string.h>
 #include <Globales.h>
 #include <Serializacion.h>
+#include <pthread.h>
+#include <commons/log.h>
 
-#define idMaster 2
+#define mensajeArchivo 2
+#define mensajeEtapaTransformacion 5
+
+/*----VARIABLES GLOBALES----*/
+t_log* loggerMaster;
+int socketYama;
+/*--------------------------*/
+
+typedef struct{
+	char* ip;
+	int port;
+	int id;
+} parametrosConexionMaster;
 
 void conectarseConYama(char* ip, int port);
 
-void conectarseConWorkers(char* ip, int port);
+void* conectarseConWorkers(parametrosConexionMaster* parametros);
+
+void enviarJobAYama();
+
+void esperarInstruccionesDeYama();
 
 char* recibirRuta(char* mensaje);
 

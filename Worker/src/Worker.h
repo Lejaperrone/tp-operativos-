@@ -14,6 +14,7 @@
 #include <Configuracion.h>
 #include <commons/log.h>
 #include "Serializacion.h"
+#include <commons/log.h>
 
 #define mensajeHandshake 1
 #define idMaster 2
@@ -27,6 +28,6 @@ t_log* logger;
 
 /*----PROTOTIPOS--------------------*/
 int levantarServidorWorker(char* ip, int port);
-void realizarHandshake(respuesta conexion);
+void realizarHandshake(int socket, respuesta conexion);
 
 #endif /* WORKER_H_ */
