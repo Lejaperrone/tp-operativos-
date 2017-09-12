@@ -115,7 +115,7 @@ void levantarServidorYama(char* ip, int port){
 						int idRecibido = *(int*)conexionNueva.envio;
 
 						if (idRecibido == idMaster){
-							printf("Conexion de id:%d\n",idRecibido);
+							printf("Conexion de Master\n");
 							//hacer algo despues del handshake
 						}
 					}
