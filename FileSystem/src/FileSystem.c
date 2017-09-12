@@ -21,76 +21,27 @@
 #include "Comandos.h"
 #include <Configuracion.h>
 #include "Sockets.c"
+#include <commons/bitarray.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include "FuncionesFS.h"
 
-typedef struct{
-	int index;
-	char nombre[255];
-	int padre;
-} t_directory;
+#define cantDataNodes 10
 
-
+int cantBloques = 10;
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
 t_directory tablaDeDirectorios[100];
 char* rutaArchivos = "metadata/Archivos/";
-
-int getIndexDirectorio(char* ruta){
-	int index = 0, i = 0, j = 0, indexFinal = 0;
-	char** arrayPath = string_split(ruta, "/");
-	char* arrayComparador[100];
-	while(arrayPath[index] != NULL){ // separo por '/' la ruta en un array
-		arrayComparador[index] = malloc(strlen(arrayPath[index]));
-		memcpy(arrayComparador[index],arrayPath[index],strlen(arrayPath[index]));
-		++index; // guardo cuantas partes tiene el array
-	}
-	indexFinal = index - 1;
-	int indexDirectorios[index];
-
-	for (i = 0; i < index; ++i)
-		indexDirectorios[i] = -1; // inicializo todo en -1, si al final me queda alguno en algun lado del array, significa que la ruta que pase no existe
-
-	indexDirectorios[0] = 0;
-
-	for(i = 0; i < index; --index){
-		for(j = 0; j < 100; ++j){ // busco en la tabla que posicion coincide con el fragmento de ruta del loop
-			if (strcmp(tablaDeDirectorios[j].nombre,arrayComparador[index]) == 0){ // me fijo si el padre de ese es el mismo que aparece en el fragmento anterior de la ruta
-				if (index != 0 && strcmp(tablaDeDirectorios[tablaDeDirectorios[j].padre].nombre,arrayComparador[index-1]) == 0){ // si es asi lo guardo
-					indexDirectorios[index] = tablaDeDirectorios[j].index;
-				}
-			}
-		}
-	}
-
-	for (i = 0; i < indexFinal; ++i)
-		if (indexDirectorios[i] == -1){
-			for (i = 0; i < indexFinal; ++i){
-				free(arrayComparador[i]);
-			}
-			return -1;
-		} //me fijo si quedo algun -1, si es asi no existe la ruta
-
-	for (i = 0; i < indexFinal; ++i){
-		free(arrayComparador[i]);
-	}
-	return indexDirectorios[indexFinal]; // devuelvo el index de la ruta
-}
-
-char* buscarRutaArchivo(char* ruta){
-	int indexDirectorio = getIndexDirectorio(ruta);
-	char* numeroIndexString = string_itoa(indexDirectorio);
-	char* rutaGenerada = malloc(strlen(rutaArchivos) + strlen(numeroIndexString));
-	memcpy(rutaGenerada, rutaArchivos, strlen(rutaArchivos));
-	memcpy(rutaGenerada + strlen(rutaArchivos), numeroIndexString, strlen(numeroIndexString));
-	return rutaGenerada; //poner free despues de usar
-}
-
-void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos);
+t_bitarray* bitmap[cantDataNodes];
 
 int main(void) {
 
 	int sizeComando = 256;
 	int clienteYama = 0;
 	int servidorFS = crearSocket();
+
+	inicializarBitmaps();
 
 	/*tablaDeDirectorios[0].index = 0;
 	tablaDeDirectorios[1].index = 1;

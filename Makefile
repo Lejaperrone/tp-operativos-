@@ -48,9 +48,11 @@ dataNode.o:
 
 # Master
 
-master: master.o
-	$(CC) $(LIBPATH) master.o -o master $(LIBS)
+master: master.o funcionesMaster.o
+	$(CC) $(LIBPATH) master.o funcionesMaster.o -o master $(LIBS)
 
+funcionesMaster.o:
+	$(CC) $(CFLAGS) -c $(DIR)/Master/src/FuncionesMaster.c -o funcionesMaster.o
 
 master.o:
 	$(CC) $(CFLAGS) -c $(DIR)/Master/src/Master.c -o master.o
@@ -74,11 +76,14 @@ worker.o:
 
 # FileSystem
 
+funcionesFS.o:
+	$(CC) $(CFLAGS) -c $(DIR)/FileSystem/src/FuncionesFS.c -o funcionesFS.o
+
 comandos.o:
 	$(CC) $(CFLAGS) -c $(DIR)/FileSystem/src/Comandos.c -o comandos.o
 
-fileSystem: fileSystem.o comandos.o
-	$(CC) $(LIBPATH) fileSystem.o comandos.o -o fileSystem $(LIBS)
+fileSystem: fileSystem.o comandos.o funcionesFS.o
+	$(CC) $(LIBPATH) fileSystem.o comandos.o funcionesFS.o -o fileSystem $(LIBS)
 
 
 fileSystem.o:

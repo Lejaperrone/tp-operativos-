@@ -74,11 +74,14 @@ worker.o:
 
 # FileSystem
 
+funcionesFS.o:
+	$(CC) $(CFLAGS) -c $(DIR)/FileSystem/src/FuncionesFS.c -o funcionesFS.o
+
 comandos.o:
 	$(CC) $(CFLAGS) -c $(DIR)/FileSystem/src/Comandos.c -o comandos.o
 
-fileSystem: fileSystem.o comandos.o
-	$(CC) $(LIBPATH) fileSystem.o comandos.o -o fileSystem $(LIBS)
+fileSystem: fileSystem.o comandos.o funcionesFS.o
+	$(CC) $(LIBPATH) fileSystem.o comandos.o funcionesFS.o -o fileSystem $(LIBS)
 
 
 fileSystem.o:
@@ -121,4 +124,4 @@ lib:
 # Clean
 
 clean:
-	rm -f yama worker dataNode master fileSystem *.o
+	rm -f yama worker datanode master fileSystem *.o
