@@ -15,6 +15,7 @@
 #include <Configuracion.h>
 #include <Configuracion.c>
 #include <commons/log.h>
+#include <commons/bitarray.h>
 
 struct configuracionNodo config;
 
