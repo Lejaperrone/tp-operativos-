@@ -15,7 +15,8 @@ void conectarseConYama(char* ip, int port) {
 }
 void crearHilosConexion() {
 	pthread_t hiloConexion;
-	parametrosConexionMaster* parametrosConexion = malloc(sizeof(parametrosConexionMaster));
+	parametrosConexionMaster* parametrosConexion = malloc(
+			sizeof(parametrosConexionMaster));
 	//para probar conexion por hilos
 	parametrosConexion->ip = "127.0.0.1";
 	parametrosConexion->id = 2;
@@ -39,57 +40,57 @@ void enviarJobAYama() {
 }
 
 void esperarInstruccionesDeYama() {
-	respuesta instruccionesYama;
+	respuesta instruccionesYama = malloc(sizeof(respuesta));
 	while (1) {
 		instruccionesYama = desempaquetar(socketYama);
 		switch (instruccionesYama.idMensaje) {
 
 		case mensajeEtapaTransformacion:
-				crearHilosConexion();
-				//logica en etapa de transformacion
-				break;
+			crearHilosConexion();
+			//logica en etapa de transformacion
+			break;
+		}
 	}
-}
 //recibir de yama todos los parametros conexion IP PUERTO
 //ver que tipo de etapa es! los hilos de cada etapa son DISTINTOS!!!
 }
 
 char* recibirRuta(char* mensaje) {
-printf("%s\n", mensaje);
-char* comando = malloc(sizeof(char) * 256);
-bzero(comando, 256);
-fgets(comando, 256, stdin);
-string_trim(&comando);
-return comando;
+	printf("%s\n", mensaje);
+	char* comando = malloc(sizeof(char) * 256);
+	bzero(comando, 256);
+	fgets(comando, 256, stdin);
+	string_trim(&comando);
+	return comando;
 }
 
 void enviarArchivo(int socketPrograma, char* rutaArchivo) {
-FILE *archivo;
-char* stringArchivo;
+	FILE *archivo;
+	char* stringArchivo;
 
-archivo = fopen(rutaArchivo, "r");
-fseek(archivo, 0L, SEEK_SET);
+	archivo = fopen(rutaArchivo, "r");
+	fseek(archivo, 0L, SEEK_SET);
 
-char c = fgetc(archivo);
-stringArchivo = malloc(sizeof(char));
-int i = 0;
+	char c = fgetc(archivo);
+	stringArchivo = malloc(sizeof(char));
+	int i = 0;
 
-while (!feof(archivo)) {
-	stringArchivo[i] = c;
-	++i;
-	stringArchivo = realloc(stringArchivo, (i + 1) * sizeof(char));
-	c = fgetc(archivo);
-}
-stringArchivo[i] = '\0';
+	while (!feof(archivo)) {
+		stringArchivo[i] = c;
+		++i;
+		stringArchivo = realloc(stringArchivo, (i + 1) * sizeof(char));
+		c = fgetc(archivo);
+	}
+	stringArchivo[i] = '\0';
 
-fclose(archivo);
+	fclose(archivo);
 
-string* archivoEnviar = malloc(sizeof(string));
-archivoEnviar->longitud = i;
-archivoEnviar->cadena = malloc(i + 1);
-strcpy(archivoEnviar->cadena, stringArchivo);
+	string* archivoEnviar = malloc(sizeof(string));
+	archivoEnviar->longitud = i;
+	archivoEnviar->cadena = malloc(i + 1);
+	strcpy(archivoEnviar->cadena, stringArchivo);
 
-empaquetar(socketPrograma, mensajeArchivo, sizeof(int) + i, archivo);
+	empaquetar(socketPrograma, mensajeArchivo, sizeof(int) + i, archivo);
 
-free(stringArchivo);
+	free(stringArchivo);
 }
