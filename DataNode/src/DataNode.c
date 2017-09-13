@@ -13,6 +13,7 @@
 #include <Sockets.h>
 #include <Configuracion.h>
 #include <Configuracion.c>
+#include "FuncionesDN.h"
 
 struct configuracionNodo  config;
 

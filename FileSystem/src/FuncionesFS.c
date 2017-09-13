@@ -75,8 +75,8 @@ char* buscarRutaArchivo(char* ruta){
 
 void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos);
 
-void inicializarBitmaps(){
-	char* path = "/Metadata/Bitmap.bin"; //cambiar
+void inicializarBitmaps(){ //TODO (y ver si aca hace falta mmap)
+	/*char* path = "/Metadata/Bitmap.bin"; //cambiar
 	int fd = open(path,O_RDWR | O_TRUNC);
 	if (fd == -1)
 	{
@@ -97,5 +97,5 @@ void inicializarBitmaps(){
 	}
 	char* mapa = mmap(0,cantBloques/8,PROT_READ | PROT_WRITE,MAP_SHARED,fd,0);
 
-	bitmap[0] = bitarray_create_with_mode(mapa, cantBloques/8 , LSB_FIRST);
+	bitmap[0] = bitarray_create_with_mode(mapa, cantBloques/8 , LSB_FIRST);*/
 }

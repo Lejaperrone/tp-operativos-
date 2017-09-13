@@ -36,21 +36,26 @@ all: clean datanode master worker yama fileSystem
 
 # datanode
 
-datanode: dataNode.o
-	$(CC) $(LIBPATH) dataNode.o -o datanode $(LIBS)
+datanode: dataNode.o funcionesDN.o
+	$(CC) $(LIBPATH) dataNode.o funcionesDN.o -o datanode $(LIBS)
 
 
 dataNode.o:
 	$(CC) $(CFLAGS) -c $(DIR)/DataNode/src/DataNode.c -o dataNode.o
+
+funcionesDN.o:
+	$(CC) $(CFLAGS) -c $(DIR)/DataNode/src/FuncionesDN.c -o FuncionesDN.o
 
 
 
 
 # Master
 
-master: master.o
-	$(CC) $(LIBPATH) master.o -o master $(LIBS)
+master: master.o funcionesMaster.o
+	$(CC) $(LIBPATH) master.o funcionesMaster.o -o master $(LIBS)
 
+funcionesMaster.o:
+	$(CC) $(CFLAGS) -c $(DIR)/Master/src/FuncionesMaster.c -o funcionesMaster.o
 
 master.o:
 	$(CC) $(CFLAGS) -c $(DIR)/Master/src/Master.c -o master.o
