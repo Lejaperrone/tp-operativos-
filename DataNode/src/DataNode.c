@@ -11,14 +11,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <Sockets.h>
-#include <Configuracion.h>
-#include <Configuracion.c>
+#include "Configuracion.h"
+#include "Configuracion.c"
 #include "FuncionesDN.h"
+#include "Serializacion.h"
 
 struct configuracionNodo  config;
 
 int main(void) {
+	respuesta conexionConFS;
+
 	cargarConfiguracionNodo(&config);
+	conectarseConFs();
 	puts("!!!Hello World!!!");
 	return EXIT_SUCCESS;
 }
