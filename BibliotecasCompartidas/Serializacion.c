@@ -14,6 +14,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 	switch(idMensaje){
 		case mensajeHandshake:
+		case mensajeEtapaTransformacion://FIXME: SOLO LO USO PARA PROBAR
 			tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
 			memcpy(bloque,paquete,sizeof(int));

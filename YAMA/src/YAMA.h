@@ -37,9 +37,9 @@ int addrlen;
 int i, j;
 struct sockaddr_in direccionCliente;
 
-void levantarServidorYama();
 void conectarseConFs();
 int crearServidorAsociado(char* ip, int puerto);
+void levantarServidorYama(char* ip, int port);
 
 struct configuracionYama config;
 

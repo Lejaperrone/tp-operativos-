@@ -18,6 +18,7 @@
 
 #define mensajeHandshake 1
 #define mensajeArchivo 2
+#define mensajeEtapaTransformacion 5
 
 typedef struct{
 	int idMensaje;

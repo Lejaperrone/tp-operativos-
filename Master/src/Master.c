@@ -18,15 +18,15 @@ int main(void) {
 
 	conectarseConYama(config.YAMA_IP,config.YAMA_PUERTO);
 
-	char* rutaTrans = recibirRuta("Ingrese ruta transformador");
+	/*char* rutaTrans = recibirRuta("Ingrese ruta transformador");
 	char* rutaRedu = recibirRuta("Ingrese ruta reductor");
 	char* rutaDatos = recibirRuta("Ingrese ruta de los datos");
-	char* rutaAlma = recibirRuta("Ingrese ruta donde almacenar");
+	char* rutaAlma = recibirRuta("Ingrese ruta donde almacenar");*/
 
 
 	enviarJobAYama();//antes hay que crear un job para enviarle a yama con todos esos archivos
 
-	//esperarInstruccionesDeYama();
+	esperarInstruccionesDeYama();
 
 	return EXIT_SUCCESS;
 }

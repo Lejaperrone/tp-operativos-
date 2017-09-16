@@ -11,12 +11,11 @@ void conectarseConYama(char* ip, int port) {
 	socketYama = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(ip, port);
 	conectarCon(direccion, socketYama, 2); //2 id master
-	log_info(loggerMaster, "Conexion con Yama establecida"); //FIXME: FALTA CONTROL DE ERROR
+	log_trace(loggerMaster, "Conexion con Yama establecida"); //FIXME: FALTA CONTROL DE ERROR
 }
 void crearHilosConexion() {
 	pthread_t hiloConexion;
-	parametrosConexionMaster* parametrosConexion = malloc(
-			sizeof(parametrosConexionMaster));
+	parametrosConexionMaster* parametrosConexion = malloc(sizeof(parametrosConexionMaster));
 	//para probar conexion por hilos
 	parametrosConexion->ip = "127.0.0.1";
 	parametrosConexion->id = 2;
@@ -40,12 +39,14 @@ void enviarJobAYama() {
 }
 
 void esperarInstruccionesDeYama() {
-	respuesta instruccionesYama = malloc(sizeof(respuesta));
+	respuesta instruccionesYama ;//= malloc(sizeof(respuesta));
 	while (1) {
 		instruccionesYama = desempaquetar(socketYama);
+
 		switch (instruccionesYama.idMensaje) {
 
 		case mensajeEtapaTransformacion:
+			//verificar envio
 			crearHilosConexion();
 			//logica en etapa de transformacion
 			break;
