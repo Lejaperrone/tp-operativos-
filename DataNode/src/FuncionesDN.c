@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "FuncionesDN.h"
+#include "Serializacion.h"
+#include "Sockets.h"
 
 void enviarBloqueAFS(int numeroBloque){
 
@@ -15,4 +17,10 @@ void enviarBloqueAFS(int numeroBloque){
 
 void setearBloque(int numeroBloque, void* datos){
 
+}
+
+void conectarseConFs(){
+	int socketFs = crearSocket();
+	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 6000);
+	conectarCon(direccion, socketFs, 1);
 }

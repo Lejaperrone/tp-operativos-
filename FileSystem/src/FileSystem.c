@@ -60,7 +60,7 @@ int main(void) {
 
 	t_log* logger = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
-	//levantarServidorFS(servidorFS, clienteYama);
+	levantarServidorFS(servidorFS, clienteYama);
 
 	while (1) {
 		printf("Introduzca comando: ");

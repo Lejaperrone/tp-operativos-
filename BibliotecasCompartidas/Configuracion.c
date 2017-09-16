@@ -63,7 +63,7 @@ void cargarConfiguracionMaster(struct configuracionMaster *config){
 
 void cargarConfiguracionNodo(struct configuracionNodo *config){
 
-	t_config* configNodo = config_create("/home/utnso/tp-2017-2c-PEQL/Worker/src/Nodo.cfg");
+	t_config* configNodo = config_create("/home/utnso/Escritorio/tp-2017-2c-PEQL/DataNode/src/Nodo.cfg");
 
 	if (config_has_property(configNodo, "IP_FILESYSTEM")){
 		config->IP_FILESYSTEM= config_get_string_value(configNodo,"IP_FILESYSTEM");
