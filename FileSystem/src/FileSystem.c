@@ -33,7 +33,7 @@ int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
 t_directory tablaDeDirectorios[100];
 char* rutaArchivos = "metadata/Archivos/";
-t_bitarray* bitmap[cantDataNodes];
+//t_bitarray* bitmap[cantDataNodes];
 t_log* loggerFS;
 
 int main(void) {
@@ -46,7 +46,7 @@ int main(void) {
 	parametrosServidorFS.cliente = clienteYama;
 	parametrosServidorFS.servidor = servidorFS;
 
-	inicializarBitmaps();
+	//inicializarBitmaps();
 
 	/*tablaDeDirectorios[0].index = 0;
 	tablaDeDirectorios[1].index = 1;

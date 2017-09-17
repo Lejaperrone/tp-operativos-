@@ -19,6 +19,9 @@ typedef struct{
 	int padre;
 } t_directory;
 
+int maxDatanodes;
+int nuevoDataNode;
+
 void* consolaFS();
 
 char* buscarRutaArchivo(char* ruta);

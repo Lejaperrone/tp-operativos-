@@ -81,27 +81,3 @@ int crearServidorAsociado(char* ip, int puerto) {
 }
 
 
-void* levantarServidorFS(void* parametrosServidorFS){
-
-	struct parametrosServidorHilo*params;
-	params = (struct parametrosServidorHilo*) parametrosServidorFS;
-
-	int cliente = params->cliente;
-	int servidor = params->servidor;
-
-	char* buffer = malloc(300);
-	struct sockaddr_in direccionCliente;
-	unsigned int tamanioDireccion = sizeof(direccionCliente);
-	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",6000);
-	int activado = 1;
-	setsockopt(servidor, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
-
-	asociarSocketA(direccionServidor, servidor);
-
-	cliente = accept(servidor, (struct sockaddr *) &direccionCliente, &tamanioDireccion);
-
-	//falta agregar el manejo de error cuando se desconecta el fs,
-	//handshake y el protocolo de envio de mensajes
-	free(buffer);
-	return 0;
-}

@@ -5,7 +5,7 @@ DIR := ${CURDIR}
 
 H_SRCS=$(shell find . -iname "*.h" | tr '\n' ' ')
 
-HEADERS := -I"$(DIR)/commons_lib/commons" -I"/usr/include" -I"$(DIR)/BibliotecasCompartidas" -I"$(DIR)/commons_lib/commons/collections" -I"$(DIR)/YAMA" -I"$(DIR)/DataNode" -I"$(DIR)/Worker" -I"$(DIR)/Master" -I"$(DIR)/FileSystem"          # Cualquier cosa aca hay un ejemplo http://www.network-theory.co.uk/docs/gccintro/gccintro_22.html
+HEADERS := -I"$(DIR)/commons_lib/commons" -I"/usr/include" -I"$(DIR)/BibliotecasCompartidas/Debug" -I"$(DIR)/commons_lib/commons/collections" -I"$(DIR)/YAMA" -I"$(DIR)/DataNode" -I"$(DIR)/Worker" -I"$(DIR)/Master" -I"$(DIR)/FileSystem"          # Cualquier cosa aca hay un ejemplo http://www.network-theory.co.uk/docs/gccintro/gccintro_22.html
 LIBPATH := -L"$(DIR)/BibliotecasCompartidas/Debug"
 LIBS := -lcommons -lpthread -lreadline -lm -lBibliotecasCompartidas
 
@@ -44,7 +44,7 @@ dataNode.o:
 	$(CC) $(CFLAGS) -c $(DIR)/DataNode/src/DataNode.c -o dataNode.o
 
 funcionesDN.o:
-	$(CC) $(CFLAGS) -c $(DIR)/DataNode/src/FuncionesDN.c -o FuncionesDN.o
+	$(CC) $(CFLAGS) -c $(DIR)/DataNode/src/FuncionesDN.c -o funcionesDN.o
 
 
 

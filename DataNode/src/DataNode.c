@@ -23,6 +23,9 @@ int main(void) {
 
 	cargarConfiguracionNodo(&config);
 	conectarseConFs();
+	while(1){
+
+	}
 	puts("!!!Hello World!!!");
 	return EXIT_SUCCESS;
 }

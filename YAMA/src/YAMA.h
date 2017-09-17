@@ -23,6 +23,7 @@
 #include <Configuracion.h>
 
 #define idMaster 2
+#define idDataNodes 3
 
 int mostrarLoggerPorPantalla=1;
 fd_set master;   // conjunto maestro de descriptores de fichero

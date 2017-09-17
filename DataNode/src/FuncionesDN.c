@@ -21,6 +21,6 @@ void setearBloque(int numeroBloque, void* datos){
 
 void conectarseConFs(){
 	int socketFs = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 6000);
-	conectarCon(direccion, socketFs, 1);
+	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 7000);
+	conectarCon(direccion, socketFs, 3);
 }
