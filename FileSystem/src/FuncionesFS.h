@@ -11,9 +11,16 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <commons/log.h>
 
 typedef struct{
 	int index;
 	char nombre[255];
 	int padre;
 } t_directory;
+
+void* consolaFS();
+
+char* buscarRutaArchivo(char* ruta);
+
+int getIndexDirectorio(char* ruta);

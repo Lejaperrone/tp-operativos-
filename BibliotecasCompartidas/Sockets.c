@@ -81,7 +81,14 @@ int crearServidorAsociado(char* ip, int puerto) {
 }
 
 
-void levantarServidorFS(int servidor, int cliente){
+void* levantarServidorFS(void* parametrosServidorFS){
+
+	struct parametrosServidorHilo*params;
+	params = (struct parametrosServidorHilo*) parametrosServidorFS;
+
+	int cliente = params->cliente;
+	int servidor = params->servidor;
+
 	char* buffer = malloc(300);
 	struct sockaddr_in direccionCliente;
 	unsigned int tamanioDireccion = sizeof(direccionCliente);
@@ -96,4 +103,5 @@ void levantarServidorFS(int servidor, int cliente){
 	//falta agregar el manejo de error cuando se desconecta el fs,
 	//handshake y el protocolo de envio de mensajes
 	free(buffer);
+	return 0;
 }

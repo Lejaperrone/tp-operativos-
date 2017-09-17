@@ -15,6 +15,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include "FuncionesFS.h"
+#include "Comandos.h"
 
 #define cantDataNodes 10
 
@@ -22,6 +23,7 @@ extern t_directory tablaDeDirectorios[100];
 extern char* rutaArchivos;
 extern int cantBloques;
 extern t_bitarray* bitmap[cantDataNodes];
+extern t_log* loggerFS;
 
 int getIndexDirectorio(char* ruta){
 	int index = 0, i = 0, j = 0, indexFinal = 0;
@@ -71,6 +73,101 @@ char* buscarRutaArchivo(char* ruta){
 	memcpy(rutaGenerada, rutaArchivos, strlen(rutaArchivos));
 	memcpy(rutaGenerada + strlen(rutaArchivos), numeroIndexString, strlen(numeroIndexString));
 	return rutaGenerada; //poner free despues de usar
+}
+
+void* consolaFS(){
+
+	int sizeComando = 256;
+
+	while (1) {
+		printf("Introduzca comando: ");
+		char* comando = malloc(sizeof(char) * sizeComando);
+		bzero(comando, sizeComando);
+		comando = readline(">");
+		if (comando)
+			add_history(comando);
+
+		log_trace(loggerFS, "El usuario ingreso: %s", comando);
+
+		if (string_starts_with(comando, "format")) {
+			log_trace(loggerFS, "File system formateado");
+		}
+		else if (string_starts_with(comando, "rm -d")) {
+			if (eliminarDirectorio(comando, 6) != -1)
+				log_trace(loggerFS, "Directorio eliminado");
+			else
+				log_trace(loggerFS, "No se pudo eliminar el directorio");
+		}
+		else if (string_starts_with(comando, "rm -b")) {
+			log_trace(loggerFS, "Bloque eliminado");
+		}
+		else if (string_starts_with(comando, "rm")) {
+			if (eliminarArchivo(comando, 3) != -1)
+				log_trace(loggerFS, "archivo eliminado");
+			else
+				log_trace(loggerFS, "No se pudo eliminar el archivo");
+		}
+		else if (string_starts_with(comando, "rename")) {
+			if (cambiarNombre(comando, 7) == 1)
+				log_trace(loggerFS, "Renombrado");
+			else
+				log_trace(loggerFS, "No se pudo renombrar");
+
+		}
+		else if (string_starts_with(comando, "mv")) {
+			if (mover(comando,3) == 1)
+				log_trace(loggerFS, "Archivo movido");
+			else
+				log_trace(loggerFS, "No se pudo mover el archivo");
+		}
+		else if (string_starts_with(comando, "cat")) {
+			if (mostrarArchivo(comando, 4) == 1){
+			log_trace(loggerFS, "Archivo mostrado");
+			}else{
+				log_trace(loggerFS, "No se pudo mostrar el archivo");
+			}
+		}
+		else if (string_starts_with(comando, "mkdir")) {
+			if (crearDirectorio(comando,6) == 1){
+
+			log_trace(loggerFS, "Directorio creado");// avisar si ya existe
+			}else{
+				if (crearDirectorio(comando,6) == 2){
+				log_trace(loggerFS, "El directorio ya existe");
+				}else{
+					log_trace(loggerFS, "No se pudo crear directorio");
+				}
+			}
+		}
+		else if (string_starts_with(comando, "cpfrom")) {
+			log_trace(loggerFS, "Archivo copiado a yamafs");
+		}
+		else if (string_starts_with(comando, "cpto")) {
+			log_trace(loggerFS, "Archivo copiado desde yamafs");
+		}
+		else if (string_starts_with(comando, "cpblock")) {
+			log_trace(loggerFS, "Bloque copiado en el nodo");
+		}
+		else if (string_starts_with(comando, "md5")) {
+			log_trace(loggerFS, "MD5 del archivo");
+		}
+		else if (string_starts_with(comando, "ls")) {
+			listarArchivos(comando, 3);
+			log_trace(loggerFS, "Archivos listados");
+		}
+		else if (string_starts_with(comando, "info")) {
+			if (informacion(comando,5) == 1)
+				log_trace(loggerFS, "Mostrando informacion del archivo");
+			else
+				log_trace(loggerFS, "No se pudo mostrar informacion del archivo");
+		}
+		else {
+			printf("Comando invalido\n");
+			log_trace(loggerFS, "Comando invalido");
+		}
+		free(comando);
+	}
+	return 0;
 }
 
 void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos);

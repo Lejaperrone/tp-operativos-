@@ -58,10 +58,15 @@ int addrlen;
 int i, j;
 struct sockaddr_in direccionCliente;
 
+typedef struct parametrosServidorHilo{
+	int servidor;
+	int cliente;
+}parametrosServidorHilo;
+
 void levantarServidorYama(char* ip, int port);
 
 int crearServidorAsociado(char* ip, int puerto);
 
-void levantarServidorFS(int servidor, int cliente);
+void* levantarServidorFS(void* parametrosServidorFS);
 
 #endif /* SOCKETS_H_ */
