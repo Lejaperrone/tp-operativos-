@@ -38,10 +38,12 @@ struct configuracionMaster{
 	int YAMA_PUERTO;
 }configuracionMaster;
 
-void cargarConfiguracionYama(struct configuracionYama *config);
+void cargarConfiguracionYama(struct configuracionYama *config,char* rutaAConfig);
 
-void cargarConfiguracionMaster(struct configuracionMaster *config);
+void cargarConfiguracionMaster(struct configuracionMaster *config,char* rutaAConfig);
 
-void cargarConfiguracionNodo(struct configuracionNodo *config);
+void cargarConfiguracionNodo(struct configuracionNodo *config,char* rutaAConfig);
+
+char* obtenerRutaRealConfiguracion(char* rutaAConfig);
 
 #endif /* CONFIGURACION_H_ */

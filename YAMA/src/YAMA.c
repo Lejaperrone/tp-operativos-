@@ -2,17 +2,15 @@
 #include "Sockets.h"
 #include "Sockets.c"
 #include "Configuracion.h"
-#include "Configuracion.c"
 
 t_log* logger;
 
-int main(void) {
-
+int main(int argc, char *argv[]) {
 	struct configuracionYama config;
 	logger = log_create("logYama", "YAMA.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
-	conectarseConFs();
+	//conectarseConFs();
 
-	cargarConfiguracionYama(&config);
+	cargarConfiguracionYama(&config,argv[1]);
 
 	levantarServidorYama(config.YAMA_IP,config.YAMA_PUERTO);
 

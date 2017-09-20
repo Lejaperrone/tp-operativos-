@@ -12,16 +12,15 @@
 #include <stdlib.h>
 #include <Sockets.h>
 #include "Configuracion.h"
-#include "Configuracion.c"
 #include "FuncionesDN.h"
 #include "Serializacion.h"
 
 struct configuracionNodo  config;
 
-int main(void) {
+int main(int argc, char *argv[]) {
 	respuesta conexionConFS;
 
-	cargarConfiguracionNodo(&config);
+	cargarConfiguracionNodo(&config,argv[1]);
 	conectarseConFs();
 	while(1){
 

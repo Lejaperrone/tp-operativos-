@@ -12,12 +12,12 @@
 
 struct configuracionNodo config;
 
-int main(void) {
+int main(int argc, char *argv[]) {
 	respuesta conexionConMaster;
 
 	logger = log_create("logYama", "YAMA.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
-	cargarConfiguracionNodo(&config);
+	cargarConfiguracionNodo(&config,argv[1]);
 
 	socketMaster = levantarServidorWorker(config.IP_NODO,config.PUERTO_WORKER);//FIXME: CAMBIAR ARCHIVO CONFIGURACION CON IP NODO
 

@@ -7,12 +7,15 @@
 
 #include "Configuracion.h"
 #include <commons/config.h>
+#include <string.h>
+#include <unistd.h>
 
 //Configuracion de YAMA
 
-void cargarConfiguracionYama(struct configuracionYama *config){
+void cargarConfiguracionYama(struct configuracionYama *config,char* rutaAConfig){
+	char* pathArchConfig = obtenerRutaRealConfiguracion(rutaAConfig);
 
-	t_config* configYama = config_create("/home/utnso/tp-2017-2c-PEQL/YAMA/src/YAMA.cfg");
+	t_config* configYama = config_create(pathArchConfig);
 
 	if (config_has_property(configYama, "FS_IP")){
 		config->FS_IP= config_get_string_value(configYama,"FS_IP");
@@ -46,9 +49,10 @@ void cargarConfiguracionYama(struct configuracionYama *config){
 
 //Configuracion de Master
 
-void cargarConfiguracionMaster(struct configuracionMaster *config){
+void cargarConfiguracionMaster(struct configuracionMaster *config,char* rutaAConfig){
+	char* pathArchConfig = obtenerRutaRealConfiguracion(rutaAConfig);
 
-	t_config* configMaster = config_create("/home/utnso/tp-2017-2c-PEQL/Master/src/Master.cfg");
+	t_config* configMaster = config_create(pathArchConfig);
 
 	if (config_has_property(configMaster, "YAMA_IP")){
 		config->YAMA_IP= config_get_string_value(configMaster,"YAMA_IP");
@@ -61,9 +65,10 @@ void cargarConfiguracionMaster(struct configuracionMaster *config){
 	}
 }
 
-void cargarConfiguracionNodo(struct configuracionNodo *config){
+void cargarConfiguracionNodo(struct configuracionNodo *config,char* rutaAConfig){
+	char* pathArchConfig = obtenerRutaRealConfiguracion(rutaAConfig);
 
-	t_config* configNodo = config_create("/home/utnso/Escritorio/tp-2017-2c-PEQL/DataNode/src/Nodo.cfg");
+	t_config* configNodo = config_create(pathArchConfig);
 
 	if (config_has_property(configNodo, "IP_FILESYSTEM")){
 		config->IP_FILESYSTEM= config_get_string_value(configNodo,"IP_FILESYSTEM");
@@ -101,4 +106,8 @@ void cargarConfiguracionNodo(struct configuracionNodo *config){
 	}
 }
 
-
+char* obtenerRutaRealConfiguracion(char* rutaAConfig){
+	char cwd [1024];    // Variable donde voy a guardar el path absoluto hasta el /Debug
+	char* pathArchConfig = string_from_format("%s/%s", getcwd(cwd, sizeof(cwd)), rutaAConfig); // String que va a tener el path absoluto para pasarle al config_create
+	return pathArchConfig;
+}
