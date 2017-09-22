@@ -11,6 +11,7 @@
 #include "FuncionesMaster.h"
 
 struct configuracionMaster config;
+job* miJob;
 
 int main(int argc, char *argv[]) {
 	loggerMaster = log_create("logMaster", "Master.c", 1, LOG_LEVEL_TRACE);
@@ -19,11 +20,7 @@ int main(int argc, char *argv[]) {
 
 	conectarseConYama(config.YAMA_IP,config.YAMA_PUERTO);
 
-	/*char* rutaTrans = recibirRuta("Ingrese ruta transformador");
-	char* rutaRedu = recibirRuta("Ingrese ruta reductor");
-	char* rutaDatos = recibirRuta("Ingrese ruta de los datos");
-	char* rutaAlma = recibirRuta("Ingrese ruta donde almacenar");*/
-
+	miJob = crearJob(argv);
 
 	enviarJobAYama();//antes hay que crear un job para enviarle a yama con todos esos archivos
 

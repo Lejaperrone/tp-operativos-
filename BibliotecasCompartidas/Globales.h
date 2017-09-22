@@ -49,6 +49,11 @@ typedef struct registroTablaEstados{
 	int estapa;
 	char* rutaArchivoTemp;
 	int estado;
-};
+}registroTablaEstados;
+
+typedef struct solicitudTransformacion{
+	string rutaDatos;
+	string rutaResultado;
+}solicitudTransformacion;
 
 #endif /* GLOBALES_H_ */

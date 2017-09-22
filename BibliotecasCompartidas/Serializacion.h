@@ -18,6 +18,8 @@
 
 #define mensajeHandshake 1
 #define mensajeArchivo 2
+#define mensajeOk 3
+#define mensajeSolicitudTransformacion 4
 #define mensajeEtapaTransformacion 5
 
 typedef struct{
@@ -35,5 +37,8 @@ respuesta desempaquetar(int socket);
 
 void* serializarString(void* paquete,int* tamanio);
 string* deserializarString(int socket,int tamanio);
+
+void* serializarSolicitudTransformacion(void* paquete,int* tamanio);
+solicitudTransformacion* deserializarSolicitudTransformacion(int socket,int tamanio);
 
 #endif /* SERIALIZACION_H_ */

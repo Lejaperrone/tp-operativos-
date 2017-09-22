@@ -6,6 +6,7 @@
  */
 
 #include "FuncionesMaster.h"
+#include <Globales.h>
 
 void conectarseConYama(char* ip, int port) {
 	socketYama = crearSocket();
@@ -35,7 +36,26 @@ void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
 }
 
 void enviarJobAYama() {
-	//empaquetar los archivos y setear un job a enviar (crear struct job)
+	solicitudTransformacion* nuevaSol = malloc(sizeof(solicitudTransformacion));
+
+	nuevaSol->rutaDatos.cadena = string_duplicate(miJob->rutaDatos);
+	nuevaSol->rutaDatos.longitud = string_length(miJob->rutaDatos);
+	nuevaSol->rutaResultado.cadena = string_duplicate(miJob->rutaResultado);
+	nuevaSol->rutaResultado.longitud = string_length(miJob->rutaResultado);
+
+	/*empaquetar(socketYama,mensajeSolicitudTransformacion,0,nuevaSol);
+
+	respuesta respuestaYama = desempaquetar(socketYama);
+
+	if(respuestaYama.idMensaje != mensajeOk){
+		printf("No se pudo iniciar correctamente el job");
+		//Hacer todo para cuando muere
+		exit(1);
+	}
+
+	printf("Envio correcto de datos a Yama.");
+	log_trace(loggerMaster, "Envio correcto de datos a Yama.");*/
+
 }
 
 void esperarInstruccionesDeYama() {
@@ -94,4 +114,14 @@ void enviarArchivo(int socketPrograma, char* rutaArchivo) {
 	empaquetar(socketPrograma, mensajeArchivo, sizeof(int) + i, archivo);
 
 	free(stringArchivo);
+}
+
+job* crearJob(char* argv[]){
+	job* nuevo = (job*)malloc(sizeof(job));
+	nuevo->rutaTransformador= argv[2];
+	nuevo->rutaReductor= argv[3];
+	nuevo->rutaDatos= argv[4];
+	nuevo->rutaResultado= argv[5];
+
+	return nuevo;
 }

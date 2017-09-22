@@ -14,15 +14,24 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 	switch(idMensaje){
 		case mensajeHandshake:
-		case mensajeEtapaTransformacion://FIXME: SOLO LO USO PARA PROBAR
 			tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
 			memcpy(bloque,paquete,sizeof(int));
 			break;
 
+		case mensajeOk:
+			tamanio =1;
+			bloque = malloc(1);
+			char a = 'a';
+			memcpy(bloque,&a,1);
+			break;
+
 		case mensajeArchivo:
 			serializarString(paquete,&tamanio);
 			break;
+
+		case mensajeSolicitudTransformacion:
+			serializarSolicitudTransformacion(paquete,&tamanio);
 	}
 
 	cabecera.tamanio = tamanio;
@@ -54,20 +63,31 @@ respuesta desempaquetar(int socket){
 
 		switch (miRespuesta.idMensaje) {
 
-		case mensajeHandshake:
-			bufferOk = malloc(sizeof(int));
-			recv(socket, bufferOk, sizeof(int), 0);
-			miRespuesta.envio = malloc(sizeof(int));
-			memcpy(miRespuesta.envio, bufferOk, sizeof(int));
-			free(bufferOk);
-			break;
+			case mensajeHandshake:
+				bufferOk = malloc(sizeof(int));
+				recv(socket, bufferOk, sizeof(int), 0);
+				miRespuesta.envio = malloc(sizeof(int));
+				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
+				free(bufferOk);
+				break;
 
-		case mensajeArchivo:
-			deserializarString(socket,cabecera->tamanio);
+			case mensajeArchivo:
+				deserializarString(socket,cabecera->tamanio);
+				break;
+
+			case mensajeOk:
+				bufferOk = malloc(sizeof(char));
+				recv(socket,bufferOk,sizeof(char),0);
+				free(bufferOk);
+				break;
+
+			case mensajeSolicitudTransformacion:
+				deserializarSolicitudTransformacion(socket,cabecera->tamanio);
+				break;
+
 		}
-
-
 	}
+
 	return miRespuesta;
 }
 //------SERIALIZACIONES PARTICULARES------//
@@ -101,4 +121,48 @@ string* deserializarString(int socket,int tamanio){
 	memcpy(cadena->cadena,paquete+desplazamiento, cadena->longitud+1);
 
 	return cadena;
+}
+
+void* serializarSolicitudTransformacion(void* paquete,int* tamanio){
+	solicitudTransformacion* unaSolicitud = (solicitudTransformacion*)paquete;
+	int desplazamiento = 0;
+
+	*tamanio = sizeof(solicitudTransformacion) - (2* sizeof(int)) + unaSolicitud->rutaDatos.longitud + unaSolicitud->rutaResultado.longitud;
+	void * buffer = malloc(*tamanio);
+
+	memcpy(buffer + desplazamiento, &(unaSolicitud->rutaDatos.longitud), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, unaSolicitud->rutaDatos.cadena, unaSolicitud->rutaDatos.longitud);
+	desplazamiento += unaSolicitud->rutaDatos.longitud;
+
+	memcpy(buffer + desplazamiento, &(unaSolicitud->rutaResultado.longitud), sizeof(int));
+	desplazamiento += sizeof(int);
+	memcpy(buffer + desplazamiento, unaSolicitud->rutaResultado.cadena, unaSolicitud->rutaResultado.longitud);
+	desplazamiento += unaSolicitud->rutaResultado.longitud;
+
+	return buffer;
+}
+
+solicitudTransformacion* deserializarSolicitudTransformacion(int socket,int tamanio){
+	int desplazamiento = 0;
+	solicitudTransformacion* unaSolicitud = malloc(sizeof(solicitudTransformacion));
+
+	void* buffer = malloc(tamanio);
+	recv(socket,buffer,tamanio,0);
+
+	memcpy(&unaSolicitud->rutaDatos.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	unaSolicitud->rutaDatos.cadena = malloc(unaSolicitud->rutaDatos.longitud+1);
+	memcpy(unaSolicitud->rutaDatos.cadena, buffer + desplazamiento, unaSolicitud->rutaDatos.longitud);
+	desplazamiento += unaSolicitud->rutaDatos.longitud;
+
+	memcpy(&unaSolicitud->rutaResultado.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	unaSolicitud->rutaResultado.cadena = malloc(unaSolicitud->rutaResultado.longitud+1);
+	memcpy(unaSolicitud->rutaResultado.cadena, buffer + desplazamiento, unaSolicitud->rutaResultado.longitud);
+	desplazamiento += unaSolicitud->rutaResultado.longitud;
+
+	return unaSolicitud;
 }

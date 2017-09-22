@@ -27,11 +27,20 @@
 #include <commons/log.h>
 
 #define mensajeArchivo 2
-#define mensajeEtapaTransformacion 5
+#define mensajeSolicitudTransformacion 4
+
+typedef struct job{
+	int id;
+	char* rutaTransformador;
+	char* rutaReductor;
+	char* rutaDatos;
+	char* rutaResultado;
+}job;
 
 /*----VARIABLES GLOBALES----*/
 t_log* loggerMaster;
 int socketYama;
+job* miJob;
 /*--------------------------*/
 
 typedef struct{
@@ -49,5 +58,7 @@ void enviarJobAYama();
 void esperarInstruccionesDeYama();
 
 char* recibirRuta(char* mensaje);
+
+job* crearJob(char* argv[]);
 
 #endif /* FUNCIONESMASTER_H_ */
