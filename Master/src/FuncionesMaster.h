@@ -53,6 +53,8 @@ void conectarseConYama(char* ip, int port);
 
 void* conectarseConWorkers(parametrosConexionMaster* parametros);
 
+void controlarParametros();
+
 void enviarJobAYama();
 
 void esperarInstruccionesDeYama();

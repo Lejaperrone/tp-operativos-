@@ -15,7 +15,7 @@ job* miJob;
 
 int main(int argc, char *argv[]) {
 	loggerMaster = log_create("logMaster", "Master.c", 1, LOG_LEVEL_TRACE);
-
+	//controlarParametros(argc);
 	cargarConfiguracionMaster(&config,argv[1]);
 
 	conectarseConYama(config.YAMA_IP,config.YAMA_PUERTO);

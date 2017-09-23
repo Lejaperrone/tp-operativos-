@@ -21,6 +21,8 @@
 #include <commons/log.h>
 #include "Serializacion.h"
 #include <Configuracion.h>
+#include "Globales.h"
+
 
 #define idMaster 2
 #define idDataNodes 3

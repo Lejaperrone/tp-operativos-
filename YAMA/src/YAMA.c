@@ -24,6 +24,7 @@ void conectarseConFs(){
 }
 void levantarServidorYama(char* ip, int port){
 	respuesta conexionNueva;
+	respuesta nuevoJob;
 	int bufferPrueba = 2;
 	servidor = crearServidorAsociado(ip, port);
 	FD_ZERO(&master);    // borra los conjuntos maestro y temporal
@@ -58,8 +59,9 @@ void levantarServidorYama(char* ip, int port){
 
 						if (idRecibido == idMaster){
 							log_trace(logger, "Conexion de Master\n");
-							empaquetar(nuevoMaster,5,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
-							//hacer algo despues del handshake
+							nuevoJob = desempaquetar(nuevoMaster);
+							solicitudTransformacion* sol = (solicitudTransformacion*)nuevoJob.envio;
+							log_trace(logger, "Me llego %s",sol->rutaDatos.cadena);
 						}
 					}
 				} else {

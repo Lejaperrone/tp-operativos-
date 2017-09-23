@@ -31,7 +31,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeSolicitudTransformacion:
-			serializarSolicitudTransformacion(paquete,&tamanio);
+			bloque = serializarSolicitudTransformacion(paquete,&tamanio);
 	}
 
 	cabecera.tamanio = tamanio;
@@ -41,7 +41,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 	memcpy(buffer , &cabecera, sizeof(header));
 	desplazamiento += sizeof(header);
-	memcpy(buffer + desplazamiento, bloque, tamanio);
+	memcpy(buffer + desplazamiento, bloque, tamanio);//
 	send(socket,buffer,tamanioTotal,0);
 	free(bloque);
 	free(buffer);
@@ -52,6 +52,7 @@ respuesta desempaquetar(int socket){
 	void* bufferOk;
 	respuesta miRespuesta;
 	header *cabecera = malloc(sizeof(header));
+	solicitudTransformacion* solicitudTransf = malloc(sizeof(solicitudTransformacion));
 	int bytesRecibidos;
 
 	if ((bytesRecibidos = recv(socket, cabecera, sizeof(header), 0)) == 0) {
@@ -82,7 +83,7 @@ respuesta desempaquetar(int socket){
 				break;
 
 			case mensajeSolicitudTransformacion:
-				deserializarSolicitudTransformacion(socket,cabecera->tamanio);
+				miRespuesta.envio = deserializarSolicitudTransformacion(socket,cabecera->tamanio);
 				break;
 
 		}

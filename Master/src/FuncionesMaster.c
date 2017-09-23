@@ -43,18 +43,19 @@ void enviarJobAYama() {
 	nuevaSol->rutaResultado.cadena = string_duplicate(miJob->rutaResultado);
 	nuevaSol->rutaResultado.longitud = string_length(miJob->rutaResultado);
 
-	/*empaquetar(socketYama,mensajeSolicitudTransformacion,0,nuevaSol);
+	empaquetar(socketYama,mensajeSolicitudTransformacion,0,nuevaSol);//
+	log_trace(loggerMaster,"Enviando solicitud de etapa Transformacion a YAMA");
 
 	respuesta respuestaYama = desempaquetar(socketYama);
 
 	if(respuestaYama.idMensaje != mensajeOk){
-		printf("No se pudo iniciar correctamente el job");
+		log_error(loggerMaster,"No se pudo iniciar correctamente el job");
 		//Hacer todo para cuando muere
 		exit(1);
 	}
 
 	printf("Envio correcto de datos a Yama.");
-	log_trace(loggerMaster, "Envio correcto de datos a Yama.");*/
+	log_trace(loggerMaster, "Envio correcto de datos a Yama.");
 
 }
 
@@ -124,4 +125,9 @@ job* crearJob(char* argv[]){
 	nuevo->rutaResultado= argv[5];
 
 	return nuevo;
+}
+void controlarParametros(int cantParams){
+	if(cantParams < 6){
+		log_error(loggerMaster, "Parametros insuficientes");
+	}
 }
