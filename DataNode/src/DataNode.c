@@ -17,10 +17,12 @@
 
 struct configuracionNodo  config;
 
+t_bitarray* bitmap;
+
 int main(int argc, char *argv[]) {
 	respuesta conexionConFS;
-
 	cargarConfiguracionNodo(&config,argv[1]);
+	levantarBitmap(config.NOMBRE_NODO);
 	conectarseConFs();
 	while(1){
 

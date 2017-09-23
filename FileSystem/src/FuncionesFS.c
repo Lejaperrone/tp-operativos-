@@ -232,7 +232,7 @@ void* levantarServidorFS(void* parametrosServidorFS){
 
 						if (idRecibido == idDataNodes){
 							log_trace(loggerFS, "Conexion de DataNode\n");
-							empaquetar(nuevoDataNode,5,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
+							empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
 							//hacer algo despues del handshake
 						}
 					}
