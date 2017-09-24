@@ -52,7 +52,6 @@ respuesta desempaquetar(int socket){
 	void* bufferOk;
 	respuesta miRespuesta;
 	header *cabecera = malloc(sizeof(header));
-	solicitudTransformacion* solicitudTransf = malloc(sizeof(solicitudTransformacion));
 	int bytesRecibidos;
 
 	if ((bytesRecibidos = recv(socket, cabecera, sizeof(header), 0)) == 0) {
