@@ -21,7 +21,6 @@ typedef struct{
 
 int maxDatanodes;
 int nuevoDataNode;
-int cantidadDirectorios = 100;
 
 void* consolaFS();
 

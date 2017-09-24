@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include "Comandos.h"
 #include <Configuracion.h>
-#include "Sockets.c"
 #include <commons/bitarray.h>
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -33,6 +32,7 @@ int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
 t_directory tablaDeDirectorios[100];
 char* rutaArchivos = "metadata/Archivos/";
+int cantidadDirectorios = 100;
 //t_bitarray* bitmap[cantDataNodes];
 t_log* loggerFS;
 
@@ -61,11 +61,10 @@ int main(void) {
 	memcpy(tablaDeDirectorios[2].nombre,"bla",4);
 	memcpy(tablaDeDirectorios[3].nombre,"bla",4);*/
 
+	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
+
 	inicializarTablaDirectorios();
 	//printf("\n\n %s", tablaDeDirectorios[0].nombre);
-
-
-	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);
