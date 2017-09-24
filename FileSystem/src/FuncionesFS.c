@@ -23,9 +23,33 @@
 
 extern t_directory tablaDeDirectorios[100];
 extern char* rutaArchivos;
+extern int cantidadDirectorios;
 extern int cantBloques;
 //extern t_bitarray* bitmap[cantDataNodes];
 extern t_log* loggerFS;
+char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+
+void inicializarTablaDirectorios(){
+	int leido;
+	FILE* archivoDirectorios = fopen(pathArchivoDirectorios, "r");
+	leido = fread(tablaDeDirectorios,sizeof(t_directory), cantidadDirectorios, archivoDirectorios);
+	if (leido == cantidadDirectorios)
+		log_trace(loggerFS, "Se cargaron los directorios correctamente");
+	else
+		log_trace(loggerFS, "No se pudieron cargar todos los directorios");
+	fclose(archivoDirectorios);
+}
+
+void guardarTablaDirectorios(){
+	int escrito;
+	FILE* archivoDirectorios = fopen(pathArchivoDirectorios, "wb+");
+	escrito = fwrite(tablaDeDirectorios,sizeof(t_directory), 100, archivoDirectorios);
+	if (escrito == cantidadDirectorios)
+		log_trace(loggerFS, "Se escribieron los directorios correctamente");
+	else
+		log_trace(loggerFS, "No se pudieron escribir todos los directorios");
+	fclose(archivoDirectorios);
+}
 
 int getIndexDirectorio(char* ruta){
 	int index = 0, i = 0, j = 0, indexFinal = 0;
@@ -173,6 +197,9 @@ void* consolaFS(){
 }
 
 void* levantarServidorFS(void* parametrosServidorFS){
+
+	int i = 0;
+	int addrlen;
 
 	struct parametrosServidorHilo*params;
 	params = (struct parametrosServidorHilo*) parametrosServidorFS;

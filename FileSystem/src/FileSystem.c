@@ -59,9 +59,11 @@ int main(void) {
 	memcpy(tablaDeDirectorios[0].nombre,"hola",5);
 	memcpy(tablaDeDirectorios[1].nombre,"chau",5);
 	memcpy(tablaDeDirectorios[2].nombre,"bla",4);
-	memcpy(tablaDeDirectorios[3].nombre,"bla",4);
+	memcpy(tablaDeDirectorios[3].nombre,"bla",4);*/
 
-	printf("\n\n %s", buscarRutaArchivo("hola/bla"));*/
+	inicializarTablaDirectorios();
+	//printf("\n\n %s", tablaDeDirectorios[0].nombre);
+
 
 	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
