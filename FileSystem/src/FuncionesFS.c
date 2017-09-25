@@ -26,6 +26,7 @@ extern char* rutaArchivos;
 extern t_log* loggerFS;
 extern int cantidadDirectorios;
 extern int cantBloques;
+extern int sizeTotalNodos, nodosLibres;
 //extern t_bitarray* bitmap[cantDataNodes];
 char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
@@ -198,6 +199,9 @@ void* consolaFS(){
 
 void* levantarServidorFS(void* parametrosServidorFS){
 
+	int maxDatanodes;
+	int nuevoDataNode;
+
 	int i = 0;
 	int addrlen;
 
@@ -225,7 +229,7 @@ void* levantarServidorFS(void* parametrosServidorFS){
 	fd_set datanodes;
 	fd_set read_fds_datanodes;
 
-	respuesta conexionNueva;
+	respuesta conexionNueva, paqueteInfoNodo;
 	int bufferPrueba = 2;
 	FD_ZERO(&datanodes);    // borra los conjuntos datanodes y temporal
 	FD_ZERO(&read_fds_datanodes);
@@ -259,7 +263,9 @@ void* levantarServidorFS(void* parametrosServidorFS){
 
 						if (idRecibido == idDataNodes){
 							log_trace(loggerFS, "Conexion de DataNode\n");
-							empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
+							//empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
+							paqueteInfoNodo = desempaquetar(nuevoDataNode);
+							actualizarArchivoNodos(*(informacionNodo*)paqueteInfoNodo.envio);
 							//hacer algo despues del handshake
 						}
 					}
@@ -272,6 +278,21 @@ void* levantarServidorFS(void* parametrosServidorFS){
 	}
 	return 0;
 
+}
+
+void actualizarArchivoNodos(informacionNodo infoNodo){
+	char* pathArchivo = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
+
+	t_config* nodos = config_create(pathArchivo);
+
+	sizeTotalNodos += infoNodo.sizeNodo;
+	nodosLibres += (infoNodo.sizeNodo-infoNodo.bloquesOcupados);
+
+	config_set_value(nodos, "TAMANIO", string_itoa(sizeTotalNodos));
+
+	config_set_value(nodos, "LIBRE", string_itoa(nodosLibres));
+
+	config_save_in_file(nodos, pathArchivo);
 }
 
 void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos);

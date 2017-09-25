@@ -104,6 +104,11 @@ void cargarConfiguracionNodo(struct configuracionNodo *config,char* rutaAConfig)
 		config->RUTA_DATABIN = config_get_string_value(configNodo,"RUTA_DATABIN");
 		printf("La ruta del DataBin es %s \n",config->RUTA_DATABIN);
 	}
+
+	if (config_has_property(configNodo, "SIZE_NODO")){
+		config->SIZE_NODO = config_get_int_value(configNodo,"SIZE_NODO");
+		printf("El tamaño del DataNote es: %d \n",config->SIZE_NODO);
+	}
 }
 
 char* obtenerRutaRealConfiguracion(char* rutaAConfig){

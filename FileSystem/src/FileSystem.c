@@ -35,6 +35,7 @@ char* rutaArchivos = "metadata/Archivos/";
 int cantidadDirectorios = 100;
 //t_bitarray* bitmap[cantDataNodes];
 t_log* loggerFS;
+int sizeTotalNodos = 0, nodosLibres = 0;
 
 int main(void) {
 

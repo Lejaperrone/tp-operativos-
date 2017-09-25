@@ -10,3 +10,5 @@
 #include <commons/bitarray.h>
 
 void conectarseConFs();
+
+int levantarBitmap(char* nombreNodo);

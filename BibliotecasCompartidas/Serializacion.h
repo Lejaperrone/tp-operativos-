@@ -21,6 +21,7 @@
 #define mensajeOk 3
 #define mensajeSolicitudTransformacion 4
 #define mensajeEtapaTransformacion 5
+#define mensajeInformacionNodo 6
 
 typedef struct{
 	int idMensaje;
