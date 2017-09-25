@@ -1,12 +1,12 @@
 /*
- * Worker.h
+ * FuncionesWorker.h
  *
- *  Created on: 9/9/2017
+ *  Created on: 24/9/2017
  *      Author: utnso
  */
 
-#ifndef WORKER_H_
-#define WORKER_H_
+#ifndef FUNCIONESWORKER_H_
+#define FUNCIONESWORKER_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,19 +15,18 @@
 #include <commons/log.h>
 #include "Serializacion.h"
 #include <commons/log.h>
-
-#define mensajeHandshake 1
-#define idMaster 2
+#include "FuncionesWorker.h"
 
 /*------VARIABLES-------------*/
 struct configuracionNodo config;
 struct sockaddr_in direccionCliente;
 int socketMaster;
-int mostrarLoggerPorPantalla = 1;
 t_log* logger;
 
 /*----PROTOTIPOS--------------------*/
+void esperarConexionesMaster(char* ip, int port);
+void esperarJobDeMaster();
 int levantarServidorWorker(char* ip, int port);
-void realizarHandshake(int socket, respuesta conexion);
+void realizarHandshake(int socket);
 
-#endif /* WORKER_H_ */
+#endif /* FUNCIONESWORKER_H_ */

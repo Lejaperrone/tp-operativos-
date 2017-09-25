@@ -20,6 +20,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeOk:
+		case mensajeDesignarWorker:		//SOLO A MODO DE PRUEBA ACA, HASTA HACER LAS ESTRUCTURAS DE YAMA.
 			tamanio =1;
 			bloque = malloc(1);
 			char a = 'a';
@@ -33,6 +34,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeSolicitudTransformacion:
 			bloque = serializarSolicitudTransformacion(paquete,&tamanio);
 			break;
+
 
 		case mensajeInformacionNodo:
 			tamanio = sizeof(informacionNodo);
@@ -58,7 +60,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 respuesta desempaquetar(int socket){
 	void* bufferOk;
 	respuesta miRespuesta;
-	header *cabecera = malloc(sizeof(header));
+	header* cabecera = malloc(sizeof(header));
 	int bytesRecibidos;
 
 	if ((bytesRecibidos = recv(socket, cabecera, sizeof(header), 0)) == 0) {
@@ -82,6 +84,7 @@ respuesta desempaquetar(int socket){
 				deserializarString(socket,cabecera->tamanio);
 				break;
 
+			case mensajeDesignarWorker:
 			case mensajeOk:
 				bufferOk = malloc(sizeof(char));
 				recv(socket,bufferOk,sizeof(char),0);
@@ -102,7 +105,6 @@ respuesta desempaquetar(int socket){
 
 		}
 	}
-
 	return miRespuesta;
 }
 //------SERIALIZACIONES PARTICULARES------//

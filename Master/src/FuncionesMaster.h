@@ -61,6 +61,8 @@ void esperarInstruccionesDeYama();
 
 char* recibirRuta(char* mensaje);
 
+void enviarArchivo(int socketPrograma, char* rutaArchivo);
+
 job* crearJob(char* argv[]);
 
 #endif /* FUNCIONESMASTER_H_ */

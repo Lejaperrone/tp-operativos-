@@ -22,9 +22,9 @@ int main(int argc, char *argv[]) {
 
 	miJob = crearJob(argv);
 
-	enviarJobAYama();//antes hay que crear un job para enviarle a yama con todos esos archivos
+	enviarJobAYama();
 
-	esperarInstruccionesDeYama();
+	//esperarInstruccionesDeYama();
 
 	return EXIT_SUCCESS;
 }

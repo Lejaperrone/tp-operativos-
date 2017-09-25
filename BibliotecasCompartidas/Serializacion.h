@@ -21,7 +21,10 @@
 #define mensajeOk 3
 #define mensajeSolicitudTransformacion 4
 #define mensajeEtapaTransformacion 5
-#define mensajeInformacionNodo 6
+#define mensajeEtapaReduccionLocal 6
+#define mensajeEtapaReduccionGlobal 7
+#define mensajeInformacionNodo 8
+#define mensajeDesignarWorker 11
 
 typedef struct{
 	int idMensaje;
