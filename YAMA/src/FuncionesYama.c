@@ -64,6 +64,9 @@ void recibirContenido(){
 		log_trace(logger, "Conexion de Master\n");
 		nuevoJob = desempaquetar(nuevoMaster);
 		solicitudTransformacion* sol = (solicitudTransformacion*)nuevoJob.envio;
-		log_trace(logger, "Me llego %s",sol->rutaDatos.cadena);
+		log_trace(logger, "Me llego %d %d ",sol->rutaDatos.longitud,sol->rutaResultado.longitud);
+
+		empaquetar(nuevoMaster, mensajeOk, 0, 0);
+		empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
 	}
 }

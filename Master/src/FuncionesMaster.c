@@ -31,13 +31,16 @@ void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(parametrosConexion->ip,parametrosConexion->port);
 	conectarCon(direccion, socketWorker, parametrosConexion->id); //2 id master
-	log_trace(loggerMaster, "Conexion con Worker\n");
+	log_trace(loggerMaster, "Conexion con Worker \n");
+
+	//empaquetar la solicitud de procesamiento
 	return 0;
 }
 
 void enviarJobAYama() {
 	solicitudTransformacion* nuevaSol = malloc(sizeof(solicitudTransformacion));
-
+	//enviarArchivo(socketYama, miJob->rutaTransformador);
+	//enviarArchivo(socketYama, miJob->rutaReductor);
 	nuevaSol->rutaDatos.cadena = string_duplicate(miJob->rutaDatos);
 	nuevaSol->rutaDatos.longitud = string_length(miJob->rutaDatos);
 	nuevaSol->rutaResultado.cadena = string_duplicate(miJob->rutaResultado);
@@ -50,11 +53,9 @@ void enviarJobAYama() {
 
 	if(respuestaYama.idMensaje != mensajeOk){
 		log_error(loggerMaster,"No se pudo iniciar correctamente el job");
-		//Hacer todo para cuando muere
 		exit(1);
 	}
 
-	printf("Envio correcto de datos a Yama.");
 	log_trace(loggerMaster, "Envio correcto de datos a Yama.");
 
 }
@@ -66,7 +67,7 @@ void esperarInstruccionesDeYama() {
 
 		switch (instruccionesYama.idMensaje) {
 
-		case mensajeEtapaTransformacion:
+		case mensajeDesignarWorker:
 			//verificar envio
 			crearHilosConexion();
 			//logica en etapa de transformacion
@@ -125,6 +126,10 @@ job* crearJob(char* argv[]){
 	nuevo->rutaResultado= argv[5];
 
 	return nuevo;
+}
+
+int dameUnID(){
+	return 1;//FIXME
 }
 void controlarParametros(int cantParams){
 	if(cantParams < 6){

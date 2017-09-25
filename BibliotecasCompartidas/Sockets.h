@@ -26,8 +26,6 @@
 #include <netinet/in.h>
 #include <sys/select.h>
 
-#define idMaster 2
-
 struct t_tam{
 	int menu;
 	int length;

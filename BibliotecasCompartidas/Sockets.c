@@ -24,7 +24,7 @@ void conectarCon(struct sockaddr_in direccionServidor, int cliente,	int tipoClie
 		exit(1);
 	}
 
-	empaquetar(cliente, mensajeHandshake, 0, &tipoCliente);
+	empaquetar(cliente, 1, 0, &tipoCliente);
 }
 
 void enviarMensajeA(int *socket, int longitud) {
