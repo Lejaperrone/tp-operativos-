@@ -19,8 +19,8 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			memcpy(bloque,paquete,sizeof(int));
 			break;
 
+		case mensajeDesignarWorker:
 		case mensajeOk:
-		case mensajeDesignarWorker:		//SOLO A MODO DE PRUEBA ACA, HASTA HACER LAS ESTRUCTURAS DE YAMA.
 			tamanio =1;
 			bloque = malloc(1);
 			char a = 'a';
@@ -43,7 +43,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 	memcpy(buffer , &cabecera, sizeof(header));
 	desplazamiento += sizeof(header);
-	memcpy(buffer + desplazamiento, bloque, tamanio);//
+	memcpy(buffer + desplazamiento, bloque, tamanio);
 	send(socket,buffer,tamanioTotal,0);
 	free(bloque);
 	free(buffer);
@@ -62,7 +62,6 @@ respuesta desempaquetar(int socket){
 
 	else {
 		miRespuesta.idMensaje = cabecera->idMensaje;
-
 		switch (miRespuesta.idMensaje) {
 
 			case mensajeHandshake:

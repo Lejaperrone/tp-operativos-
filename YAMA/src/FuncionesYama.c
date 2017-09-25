@@ -68,5 +68,6 @@ void recibirContenido(){
 
 		empaquetar(nuevoMaster, mensajeOk, 0, 0);
 		empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
+	free(sol);
 	}
 }

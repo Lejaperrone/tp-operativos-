@@ -16,6 +16,7 @@ void conectarseConYama(char* ip, int port) {
 }
 void crearHilosConexion() {
 	pthread_t hiloConexion;
+
 	parametrosConexionMaster* parametrosConexion = malloc(sizeof(parametrosConexionMaster));
 	//para probar conexion por hilos
 	parametrosConexion->ip = "127.0.0.1";
@@ -25,7 +26,6 @@ void crearHilosConexion() {
 		log_error(loggerMaster, "No se pudo crear el thread de conexion");
 		exit(-1);
 	}
-
 }
 void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
 	int socketWorker = crearSocket();

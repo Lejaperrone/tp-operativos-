@@ -8,10 +8,10 @@
 
 void esperarConexionesMaster(char* ip, int port){
 	socketMaster = levantarServidorWorker(ip,port);//FIXME: CAMBIAR ARCHIVO CONFIGURACION CON IP NODO
-
 	realizarHandshake(socketMaster);
-
+	esperarJobDeMaster();
 }
+
 void esperarJobDeMaster(){
 	respuesta instruccionMaster;
 	log_trace(logger,"Esperando instruccion de Master");
@@ -28,24 +28,22 @@ void esperarJobDeMaster(){
 
 }
 int levantarServidorWorker(char* ip, int port){
-	unsigned int tamanioDireccion;
+	struct sockaddr_in direccionCliente;
+	int tamanioDireccion = sizeof(direccionCliente);
 	int server = crearServidorAsociado(ip,port);
 	return accept(server, (void*) &direccionCliente, &tamanioDireccion);
+
 
 }
 
 void realizarHandshake(int socket){
-	respuesta conexion;
-	conexion = desempaquetar(socketMaster);
-	if (conexion.idMensaje == 0){ //que sea mensaje handshake
-		int idProceso = *(int*) conexion.envio;
-		if (idProceso == 2){//HANDSHAKE, RECONOCIA A MASTER con id master =2
-			log_trace(logger, "Conexion de Master establecida\n");
-			//logica con el master
+	respuesta conexionNueva;
+	conexionNueva = desempaquetar(socket);
+
+	if(conexionNueva.idMensaje == 1){
+		if(*(int*)conexionNueva.envio == 2){
+			log_trace(logger, "Conexion establecida con Master");
 		}
-
-		close(socket);
-
 	}
 }
 

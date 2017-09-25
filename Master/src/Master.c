@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 
 	enviarJobAYama();
 
-	//esperarInstruccionesDeYama();
+	esperarInstruccionesDeYama();
 
 	return EXIT_SUCCESS;
 }

@@ -19,7 +19,6 @@
 
 /*------VARIABLES-------------*/
 struct configuracionNodo config;
-struct sockaddr_in direccionCliente;
 int socketMaster;
 t_log* logger;
 

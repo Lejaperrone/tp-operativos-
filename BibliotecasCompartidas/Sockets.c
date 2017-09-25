@@ -24,7 +24,7 @@ void conectarCon(struct sockaddr_in direccionServidor, int cliente,	int tipoClie
 		exit(1);
 	}
 
-	empaquetar(cliente, 1, 0, &tipoCliente);
+	empaquetar(cliente, mensajeHandshake, 0, &tipoCliente);
 }
 
 void enviarMensajeA(int *socket, int longitud) {
@@ -77,6 +77,8 @@ int crearServidorAsociado(char* ip, int puerto) {
 	int activado = 1;
 	setsockopt(servidor, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
 	asociarSocketA(direccionServidor, servidor);
+
+
 	return servidor;
 }
 
