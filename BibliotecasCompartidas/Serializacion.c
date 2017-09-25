@@ -34,6 +34,13 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeSolicitudTransformacion:
 			bloque = serializarSolicitudTransformacion(paquete,&tamanio);
 			break;
+
+
+		case mensajeInformacionNodo:
+			tamanio = sizeof(informacionNodo);
+			bloque = malloc(tamanio);
+			memcpy(bloque,paquete,tamanio);
+			break;
 	}
 
 	cabecera.tamanio = tamanio;
@@ -85,6 +92,14 @@ respuesta desempaquetar(int socket){
 
 			case mensajeSolicitudTransformacion:
 				miRespuesta.envio = deserializarSolicitudTransformacion(socket,cabecera->tamanio);
+				break;
+
+			case mensajeInformacionNodo:
+				bufferOk = malloc(sizeof(informacionNodo));
+				recv(socket,bufferOk,sizeof(informacionNodo),0);
+				miRespuesta.envio = malloc(sizeof(informacionNodo));
+				memcpy(miRespuesta.envio, bufferOk, sizeof(informacionNodo));
+				free(bufferOk);
 				break;
 
 		}

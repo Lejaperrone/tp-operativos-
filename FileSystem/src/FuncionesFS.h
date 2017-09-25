@@ -12,15 +12,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <commons/log.h>
+#include "Globales.h"
+#include <commons/collections/list.h>
 
 typedef struct{
 	int index;
 	char nombre[255];
 	int padre;
 } t_directory;
-
-int maxDatanodes;
-int nuevoDataNode;
 
 void* consolaFS();
 
@@ -31,3 +30,7 @@ void guardarTablaDirectorios();
 char* buscarRutaArchivo(char* ruta);
 
 int getIndexDirectorio(char* ruta);
+
+char* generarArrayNodos();
+
+void actualizarArchivoNodos(informacionNodo infoNodo);

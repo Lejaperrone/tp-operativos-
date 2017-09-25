@@ -31,6 +31,7 @@ struct configuracionNodo{
 	char* NOMBRE_NODO;
 	int PUERTO_DATANODE;
 	char* RUTA_DATABIN;
+	int SIZE_NODO;
 }configuracionNodo;
 
 struct configuracionMaster{

@@ -23,6 +23,7 @@
 #define mensajeEtapaTransformacion 5
 #define mensajeEtapaReduccionLocal 6
 #define mensajeEtapaReduccionGlobal 7
+#define mensajeInformacionNodo 8
 #define mensajeDesignarWorker 11
 
 typedef struct{

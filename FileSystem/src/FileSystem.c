@@ -35,9 +35,12 @@ char* rutaArchivos = "metadata/Archivos/";
 int cantidadDirectorios = 100;
 //t_bitarray* bitmap[cantDataNodes];
 t_log* loggerFS;
+int sizeTotalNodos = 0, nodosLibres = 0;
+t_list* nodosConectados;
 
 int main(void) {
 
+	nodosConectados = list_create();
 	int clienteYama = 0;
 	int servidorFS = crearSocket();
 	pthread_t hiloServidorFS, hiloConsolaFS;
