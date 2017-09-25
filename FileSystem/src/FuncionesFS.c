@@ -27,6 +27,7 @@ extern t_log* loggerFS;
 extern int cantidadDirectorios;
 extern int cantBloques;
 extern int sizeTotalNodos, nodosLibres;
+extern t_list* nodosConectados;
 //extern t_bitarray* bitmap[cantDataNodes];
 char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
@@ -265,8 +266,8 @@ void* levantarServidorFS(void* parametrosServidorFS){
 							log_trace(loggerFS, "Conexion de DataNode\n");
 							//empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
 							paqueteInfoNodo = desempaquetar(nuevoDataNode);
+							list_add(nodosConectados,paqueteInfoNodo.envio);
 							actualizarArchivoNodos(*(informacionNodo*)paqueteInfoNodo.envio);
-							//hacer algo despues del handshake
 						}
 					}
 				} else {
@@ -285,6 +286,8 @@ void actualizarArchivoNodos(informacionNodo infoNodo){
 
 	t_config* nodos = config_create(pathArchivo);
 
+	char* arrayNodos = generarArrayNodos();
+
 	sizeTotalNodos += infoNodo.sizeNodo;
 	nodosLibres += (infoNodo.sizeNodo-infoNodo.bloquesOcupados);
 
@@ -292,7 +295,33 @@ void actualizarArchivoNodos(informacionNodo infoNodo){
 
 	config_set_value(nodos, "LIBRE", string_itoa(nodosLibres));
 
+	config_set_value(nodos, "NODOS", arrayNodos);
+
 	config_save_in_file(nodos, pathArchivo);
+}
+
+char* generarArrayNodos(){
+	int i, cantidadNodos = list_size(nodosConectados);
+	int indexes[cantidadNodos];
+	char* array;
+	int longitudEscrito = 0;
+	int longitudSting = 2 + cantidadNodos*4; // 2 [] + "NODO" * cantidad nodos, despues se le suman los numeros
+	informacionNodo info;
+	for (i = 0; i < cantidadNodos; ++i){
+		info = *(informacionNodo*)list_get(nodosConectados,i);
+		indexes[i] = info.numeroNodo;
+		longitudSting += strlen(string_itoa(info.numeroNodo));
+	}
+	array = malloc(longitudSting);
+	memcpy(array,"[",1);
+	++longitudEscrito;
+	for (i = 0; i < cantidadNodos; ++i){
+		char* temp = string_from_format("NODO%d,",indexes[i]);
+		memcpy(array + longitudEscrito,  temp, strlen(temp));
+		longitudEscrito += strlen(temp);
+	}
+	memcpy(array + longitudEscrito-1,"]",1);
+	return array;
 }
 
 void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos);

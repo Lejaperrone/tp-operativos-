@@ -37,8 +37,9 @@ void conectarseConFs() {
 	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 7000);
 	conectarCon(direccion, socketFs, 3);
 	informacionNodo info;
-	info.size_nodo = config.SIZE_NODO;
+	info.sizeNodo = config.SIZE_NODO;
 	info.bloquesOcupados = levantarBitmap(config.NOMBRE_NODO);
+	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO,4));
 	empaquetar(socketFs, mensajeInformacionNodo, sizeof(informacionNodo),&info );
 }
 

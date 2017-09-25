@@ -59,6 +59,7 @@ typedef struct solicitudTransformacion{
 typedef struct{
 	int sizeNodo;
 	int bloquesOcupados;
+	int numeroNodo;
 } informacionNodo;
 
 #endif /* GLOBALES_H_ */
