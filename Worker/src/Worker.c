@@ -18,9 +18,10 @@ int main(int argc, char *argv[]) {
 
 	esperarConexionesMaster(config.IP_NODO, config.PUERTO_WORKER);
 
+	esperarJobDeMaster();
+
 	while(1){
 
 	}
-	//forkear por cada tarea mandada por el master
 	return EXIT_SUCCESS;
 }

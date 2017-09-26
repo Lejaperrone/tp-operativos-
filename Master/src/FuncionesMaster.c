@@ -70,12 +70,11 @@ void esperarInstruccionesDeYama() {
 		case mensajeDesignarWorker:
 			//verificar envio
 			crearHilosConexion();
-			//logica en etapa de transformacion
 			break;
 		}
 	}
 //recibir de yama todos los parametros conexion IP PUERTO
-//ver que tipo de etapa es! los hilos de cada etapa son DISTINTOS!!!
+//ver que tipo de etapa es, los hilos de cada etapa son DISTINTOS!!!
 }
 
 char* recibirRuta(char* mensaje) {
