@@ -168,7 +168,10 @@ void* consolaFS(){
 			}
 		}
 		else if (string_starts_with(comando, "cpfrom")) {
-			log_trace(loggerFS, "Archivo copiado a yamafs");
+			if (copiarArchivo(comando) == 1)
+				log_trace(loggerFS, "Archivo copiado a yamafs");
+			else
+				log_trace(loggerFS, "No se pudo copiar el archivo");
 		}
 		else if (string_starts_with(comando, "cpto")) {
 			log_trace(loggerFS, "Archivo copiado desde yamafs");

@@ -9,13 +9,25 @@
 
 char* devolverRuta(char* comando, int cantidadDeComandos)
 {
-	char* ruta = strtok(comando, " ");
+	char* copiaComando = malloc(strlen(comando));
+	memcpy(copiaComando, comando,strlen(comando));
+	char* ruta = strtok(copiaComando, " ");
 	int i;
 
 	for (i = 0; i < cantidadDeComandos; ++i){
 		ruta = strtok(NULL, " ");
 	}
 	return ruta;
+}
+
+int copiarArchivo(comando){
+	printf("---%s\n",devolverRuta(comando, 1));
+	printf("---%s\n",devolverRuta(comando, 2));
+	//if (validarArchivo(pathFrom)){
+
+	//}
+	//else
+		//return 0;
 }
 
 bool validarArchivo(char* path) {
