@@ -7,6 +7,17 @@
 
 #include "Comandos.h"
 
+char* devolverRuta(char* comando, int cantidadDeComandos)
+{
+	char* ruta = strtok(comando, " ");
+	int i;
+
+	for (i = 0; i < cantidadDeComandos; ++i){
+		ruta = strtok(NULL, " ");
+	}
+	return ruta;
+}
+
 bool validarArchivo(char* path) {
 	if (access(path, R_OK) == -1) {
 		printf("No existe el archivo %s en el FileSystem\n", path);
@@ -35,10 +46,9 @@ bool validarDirectorio(char* path){
 	}
 }
 
-int eliminarArchivo(char* comando, int longitudKey){
+int eliminarArchivo(char* comando, int cantidadDeComandos){
 	int success = -1;
-	char* path = malloc(strlen(comando)-longitudKey);
-	memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
+	char* path = devolverRuta(comando, cantidadDeComandos);
 	if (validarArchivo(path)){
 		success = remove(path);
 		if (success == -1)
@@ -46,14 +56,12 @@ int eliminarArchivo(char* comando, int longitudKey){
 		else
 			printf("El archivo fue eliminado correctamente");
 	}
-	free(path);
 	return success;
 }
 
-int eliminarDirectorio(char* comando, int longitudKey){
+int eliminarDirectorio(char* comando, int cantidadDeComandos){
 	int success = -1;
-		char* path = malloc(strlen(comando)-longitudKey);
-		memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
+	char* path = devolverRuta(comando, cantidadDeComandos);
 		if (validarDirectorio(path)){
 			success = remove(path);
 			if (success == -1)
@@ -61,14 +69,12 @@ int eliminarDirectorio(char* comando, int longitudKey){
 			else
 				printf("El archivo fue eliminado correctamente");
 		}
-		free(path);
 		return success;
 }
 
-void listarArchivos(char* comando, int longitudKey){
+void listarArchivos(char* comando, int cantidadDeComandos){
 
-	char* path = malloc(strlen(comando)-longitudKey);
-	memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
+	char* path = devolverRuta(comando, cantidadDeComandos);
 
 	DIR * directorio;
 	struct dirent * elemento;
@@ -79,35 +85,31 @@ void listarArchivos(char* comando, int longitudKey){
 			printf("%s\n", elemento->d_name);
 		}
 	}
-	free(path);
 	closedir(directorio);
 }
 
-int crearDirectorio(char* comando, int longitudKey){
+int crearDirectorio(char* comando, int cantidadDeComandos){
 
-	char* path = malloc(strlen(comando)-longitudKey);
-	memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
+	char* path = devolverRuta(comando, cantidadDeComandos);
 
 	if (validarDirectorio(path)){
 		return 2;
 	}
 
+
 	struct stat st = {0};
 
 	if (stat(path, &st) == -1) {
-	    mkdir(path, 0700);
-	    free(path);
+	    mkdir(path, 0777);
 	    return 1;
 	}else{
-		free(path);
 		return 0;
 	}
 }
 
-int mostrarArchivo(char* comando, int longitudKey){
+int mostrarArchivo(char* comando, int cantidadDeComandos){
 
-	char* path = malloc(strlen(comando)-longitudKey);
-	memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
+	char* path = devolverRuta(comando, cantidadDeComandos);
 
 	FILE *fd;
 	int c;
@@ -121,18 +123,15 @@ int mostrarArchivo(char* comando, int longitudKey){
 	while ((c=fgetc(fd)) != EOF){
 		putchar(c);
 	}
-	free(path);
 	fclose(fd);
 	return 1;
 }
 
-int cambiarNombre(char* comando, int longitudKey){
+int cambiarNombre(char* comando, int cantidadDeComandos){
 
-	char*  paths= malloc(strlen(comando)-longitudKey);
-	memcpy(paths,comando + longitudKey, strlen(comando) - longitudKey);
-
-	char* rutaNombreViejo = strtok(paths, " ");
-	char* nombreNuevo = strtok(NULL, " ");
+	char* comando1 = comando;
+	char* rutaNombreViejo = devolverRuta(comando, cantidadDeComandos);
+	char* nombreNuevo = devolverRuta(comando1, cantidadDeComandos + 1);
 
 	char* rutaNombreViejoReverse = strdup(string_reverse(rutaNombreViejo));
 
@@ -163,14 +162,14 @@ int cambiarNombre(char* comando, int longitudKey){
 	return 0;
 }
 
-int mover(char* comando, int longitudKey){
+int mover(char* comando, int cantidadDeComandos){
 
-	char*  path= malloc(strlen(comando)-longitudKey);
-	memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
+	char* comando1 = comando;
+	char* rutaNombreViejo = devolverRuta(comando, cantidadDeComandos + 1);
+	char* nombreNuevo = devolverRuta(comando1, (cantidadDeComandos + 1));
 
-	char* rutaNombreViejo = strtok(path, " ");
-	char* nombreNuevo = strtok(NULL, " ");
-
+	printf("%s\n", rutaNombreViejo);
+	printf("%s\n", nombreNuevo);
 
 	if (rename(rutaNombreViejo,nombreNuevo) == 0){
 		return 1;
@@ -179,10 +178,9 @@ int mover(char* comando, int longitudKey){
 	}
 }
 
-int informacion(char* comando, int longitudKey){
+int informacion(char* comando, int cantidadDeComandos){
 
-	char*  path= malloc(strlen(comando)-longitudKey);
-	memcpy(path,comando + longitudKey, strlen(comando) - longitudKey);
+	char* path = devolverRuta(comando, cantidadDeComandos);
 
 	struct stat fileStat;
 		    if(stat(path,&fileStat) < 0)

@@ -25,24 +25,26 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+char* devolverRuta(char* comando, int cantidadDeComandos);
+
 bool validarArchivo(char* path);
 
 bool validarDirectorio(char* path);
 
-int eliminarArchivo(char* comando, int longitudKey);//rm
+int eliminarArchivo(char* comando, int cantidadDeComandos);//rm
 
-int eliminarDirectorio(char* comando, int longitudKey);//rm -d
+int eliminarDirectorio(char* comando, int cantidadDeComandos);//rm -d
 
-void listarArchivos(char* comando, int longitudKey);//ls
+void listarArchivos(char* comando, int cantidadDeComandos);//ls
 
-int crearDirectorio(char* comando, int longitudKey);//mkdir
+int crearDirectorio(char* comando, int cantidadDeComandos);//mkdir
 
-int mostrarArchivo(char* comando, int longitudKey);//cat
+int mostrarArchivo(char* comando, int cantidadDeComandos);//cat
 
-int cambiarNombre(char* comando, int longitudKey);//rename
+int cambiarNombre(char* comando, int cantidadDeComandos);//rename
 
-int mover(char* comando, int longitudKey);//mv
+int mover(char* comando, int cantidadDeComandos);//mv
 
-int informacion(char* comando, int longitudKey);//info
+int informacion(char* comando, int cantidadDeComandos);//info
 
 #endif /* FILESYSTEM_COMANDOS_H_ */

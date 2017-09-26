@@ -121,7 +121,7 @@ void* consolaFS(){
 			log_trace(loggerFS, "File system formateado");
 		}
 		else if (string_starts_with(comando, "rm -d")) {
-			if (eliminarDirectorio(comando, 6) != -1)
+			if (eliminarDirectorio(comando, 2) != -1)
 				log_trace(loggerFS, "Directorio eliminado");
 			else
 				log_trace(loggerFS, "No se pudo eliminar el directorio");
@@ -130,37 +130,37 @@ void* consolaFS(){
 			log_trace(loggerFS, "Bloque eliminado");
 		}
 		else if (string_starts_with(comando, "rm")) {
-			if (eliminarArchivo(comando, 3) != -1)
+			if (eliminarArchivo(comando, 1) != -1)
 				log_trace(loggerFS, "archivo eliminado");
 			else
 				log_trace(loggerFS, "No se pudo eliminar el archivo");
 		}
 		else if (string_starts_with(comando, "rename")) {
-			if (cambiarNombre(comando, 7) == 1)
+			if (cambiarNombre(comando, 1) == 1)
 				log_trace(loggerFS, "Renombrado");
 			else
 				log_trace(loggerFS, "No se pudo renombrar");
 
 		}
 		else if (string_starts_with(comando, "mv")) {
-			if (mover(comando,3) == 1)
+			if (mover(comando,1) == 1)
 				log_trace(loggerFS, "Archivo movido");
 			else
 				log_trace(loggerFS, "No se pudo mover el archivo");
 		}
 		else if (string_starts_with(comando, "cat")) {
-			if (mostrarArchivo(comando, 4) == 1){
+			if (mostrarArchivo(comando, 1) == 1){
 			log_trace(loggerFS, "Archivo mostrado");
 			}else{
 				log_trace(loggerFS, "No se pudo mostrar el archivo");
 			}
 		}
 		else if (string_starts_with(comando, "mkdir")) {
-			if (crearDirectorio(comando,6) == 1){
+			if (crearDirectorio(comando,1) == 1){
 
 			log_trace(loggerFS, "Directorio creado");// avisar si ya existe
 			}else{
-				if (crearDirectorio(comando,6) == 2){
+				if (crearDirectorio(comando,1) == 2){
 				log_trace(loggerFS, "El directorio ya existe");
 				}else{
 					log_trace(loggerFS, "No se pudo crear directorio");
@@ -180,11 +180,11 @@ void* consolaFS(){
 			log_trace(loggerFS, "MD5 del archivo");
 		}
 		else if (string_starts_with(comando, "ls")) {
-			listarArchivos(comando, 3);
+			listarArchivos(comando, 1);
 			log_trace(loggerFS, "Archivos listados");
 		}
 		else if (string_starts_with(comando, "info")) {
-			if (informacion(comando,5) == 1)
+			if (informacion(comando,1) == 1)
 				log_trace(loggerFS, "Mostrando informacion del archivo");
 			else
 				log_trace(loggerFS, "No se pudo mostrar informacion del archivo");
