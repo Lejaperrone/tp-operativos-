@@ -31,6 +31,7 @@ int levantarServidorWorker(char* ip, int port){
 	struct sockaddr_in direccionCliente;
 	int tamanioDireccion = sizeof(direccionCliente);
 	int server = crearServidorAsociado(ip,port);
+
 	return accept(server, (void*) &direccionCliente, &tamanioDireccion);
 
 

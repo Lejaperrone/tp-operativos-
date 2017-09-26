@@ -5,6 +5,7 @@
  *      Author: utnso
  */
 #include "FuncionesYama.h"
+#include <stdio.h>
 
 void conectarseConFs(){
 	int socketFs = crearSocket();
@@ -50,7 +51,6 @@ void levantarServidorYama(char* ip, int port){
 			}
 		}
 	}
-
 }
 
 void recibirContenido(){
@@ -59,6 +59,7 @@ void recibirContenido(){
 
 	conexionNueva = desempaquetar(nuevoMaster);
 	int idRecibido = *(int*)conexionNueva.envio;
+
 
 	if (idRecibido == idMaster){
 		log_trace(logger, "Conexion de Master\n");
