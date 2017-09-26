@@ -121,7 +121,7 @@ void* consolaFS(){
 			log_trace(loggerFS, "File system formateado");
 		}
 		else if (string_starts_with(comando, "rm -d")) {
-			if (eliminarDirectorio(comando, 6) != -1)
+			if (eliminarDirectorio(comando, 2) != -1)
 				log_trace(loggerFS, "Directorio eliminado");
 			else
 				log_trace(loggerFS, "No se pudo eliminar el directorio");
@@ -130,37 +130,37 @@ void* consolaFS(){
 			log_trace(loggerFS, "Bloque eliminado");
 		}
 		else if (string_starts_with(comando, "rm")) {
-			if (eliminarArchivo(comando, 3) != -1)
+			if (eliminarArchivo(comando, 1) != -1)
 				log_trace(loggerFS, "archivo eliminado");
 			else
 				log_trace(loggerFS, "No se pudo eliminar el archivo");
 		}
 		else if (string_starts_with(comando, "rename")) {
-			if (cambiarNombre(comando, 7) == 1)
+			if (cambiarNombre(comando, 1) == 1)
 				log_trace(loggerFS, "Renombrado");
 			else
 				log_trace(loggerFS, "No se pudo renombrar");
 
 		}
 		else if (string_starts_with(comando, "mv")) {
-			if (mover(comando,3) == 1)
+			if (mover(comando,1) == 1)
 				log_trace(loggerFS, "Archivo movido");
 			else
 				log_trace(loggerFS, "No se pudo mover el archivo");
 		}
 		else if (string_starts_with(comando, "cat")) {
-			if (mostrarArchivo(comando, 4) == 1){
+			if (mostrarArchivo(comando, 1) == 1){
 			log_trace(loggerFS, "Archivo mostrado");
 			}else{
 				log_trace(loggerFS, "No se pudo mostrar el archivo");
 			}
 		}
 		else if (string_starts_with(comando, "mkdir")) {
-			if (crearDirectorio(comando,6) == 1){
+			if (crearDirectorio(comando,1) == 1){
 
 			log_trace(loggerFS, "Directorio creado");// avisar si ya existe
 			}else{
-				if (crearDirectorio(comando,6) == 2){
+				if (crearDirectorio(comando,1) == 2){
 				log_trace(loggerFS, "El directorio ya existe");
 				}else{
 					log_trace(loggerFS, "No se pudo crear directorio");
@@ -180,11 +180,11 @@ void* consolaFS(){
 			log_trace(loggerFS, "MD5 del archivo");
 		}
 		else if (string_starts_with(comando, "ls")) {
-			listarArchivos(comando, 3);
+			listarArchivos(comando, 1);
 			log_trace(loggerFS, "Archivos listados");
 		}
 		else if (string_starts_with(comando, "info")) {
-			if (informacion(comando,5) == 1)
+			if (informacion(comando,1) == 1)
 				log_trace(loggerFS, "Mostrando informacion del archivo");
 			else
 				log_trace(loggerFS, "No se pudo mostrar informacion del archivo");
@@ -202,8 +202,10 @@ void* levantarServidorFS(void* parametrosServidorFS){
 
 	int maxDatanodes;
 	int nuevoDataNode;
+	int cantidadNodos;
+	informacionNodo info;
 
-	int i = 0;
+	int i = 0, j = 0;
 	int addrlen;
 
 	struct parametrosServidorHilo*params;
@@ -263,11 +265,18 @@ void* levantarServidorFS(void* parametrosServidorFS){
 						int idRecibido = *(int*)conexionNueva.envio;
 
 						if (idRecibido == idDataNodes){
-							log_trace(loggerFS, "Conexion de DataNode\n");
 							//empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
 							paqueteInfoNodo = desempaquetar(nuevoDataNode);
-							list_add(nodosConectados,paqueteInfoNodo.envio);
-							actualizarArchivoNodos(*(informacionNodo*)paqueteInfoNodo.envio);
+							info = *(informacionNodo*)paqueteInfoNodo.envio;
+							if (nodoRepetido(info) == 0){
+								log_trace(loggerFS, "Conexion de DataNode\n");
+								list_add(nodosConectados,paqueteInfoNodo.envio);
+								cantidadNodos = list_size(nodosConectados);
+								actualizarArchivoNodos();
+							}
+							else
+								log_trace(loggerFS, "DataNode repetido\n");
+
 						}
 					}
 				} else {
@@ -281,15 +290,43 @@ void* levantarServidorFS(void* parametrosServidorFS){
 
 }
 
-void actualizarArchivoNodos(informacionNodo infoNodo){
+int nodoRepetido(informacionNodo info){
+	int cantidadNodos = list_size(nodosConectados);
+	int i = 0, repetido = 0;
+	informacionNodo infoAux;
+	for (i = 0; i < cantidadNodos; ++i){
+		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
+		if (infoAux.numeroNodo == info.numeroNodo)
+			repetido = 1;
+	}
+	return repetido;
+}
+
+
+void actualizarArchivoNodos(){
+
 	char* pathArchivo = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
+	FILE* archivoNodes = fopen(pathArchivo, "wb+");
+	fclose(archivoNodes); //para dejarlo vacio
+	int cantidadNodos = list_size(nodosConectados), i = 0;
+	int bloquesLibresNodo = 0;
+	informacionNodo info;
 
 	t_config* nodos = config_create(pathArchivo);
 
+	sizeTotalNodos = 0;
+	nodosLibres = 0;
+	for (i = 0; i < cantidadNodos; ++i){
+		info = *(informacionNodo*)list_get(nodosConectados,i);
+		bloquesLibresNodo = info.sizeNodo-info.bloquesOcupados;
+		sizeTotalNodos += info.sizeNodo;
+		nodosLibres += bloquesLibresNodo;
+		config_set_value(nodos, string_from_format("NODO%dTOTAL",info.numeroNodo), string_itoa(info.sizeNodo));
+		config_set_value(nodos, string_from_format("NODO%dLIBRE",info.numeroNodo), string_itoa(bloquesLibresNodo));
+	}
+
 	char* arrayNodos = generarArrayNodos();
 
-	sizeTotalNodos += infoNodo.sizeNodo;
-	nodosLibres += (infoNodo.sizeNodo-infoNodo.bloquesOcupados);
 
 	config_set_value(nodos, "TAMANIO", string_itoa(sizeTotalNodos));
 
@@ -305,7 +342,7 @@ char* generarArrayNodos(){
 	int indexes[cantidadNodos];
 	char* array;
 	int longitudEscrito = 0;
-	int longitudSting = 2 + cantidadNodos*4; // 2 [] + "NODO" * cantidad nodos, despues se le suman los numeros
+	int longitudSting = 1 + cantidadNodos*5; // 2 [] + "NODO," * cantidad nodos - 1 de la ultima coma, despues se le suman los numeros
 	informacionNodo info;
 	for (i = 0; i < cantidadNodos; ++i){
 		info = *(informacionNodo*)list_get(nodosConectados,i);

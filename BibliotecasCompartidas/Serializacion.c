@@ -54,7 +54,6 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 	send(socket,buffer,tamanioTotal,0);
 	free(bloque);
 	free(buffer);
-
 }
 
 respuesta desempaquetar(int socket){

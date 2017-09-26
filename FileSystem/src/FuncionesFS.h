@@ -33,4 +33,6 @@ int getIndexDirectorio(char* ruta);
 
 char* generarArrayNodos();
 
-void actualizarArchivoNodos(informacionNodo infoNodo);
+void actualizarArchivoNodos();
+
+int nodoRepetido(informacionNodo info);
