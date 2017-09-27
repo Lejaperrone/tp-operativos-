@@ -33,6 +33,7 @@ int mostrarLoggerPorPantalla = 1;
 t_directory tablaDeDirectorios[100];
 char* rutaArchivos = "metadata/Archivos/";
 int cantidadDirectorios = 100;
+int numeroCopiasBloque = 2;
 //t_bitarray* bitmap[cantDataNodes];
 t_log* loggerFS;
 int sizeTotalNodos = 0, nodosLibres = 0;

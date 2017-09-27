@@ -7,6 +7,8 @@
 
 #include "Comandos.h"
 
+#define mb 1048576
+
 char* devolverRuta(char* comando, int cantidadDeComandos)
 {
 	char* copiaComando = malloc(strlen(comando));
@@ -23,12 +25,15 @@ char* devolverRuta(char* comando, int cantidadDeComandos)
 int copiarArchivo(comando){
 	printf("---%s\n",devolverRuta(comando, 1));
 	printf("---%s\n",devolverRuta(comando, 2));
+	int mockSizeArchivo = 1024*1024*2;
+	guardarEnNodos(mockSizeArchivo);
 	//if (validarArchivo(pathFrom)){
 
 	//}
 	//else
 		//return 0;
 }
+
 
 bool validarArchivo(char* path) {
 	if (access(path, R_OK) == -1) {

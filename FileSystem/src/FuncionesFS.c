@@ -20,7 +20,9 @@
 
 #define idDataNodes 3
 #define cantDataNodes 10
+#define mb 1048576
 
+extern int numeroCopiasBloque;
 extern t_directory tablaDeDirectorios[100];
 extern char* rutaArchivos;
 extern t_log* loggerFS;
@@ -305,6 +307,64 @@ int nodoRepetido(informacionNodo info){
 	return repetido;
 }
 
+void guardarEnNodos(int mockSizeArchivo){
+	int i, j, k, success = 1;
+	int cantNodosNecesarios = mockSizeArchivo/mb;
+	printf("nodos a usar %d\n",cantNodosNecesarios);
+	informacionNodo infoAux;
+	int cantidadNodos = list_size(nodosConectados);
+	int bloquesLibreNodo[cantidadNodos];
+	int indexNodos[cantidadNodos];
+	int masBloquesLibres[numeroCopiasBloque];
+	int nodosEnUso[cantidadNodos];
+	int indexNodoEnListaConectados[numeroCopiasBloque];
+
+	for (i = 0; i < cantidadNodos; ++i){ //Itero por cada nodo, guardo los que tengan mas bloques libres, fijandome que no hayan repetidos
+		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
+		bloquesLibreNodo[i] = infoAux.sizeNodo-infoAux.bloquesOcupados;
+		indexNodos[i] = infoAux.numeroNodo;
+		indexNodoEnListaConectados[i] = i;
+	}
+
+	for (i = 0; i < cantNodosNecesarios; ++i){
+		printf("--%d\n",cantNodosNecesarios);
+		for (j = 0; j < cantNodosNecesarios; ++j) {
+			masBloquesLibres[j] = -1;
+			nodosEnUso[j] = 0;
+		}
+		for (j = 0; j < cantidadNodos; ++j){
+			for (k = 0; k < numeroCopiasBloque; ++k){
+				if (nodosEnUso[j] != 1){
+					if (masBloquesLibres[k] == -1){
+						masBloquesLibres[k] = indexNodos[j];
+						nodosEnUso[j] = 1;
+						bloquesLibreNodo[j] -= 1;
+					}
+					else if(bloquesLibreNodo[masBloquesLibres[k]] < bloquesLibreNodo[j]){
+						masBloquesLibres[k] = indexNodos[j];
+						nodosEnUso[j] = 1;
+						bloquesLibreNodo[j] -= 1;
+					}
+				}
+			}
+		}
+	//Empaquetar bloques a guardar a los que esten en masBloquesLibres
+	//Desempaqutar notificacion success
+		for (k = 0; k < cantNodosNecesarios; ++k){
+			printf("---nodo %d---\n", masBloquesLibres[k]);
+		}
+
+		if(success){
+
+		}
+
+
+	}
+
+
+
+
+}
 
 void actualizarArchivoNodos(){
 
