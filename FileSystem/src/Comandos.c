@@ -11,8 +11,8 @@
 
 char* devolverRuta(char* comando, int cantidadDeComandos)
 {
-	char* copiaComando = malloc(strlen(comando));
-	memcpy(copiaComando, comando,strlen(comando));
+	char* copiaComando = malloc(strlen(comando)+1);
+	memcpy(copiaComando, comando,strlen(comando)+1);
 	char* ruta = strtok(copiaComando, " ");
 	int i;
 
@@ -146,16 +146,19 @@ int mostrarArchivo(char* comando, int cantidadDeComandos){
 
 int cambiarNombre(char* comando, int cantidadDeComandos){
 
-	char* comando1 = comando;
 	char* rutaNombreViejo = devolverRuta(comando, cantidadDeComandos);
-	char* nombreNuevo = devolverRuta(comando1, cantidadDeComandos + 1);
+	char* nombreNuevo = devolverRuta(comando, cantidadDeComandos + 1);
+	printf("--%s\n", rutaNombreViejo);
+	printf("--%s\n", nombreNuevo);
 
 	char* rutaNombreViejoReverse = strdup(string_reverse(rutaNombreViejo));
-
+	printf("--%s\n", rutaNombreViejoReverse);
 	int posicion = 0;
 	int longitudNombreOriginal = 0;
 
-	char* caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
+	char* caracterActual = malloc(sizeof(char)*256);
+	caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
+	printf("---%s\n", caracterActual);
 	char* slash ="/";
 
 	while(caracterActual != slash){
@@ -164,11 +167,15 @@ int cambiarNombre(char* comando, int cantidadDeComandos){
 		++posicion;
 		caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
 	}
+	free(caracterActual);
 	rutaNombreViejoReverse = string_substring_from(rutaNombreViejoReverse, longitudNombreOriginal + 1 );
+	printf("--%s\n", rutaNombreViejoReverse);
 	rutaNombreViejoReverse = strdup(string_reverse(rutaNombreViejoReverse));
+	printf("--%s\n", rutaNombreViejoReverse);
 
 	strcat(rutaNombreViejoReverse, nombreNuevo);
 	char* rutaNombreNuevo = rutaNombreViejoReverse;
+	printf("--%s\n", rutaNombreNuevo);
 
 	if (rename(rutaNombreViejo,rutaNombreNuevo) == 0){
 		return 1;
@@ -181,16 +188,16 @@ int cambiarNombre(char* comando, int cantidadDeComandos){
 
 int mover(char* comando, int cantidadDeComandos){
 
-	char* comando1 = comando;
-	char* rutaNombreViejo = devolverRuta(comando, cantidadDeComandos + 1);
-	char* nombreNuevo = devolverRuta(comando1, (cantidadDeComandos + 1));
+	char* rutaNombreViejo = devolverRuta(comando, cantidadDeComandos);
+	char* rutaNombreNuevo = devolverRuta(comando, (cantidadDeComandos + 1));
 
-	printf("%s\n", rutaNombreViejo);
-	printf("%s\n", nombreNuevo);
-
-	if (rename(rutaNombreViejo,nombreNuevo) == 0){
+	if (rename(rutaNombreViejo,rutaNombreNuevo) == 0){
+		free(rutaNombreViejo);
+		free(rutaNombreNuevo);
 		return 1;
 	}else{
+		free(rutaNombreViejo);
+		free(rutaNombreNuevo);
 		return 0;
 	}
 }
