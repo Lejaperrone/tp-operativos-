@@ -39,7 +39,7 @@ void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
 	conectarCon(direccion, socketWorker, parametrosConexion->id); //2 id master
 	log_trace(loggerMaster, "Conexion con Worker \n");
 
-
+	empaquetar(socketWorker,mensajeProcesarTransformacion, 0,0);
 	//empaquetar la solicitud de procesamiento
 	return 0;
 }

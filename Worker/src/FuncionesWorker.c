@@ -7,8 +7,7 @@
 #include "FuncionesWorker.h"
 
 void esperarConexionesMaster(char* ip, int port){
-	socketMaster = levantarServidorWorker(ip,port);//FIXME: CAMBIAR ARCHIVO CONFIGURACION CON IP NODO
-	realizarHandshake(socketMaster);
+	levantarServidorWorker(ip,port);//FIXME: CAMBIAR ARCHIVO CONFIGURACION CON IP NODO
 }
 
 void esperarJobDeMaster(){
@@ -16,13 +15,14 @@ void esperarJobDeMaster(){
 	log_trace(logger,"Esperando instruccion de Master");
 
 	instruccionMaster = desempaquetar(socketMaster);
+
 	switch(instruccionMaster.idMensaje){
-	case mensajeEtapaTransformacion:
+	case mensajeProcesarTransformacion:
 		ejecutarTransformacion();//LE TIENE QUE LLEGAR EL ARCHIVO DE ORIGEN EL DE DESTINO Y EL SCRIPT A EJECUTAR
 		break;
-	case mensajeEtapaReduccionLocal:
+	case mensajeProcesarRedLocal:
 		break;
-	case mensajeEtapaReduccionGlobal:
+	case mensajeProcesarRedGlobal:
 		break;
 	}
 	//forkear por cada tarea recibida por el master
@@ -38,17 +38,15 @@ void ejecutarTransformacion(){//PARA PROBAR
 	}else{
 		//logica del padre
 	}*/
-	system("echo Ejecutando Transformacion | ./script_prueba > /tmp/resultado" );
+	//system("echo Ejecutando Transformacion | ./script_prueba > /tmp/resultado" );
+	system("echo Ejecutando Transformacion" );
 }
-int levantarServidorWorker(char* ip, int port){
+void levantarServidorWorker(char* ip, int port){
 	struct sockaddr_in direccionCliente;
 	int server;
 	fd_set master;
 	fd_set read_fds;
 	int fdmax;
-	int nuevoMaster;
-	char buf[256];
-	int nbytes;
 	int i, j;
 	int tamanioDireccion;
 	respuesta conexionNueva;
@@ -71,15 +69,15 @@ int levantarServidorWorker(char* ip, int port){
 				if (i == server) {
 					// gestionar nuevas conexiones
 					tamanioDireccion = sizeof(direccionCliente);
-					if ((nuevoMaster = accept(server,(struct sockaddr *) &direccionCliente, &tamanioDireccion))
+					if ((socketMaster = accept(server,(struct sockaddr *) &direccionCliente, &tamanioDireccion))
 							== -1) {
 						perror("accept");
 					} else {
-						FD_SET(nuevoMaster, &master);
-						if (nuevoMaster > fdmax) {
-							fdmax = nuevoMaster;
+						FD_SET(socketMaster, &master);
+						if (socketMaster > fdmax) {
+							fdmax = socketMaster;
 						}
-						realizarHandshake(nuevoMaster);
+						realizarHandshake(socketMaster);
 
 						esperarJobDeMaster();
 					}

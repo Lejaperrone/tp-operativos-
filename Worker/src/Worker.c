@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
 	cargarConfiguracionNodo(&config,argv[1]);
 
 	esperarConexionesMaster(config.IP_NODO, config.PUERTO_WORKER);
+	//levantarServidorWorker(config.IP_NODO, config.PUERTO_WORKER);
 
 	esperarJobDeMaster();
 

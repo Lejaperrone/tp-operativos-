@@ -67,10 +67,8 @@ void recibirContenidoMaster() {
 
 	log_trace(logger, "Conexion de Master\n");
 	nuevoJob = desempaquetar(nuevoMaster);
-	solicitudTransformacion* solTransf =
-			(solicitudTransformacion*) nuevoJob.envio;
-	log_trace(logger, "Me llego %d %d ", solTransf->rutaDatos.longitud,
-			solTransf->rutaResultado.longitud);
+	solicitudTransformacion* solTransf =(solicitudTransformacion*) nuevoJob.envio;
+	log_trace(logger, "Me llego %d %d ", solTransf->rutaDatos.longitud,	solTransf->rutaResultado.longitud);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);
 
 	respuestaTransformacion rtaTransf;
