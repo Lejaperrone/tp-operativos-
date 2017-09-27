@@ -15,6 +15,10 @@ typedef struct string{
 	char* cadena;
 }string;
 
+typedef enum {TRANSFORMACION, RED_LOCAL, RED_GLOBAL, ALM_FINAL}Etapa;
+
+typedef enum {EN_EJECUCION, ERROR, FINALIZADO_OK}Estado;
+
 typedef struct respuestaTransformacion{
 	int nodo;
 	char* ip;
@@ -46,9 +50,9 @@ typedef struct registroTablaEstados{
 	int master;
 	int nodo;
 	int bloque;
-	int estapa;
+	Etapa etapa;
 	char* rutaArchivoTemp;
-	int estado;
+	Estado estado;
 }registroTablaEstados;
 
 typedef struct solicitudTransformacion{

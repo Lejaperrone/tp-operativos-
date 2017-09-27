@@ -33,10 +33,12 @@ void crearHilosConexion() {
 	}
 }
 void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
+	procesarTransformacion solicitud;
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(parametrosConexion->ip,parametrosConexion->port);
 	conectarCon(direccion, socketWorker, parametrosConexion->id); //2 id master
 	log_trace(loggerMaster, "Conexion con Worker \n");
+
 
 	//empaquetar la solicitud de procesamiento
 	return 0;
@@ -44,8 +46,7 @@ void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
 
 void enviarJobAYama() {
 	solicitudTransformacion* nuevaSol = malloc(sizeof(solicitudTransformacion));
-	//enviarArchivo(socketYama, miJob->rutaTransformador);
-	//enviarArchivo(socketYama, miJob->rutaReductor);
+
 	nuevaSol->rutaDatos.cadena = string_duplicate(miJob->rutaDatos);
 	nuevaSol->rutaDatos.longitud = string_length(miJob->rutaDatos);
 	nuevaSol->rutaResultado.cadena = string_duplicate(miJob->rutaResultado);
@@ -73,7 +74,6 @@ void esperarInstruccionesDeYama() {
 		switch (instruccionesYama.idMensaje) {
 
 		case mensajeDesignarWorker:
-			//verificar envio
 			crearHilosConexion();
 			break;
 		}
