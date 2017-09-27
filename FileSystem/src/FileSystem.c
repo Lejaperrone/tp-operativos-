@@ -68,7 +68,7 @@ int main(void) {
 	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
 	inicializarTablaDirectorios();
-	//printf("\n\n %s", tablaDeDirectorios[0].nombre);
+	printf("\n\n %s",  buscarRutaArchivo("hola/chau"));
 
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);

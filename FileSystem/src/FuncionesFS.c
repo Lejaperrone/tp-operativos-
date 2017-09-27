@@ -307,7 +307,20 @@ int nodoRepetido(informacionNodo info){
 	return repetido;
 }
 
-void guardarEnNodos(int mockSizeArchivo){
+void guardarEnNodos(char* path, char* nombre, int mockSizeArchivo){
+	char* ruta = buscarRutaArchivo(path);
+	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + 1);
+
+	memcpy(rutaFinal, ruta, strlen(ruta));
+	memcpy(rutaFinal + strlen(ruta), "/", 1);
+	memcpy(rutaFinal + strlen(ruta) + 1, nombre, strlen(nombre));
+
+	printf("----ruta final    %s\n", rutaFinal);
+
+	FILE* archivos = fopen(rutaFinal, "wb+");
+	fclose(archivos); //para dejarlo vacio
+
+
 	int i, j, k, success = 1;
 	int cantNodosNecesarios = mockSizeArchivo/mb;
 	printf("nodos a usar %d\n",cantNodosNecesarios);
@@ -355,7 +368,9 @@ void guardarEnNodos(int mockSizeArchivo){
 		}
 
 		if(success){
+			for (k = 0; k < numeroCopiasBloque; ++k){
 
+			}
 		}
 
 
