@@ -26,7 +26,9 @@ int copiarArchivo(comando){
 	printf("---%s\n",devolverRuta(comando, 1));
 	printf("---%s\n",buscarRutaArchivo("hola/chau"));
 	int mockSizeArchivo = 1024*1024*2;
-	guardarEnNodos("hola/chau", "nom",mockSizeArchivo);
+	char* p = "hola/chau";
+	char* n = "nom.bin";
+	guardarEnNodos(p, n,mockSizeArchivo);
 	//if (validarArchivo(pathFrom)){
 
 	//}

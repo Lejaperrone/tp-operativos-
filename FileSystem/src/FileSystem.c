@@ -31,7 +31,7 @@ int cantBloques = 10;
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
 t_directory tablaDeDirectorios[100];
-char* rutaArchivos = "metadata/Archivos/";
+char* rutaArchivos = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/";
 int cantidadDirectorios = 100;
 int numeroCopiasBloque = 2;
 //t_bitarray* bitmap[cantDataNodes];

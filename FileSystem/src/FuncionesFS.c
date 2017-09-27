@@ -17,6 +17,8 @@
 #include "FuncionesFS.h"
 #include "Comandos.h"
 #include "Serializacion.h"
+#include <dirent.h>
+#include <errno.h>
 
 #define idDataNodes 3
 #define cantDataNodes 10
@@ -308,8 +310,13 @@ int nodoRepetido(informacionNodo info){
 }
 
 void guardarEnNodos(char* path, char* nombre, int mockSizeArchivo){
+	int mockNumeroBloqueAsignado = 0;
+
 	char* ruta = buscarRutaArchivo(path);
 	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + 1);
+
+	if (!validarDirectorio(ruta))
+		mkdir(ruta,0777);
 
 	memcpy(rutaFinal, ruta, strlen(ruta));
 	memcpy(rutaFinal + strlen(ruta), "/", 1);
@@ -320,6 +327,7 @@ void guardarEnNodos(char* path, char* nombre, int mockSizeArchivo){
 	FILE* archivos = fopen(rutaFinal, "wb+");
 	fclose(archivos); //para dejarlo vacio
 
+	t_config* infoArchivo = config_create(rutaFinal);
 
 	int i, j, k, success = 1;
 	int cantNodosNecesarios = mockSizeArchivo/mb;
@@ -362,23 +370,28 @@ void guardarEnNodos(char* path, char* nombre, int mockSizeArchivo){
 			}
 		}
 	//Empaquetar bloques a guardar a los que esten en masBloquesLibres
-	//Desempaqutar notificacion success
+	//Desempaqutar notificacion success, que va a ser el numero de bloque. si falla, -1
 		for (k = 0; k < cantNodosNecesarios; ++k){
 			printf("---nodo %d---\n", masBloquesLibres[k]);
 		}
 
-		if(success){
+		if(mockNumeroBloqueAsignado != -1){
+			config_set_value(infoArchivo, "TAMANIO", string_itoa(mockSizeArchivo));
 			for (k = 0; k < numeroCopiasBloque; ++k){
-
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(mb));
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,k), generarArrayBloque(masBloquesLibres[k], mockNumeroBloqueAsignado));
+				++mockNumeroBloqueAsignado;
 			}
 		}
 
 
 	}
+	config_save_in_file(infoArchivo, rutaFinal);
 
+}
 
-
-
+char* generarArrayBloque(int numeroNodo, int numeroBloque){
+	return string_from_format("[NODO%d,%d]",numeroNodo ,numeroBloque);
 }
 
 void actualizarArchivoNodos(){

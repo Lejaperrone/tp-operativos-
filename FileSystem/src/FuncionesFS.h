@@ -36,3 +36,5 @@ char* generarArrayNodos();
 void actualizarArchivoNodos();
 
 int nodoRepetido(informacionNodo info);
+
+char* generarArrayBloque(int numeroNodo, int numeroBloque);
