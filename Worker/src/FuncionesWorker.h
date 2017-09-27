@@ -25,7 +25,8 @@ t_log* logger;
 /*----PROTOTIPOS--------------------*/
 void esperarConexionesMaster(char* ip, int port);
 void esperarJobDeMaster();
-int levantarServidorWorker(char* ip, int port);
+void levantarServidorWorker(char* ip, int port);
 void realizarHandshake(int socket);
+void ejecutarTransformacion();
 
 #endif /* FUNCIONESWORKER_H_ */

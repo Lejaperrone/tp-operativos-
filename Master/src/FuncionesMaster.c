@@ -33,19 +33,20 @@ void crearHilosConexion() {
 	}
 }
 void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
+	procesarTransformacion solicitud;
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(parametrosConexion->ip,parametrosConexion->port);
 	conectarCon(direccion, socketWorker, parametrosConexion->id); //2 id master
 	log_trace(loggerMaster, "Conexion con Worker \n");
 
+	empaquetar(socketWorker,mensajeProcesarTransformacion, 0,0);
 	//empaquetar la solicitud de procesamiento
 	return 0;
 }
 
 void enviarJobAYama() {
 	solicitudTransformacion* nuevaSol = malloc(sizeof(solicitudTransformacion));
-	//enviarArchivo(socketYama, miJob->rutaTransformador);
-	//enviarArchivo(socketYama, miJob->rutaReductor);
+
 	nuevaSol->rutaDatos.cadena = string_duplicate(miJob->rutaDatos);
 	nuevaSol->rutaDatos.longitud = string_length(miJob->rutaDatos);
 	nuevaSol->rutaResultado.cadena = string_duplicate(miJob->rutaResultado);
@@ -73,14 +74,12 @@ void esperarInstruccionesDeYama() {
 		switch (instruccionesYama.idMensaje) {
 
 		case mensajeDesignarWorker:
-			//verificar envio
 			crearHilosConexion();
-			//logica en etapa de transformacion
 			break;
 		}
 	}
 //recibir de yama todos los parametros conexion IP PUERTO
-//ver que tipo de etapa es! los hilos de cada etapa son DISTINTOS!!!
+//ver que tipo de etapa es, los hilos de cada etapa son DISTINTOS!!!
 }
 
 char* recibirRuta(char* mensaje) {

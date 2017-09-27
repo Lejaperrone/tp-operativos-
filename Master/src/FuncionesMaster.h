@@ -37,6 +37,12 @@ typedef struct job{
 	char* rutaResultado;
 }job;
 
+typedef struct{
+	void* scriptTransformacion;//FIXMe POUEDE CAMBIAR POR EL TEMA DE MMAP
+	int bloque;
+	int bytesOcupados;
+	string archivoTemporal;
+}procesarTransformacion;
 /*----VARIABLES GLOBALES----*/
 t_log* loggerMaster;
 int socketYama;

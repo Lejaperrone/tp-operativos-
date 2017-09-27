@@ -46,6 +46,8 @@ void conectarseConFs();
 
 void levantarServidorYama(char* ip, int port);
 
-void recibirContenido();
+void recibirContenidoMaster();
+
+char* obtenerNombreArchivoResultadoTemporal();
 
 #endif /* FUNCIONESYAMA_H_ */
