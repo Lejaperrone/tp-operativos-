@@ -47,4 +47,6 @@ int mover(char* comando, int cantidadDeComandos);//mv
 
 int informacion(char* comando, int cantidadDeComandos);//info
 
+int copiarArchivo(char* comando);
+
 #endif /* FILESYSTEM_COMANDOS_H_ */

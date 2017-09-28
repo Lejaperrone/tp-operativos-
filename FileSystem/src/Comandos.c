@@ -6,32 +6,62 @@
  */
 
 #include "Comandos.h"
+#include "FuncionesFS.h"
 
 #define mb 1048576
 
-char* devolverRuta(char* comando, int cantidadDeComandos)
+char* devolverRuta(char* comando, int numeroParametro)
 {
-	char* copiaComando = malloc(strlen(comando));
-	memcpy(copiaComando, comando,strlen(comando));
+	char* copiaComando = malloc(strlen(comando)+1);
+	memcpy(copiaComando, comando,strlen(comando)+1);
 	char* ruta = strtok(copiaComando, " ");
 	int i;
 
-	for (i = 0; i < cantidadDeComandos; ++i){
+	for (i = 0; i < numeroParametro; ++i){
 		ruta = strtok(NULL, " ");
 	}
 	return ruta;
 }
 
-int copiarArchivo(comando){
-	printf("---%s\n",devolverRuta(comando, 1));
-	printf("---%s\n",devolverRuta(comando, 2));
+int copiarArchivo(char* comando){
+	int indice = 0, indiceNom = 0;;
 	int mockSizeArchivo = 1024*1024*2;
-	guardarEnNodos(mockSizeArchivo);
-	//if (validarArchivo(pathFrom)){
+	char* tipo = malloc(5); //.bin o .txt
+	char* rutaNormal = devolverRuta(comando, 1);
+	char* rutaFS = devolverRuta(comando, 2);
+	char* nombre = malloc(strlen(comando)-4); //El peor caso seria que el parametro sea el nombre sin ruta, tomo ese valor
+	char* rutaInvertida = string_reverse(rutaNormal);
+	char* slash = "/";
+	char* dot = ".";
+	char* caracterActual = string_substring(rutaInvertida, indice, 1);
 
-	//}
-	//else
-		//return 0;
+	while(strcmp(caracterActual,dot)){
+		memcpy(tipo + indice, caracterActual, 1);
+		++indice;
+		caracterActual = string_substring(rutaInvertida, indice, 1);
+	}
+
+	memcpy(tipo + indice, caracterActual, 1);
+	++indice;
+	caracterActual = string_substring(rutaInvertida, indice, 1);
+
+	tipo = string_reverse(tipo);
+
+	while(strcmp(caracterActual,slash)){
+		memcpy(nombre + indiceNom, caracterActual, 1);
+		++indice;
+		++indiceNom;
+		caracterActual = string_substring(rutaInvertida, indice, 1);
+	}
+
+	nombre = string_reverse(nombre);
+
+	guardarEnNodos(rutaFS, nombre, tipo, mockSizeArchivo);
+
+	free(tipo);
+	free(nombre);
+
+	return 1;
 }
 
 
@@ -146,16 +176,19 @@ int mostrarArchivo(char* comando, int cantidadDeComandos){
 
 int cambiarNombre(char* comando, int cantidadDeComandos){
 
-	char* comando1 = comando;
 	char* rutaNombreViejo = devolverRuta(comando, cantidadDeComandos);
-	char* nombreNuevo = devolverRuta(comando1, cantidadDeComandos + 1);
+	char* nombreNuevo = devolverRuta(comando, cantidadDeComandos + 1);
+	printf("--%s\n", rutaNombreViejo);
+	printf("--%s\n", nombreNuevo);
 
 	char* rutaNombreViejoReverse = strdup(string_reverse(rutaNombreViejo));
-
+	printf("--%s\n", rutaNombreViejoReverse);
 	int posicion = 0;
 	int longitudNombreOriginal = 0;
 
-	char* caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
+	char* caracterActual = malloc(sizeof(char)*256);
+	caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
+	printf("---%s\n", caracterActual);
 	char* slash ="/";
 
 	while(caracterActual != slash){
@@ -164,11 +197,15 @@ int cambiarNombre(char* comando, int cantidadDeComandos){
 		++posicion;
 		caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
 	}
+	free(caracterActual);
 	rutaNombreViejoReverse = string_substring_from(rutaNombreViejoReverse, longitudNombreOriginal + 1 );
+	printf("--%s\n", rutaNombreViejoReverse);
 	rutaNombreViejoReverse = strdup(string_reverse(rutaNombreViejoReverse));
+	printf("--%s\n", rutaNombreViejoReverse);
 
 	strcat(rutaNombreViejoReverse, nombreNuevo);
 	char* rutaNombreNuevo = rutaNombreViejoReverse;
+	printf("--%s\n", rutaNombreNuevo);
 
 	if (rename(rutaNombreViejo,rutaNombreNuevo) == 0){
 		return 1;
@@ -181,16 +218,16 @@ int cambiarNombre(char* comando, int cantidadDeComandos){
 
 int mover(char* comando, int cantidadDeComandos){
 
-	char* comando1 = comando;
-	char* rutaNombreViejo = devolverRuta(comando, cantidadDeComandos + 1);
-	char* nombreNuevo = devolverRuta(comando1, (cantidadDeComandos + 1));
+	char* rutaNombreViejo = devolverRuta(comando, cantidadDeComandos);
+	char* rutaNombreNuevo = devolverRuta(comando, (cantidadDeComandos + 1));
 
-	printf("%s\n", rutaNombreViejo);
-	printf("%s\n", nombreNuevo);
-
-	if (rename(rutaNombreViejo,nombreNuevo) == 0){
+	if (rename(rutaNombreViejo,rutaNombreNuevo) == 0){
+		free(rutaNombreViejo);
+		free(rutaNombreNuevo);
 		return 1;
 	}else{
+		free(rutaNombreViejo);
+		free(rutaNombreNuevo);
 		return 0;
 	}
 }

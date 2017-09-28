@@ -17,6 +17,8 @@
 #include "FuncionesFS.h"
 #include "Comandos.h"
 #include "Serializacion.h"
+#include <dirent.h>
+#include <errno.h>
 
 #define idDataNodes 3
 #define cantDataNodes 10
@@ -34,6 +36,12 @@ extern t_list* nodosConectados;
 char* pathArchivoDirectorios = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
 void inicializarTablaDirectorios(){
+	int i;
+	for (i = 0; i < 100; ++i){
+		tablaDeDirectorios[i].index = -1;
+		tablaDeDirectorios[i].padre = -1;
+		memcpy(tablaDeDirectorios[i].nombre," ",1);
+	}
 	int leido;
 	FILE* archivoDirectorios = fopen(pathArchivoDirectorios, "r");
 	leido = fread(tablaDeDirectorios,sizeof(t_directory), cantidadDirectorios, archivoDirectorios);
@@ -60,13 +68,16 @@ int getIndexDirectorio(char* ruta){
 	char** arrayPath = string_split(ruta, "/");
 	char* arrayComparador[100];
 	while(arrayPath[index] != NULL){ // separo por '/' la ruta en un array
+		printf("c------- %s\n",arrayPath[index]);
 		arrayComparador[index] = malloc(strlen(arrayPath[index]));
 		memcpy(arrayComparador[index],arrayPath[index],strlen(arrayPath[index]));
+		printf("d------- %s\n",arrayComparador[index]);
 		++index; // guardo cuantas partes tiene el array
 	}
 	indexFinal = index - 1;
 	int indexDirectorios[index];
 
+	--index;
 	for (i = 0; i < index; ++i)
 		indexDirectorios[i] = -1; // inicializo todo en -1, si al final me queda alguno en algun lado del array, significa que la ruta que pase no existe
 
@@ -321,7 +332,28 @@ int nodoRepetido(informacionNodo info){
 	return repetido;
 }
 
-void guardarEnNodos(int mockSizeArchivo){
+void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
+	int mockNumeroBloqueAsignado = 0;
+
+	char* ruta = buscarRutaArchivo(path);
+	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + 1);
+
+	if (!validarDirectorio(ruta))
+		mkdir(ruta,0777);
+
+	memcpy(rutaFinal, ruta, strlen(ruta));
+	memcpy(rutaFinal + strlen(ruta), "/", 1);
+	memcpy(rutaFinal + strlen(ruta) + 1, nombre, strlen(nombre));
+
+	printf("----ruta final    %s\n", rutaFinal);
+
+	FILE* archivos = fopen(rutaFinal, "wb+");
+	fclose(archivos); //para dejarlo vacio
+
+	t_config* infoArchivo = config_create(rutaFinal);
+
+	//Busco la ruta donde tengo que guardar el archivo y lo dejo en blanco
+
 	int i, j, k, success = 1;
 	int cantNodosNecesarios = mockSizeArchivo/mb;
 	printf("nodos a usar %d\n",cantNodosNecesarios);
@@ -333,17 +365,17 @@ void guardarEnNodos(int mockSizeArchivo){
 	int nodosEnUso[cantidadNodos];
 	int indexNodoEnListaConectados[numeroCopiasBloque];
 
-	for (i = 0; i < cantidadNodos; ++i){ //Itero por cada nodo, guardo los que tengan mas bloques libres, fijandome que no hayan repetidos
+	for (i = 0; i < cantidadNodos; ++i){
 		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
 		bloquesLibreNodo[i] = infoAux.sizeNodo-infoAux.bloquesOcupados;
 		indexNodos[i] = infoAux.numeroNodo;
 		indexNodoEnListaConectados[i] = i;
 	}
 
-	for (i = 0; i < cantNodosNecesarios; ++i){
-		printf("--%d\n",cantNodosNecesarios);
-		for (j = 0; j < cantNodosNecesarios; ++j) {
-			masBloquesLibres[j] = -1;
+	for (i = 0; i < cantNodosNecesarios; ++i){	//Primer for: itera por cada bloque que ocupa el archivo
+		printf("--%d\n",cantNodosNecesarios);	//Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
+		for (j = 0; j < cantNodosNecesarios; ++j) {	// y se queda con la cantidad de nodos por copia que cumplan con ese
+			masBloquesLibres[j] = -1;				//criterio
 			nodosEnUso[j] = 0;
 		}
 		for (j = 0; j < cantidadNodos; ++j){
@@ -363,19 +395,29 @@ void guardarEnNodos(int mockSizeArchivo){
 			}
 		}
 	//Empaquetar bloques a guardar a los que esten en masBloquesLibres
-	//Desempaqutar notificacion success
+	//Desempaqutar notificacion success, que va a ser el numero de bloque. si falla, -1
 		for (k = 0; k < cantNodosNecesarios; ++k){
 			printf("---nodo %d---\n", masBloquesLibres[k]);
 		}
 
-		if(success){
-
+		if(mockNumeroBloqueAsignado != -1){ //Por cada bloque agrego sus valores para la tabla
+			config_set_value(infoArchivo, "RUTA", rutaFinal);
+			config_set_value(infoArchivo, "TAMANIO", string_itoa(mockSizeArchivo));
+			for (k = 0; k < numeroCopiasBloque; ++k){
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(mb));
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,k), generarArrayBloque(masBloquesLibres[k], mockNumeroBloqueAsignado));
+				++mockNumeroBloqueAsignado;
+			}
 		}
 
 
 	}
+	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
 
+}
 
+char* generarArrayBloque(int numeroNodo, int numeroBloque){
+	return string_from_format("[NODO%d,%d]",numeroNodo ,numeroBloque);
 }
 
 void actualizarArchivoNodos(){

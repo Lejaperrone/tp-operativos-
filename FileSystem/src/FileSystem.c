@@ -31,7 +31,7 @@ int cantBloques = 10;
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
 t_directory tablaDeDirectorios[100];
-char* rutaArchivos = "metadata/Archivos/";
+char* rutaArchivos = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/";
 int cantidadDirectorios = 100;
 int numeroCopiasBloque = 2;
 //t_bitarray* bitmap[cantDataNodes];
@@ -68,7 +68,9 @@ int main(void) {
 	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
 	inicializarTablaDirectorios();
-	//printf("\n\n %s", tablaDeDirectorios[0].nombre);
+
+	printf("\n\n %s",  buscarRutaArchivo("hola/chau"));
+
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);
 
