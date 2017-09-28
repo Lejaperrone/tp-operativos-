@@ -38,3 +38,5 @@ void actualizarArchivoNodos();
 int nodoRepetido(informacionNodo info);
 
 char* generarArrayBloque(int numeroNodo, int numeroBloque);
+
+void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo);
