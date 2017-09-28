@@ -36,3 +36,7 @@ char* generarArrayNodos();
 void actualizarArchivoNodos();
 
 int nodoRepetido(informacionNodo info);
+
+void* levantarServerParaYama();
+
+void atenderSolicitudYama(int socketYama, void* envio);

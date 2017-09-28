@@ -19,6 +19,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			memcpy(bloque,paquete,sizeof(int));
 			break;
 
+		case mensajeInfoArchivo:
 		case mensajeProcesarTransformacion:
 		case mensajeDesignarWorker:
 		case mensajeOk:
@@ -83,6 +84,7 @@ respuesta desempaquetar(int socket){
 				deserializarString(socket,cabecera->tamanio);
 				break;
 
+			case mensajeInfoArchivo://todo
 			case mensajeProcesarTransformacion://todo
 			case mensajeDesignarWorker://todo
 			case mensajeOk:

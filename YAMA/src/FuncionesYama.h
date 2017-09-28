@@ -32,7 +32,7 @@ fd_set master;   // conjunto maestro de descriptores de fichero
 fd_set read_fds; // conjunto temporal de descriptores de fichero para select()
 int fdmax;        // número máximo de descriptores de fichero
 int servidor;     // descriptor de socket a la escucha
-int nuevoMaster;        // descriptor de socket de nueva conexión aceptada
+int nuevoMaster, socketFs;        // descriptor de socket de nueva conexión aceptada
 char buf[256];    // buffer para datos del cliente
 int nbytes;
 int addrlen;
@@ -42,11 +42,13 @@ struct sockaddr_in direccionCliente;
 t_log* logger;
 struct configuracionYama config;
 
-void conectarseConFs();
+int conectarseConFs();
 
 void levantarServidorYama(char* ip, int port);
 
 void recibirContenidoMaster();
+
+respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solicitud);
 
 char* obtenerNombreArchivoResultadoTemporal();
 

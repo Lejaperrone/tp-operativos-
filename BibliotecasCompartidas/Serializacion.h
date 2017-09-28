@@ -29,6 +29,7 @@
 #define mensajeProcesarRedGlobal 12
 #define mensajeProcesarAlmFinal 13
 #define mensajeDesignarWorker 14
+#define mensajeInfoArchivo 15
 
 typedef struct{
 	int idMensaje;

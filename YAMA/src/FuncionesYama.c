@@ -7,10 +7,11 @@
 #include "FuncionesYama.h"
 #include <stdio.h>
 
-void conectarseConFs() {
+int conectarseConFs() {
 	int socketFs = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 6000);
+	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 7000);
 	conectarCon(direccion, socketFs, 1);
+	return socketFs;
 }
 
 void levantarServidorYama(char* ip, int port) {
@@ -64,16 +65,35 @@ void levantarServidorYama(char* ip, int port) {
 
 void recibirContenidoMaster() {
 	respuesta nuevoJob;
+	respuestaTransformacion* rtaTransf;
 
 	log_trace(logger, "Conexion de Master\n");
 	nuevoJob = desempaquetar(nuevoMaster);
 	solicitudTransformacion* solTransf =(solicitudTransformacion*) nuevoJob.envio;
 	log_trace(logger, "Me llego %d %d ", solTransf->rutaDatos.longitud,	solTransf->rutaResultado.longitud);
-	empaquetar(nuevoMaster, mensajeOk, 0, 0);
 
-	respuestaTransformacion rtaTransf;
+	rtaTransf  = solicitarInformacionAFS(solTransf);
+	empaquetar(nuevoMaster, mensajeOk, 0, 0);
 	// logica con respuesta a Master
 	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
 
 }
 
+respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solicitud){
+	respuestaTransformacion* rtaTransf;
+	respuesta respuestaFs;
+
+	empaquetar(socketFs, mensajeSolicitudTransformacion, 0, solicitud);
+
+	respuestaFs = desempaquetar(socketFs);
+
+	if(respuestaFs.idMensaje == mensajeInfoArchivo){
+		rtaTransf = (respuestaTransformacion*)respuestaFs.envio;
+		log_trace(logger, "Me llego la informacion desde Fs correctamente");
+	}
+	else{
+		log_error(logger, "Error al recibir la informacion del archivo desde FS");
+		exit(1);
+	}
+	return rtaTransf;
+}

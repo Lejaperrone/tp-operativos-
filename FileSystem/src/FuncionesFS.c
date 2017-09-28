@@ -31,7 +31,7 @@ extern int cantBloques;
 extern int sizeTotalNodos, nodosLibres;
 extern t_list* nodosConectados;
 //extern t_bitarray* bitmap[cantDataNodes];
-char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+char* pathArchivoDirectorios = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
 void inicializarTablaDirectorios(){
 	int leido;
@@ -209,6 +209,8 @@ void* levantarServidorFS(void* parametrosServidorFS){
 	int nuevoDataNode;
 	int cantidadNodos;
 	informacionNodo info;
+	respuesta nuevaConexionYama;
+	respuesta solicitudInfoArchivo;
 
 	int i = 0, j = 0;
 	int addrlen;
@@ -216,7 +218,7 @@ void* levantarServidorFS(void* parametrosServidorFS){
 	struct parametrosServidorHilo*params;
 	params = (struct parametrosServidorHilo*) parametrosServidorFS;
 
-	int cliente = params->cliente;
+	int clienteYama = params->cliente;
 	int servidor = params->servidor;
 
 	char* buffer = malloc(300);
@@ -281,12 +283,23 @@ void* levantarServidorFS(void* parametrosServidorFS){
 							}
 							else
 								log_trace(loggerFS, "DataNode repetido\n");
+						}
+						else if(idRecibido == 1){//idYAMA
+							log_trace(loggerFS, "Nueva Conexion de Yama");
+							solicitudInfoArchivo = desempaquetar(nuevoDataNode);
+
+							if(solicitudInfoArchivo.idMensaje == mensajeSolicitudTransformacion){
+								atenderSolicitudYama(nuevoDataNode, solicitudInfoArchivo.envio);
+								//cambiar NUEVO DATANODE POR OTRO NOMBRE FIXME
+								log_trace(loggerFS, "Me llego una solicitud para dar informacion de este archivo");
+							}
+						}
+
+						else {
+							// gestionar datos de un cliente
 
 						}
 					}
-				} else {
-					// gestionar datos de un cliente
-
 				}
 			}
 		}
@@ -294,6 +307,7 @@ void* levantarServidorFS(void* parametrosServidorFS){
 	return 0;
 
 }
+
 
 int nodoRepetido(informacionNodo info){
 	int cantidadNodos = list_size(nodosConectados);
@@ -362,8 +376,6 @@ void guardarEnNodos(int mockSizeArchivo){
 	}
 
 
-
-
 }
 
 void actualizarArchivoNodos(){
@@ -424,6 +436,7 @@ char* generarArrayNodos(){
 	return array;
 }
 
+
 void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos);
 
 void inicializarBitmaps(){ //TODO (y ver si aca hace falta mmap)
@@ -449,4 +462,13 @@ void inicializarBitmaps(){ //TODO (y ver si aca hace falta mmap)
 	char* mapa = mmap(0,cantBloques/8,PROT_READ | PROT_WRITE,MAP_SHARED,fd,0);
 
 	bitmap[0] = bitarray_create_with_mode(mapa, cantBloques/8 , LSB_FIRST);*/
+}
+
+void atenderSolicitudYama(int socketYama, void* envio){
+	//respuestaTransformacion* rtaTransf;
+	//solicitudTransformacion* solTransf =(solicitudTransformacion*)envio;
+
+	empaquetar(socketYama, mensajeInfoArchivo, 0 ,0);
+	//aca hay que aplicar la super funcion mockeada de @Ronan
+
 }

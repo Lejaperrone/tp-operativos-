@@ -44,7 +44,7 @@ int main(void) {
 	nodosConectados = list_create();
 	int clienteYama = 0;
 	int servidorFS = crearSocket();
-	pthread_t hiloServidorFS, hiloConsolaFS;
+	pthread_t hiloServidorFS, hiloConsolaFS, hiloConexionYama;
 	parametrosServidorHilo parametrosServidorFS;
 
 	parametrosServidorFS.cliente = clienteYama;
@@ -69,13 +69,11 @@ int main(void) {
 
 	inicializarTablaDirectorios();
 	//printf("\n\n %s", tablaDeDirectorios[0].nombre);
-
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);
-	//levantarServidorFS(servidorFS, clienteYama);
+
 	pthread_join(hiloServidorFS, NULL);
 	pthread_join(hiloConsolaFS, NULL);
-
 
 }
 
