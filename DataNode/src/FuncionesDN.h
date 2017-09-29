@@ -12,3 +12,5 @@
 void conectarseConFs();
 
 int levantarBitmap(char* nombreNodo);
+
+void escucharAlFS(int socketFs);

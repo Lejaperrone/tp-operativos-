@@ -14,6 +14,7 @@
 #include <commons/log.h>
 #include "Globales.h"
 #include <commons/collections/list.h>
+#include <semaphore.h>
 
 typedef struct{
 	int index;

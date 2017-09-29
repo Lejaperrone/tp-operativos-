@@ -19,10 +19,13 @@
 #include <stdbool.h>
 #include <commons/string.h>
 
+
+
 char* path = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
 extern t_bitarray* bitmap;
 int cantBloques = 50;
 extern struct configuracionNodo  config;
+extern sem_t pedidoFS;
 
 void enviarBloqueAFS(int numeroBloque) {
 
@@ -40,7 +43,19 @@ void conectarseConFs() {
 	info.sizeNodo = config.SIZE_NODO;
 	info.bloquesOcupados = levantarBitmap(config.NOMBRE_NODO);
 	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO,4));
+	info.socket = -1;
 	empaquetar(socketFs, mensajeInformacionNodo, sizeof(informacionNodo),&info );
+	escucharAlFS(socketFs);
+}
+
+void escucharAlFS(int socketFs){
+	respuesta pedido;
+	int bloqueOcupado = 0;
+	while(1){
+		pedido = desempaquetar(socketFs);
+		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &bloqueOcupado);
+		sem_post(&pedidoFS);
+	}
 }
 
 

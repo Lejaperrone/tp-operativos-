@@ -9,6 +9,9 @@
 #define GLOBALES_H_
 
 #include <stdbool.h>
+#include <semaphore.h>
+
+sem_t pedidoFS;
 
 typedef struct string{
 	int longitud;
@@ -64,6 +67,7 @@ typedef struct{
 	int sizeNodo;
 	int bloquesOcupados;
 	int numeroNodo;
+	int socket;
 } informacionNodo;
 
 #endif /* GLOBALES_H_ */

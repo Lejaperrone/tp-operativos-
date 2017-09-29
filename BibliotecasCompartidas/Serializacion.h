@@ -30,6 +30,8 @@
 #define mensajeProcesarAlmFinal 13
 #define mensajeDesignarWorker 14
 #define mensajeInfoArchivo 15
+#define mensajeEnvioBloqueANodo 16
+#define mensajeRespuestaEnvioBloqueANodo 17
 
 typedef struct{
 	int idMensaje;

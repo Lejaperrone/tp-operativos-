@@ -38,9 +38,11 @@ int numeroCopiasBloque = 2;
 t_log* loggerFS;
 int sizeTotalNodos = 0, nodosLibres = 0;
 t_list* nodosConectados;
+extern sem_t pedidoFS;
 
 int main(void) {
 
+	sem_init(&pedidoFS,0,0);
 	nodosConectados = list_create();
 	int clienteYama = 0;
 	int servidorFS = crearSocket();

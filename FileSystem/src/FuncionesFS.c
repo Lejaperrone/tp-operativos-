@@ -33,7 +33,7 @@ extern int cantBloques;
 extern int sizeTotalNodos, nodosLibres;
 extern t_list* nodosConectados;
 //extern t_bitarray* bitmap[cantDataNodes];
-char* pathArchivoDirectorios = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
 void inicializarTablaDirectorios(){
 	int i;
@@ -288,6 +288,8 @@ void* levantarServidorFS(void* parametrosServidorFS){
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
 							if (nodoRepetido(info) == 0){
 								log_trace(loggerFS, "Conexion de DataNode\n");
+								info.socket = nuevoDataNode;
+								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
 								list_add(nodosConectados,paqueteInfoNodo.envio);
 								cantidadNodos = list_size(nodosConectados);
 								actualizarArchivoNodos();
@@ -394,6 +396,8 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 				}
 			}
 		}
+		infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[j]);
+		empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(informacionNodo),&infoAux );
 	//Empaquetar bloques a guardar a los que esten en masBloquesLibres
 	//Desempaqutar notificacion success, que va a ser el numero de bloque. si falla, -1
 		for (k = 0; k < cantNodosNecesarios; ++k){
