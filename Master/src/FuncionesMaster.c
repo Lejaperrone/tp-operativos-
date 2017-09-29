@@ -146,13 +146,11 @@ void enviarArchivoo(int socketPrograma, char* pathArchivo){
 	if(stat(pathArchivo,&fileStat) < 0)
 		exit(1);
 	int fd = open(pathArchivo,O_RDWR);
-	FILE* paquete = mmap(0,fileStat.st_size,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
-	empaquetar(socketPrograma, mensajeArchivo, fileStat.st_size, (void*)paquete);
+	char* paquete = mmap(0,fileStat.st_size,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+	empaquetar(socketPrograma, mensajeArchivo, fileStat.st_size, paquete);
 	close(fd);
 	if (munmap(paquete,fileStat.st_size) == 0)
 		printf("%s\n", "todo joya");
 	else
 		printf("%s\n", "todo no joya");
-
-
 }

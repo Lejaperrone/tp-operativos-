@@ -30,7 +30,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeArchivo:
-			serializarString(paquete,&tamanio);
+			bloque = serializarString(paquete,&tamanio);
 			break;
 
 		case mensajeSolicitudTransformacion:
@@ -81,7 +81,7 @@ respuesta desempaquetar(int socket){
 				break;
 
 			case mensajeArchivo:
-				deserializarString(socket,cabecera->tamanio);
+				miRespuesta.envio = deserializarString(socket,cabecera->tamanio);
 				break;
 
 			case mensajeInfoArchivo://todo
@@ -111,7 +111,9 @@ respuesta desempaquetar(int socket){
 }
 //------SERIALIZACIONES PARTICULARES------//
 void* serializarString(void* paquete,int* tamanio){
-	string* cadena = (string*)paquete;
+	string* cadena = malloc(sizeof(string));
+	cadena->cadena = (char*) paquete;
+	cadena.longitud = sizeof(paquete);
 	int longitudInt = sizeof(int);
 	*tamanio = sizeof(int)+cadena->longitud+1;
 	void* bloque = malloc(*tamanio);
