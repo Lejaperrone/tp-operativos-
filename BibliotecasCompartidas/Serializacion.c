@@ -112,8 +112,8 @@ respuesta desempaquetar(int socket){
 //------SERIALIZACIONES PARTICULARES------//
 void* serializarString(void* paquete,int* tamanio){
 	string* cadena = malloc(sizeof(string));
-	cadena->cadena = (char*) paquete;
-	cadena.longitud = sizeof(paquete);
+	cadena->cadena = paquete;
+	cadena->longitud = sizeof(paquete);
 	int longitudInt = sizeof(int);
 	*tamanio = sizeof(int)+cadena->longitud+1;
 	void* bloque = malloc(*tamanio);
