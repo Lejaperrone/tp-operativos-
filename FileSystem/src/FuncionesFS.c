@@ -358,6 +358,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 	//Busco la ruta donde tengo que guardar el archivo y lo dejo en blanco
 
 	int i, j, k, success = 1, bloqueLibre = -1;
+	int nodoAUtilizar = -1;
 	int cantNodosNecesarios = mockSizeArchivo/mb;
 	printf("nodos a usar %d\n",cantNodosNecesarios);
 	informacionNodo infoAux;
@@ -397,25 +398,38 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 				}
 			}
 		}
-		infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[j-1]);
-		bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[j-1], infoAux.sizeNodo);
-		empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(int),&bloqueLibre );
-		empaquetar(infoAux.socket, mensajeEnvioArchivoANodo, sizeof(int),&mockSizeArchivo );
-		respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
-		mockNumeroBloqueAsignado = 1;//*(int*)respuestaPedidoAlmacenar.envio;
+		for (j = 0; j < numeroCopiasBloque; ++j){
+			for (k = 0; k < cantidadNodos; ++k)
+				if(masBloquesLibres[j] ==  indexNodos[k]){
+					nodoAUtilizar = k;
+				}
+			infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[nodoAUtilizar]);
+			printf("le mando el bloque a %d\n", infoAux.numeroNodo);
+
+			bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[nodoAUtilizar], infoAux.sizeNodo);
+
+			printf("bloque libre %d\n",bloqueLibre);
+			empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(int),&bloqueLibre );
+
+			empaquetar(infoAux.socket, mensajeEnvioArchivoANodo, sizeof(int),&mockSizeArchivo );
+
+			respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
+
+			if (success == 1){
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(mockSizeArchivo));
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(masBloquesLibres[j], bloqueLibre));
+			}
+		}
+
 	//Empaquetar bloques a guardar a los que esten en masBloquesLibres
-	//Desempaqutar notificacion success, que va a ser el numero de bloque. si falla, -1
+	//Desempaqutar notificacion success. si falla, -1
 		for (k = 0; k < cantNodosNecesarios; ++k){
 			printf("---nodo %d---\n", masBloquesLibres[k]);
 		}
 
-		if(mockNumeroBloqueAsignado != -1){ //Por cada bloque agrego sus valores para la tabla
+		if(success == 1){ //Por cada bloque agrego sus valores para la tabla
 			config_set_value(infoArchivo, "RUTA", rutaFinal);
 			config_set_value(infoArchivo, "TAMANIO", string_itoa(mockSizeArchivo));
-			for (k = 0; k < numeroCopiasBloque; ++k){
-				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(mb));
-				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,k), generarArrayBloque(masBloquesLibres[k], mockNumeroBloqueAsignado));
-			}
 		}
 
 
@@ -467,21 +481,23 @@ int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve
 
 	bitmap = bitarray_create_with_mode(espacioBitarray, cantBloques, LSB_FIRST);
 
+	fread(currentChar, 1, 1, bitmapFile);
 	while (!feof(bitmapFile)) {
-		fread(currentChar, 1, 1, bitmapFile);
-		if (strcmp(currentChar, "1")){
+		if (strcmp(currentChar, "1") == 0){
 			bitarray_set_bit(bitmap, posicion);
 			++bloquesLibres;
 		}
 		else
 			bitarray_clean_bit(bitmap, posicion);
 		++posicion;
+		fread(currentChar, 1, 1, bitmapFile);
 	}
 
-	/*while(posicion > 0){
-		printf("bit %d", bitarray_test_bit(bitmap,posicion));
-		--posicion;
-	} para verificar que lo lee bien */
+	int contador = 0;
+	while(contador < posicion){
+		printf("bit %d\n", bitarray_test_bit(bitmap,contador));
+		++contador;
+	} /*para verificar que lo lee bien */
 
 	free(pathParticular);
 	fclose(bitmapFile);

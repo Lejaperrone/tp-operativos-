@@ -50,14 +50,14 @@ void conectarseConFs() {
 void escucharAlFS(int socketFs){
 	respuesta pedido;
 	int bloqueOcupado = 1;
+	int bloqueMock;
+	int archivoMock;
 	while(1){
 		pedido = desempaquetar(socketFs);
-		int bloqueMock;
 		memcpy(&bloqueMock, pedido.envio, sizeof(int));
 		pedido = desempaquetar(socketFs);
-		int archivoMock;
 		memcpy(&archivoMock, pedido.envio, sizeof(int));
-		printf("la longitud es %d", bloqueMock);
+		printf("la longitud es %d\n", bloqueMock);
 		//bloqueOcupado = almacenarBloque(pedido.envio);
 		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &bloqueOcupado);
 		bloqueOcupado *= 3;
