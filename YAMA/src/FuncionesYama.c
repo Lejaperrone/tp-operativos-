@@ -18,6 +18,8 @@ int conectarseConFs() {
 	return socketFs;
 }
 
+void recibirArchivo();
+
 void levantarServidorYama(char* ip, int port) {
 	respuesta conexionNueva;
 	servidor = crearServidorAsociado(ip, port);
@@ -54,8 +56,8 @@ void levantarServidorYama(char* ip, int port) {
 
 						switch (idRecibido) {    //HANDSHAKE
 						case idMaster:
-							//recibirContenidoMaster();
-							recibirArchivo();
+							recibirContenidoMaster();
+							//recibirArchivo();
 							break;
 
 						}
@@ -78,14 +80,14 @@ void recibirContenidoMaster() {
 	solicitudTransformacion* solTransf =(solicitudTransformacion*) nuevoJob.envio;
 	log_trace(logger, "Me llego %d %d ", solTransf->rutaDatos.longitud,	solTransf->rutaResultado.longitud);
 
-	//rtaTransf  = solicitarInformacionAFS(solTransf);
+	rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);
 	// logica con respuesta a Master
 	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
 
 }
 
-/*respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solicitud){
+respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solicitud){
 	respuestaTransformacion* rtaTransf;
 	respuesta respuestaFs;
 
@@ -102,22 +104,14 @@ void recibirContenidoMaster() {
 		exit(1);
 	}
 	return rtaTransf;
-}*/
+}
 
 void recibirArchivo(){
-	respuesta archivo;
-	struct stat fileStat;
+	respuesta paquete;
 
-	archivo = desempaquetar(nuevoMaster);
+	paquete = desempaquetar(nuevoMaster);
+	string* archivo = (string*) paquete.envio;
+	char* hola = archivo->cadena;
 
-	printf("%d\n", archivo.idMensaje)
-
-	if(stat("/home/utnso/hola",&fileStat) < 0)
-		exit(1);
-
-
-	if (munmap(archivo.envio,fileStat.st_size) == 0)
-			printf("%s\n", "todo joya");
-		else
-			printf("%s\n", "todo no joya");
+	printf("%s\n", hola);
 }

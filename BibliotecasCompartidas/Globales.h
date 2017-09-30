@@ -15,7 +15,7 @@ sem_t pedidoFS;
 
 typedef struct string{
 	int longitud;
-	void* cadena;
+	char* cadena;
 }string;
 
 typedef enum {TRANSFORMACION, RED_LOCAL, RED_GLOBAL, ALM_FINAL}Etapa;
