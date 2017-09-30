@@ -149,38 +149,36 @@ respuesta desempaquetar(int socket){
 }
 //------SERIALIZACIONES PARTICULARES------//
 void* serializarString(void* paquete,int* tamanio){
-	string* cadena = malloc(sizeof(string));
-	cadena->cadena = paquete;
-	cadena->longitud = sizeof(paquete);
-	int longitudInt = sizeof(int);
-	*tamanio = sizeof(int)+cadena->longitud+1;
-	void* bloque = malloc(*tamanio);
-	int desplazamiento =0;
+ 	string* cadena = (string*)paquete;
+ 	int longitudInt = sizeof(int);
+ 	*tamanio = sizeof(int)+cadena->longitud+1;
+ 	void* bloque = malloc(*tamanio);
+ 	int desplazamiento =0;
 
-	memcpy(bloque, &cadena->longitud, longitudInt);
-	desplazamiento += longitudInt;
+ 	memcpy(bloque, &cadena->longitud, longitudInt);
+ 	desplazamiento += longitudInt;
 
-	memcpy(bloque+desplazamiento, cadena->cadena, cadena->longitud+1);
+ 	memcpy(bloque+desplazamiento, cadena->cadena, cadena->longitud+1);
 
-	return bloque;
-}
+ 	return bloque;
+ }
 
 string* deserializarString(int socket,int tamanio){
-	void* paquete = malloc(tamanio+1);
-	recv(socket,paquete,tamanio+1,0);
-	int longitudInt = sizeof(int);
-	string* cadena = malloc(sizeof(string));
-	int desplazamiento =0;
+ 	void* paquete = malloc(tamanio+1);
+ 	recv(socket,paquete,tamanio+1,0);
+ 	int longitudInt = sizeof(int);
+ 	string* cadena = malloc(sizeof(string));
+ 	int desplazamiento =0;
 
-	memcpy(&cadena->longitud,paquete, longitudInt);
-	desplazamiento += longitudInt;
+ 	memcpy(&cadena->longitud,paquete, longitudInt);
+ 	desplazamiento += longitudInt;
 
-	cadena->cadena = malloc(cadena->longitud+1);
+ 	cadena->cadena = malloc(cadena->longitud+1);
 
-	memcpy(cadena->cadena,paquete+desplazamiento, cadena->longitud+1);
+ 	memcpy(cadena->cadena,paquete+desplazamiento, cadena->longitud+1);
 
-	return cadena;
-}
+ 	return cadena;
+ }
 
 void* serializarSolicitudTransformacion(void* paquete,int* tamanio){
 	solicitudTransformacion* unaSolicitud = (solicitudTransformacion*)paquete;
