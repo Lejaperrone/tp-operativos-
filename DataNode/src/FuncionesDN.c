@@ -30,8 +30,8 @@ void enviarBloqueAFS(int numeroBloque) {
 
 }
 
-void setBloque(int numeroBloque, void* datos) {
-
+int setBloque(int numeroBloque, void* datos) {
+	return 1;
 }
 
 void conectarseConFs() {
@@ -52,15 +52,15 @@ void escucharAlFS(int socketFs){
 	int bloqueOcupado = 1;
 	int bloqueMock;
 	int archivoMock;
+	int success = 0;
 	while(1){
 		pedido = desempaquetar(socketFs);
 		memcpy(&bloqueMock, pedido.envio, sizeof(int));
 		pedido = desempaquetar(socketFs);
 		memcpy(&archivoMock, pedido.envio, sizeof(int));
 		printf("la longitud es %d\n", bloqueMock);
-		//bloqueOcupado = almacenarBloque(pedido.envio);
-		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &bloqueOcupado);
-		bloqueOcupado *= 3;
+		success = setBloque(bloqueMock, &archivoMock);
+		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &success);
 		sem_post(&pedidoFS);
 	}
 }

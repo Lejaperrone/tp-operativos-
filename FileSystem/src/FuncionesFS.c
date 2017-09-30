@@ -408,14 +408,17 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 
 			bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[nodoAUtilizar], infoAux.sizeNodo);
 
-			printf("bloque libre %d\n",bloqueLibre);
+			printf("bloque libre %d %d\n",bloqueLibre, indexNodoEnListaConectados[nodoAUtilizar]);
 			empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(int),&bloqueLibre );
 
 			empaquetar(infoAux.socket, mensajeEnvioArchivoANodo, sizeof(int),&mockSizeArchivo );
 
 			respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
 
+			memcpy(&success,respuestaPedidoAlmacenar.envio, sizeof(int));
+
 			if (success == 1){
+				setearBloqueOcupadoEnBitmap(indexNodoEnListaConectados[nodoAUtilizar], bloqueLibre);
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(mockSizeArchivo));
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(masBloquesLibres[j], bloqueLibre));
 			}
@@ -438,15 +441,30 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 
 }
 
+void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
+	informacionNodo* infoAux;
+	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
+	bitarray_set_bit(bitarrayNodo,numeroNodo);
+	//list_replace(bitmapsNodos, numeroNodo, bitarrayNodo);
+	infoAux = list_get(nodosConectados,numeroNodo);
+	printf("anterior %d\n", infoAux->bloquesOcupados);
+	++infoAux->bloquesOcupados;
+
+	bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
+
+	printf("actualizado %d\n", infoAux->bloquesOcupados);
+}
+
 char* generarArrayBloque(int numeroNodo, int numeroBloque){
 	return string_from_format("[NODO%d,%d]",numeroNodo ,numeroBloque);
 }
 
 int buscarPrimerBloqueLibre(int numeroNodo, int sizeNodo){
 	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
-	int i, numeroBloque = -1;
+	int i, numeroBloque = 1;
 	for (i = 0; i < sizeNodo; ++i){
-		if (bitarray_test_bit(bitarrayNodo,i)){
+		printf("testbit %d\n",bitarray_test_bit(bitarrayNodo,i));
+		if (bitarray_test_bit(bitarrayNodo,i) == 0){
 			numeroBloque = i;
 			break;
 		}
@@ -458,7 +476,7 @@ int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve
 	char* sufijo = ".bin";
 	t_bitarray* bitmap;
 
-	int bloquesLibres = 0;
+	int BloquesOcupados = 0;
 	int longitudPath = strlen(rutaBitmaps);
 	char* nombreNodo = string_from_format("NODO%d",numeroNodo);
 	int longitudNombre = strlen(nombreNodo);
@@ -485,7 +503,7 @@ int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve
 	while (!feof(bitmapFile)) {
 		if (strcmp(currentChar, "1") == 0){
 			bitarray_set_bit(bitmap, posicion);
-			++bloquesLibres;
+			++BloquesOcupados;
 		}
 		else
 			bitarray_clean_bit(bitmap, posicion);
@@ -504,7 +522,7 @@ int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve
 
 	list_add(bitmapsNodos,bitmap);
 
-	return bloquesLibres;
+	return BloquesOcupados;
 }
 
 void actualizarArchivoNodos(){
