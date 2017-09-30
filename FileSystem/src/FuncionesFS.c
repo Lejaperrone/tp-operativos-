@@ -367,7 +367,6 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 	int masBloquesLibres[numeroCopiasBloque];
 	int nodosEnUso[cantidadNodos];
 	int indexNodoEnListaConectados[numeroCopiasBloque];
-	pedidoAlmacenarArchivo pedido;
 
 	for (i = 0; i < cantidadNodos; ++i){
 		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
@@ -399,13 +398,11 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 			}
 		}
 		infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[j-1]);
-		pedido.bloque = buscarPrimerBloqueLibre(indexNodoEnListaConectados[j-1], infoAux.sizeNodo);
-		pedido.longitud = sizeof(int);
-		pedido.archivo = malloc(pedido.longitud);
-		memcpy(pedido.longitud, &mockSizeArchivo, pedido.longitud);
-		empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(int),&pedido );
+		bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[j-1], infoAux.sizeNodo);
+		empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(int),&bloqueLibre );
+		empaquetar(infoAux.socket, mensajeEnvioArchivoANodo, sizeof(int),&mockSizeArchivo );
 		respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
-		mockNumeroBloqueAsignado = *(int*)respuestaPedidoAlmacenar.envio;
+		mockNumeroBloqueAsignado = 1;//*(int*)respuestaPedidoAlmacenar.envio;
 	//Empaquetar bloques a guardar a los que esten en masBloquesLibres
 	//Desempaqutar notificacion success, que va a ser el numero de bloque. si falla, -1
 		for (k = 0; k < cantNodosNecesarios; ++k){
@@ -433,7 +430,7 @@ char* generarArrayBloque(int numeroNodo, int numeroBloque){
 
 int buscarPrimerBloqueLibre(int numeroNodo, int sizeNodo){
 	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
-	int i, numeroBloque;
+	int i, numeroBloque = -1;
 	for (i = 0; i < sizeNodo; ++i){
 		if (bitarray_test_bit(bitarrayNodo,i)){
 			numeroBloque = i;

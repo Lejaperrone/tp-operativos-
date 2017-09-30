@@ -52,6 +52,12 @@ void escucharAlFS(int socketFs){
 	int bloqueOcupado = 1;
 	while(1){
 		pedido = desempaquetar(socketFs);
+		int bloqueMock;
+		memcpy(&bloqueMock, pedido.envio, sizeof(int));
+		pedido = desempaquetar(socketFs);
+		int archivoMock;
+		memcpy(&archivoMock, pedido.envio, sizeof(int));
+		printf("la longitud es %d", bloqueMock);
 		//bloqueOcupado = almacenarBloque(pedido.envio);
 		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &bloqueOcupado);
 		bloqueOcupado *= 3;
