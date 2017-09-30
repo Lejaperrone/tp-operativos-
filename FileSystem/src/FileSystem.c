@@ -31,6 +31,7 @@ int cantBloques = 10;
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
 t_directory tablaDeDirectorios[100];
+char* rutaBitmaps = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
 char* rutaArchivos = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/";
 int cantidadDirectorios = 100;
 int numeroCopiasBloque = 2;
@@ -38,12 +39,14 @@ int numeroCopiasBloque = 2;
 t_log* loggerFS;
 int sizeTotalNodos = 0, nodosLibres = 0;
 t_list* nodosConectados;
+t_list* bitmapsNodos;
 extern sem_t pedidoFS;
 
 int main(void) {
 
 	sem_init(&pedidoFS,0,0);
 	nodosConectados = list_create();
+	bitmapsNodos = list_create();
 	int clienteYama = 0;
 	int servidorFS = crearSocket();
 	pthread_t hiloServidorFS, hiloConsolaFS, hiloConexionYama;

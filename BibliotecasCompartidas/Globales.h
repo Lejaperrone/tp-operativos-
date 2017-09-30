@@ -18,6 +18,12 @@ typedef struct string{
 	void* cadena;
 }string;
 
+typedef struct pedidoAlmacenarArchivo{
+	int longitud;
+	void* archivo;
+	int bloque;
+}pedidoAlmacenarArchivo;
+
 typedef enum {TRANSFORMACION, RED_LOCAL, RED_GLOBAL, ALM_FINAL}Etapa;
 
 typedef enum {EN_EJECUCION, ERROR, FINALIZADO_OK}Estado;

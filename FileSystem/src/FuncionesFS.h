@@ -34,6 +34,10 @@ int getIndexDirectorio(char* ruta);
 
 char* generarArrayNodos();
 
+int levantarBitmapNodo(int numeroNodo);
+
+int buscarPrimerBloqueLibre(int numeroNodo, int sizeNodo);
+
 void actualizarArchivoNodos();
 
 int nodoRepetido(informacionNodo info);

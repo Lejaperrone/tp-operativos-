@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <Configuracion.h>
-//#include <commons/bitarray.h>
+#include <commons/bitarray.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include "FuncionesFS.h"
@@ -31,8 +31,9 @@ extern t_log* loggerFS;
 extern int cantidadDirectorios;
 extern int cantBloques;
 extern int sizeTotalNodos, nodosLibres;
+extern t_list* bitmapsNodos;;
 extern t_list* nodosConectados;
-//extern t_bitarray* bitmap[cantDataNodes];
+extern char* rutaBitmaps;
 char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
 void inicializarTablaDirectorios(){
@@ -68,10 +69,8 @@ int getIndexDirectorio(char* ruta){
 	char** arrayPath = string_split(ruta, "/");
 	char* arrayComparador[100];
 	while(arrayPath[index] != NULL){ // separo por '/' la ruta en un array
-		printf("c------- %s\n",arrayPath[index]);
 		arrayComparador[index] = malloc(strlen(arrayPath[index]));
 		memcpy(arrayComparador[index],arrayPath[index],strlen(arrayPath[index]));
-		printf("d------- %s\n",arrayComparador[index]);
 		++index; // guardo cuantas partes tiene el array
 	}
 	indexFinal = index - 1;
@@ -288,6 +287,7 @@ void* levantarServidorFS(void* parametrosServidorFS){
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
 							if (nodoRepetido(info) == 0){
 								log_trace(loggerFS, "Conexion de DataNode\n");
+								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo);
 								info.socket = nuevoDataNode;
 								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
 								list_add(nodosConectados,paqueteInfoNodo.envio);
@@ -336,6 +336,7 @@ int nodoRepetido(informacionNodo info){
 
 void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 	int mockNumeroBloqueAsignado = 0;
+	respuesta respuestaPedidoAlmacenar;
 
 	char* ruta = buscarRutaArchivo(path);
 	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + 1);
@@ -356,7 +357,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 
 	//Busco la ruta donde tengo que guardar el archivo y lo dejo en blanco
 
-	int i, j, k, success = 1;
+	int i, j, k, success = 1, bloqueLibre = -1;
 	int cantNodosNecesarios = mockSizeArchivo/mb;
 	printf("nodos a usar %d\n",cantNodosNecesarios);
 	informacionNodo infoAux;
@@ -366,6 +367,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 	int masBloquesLibres[numeroCopiasBloque];
 	int nodosEnUso[cantidadNodos];
 	int indexNodoEnListaConectados[numeroCopiasBloque];
+	pedidoAlmacenarArchivo pedido;
 
 	for (i = 0; i < cantidadNodos; ++i){
 		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
@@ -396,8 +398,14 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 				}
 			}
 		}
-		infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[j]);
-		empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(informacionNodo),&infoAux );
+		infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[j-1]);
+		pedido.bloque = buscarPrimerBloqueLibre(indexNodoEnListaConectados[j-1], infoAux.sizeNodo);
+		pedido.longitud = sizeof(int);
+		pedido.archivo = malloc(pedido.longitud);
+		memcpy(pedido.longitud, &mockSizeArchivo, pedido.longitud);
+		empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(int),&pedido );
+		respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
+		mockNumeroBloqueAsignado = *(int*)respuestaPedidoAlmacenar.envio;
 	//Empaquetar bloques a guardar a los que esten en masBloquesLibres
 	//Desempaqutar notificacion success, que va a ser el numero de bloque. si falla, -1
 		for (k = 0; k < cantNodosNecesarios; ++k){
@@ -410,7 +418,6 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 			for (k = 0; k < numeroCopiasBloque; ++k){
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(mb));
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,k), generarArrayBloque(masBloquesLibres[k], mockNumeroBloqueAsignado));
-				++mockNumeroBloqueAsignado;
 			}
 		}
 
@@ -422,6 +429,69 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 
 char* generarArrayBloque(int numeroNodo, int numeroBloque){
 	return string_from_format("[NODO%d,%d]",numeroNodo ,numeroBloque);
+}
+
+int buscarPrimerBloqueLibre(int numeroNodo, int sizeNodo){
+	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
+	int i, numeroBloque;
+	for (i = 0; i < sizeNodo; ++i){
+		if (bitarray_test_bit(bitarrayNodo,i)){
+			numeroBloque = i;
+			break;
+		}
+	}
+	return numeroBloque;
+}
+
+int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve la cantidad de bloques libres en el nodo
+	char* sufijo = ".bin";
+	t_bitarray* bitmap;
+
+	int bloquesLibres = 0;
+	int longitudPath = strlen(rutaBitmaps);
+	char* nombreNodo = string_from_format("NODO%d",numeroNodo);
+	int longitudNombre = strlen(nombreNodo);
+	int longitudSufijo = strlen(sufijo);
+
+	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
+
+	char* espacioBitarray = malloc(cantBloques);
+	char* currentChar = malloc(sizeof(char));
+	int posicion = 0;
+
+	memcpy(pathParticular, rutaBitmaps, longitudPath);
+	memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
+	memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
+
+	printf("path %s", pathParticular);
+
+	FILE* bitmapFile = fopen(pathParticular, "r");
+
+
+	bitmap = bitarray_create_with_mode(espacioBitarray, cantBloques, LSB_FIRST);
+
+	while (!feof(bitmapFile)) {
+		fread(currentChar, 1, 1, bitmapFile);
+		if (strcmp(currentChar, "1")){
+			bitarray_set_bit(bitmap, posicion);
+			++bloquesLibres;
+		}
+		else
+			bitarray_clean_bit(bitmap, posicion);
+		++posicion;
+	}
+
+	/*while(posicion > 0){
+		printf("bit %d", bitarray_test_bit(bitmap,posicion));
+		--posicion;
+	} para verificar que lo lee bien */
+
+	free(pathParticular);
+	fclose(bitmapFile);
+
+	list_add(bitmapsNodos,bitmap);
+
+	return bloquesLibres;
 }
 
 void actualizarArchivoNodos(){

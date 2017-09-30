@@ -43,6 +43,14 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			bloque = malloc(tamanio);
 			memcpy(bloque,paquete,tamanio);
 			break;
+
+		case mensajeEnvioBloqueANodo:
+		case mensajeRespuestaEnvioBloqueANodo:
+			tamanio = sizeof(int);
+			bloque = malloc(tamanio);
+			memcpy(bloque,paquete,tamanio);
+			break;
+
 	}
 
 	cabecera.tamanio = tamanio;
@@ -102,6 +110,15 @@ respuesta desempaquetar(int socket){
 				recv(socket,bufferOk,sizeof(informacionNodo),0);
 				miRespuesta.envio = malloc(sizeof(informacionNodo));
 				memcpy(miRespuesta.envio, bufferOk, sizeof(informacionNodo));
+				free(bufferOk);
+				break;
+
+			case mensajeEnvioBloqueANodo:
+			case mensajeRespuestaEnvioBloqueANodo:
+				bufferOk = malloc(sizeof(int)); //mock. fijarse como hacer para saber la longitud de lo recibido
+				recv(socket,bufferOk,sizeof(int),0);
+				miRespuesta.envio = malloc(sizeof(int));
+				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
 				free(bufferOk);
 				break;
 

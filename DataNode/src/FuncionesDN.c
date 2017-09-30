@@ -22,7 +22,6 @@
 
 
 char* path = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
-extern t_bitarray* bitmap;
 int cantBloques = 50;
 extern struct configuracionNodo  config;
 extern sem_t pedidoFS;
@@ -31,7 +30,7 @@ void enviarBloqueAFS(int numeroBloque) {
 
 }
 
-void setearBloque(int numeroBloque, void* datos) {
+void setBloque(int numeroBloque, void* datos) {
 
 }
 
@@ -41,7 +40,7 @@ void conectarseConFs() {
 	conectarCon(direccion, socketFs, 3);
 	informacionNodo info;
 	info.sizeNodo = config.SIZE_NODO;
-	info.bloquesOcupados = levantarBitmap(config.NOMBRE_NODO);
+	info.bloquesOcupados = -1;//levantarBitmap(config.NOMBRE_NODO);
 	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO,4));
 	info.socket = -1;
 	empaquetar(socketFs, mensajeInformacionNodo, sizeof(informacionNodo),&info );
@@ -50,58 +49,13 @@ void conectarseConFs() {
 
 void escucharAlFS(int socketFs){
 	respuesta pedido;
-	int bloqueOcupado = 0;
+	int bloqueOcupado = 1;
 	while(1){
 		pedido = desempaquetar(socketFs);
+		//bloqueOcupado = almacenarBloque(pedido.envio);
 		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &bloqueOcupado);
+		bloqueOcupado *= 3;
 		sem_post(&pedidoFS);
 	}
-}
-
-
-int levantarBitmap(char* nombreNodo) { //levanta el bitmap y a la vez devuelve la cantidad de bloques libres en el nodo
-	char* sufijo = ".bin";
-
-	int bloquesLibres = 0;
-	int longitudPath = strlen(path);
-	int longitudNombre = strlen(nombreNodo);
-	int longitudSufijo = strlen(sufijo);
-
-	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
-
-	char* espacioBitarray = malloc(cantBloques);
-	char* currentChar = malloc(sizeof(char));
-	int posicion = 0;
-
-	memcpy(pathParticular, path, longitudPath);
-	memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
-	memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
-
-	printf("path %s", pathParticular);
-
-	FILE* bitmapFile = fopen(pathParticular, "r");
-
-
-	bitmap = bitarray_create_with_mode(espacioBitarray, cantBloques, LSB_FIRST);
-
-	while (!feof(bitmapFile)) {
-		fread(currentChar, 1, 1, bitmapFile);
-		if (strcmp(currentChar, "1")){
-			bitarray_set_bit(bitmap, posicion);
-			++bloquesLibres;
-		}
-		else
-			bitarray_clean_bit(bitmap, posicion);
-		++posicion;
-	}
-
-	/*while(posicion > 0){
-		printf("bit %d", bitarray_test_bit(bitmap,posicion));
-		--posicion;
-	} para verificar que lo lee bien */
-
-	free(pathParticular);
-	fclose(bitmapFile);
-	return bloquesLibres;
 }
 
