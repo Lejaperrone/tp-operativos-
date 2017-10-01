@@ -334,8 +334,9 @@ int nodoRepetido(informacionNodo info){
 	return repetido;
 }
 
-void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
+void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesarios, char* mapeosArchivo[cantNodosNecesarios]){
 	int mockNumeroBloqueAsignado = 0;
+	int mockSizeArchivo = 2*mb;
 	respuesta respuestaPedidoAlmacenar;
 
 	char* ruta = buscarRutaArchivo(path);
@@ -351,6 +352,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 
 	printf("----ruta final    %s\n", rutaFinal);
 
+
 	FILE* archivos = fopen(rutaFinal, "wb+");
 	fclose(archivos); //para dejarlo vacio
 
@@ -360,7 +362,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 
 	int i, j, k, success = 1, bloqueLibre = -1;
 	int nodoAUtilizar = -1;
-	int cantNodosNecesarios = mockSizeArchivo/mb;
+
 	printf("nodos a usar %d\n",cantNodosNecesarios);
 	informacionNodo infoAux;
 	int cantidadNodos = list_size(nodosConectados);
@@ -413,7 +415,9 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 			printf("bloque libre %d %d\n",bloqueLibre, infoAux.numeroNodo);
 			empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(int),&bloqueLibre );
 
-			empaquetar(infoAux.socket, mensajeEnvioArchivoANodo, sizeof(int),&mockSizeArchivo );
+			//empaquetar(infoAux.socket, mensajeEnvioArchivoANodo, strlen(mapeosArchivo[i]),mapeosArchivo[i] );
+
+			empaquetar(infoAux.socket, mensajeArchivo, strlen(mapeosArchivo[i]), mapeosArchivo[i]);
 
 			respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
 

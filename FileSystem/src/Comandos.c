@@ -56,7 +56,40 @@ int copiarArchivo(char* comando){
 
 	nombre = string_reverse(nombre);
 
-	guardarEnNodos(rutaFS, nombre, tipo, mockSizeArchivo);
+	printf("ruta normal %s\n", rutaNormal);
+
+	struct stat fileStat;
+	if(stat(rutaNormal,&fileStat) < 0)
+		exit(1);
+
+	int fd = open(rutaNormal,O_RDWR);
+	int size = fileStat.st_size;
+
+	printf("size archivo %d\n", size);
+
+	int sizeAux = size;
+	int cantNodosNecesarios = 0;
+
+	while(sizeAux > 0){
+		sizeAux -= mb;
+		++cantNodosNecesarios;
+	}
+
+	char* mapeosArchivo[cantNodosNecesarios];
+
+	printf("size archivo %d\n", size);
+
+
+	int sizeUltimoNodo = sizeAux*-1;
+
+	int i;
+	for(i = 0; i < cantNodosNecesarios-1; ++i){
+		mapeosArchivo[i] = mmap(0,mb,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_SHARED,fd,mb*i);
+		printf("tamaño particion %d\n", strlen(mapeosArchivo[i]));
+	}
+	mapeosArchivo[i] = mmap(0,sizeUltimoNodo,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_SHARED,fd,mb*i+1);
+
+	guardarEnNodos(rutaFS, nombre, tipo, cantNodosNecesarios, mapeosArchivo);
 
 	free(tipo);
 	free(nombre);

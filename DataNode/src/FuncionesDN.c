@@ -52,14 +52,14 @@ void escucharAlFS(int socketFs){
 	respuesta pedido;
 	int bloqueOcupado = 1;
 	int bloqueMock;
-	int archivoMock;
+	char* archivoMock;
 	int success = 0;
 	while(1){
 		pedido = desempaquetar(socketFs);
 		memcpy(&bloqueMock, pedido.envio, sizeof(int));
 		pedido = desempaquetar(socketFs);
-		memcpy(&archivoMock, pedido.envio, sizeof(int));
-		printf("la longitud es %d\n", bloqueMock);
+		memcpy(archivoMock, pedido.envio, strlen(pedido.envio));
+		printf("la longitud es %s\n", archivoMock);
 		success = setBloque(bloqueMock, &archivoMock);
 		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &success);
 		sem_post(&pedidoFS);
