@@ -42,6 +42,7 @@ void conectarseConFs() {
 	info.sizeNodo = config.SIZE_NODO;
 	info.bloquesOcupados = -1;//levantarBitmap(config.NOMBRE_NODO);
 	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO,4));
+	printf("soy el nodo %d\n", info.numeroNodo);
 	info.socket = -1;
 	empaquetar(socketFs, mensajeInformacionNodo, sizeof(informacionNodo),&info );
 	escucharAlFS(socketFs);

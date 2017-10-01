@@ -49,3 +49,5 @@ char* generarArrayBloque(int numeroNodo, int numeroBloque);
 void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo);
 
 void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
+
+void actualizarBitmapNodo(int numeroNodo);
