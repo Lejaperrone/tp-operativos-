@@ -148,7 +148,7 @@ respuesta desempaquetar(int socket){
 	return miRespuesta;
 }
 //------SERIALIZACIONES PARTICULARES------//
-void* serializarString(void* paquete,int* tamanio){
+void* serializarString(void* paquete,int *tamanio){
  	string* cadena = (string*)paquete;
  	int longitudInt = sizeof(int);
  	*tamanio = sizeof(int)+cadena->longitud+1;
@@ -174,7 +174,6 @@ string* deserializarString(int socket,int tamanio){
  	desplazamiento += longitudInt;
 
  	cadena->cadena = malloc(cadena->longitud+1);
-
  	memcpy(cadena->cadena,paquete+desplazamiento, cadena->longitud+1);
 
  	return cadena;

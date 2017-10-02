@@ -48,7 +48,7 @@ typedef struct{
 void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete);
 respuesta desempaquetar(int socket);
 
-void* serializarString(void* paquete,int* tamanio);
+void* serializarString(void* paquete,int *tamanio);
 string* deserializarString(int socket,int tamanio);
 
 void* serializarSolicitudTransformacion(void* paquete,int* tamanio);

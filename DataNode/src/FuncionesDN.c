@@ -50,21 +50,21 @@ void conectarseConFs() {
 
 void escucharAlFS(int socketFs){
 	respuesta pedido;
-	int bloqueOcupado = 1;
+	respuesta pedido2;
 	int bloqueMock;
-	char* archivoMock = malloc(mb);
+	//char* archivoMock = malloc(mb);
 	int success = 0;
 	char* envio;
 	while(1){
 		pedido = desempaquetar(socketFs);
 		memcpy(&bloqueMock, pedido.envio, sizeof(int));
-		pedido = desempaquetar(socketFs);
+		pedido2 = desempaquetar(socketFs);
 		//memcpy(archivoMock, pedido.envio, strlen(pedido.envio));
-		string* archivo = (string*) pedido.envio;
+		string* archivo = (string*) pedido2.envio;
 		envio = archivo->cadena;
 		printf("El bloque tiene %s\n", envio);
 		success = setBloque(bloqueMock, envio);
-		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &success);
+		//empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &success);
 		sem_post(&pedidoFS);
 	}
 }

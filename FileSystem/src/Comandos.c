@@ -65,34 +65,13 @@ int copiarArchivo(char* comando){
 	int fd = open(rutaNormal,O_RDWR);
 	int size = fileStat.st_size;
 
-	printf("size archivo %d\n", size);
+	string* mapeoArchivo;
 
-	int sizeAux = size;
-	int cantNodosNecesarios = 0;
+	mapeoArchivo = malloc(sizeof(string));
+	mapeoArchivo->cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
+	mapeoArchivo->longitud = size;
 
-	while(sizeAux > 0){
-		sizeAux -= mb;
-		++cantNodosNecesarios;
-	}
-
-	string* mapeosArchivo[cantNodosNecesarios];
-
-
-
-	int sizeUltimoNodo = sizeAux+mb;
-	printf("size archivo %d\n", sizeUltimoNodo);
-
-	int i = 0;
-	for(i = 0; i < cantNodosNecesarios-1; ++i){
-		mapeosArchivo[i] = malloc(sizeof(string));
-		mapeosArchivo[i]->cadena = mmap(0,mb,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_SHARED,fd,mb*i);
-		mapeosArchivo[i]->longitud = mb;
-	}
-	mapeosArchivo[i] = malloc(sizeof(string));
-	mapeosArchivo[i]->cadena = mmap(0,sizeUltimoNodo,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_SHARED,fd,mb*i);
-	mapeosArchivo[i]->longitud = sizeUltimoNodo;
-
-	guardarEnNodos(rutaFS, nombre, tipo, cantNodosNecesarios, mapeosArchivo);
+	guardarEnNodos(rutaFS, nombre, tipo, mapeoArchivo);
 
 	free(tipo);
 	free(nombre);

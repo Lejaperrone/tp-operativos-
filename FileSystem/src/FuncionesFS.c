@@ -334,7 +334,7 @@ int nodoRepetido(informacionNodo info){
 	return repetido;
 }
 
-void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesarios, string* mapeosArchivo[cantNodosNecesarios]){
+void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int mockNumeroBloqueAsignado = 0;
 	int mockSizeArchivo = 2*mb;
 	respuesta respuestaPedidoAlmacenar;
@@ -351,6 +351,18 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesario
 	memcpy(rutaFinal + strlen(ruta) + 1 + strlen(nombre), tipo, strlen(tipo));
 
 	printf("----ruta final    %s\n", rutaFinal);
+
+	int sizeAux = mapeoArchivo->longitud;
+	int cantNodosNecesarios = 0;
+
+	while(sizeAux > 0){
+		sizeAux -= mb;
+		++cantNodosNecesarios;
+	}
+
+	string* mapeosArchivo;
+
+	int sizeUltimoNodo = sizeAux+mb;
 
 
 	FILE* archivos = fopen(rutaFinal, "wb+");
@@ -371,6 +383,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesario
 	int masBloquesLibres[numeroCopiasBloque];
 	int nodosEnUso[cantidadNodos];
 	int indexNodoEnListaConectados[numeroCopiasBloque];
+	string* particion[cantNodosNecesarios];
 
 	for (i = 0; i < cantidadNodos; ++i){
 		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
@@ -412,21 +425,30 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesario
 
 			bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[nodoAUtilizar], infoAux.sizeNodo);
 
-			printf("bloque libre %d %d\n",bloqueLibre, infoAux.numeroNodo);
 			empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(int),&bloqueLibre );
 
 			//empaquetar(infoAux.socket, mensajeEnvioArchivoANodo, strlen(mapeosArchivo[i]),mapeosArchivo[i] );
 
-			printf("envio %s\n", mapeosArchivo[i]->cadena);
-			empaquetar(infoAux.socket, mensajeArchivo, mapeosArchivo[i]->longitud, mapeosArchivo[i]);
+			particion[i] = malloc(sizeof(string));
+			particion[i]->cadena = mapeoArchivo->cadena + mb*i;
+			//printf("envio %d\n", strlen(particion[i]));
+			if (i == cantNodosNecesarios-1){
+				particion[i]->longitud = sizeUltimoNodo;
+				empaquetar(infoAux.socket, mensajeArchivo, sizeUltimoNodo,particion[i]);
+			}
+			else{
+				particion[i]->longitud = mb;
+				empaquetar(infoAux.socket, mensajeArchivo, mb,particion[i]);
+			}
 
-			respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
+			printf("bloque libre %d %d\n",bloqueLibre, infoAux.numeroNodo);
+			//respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
 
-			memcpy(&success,respuestaPedidoAlmacenar.envio, sizeof(int));
+			//memcpy(&success,respuestaPedidoAlmacenar.envio, sizeof(int));
 
 			if (success == 1){
 				setearBloqueOcupadoEnBitmap(indexNodoEnListaConectados[nodoAUtilizar], bloqueLibre);
-				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(mapeosArchivo[i]->longitud));
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(particion[i]->longitud));
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(masBloquesLibres[j], bloqueLibre));
 			}
 		}
