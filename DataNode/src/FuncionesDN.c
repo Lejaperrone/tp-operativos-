@@ -19,7 +19,7 @@
 #include <stdbool.h>
 #include <commons/string.h>
 
-
+#define mb 1048576
 
 char* path = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
 int cantBloques = 50;
@@ -52,15 +52,18 @@ void escucharAlFS(int socketFs){
 	respuesta pedido;
 	int bloqueOcupado = 1;
 	int bloqueMock;
-	char* archivoMock;
+	char* archivoMock = malloc(mb);
 	int success = 0;
+	char* envio;
 	while(1){
 		pedido = desempaquetar(socketFs);
 		memcpy(&bloqueMock, pedido.envio, sizeof(int));
 		pedido = desempaquetar(socketFs);
-		memcpy(archivoMock, pedido.envio, strlen(pedido.envio));
-		printf("la longitud es %s\n", archivoMock);
-		success = setBloque(bloqueMock, &archivoMock);
+		//memcpy(archivoMock, pedido.envio, strlen(pedido.envio));
+		string* archivo = (string*) pedido.envio;
+		envio = archivo->cadena;
+		printf("El bloque tiene %s\n", envio);
+		success = setBloque(bloqueMock, envio);
 		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &success);
 		sem_post(&pedidoFS);
 	}

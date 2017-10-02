@@ -46,7 +46,7 @@ void atenderSolicitudYama(int socketYama, void* envio);
 
 char* generarArrayBloque(int numeroNodo, int numeroBloque);
 
-void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesarios, char* mapeosArchivo[cantNodosNecesarios]);
+void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesarios, string* mapeosArchivo[cantNodosNecesarios]);
 
 void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
 

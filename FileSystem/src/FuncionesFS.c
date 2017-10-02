@@ -334,7 +334,7 @@ int nodoRepetido(informacionNodo info){
 	return repetido;
 }
 
-void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesarios, char* mapeosArchivo[cantNodosNecesarios]){
+void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesarios, string* mapeosArchivo[cantNodosNecesarios]){
 	int mockNumeroBloqueAsignado = 0;
 	int mockSizeArchivo = 2*mb;
 	respuesta respuestaPedidoAlmacenar;
@@ -377,15 +377,15 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesario
 		bloquesLibreNodo[i] = infoAux.sizeNodo-infoAux.bloquesOcupados;
 		indexNodos[i] = infoAux.numeroNodo;
 		indexNodoEnListaConectados[i] = i;
-		printf("guarde el nodo %d\n", indexNodos[i]);
+		printf("bloques libres %d\n", bloquesLibreNodo[i]);
 	}
 
 	for (i = 0; i < cantNodosNecesarios; ++i){	//Primer for: itera por cada bloque que ocupa el archivo
 		printf("--%d\n",cantNodosNecesarios);	//Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
-		for (j = 0; j < cantNodosNecesarios; ++j) {	// y se queda con la cantidad de nodos por copia que cumplan con ese
+		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
 			masBloquesLibres[j] = -1;				//criterio
+		for (j = 0; j < cantidadNodos; ++j)
 			nodosEnUso[j] = 0;
-		}
 		for (j = 0; j < cantidadNodos; ++j){
 			for (k = 0; k < numeroCopiasBloque; ++k){
 				if (nodosEnUso[j] != 1){
@@ -417,7 +417,8 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesario
 
 			//empaquetar(infoAux.socket, mensajeEnvioArchivoANodo, strlen(mapeosArchivo[i]),mapeosArchivo[i] );
 
-			empaquetar(infoAux.socket, mensajeArchivo, strlen(mapeosArchivo[i]), mapeosArchivo[i]);
+			printf("envio %s\n", mapeosArchivo[i]->cadena);
+			empaquetar(infoAux.socket, mensajeArchivo, mapeosArchivo[i]->longitud, mapeosArchivo[i]);
 
 			respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
 
@@ -425,7 +426,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int cantNodosNecesario
 
 			if (success == 1){
 				setearBloqueOcupadoEnBitmap(indexNodoEnListaConectados[nodoAUtilizar], bloqueLibre);
-				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(mockSizeArchivo));
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(mapeosArchivo[i]->longitud));
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(masBloquesLibres[j], bloqueLibre));
 			}
 		}
