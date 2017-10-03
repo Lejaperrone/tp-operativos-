@@ -30,7 +30,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeArchivo:
-			serializarString(paquete,&tamanio);
+			bloque = serializarString(paquete,&tamanio);
 			break;
 
 		case mensajeSolicitudTransformacion:
@@ -40,6 +40,25 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 		case mensajeInformacionNodo:
 			tamanio = sizeof(informacionNodo);
+			bloque = malloc(tamanio);
+			memcpy(bloque,paquete,tamanio);
+			break;
+
+		case mensajeEnvioBloqueANodo:
+			tamanio = sizeof(int);
+			bloque = malloc(tamanio);
+			memcpy(bloque,paquete,tamanio);
+			break;
+
+		case mensajeRespuestaEnvioArchivoANodo:
+		case mensajeRespuestaEnvioBloqueANodo:
+			tamanio = sizeof(int);
+			bloque = malloc(tamanio);
+			memcpy(bloque,paquete,tamanio);
+			break;
+
+		case mensajeEnvioArchivoANodo:
+			tamanio = tamanioS;
 			bloque = malloc(tamanio);
 			memcpy(bloque,paquete,tamanio);
 			break;
@@ -72,6 +91,7 @@ respuesta desempaquetar(int socket){
 		miRespuesta.idMensaje = cabecera->idMensaje;
 		switch (miRespuesta.idMensaje) {
 
+			case mensajeEnvioBloqueANodo:
 			case mensajeHandshake:
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);
@@ -81,7 +101,7 @@ respuesta desempaquetar(int socket){
 				break;
 
 			case mensajeArchivo:
-				deserializarString(socket,cabecera->tamanio);
+				miRespuesta.envio = deserializarString(socket,cabecera->tamanio);
 				break;
 
 			case mensajeInfoArchivo://todo
@@ -105,42 +125,59 @@ respuesta desempaquetar(int socket){
 				free(bufferOk);
 				break;
 
+			case mensajeRespuestaEnvioArchivoANodo:
+			case mensajeRespuestaEnvioBloqueANodo:
+				bufferOk = malloc(sizeof(int));
+				recv(socket,bufferOk,sizeof(int),0);
+				miRespuesta.envio = malloc(sizeof(int));
+				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
+				free(bufferOk);
+				break;
+
+			case mensajeEnvioArchivoANodo:
+				bufferOk = malloc(cabecera->tamanio);
+				recv(socket,bufferOk,cabecera->tamanio,0);
+				miRespuesta.envio = malloc(cabecera->tamanio);
+				memcpy(miRespuesta.envio, bufferOk, cabecera->tamanio);
+				free(bufferOk);
+				break;
+
+
 		}
 	}
 	return miRespuesta;
 }
 //------SERIALIZACIONES PARTICULARES------//
-void* serializarString(void* paquete,int* tamanio){
-	string* cadena = (string*)paquete;
-	int longitudInt = sizeof(int);
-	*tamanio = sizeof(int)+cadena->longitud+1;
-	void* bloque = malloc(*tamanio);
-	int desplazamiento =0;
+void* serializarString(void* paquete,int *tamanio){
+ 	string* cadena = (string*)paquete;
+ 	int longitudInt = sizeof(int);
+ 	*tamanio = sizeof(int)+cadena->longitud+1;
+ 	void* bloque = malloc(*tamanio);
+ 	int desplazamiento =0;
 
-	memcpy(bloque, &cadena->longitud, longitudInt);
-	desplazamiento += longitudInt;
+ 	memcpy(bloque, &cadena->longitud, longitudInt);
+ 	desplazamiento += longitudInt;
 
-	memcpy(bloque+desplazamiento, cadena->cadena, cadena->longitud+1);
+ 	memcpy(bloque+desplazamiento, cadena->cadena, cadena->longitud+1);
 
-	return bloque;
-}
+ 	return bloque;
+ }
 
 string* deserializarString(int socket,int tamanio){
-	void* paquete = malloc(tamanio+1);
-	recv(socket,paquete,tamanio+1,0);
-	int longitudInt = sizeof(int);
-	string* cadena = malloc(sizeof(string));
-	int desplazamiento =0;
+ 	void* paquete = malloc(tamanio+1);
+ 	recv(socket,paquete,tamanio+1,0);
+ 	int longitudInt = sizeof(int);
+ 	string* cadena = malloc(sizeof(string));
+ 	int desplazamiento =0;
 
-	memcpy(&cadena->longitud,paquete, longitudInt);
-	desplazamiento += longitudInt;
+ 	memcpy(&cadena->longitud,paquete, longitudInt);
+ 	desplazamiento += longitudInt;
 
-	cadena->cadena = malloc(cadena->longitud+1);
+ 	cadena->cadena = malloc(cadena->longitud+1);
+ 	memcpy(cadena->cadena,paquete+desplazamiento, cadena->longitud+1);
 
-	memcpy(cadena->cadena,paquete+desplazamiento, cadena->longitud+1);
-
-	return cadena;
-}
+ 	return cadena;
+ }
 
 void* serializarSolicitudTransformacion(void* paquete,int* tamanio){
 	solicitudTransformacion* unaSolicitud = (solicitudTransformacion*)paquete;

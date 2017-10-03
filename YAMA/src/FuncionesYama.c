@@ -6,6 +6,10 @@
  */
 #include "FuncionesYama.h"
 #include <stdio.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 int conectarseConFs() {
 	int socketFs = crearSocket();
@@ -13,6 +17,8 @@ int conectarseConFs() {
 	conectarCon(direccion, socketFs, 1);
 	return socketFs;
 }
+
+void recibirArchivo();
 
 void levantarServidorYama(char* ip, int port) {
 	respuesta conexionNueva;
@@ -51,7 +57,9 @@ void levantarServidorYama(char* ip, int port) {
 						switch (idRecibido) {    //HANDSHAKE
 						case idMaster:
 							recibirContenidoMaster();
+							//recibirArchivo();
 							break;
+
 						}
 					}
 				} else {
@@ -96,4 +104,14 @@ respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solici
 		exit(1);
 	}
 	return rtaTransf;
+}
+
+void recibirArchivo(){
+	respuesta paquete;
+
+	paquete = desempaquetar(nuevoMaster);
+	string* archivo = (string*) paquete.envio;
+	char* hola = archivo->cadena;
+
+	printf("%s\n", hola);
 }

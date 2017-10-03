@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <Configuracion.h>
-//#include <commons/bitarray.h>
+#include <commons/bitarray.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include "FuncionesFS.h"
@@ -31,9 +31,10 @@ extern t_log* loggerFS;
 extern int cantidadDirectorios;
 extern int cantBloques;
 extern int sizeTotalNodos, nodosLibres;
+extern t_list* bitmapsNodos;;
 extern t_list* nodosConectados;
-//extern t_bitarray* bitmap[cantDataNodes];
-char* pathArchivoDirectorios = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+extern char* rutaBitmaps;
+char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
 void inicializarTablaDirectorios(){
 	int i;
@@ -68,10 +69,8 @@ int getIndexDirectorio(char* ruta){
 	char** arrayPath = string_split(ruta, "/");
 	char* arrayComparador[100];
 	while(arrayPath[index] != NULL){ // separo por '/' la ruta en un array
-		printf("c------- %s\n",arrayPath[index]);
 		arrayComparador[index] = malloc(strlen(arrayPath[index]));
 		memcpy(arrayComparador[index],arrayPath[index],strlen(arrayPath[index]));
-		printf("d------- %s\n",arrayComparador[index]);
 		++index; // guardo cuantas partes tiene el array
 	}
 	indexFinal = index - 1;
@@ -287,7 +286,10 @@ void* levantarServidorFS(void* parametrosServidorFS){
 							paqueteInfoNodo = desempaquetar(nuevoDataNode);
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
 							if (nodoRepetido(info) == 0){
-								log_trace(loggerFS, "Conexion de DataNode\n");
+								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
+								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo);
+								info.socket = nuevoDataNode;
+								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
 								list_add(nodosConectados,paqueteInfoNodo.envio);
 								cantidadNodos = list_size(nodosConectados);
 								actualizarArchivoNodos();
@@ -332,8 +334,10 @@ int nodoRepetido(informacionNodo info){
 	return repetido;
 }
 
-void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
+void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int mockNumeroBloqueAsignado = 0;
+	int mockSizeArchivo = 2*mb;
+	respuesta respuestaPedidoAlmacenar;
 
 	char* ruta = buscarRutaArchivo(path);
 	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + 1);
@@ -344,8 +348,22 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 	memcpy(rutaFinal, ruta, strlen(ruta));
 	memcpy(rutaFinal + strlen(ruta), "/", 1);
 	memcpy(rutaFinal + strlen(ruta) + 1, nombre, strlen(nombre));
+	memcpy(rutaFinal + strlen(ruta) + 1 + strlen(nombre), tipo, strlen(tipo));
 
 	printf("----ruta final    %s\n", rutaFinal);
+
+	int sizeAux = mapeoArchivo->longitud;
+	int cantNodosNecesarios = 0;
+
+	while(sizeAux > 0){
+		sizeAux -= mb;
+		++cantNodosNecesarios;
+	}
+
+	string* mapeosArchivo;
+
+	int sizeUltimoNodo = sizeAux+mb;
+
 
 	FILE* archivos = fopen(rutaFinal, "wb+");
 	fclose(archivos); //para dejarlo vacio
@@ -354,8 +372,9 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 
 	//Busco la ruta donde tengo que guardar el archivo y lo dejo en blanco
 
-	int i, j, k, success = 1;
-	int cantNodosNecesarios = mockSizeArchivo/mb;
+	int i, j, k, success = 1, bloqueLibre = -1;
+	int nodoAUtilizar = -1;
+
 	printf("nodos a usar %d\n",cantNodosNecesarios);
 	informacionNodo infoAux;
 	int cantidadNodos = list_size(nodosConectados);
@@ -364,20 +383,22 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 	int masBloquesLibres[numeroCopiasBloque];
 	int nodosEnUso[cantidadNodos];
 	int indexNodoEnListaConectados[numeroCopiasBloque];
+	string* particion[cantNodosNecesarios];
 
 	for (i = 0; i < cantidadNodos; ++i){
 		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
 		bloquesLibreNodo[i] = infoAux.sizeNodo-infoAux.bloquesOcupados;
 		indexNodos[i] = infoAux.numeroNodo;
 		indexNodoEnListaConectados[i] = i;
+		printf("bloques libres %d\n", bloquesLibreNodo[i]);
 	}
 
 	for (i = 0; i < cantNodosNecesarios; ++i){	//Primer for: itera por cada bloque que ocupa el archivo
 		printf("--%d\n",cantNodosNecesarios);	//Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
-		for (j = 0; j < cantNodosNecesarios; ++j) {	// y se queda con la cantidad de nodos por copia que cumplan con ese
+		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
 			masBloquesLibres[j] = -1;				//criterio
+		for (j = 0; j < cantidadNodos; ++j)
 			nodosEnUso[j] = 0;
-		}
 		for (j = 0; j < cantidadNodos; ++j){
 			for (k = 0; k < numeroCopiasBloque; ++k){
 				if (nodosEnUso[j] != 1){
@@ -394,20 +415,53 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 				}
 			}
 		}
+		for (j = 0; j < numeroCopiasBloque; ++j){
+			for (k = 0; k < cantidadNodos; ++k)
+				if(masBloquesLibres[j] ==  indexNodos[k]){
+					nodoAUtilizar = k;
+				}
+			infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[nodoAUtilizar]);
+			printf("le mando el bloque a %d\n", infoAux.numeroNodo);
+
+			bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[nodoAUtilizar], infoAux.sizeNodo);
+
+			empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(int),&bloqueLibre );
+
+			//empaquetar(infoAux.socket, mensajeEnvioArchivoANodo, strlen(mapeosArchivo[i]),mapeosArchivo[i] );
+
+			particion[i] = malloc(sizeof(string));
+			particion[i]->cadena = mapeoArchivo->cadena + mb*i;
+			//printf("envio %d\n", strlen(particion[i]));
+			if (i == cantNodosNecesarios-1){
+				particion[i]->longitud = sizeUltimoNodo;
+				empaquetar(infoAux.socket, mensajeArchivo, sizeUltimoNodo,particion[i]);
+			}
+			else{
+				particion[i]->longitud = mb;
+				empaquetar(infoAux.socket, mensajeArchivo, mb,particion[i]);
+			}
+
+			printf("bloque libre %d %d\n",bloqueLibre, infoAux.numeroNodo);
+			//respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
+
+			//memcpy(&success,respuestaPedidoAlmacenar.envio, sizeof(int));
+
+			if (success == 1){
+				setearBloqueOcupadoEnBitmap(indexNodoEnListaConectados[nodoAUtilizar], bloqueLibre);
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(particion[i]->longitud));
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(masBloquesLibres[j], bloqueLibre));
+			}
+		}
+
 	//Empaquetar bloques a guardar a los que esten en masBloquesLibres
-	//Desempaqutar notificacion success, que va a ser el numero de bloque. si falla, -1
+	//Desempaqutar notificacion success. si falla, -1
 		for (k = 0; k < cantNodosNecesarios; ++k){
 			printf("---nodo %d---\n", masBloquesLibres[k]);
 		}
 
-		if(mockNumeroBloqueAsignado != -1){ //Por cada bloque agrego sus valores para la tabla
+		if(success == 1){ //Por cada bloque agrego sus valores para la tabla
 			config_set_value(infoArchivo, "RUTA", rutaFinal);
 			config_set_value(infoArchivo, "TAMANIO", string_itoa(mockSizeArchivo));
-			for (k = 0; k < numeroCopiasBloque; ++k){
-				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(mb));
-				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,k), generarArrayBloque(masBloquesLibres[k], mockNumeroBloqueAsignado));
-				++mockNumeroBloqueAsignado;
-			}
 		}
 
 
@@ -416,8 +470,114 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo){
 
 }
 
+void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
+	informacionNodo* infoAux;
+	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
+	bitarray_set_bit(bitarrayNodo,bloqueLibre);
+	infoAux = list_get(nodosConectados,numeroNodo);
+	++infoAux->bloquesOcupados;
+	actualizarBitmapNodo(numeroNodo);
+}
+
+void actualizarBitmapNodo(int numeroNodo){
+	char* sufijo = ".bin";
+	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
+	informacionNodo infoAux = *(informacionNodo*)list_get(nodosConectados,numeroNodo);
+
+	int i;
+	int longitudPath = strlen(rutaBitmaps);
+	char* nombreNodo = string_from_format("NODO%d",infoAux.numeroNodo);
+	int longitudNombre = strlen(nombreNodo);
+	int longitudSufijo = strlen(sufijo);
+
+	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
+
+	memcpy(pathParticular, rutaBitmaps, longitudPath);
+	memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
+	memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
+
+	printf("--path-- %s\n", pathParticular);
+
+	FILE* archivoBitmap = fopen(pathParticular, "wb+");
+
+	for (i = 0; i < infoAux.sizeNodo; ++i){
+		if (bitarray_test_bit(bitarrayNodo,i) == 0)
+			fwrite("0",1,1,archivoBitmap);
+		else
+			fwrite("1",1,1,archivoBitmap);
+	}
+	fclose(archivoBitmap);
+	free(pathParticular);
+}
+
 char* generarArrayBloque(int numeroNodo, int numeroBloque){
 	return string_from_format("[NODO%d,%d]",numeroNodo ,numeroBloque);
+}
+
+int buscarPrimerBloqueLibre(int numeroNodo, int sizeNodo){
+	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
+	int i, numeroBloque = 1;
+	for (i = 0; i < sizeNodo; ++i){
+		printf("testbit %d\n",bitarray_test_bit(bitarrayNodo,i));
+		if (bitarray_test_bit(bitarrayNodo,i) == 0){
+			numeroBloque = i;
+			break;
+		}
+	}
+	return numeroBloque;
+}
+
+int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve la cantidad de bloques libres en el nodo
+	char* sufijo = ".bin";
+	t_bitarray* bitmap;
+
+	int BloquesOcupados = 0;
+	int longitudPath = strlen(rutaBitmaps);
+	char* nombreNodo = string_from_format("NODO%d",numeroNodo);
+	int longitudNombre = strlen(nombreNodo);
+	int longitudSufijo = strlen(sufijo);
+
+	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
+
+	char* espacioBitarray = malloc(cantBloques);
+	char* currentChar = malloc(sizeof(char));
+	int posicion = 0;
+
+	memcpy(pathParticular, rutaBitmaps, longitudPath);
+	memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
+	memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
+
+	printf("path %s", pathParticular);
+
+	FILE* bitmapFile = fopen(pathParticular, "r");
+
+
+	bitmap = bitarray_create_with_mode(espacioBitarray, cantBloques, LSB_FIRST);
+
+	fread(currentChar, 1, 1, bitmapFile);
+	while (!feof(bitmapFile)) {
+		if (strcmp(currentChar, "1") == 0){
+			bitarray_set_bit(bitmap, posicion);
+			++BloquesOcupados;
+		}
+		else
+			bitarray_clean_bit(bitmap, posicion);
+		++posicion;
+		fread(currentChar, 1, 1, bitmapFile);
+	}
+
+	int contador = 0;
+	while(contador < posicion){
+		printf("bit %d\n", bitarray_test_bit(bitmap,contador));
+		++contador;
+	} /*para verificar que lo lee bien */
+
+	free(pathParticular);
+	fclose(bitmapFile);
+
+	list_add(bitmapsNodos,bitmap);
+
+	return BloquesOcupados;
 }
 
 void actualizarArchivoNodos(){

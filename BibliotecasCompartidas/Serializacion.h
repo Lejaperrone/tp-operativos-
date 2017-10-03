@@ -30,6 +30,10 @@
 #define mensajeProcesarAlmFinal 13
 #define mensajeDesignarWorker 14
 #define mensajeInfoArchivo 15
+#define mensajeEnvioBloqueANodo 16
+#define mensajeRespuestaEnvioBloqueANodo 17
+#define mensajeEnvioArchivoANodo 18
+#define mensajeRespuestaEnvioArchivoANodo 19
 
 typedef struct{
 	int idMensaje;
@@ -44,7 +48,7 @@ typedef struct{
 void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete);
 respuesta desempaquetar(int socket);
 
-void* serializarString(void* paquete,int* tamanio);
+void* serializarString(void* paquete,int *tamanio);
 string* deserializarString(int socket,int tamanio);
 
 void* serializarSolicitudTransformacion(void* paquete,int* tamanio);

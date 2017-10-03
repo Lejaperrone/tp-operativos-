@@ -19,17 +19,19 @@
 #include <stdbool.h>
 #include <commons/string.h>
 
+#define mb 1048576
+
 char* path = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
-extern t_bitarray* bitmap;
 int cantBloques = 50;
 extern struct configuracionNodo  config;
+extern sem_t pedidoFS;
 
 void enviarBloqueAFS(int numeroBloque) {
 
 }
 
-void setearBloque(int numeroBloque, void* datos) {
-
+int setBloque(int numeroBloque, void* datos) {
+	return 1;
 }
 
 void conectarseConFs() {
@@ -38,55 +40,32 @@ void conectarseConFs() {
 	conectarCon(direccion, socketFs, 3);
 	informacionNodo info;
 	info.sizeNodo = config.SIZE_NODO;
-	info.bloquesOcupados = levantarBitmap(config.NOMBRE_NODO);
+	info.bloquesOcupados = -1;//levantarBitmap(config.NOMBRE_NODO);
 	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO,4));
+	printf("soy el nodo %d\n", info.numeroNodo);
+	info.socket = -1;
 	empaquetar(socketFs, mensajeInformacionNodo, sizeof(informacionNodo),&info );
+	escucharAlFS(socketFs);
 }
 
-
-int levantarBitmap(char* nombreNodo) { //levanta el bitmap y a la vez devuelve la cantidad de bloques libres en el nodo
-	char* sufijo = ".bin";
-
-	int bloquesLibres = 0;
-	int longitudPath = strlen(path);
-	int longitudNombre = strlen(nombreNodo);
-	int longitudSufijo = strlen(sufijo);
-
-	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
-
-	char* espacioBitarray = malloc(cantBloques);
-	char* currentChar = malloc(sizeof(char));
-	int posicion = 0;
-
-	memcpy(pathParticular, path, longitudPath);
-	memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
-	memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
-
-	printf("path %s", pathParticular);
-
-	FILE* bitmapFile = fopen(pathParticular, "r");
-
-
-	bitmap = bitarray_create_with_mode(espacioBitarray, cantBloques, LSB_FIRST);
-
-	while (!feof(bitmapFile)) {
-		fread(currentChar, 1, 1, bitmapFile);
-		if (strcmp(currentChar, "1")){
-			bitarray_set_bit(bitmap, posicion);
-			++bloquesLibres;
-		}
-		else
-			bitarray_clean_bit(bitmap, posicion);
-		++posicion;
+void escucharAlFS(int socketFs){
+	respuesta pedido;
+	respuesta pedido2;
+	int bloqueMock;
+	//char* archivoMock = malloc(mb);
+	int success = 0;
+	char* envio;
+	while(1){
+		pedido = desempaquetar(socketFs);
+		memcpy(&bloqueMock, pedido.envio, sizeof(int));
+		pedido2 = desempaquetar(socketFs);
+		//memcpy(archivoMock, pedido.envio, strlen(pedido.envio));
+		string* archivo = (string*) pedido2.envio;
+		envio = archivo->cadena;
+		printf("El bloque tiene %s\n", envio);
+		success = setBloque(bloqueMock, envio);
+		//empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &success);
+		sem_post(&pedidoFS);
 	}
-
-	/*while(posicion > 0){
-		printf("bit %d", bitarray_test_bit(bitmap,posicion));
-		--posicion;
-	} para verificar que lo lee bien */
-
-	free(pathParticular);
-	fclose(bitmapFile);
-	return bloquesLibres;
 }
 

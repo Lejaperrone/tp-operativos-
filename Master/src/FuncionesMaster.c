@@ -39,7 +39,7 @@ void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
 	conectarCon(direccion, socketWorker, parametrosConexion->id); //2 id master
 	log_trace(loggerMaster, "Conexion con Worker \n");
 
-	empaquetar(socketWorker,mensajeProcesarTransformacion, 0,0);
+	//empaquetar(socketWorker,mensajeProcesarTransformacion, 0,0);
 	//empaquetar la solicitud de procesamiento
 	return 0;
 }
@@ -91,36 +91,6 @@ char* recibirRuta(char* mensaje) {
 	return comando;
 }
 
-void enviarArchivo(int socketPrograma, char* rutaArchivo) {
-	FILE *archivo;
-	char* stringArchivo;
-
-	archivo = fopen(rutaArchivo, "r");
-	fseek(archivo, 0L, SEEK_SET);
-
-	char c = fgetc(archivo);
-	stringArchivo = malloc(sizeof(char));
-	int i = 0;
-
-	while (!feof(archivo)) {
-		stringArchivo[i] = c;
-		++i;
-		stringArchivo = realloc(stringArchivo, (i + 1) * sizeof(char));
-		c = fgetc(archivo);
-	}
-	stringArchivo[i] = '\0';
-
-	fclose(archivo);
-
-	string* archivoEnviar = malloc(sizeof(string));
-	archivoEnviar->longitud = i;
-	archivoEnviar->cadena = malloc(i + 1);
-	strcpy(archivoEnviar->cadena, stringArchivo);
-
-	empaquetar(socketPrograma, mensajeArchivo, sizeof(int) + i, archivo);
-
-	free(stringArchivo);
-}
 
 job* crearJob(char* argv[]){
 	job* nuevo = (job*)malloc(sizeof(job));
@@ -141,18 +111,20 @@ void controlarParametros(int cantParams){
 	}
 }
 
-void enviarArchivoo(int socketPrograma, char* pathArchivo){
+void enviarArchivo(int socketPrograma, char* pathArchivo){
 	struct stat fileStat;
 	if(stat(pathArchivo,&fileStat) < 0)
 		exit(1);
 	int fd = open(pathArchivo,O_RDWR);
-	FILE* paquete = mmap(0,fileStat.st_size,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
-	empaquetar(socketPrograma, mensajeArchivo, fileStat.st_size, (void*)paquete);
+	string* paquete = malloc(sizeof(string));
+	paquete->cadena = mmap(0,fileStat.st_size,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+	paquete->longitud = fileStat.st_size;
+	empaquetar(socketPrograma, mensajeArchivo, fileStat.st_size, paquete);
+
+	if (munmap(paquete->cadena,paquete->longitud) == 0)
+				printf("%s\n", "todo joya");
+			else
+				printf("%s\n", "todo no joya");
 	close(fd);
-	if (munmap(paquete,fileStat.st_size) == 0)
-		printf("%s\n", "todo joya");
-	else
-		printf("%s\n", "todo no joya");
-
-
+	free(paquete);
 }

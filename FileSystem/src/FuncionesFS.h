@@ -14,6 +14,7 @@
 #include <commons/log.h>
 #include "Globales.h"
 #include <commons/collections/list.h>
+#include <semaphore.h>
 
 typedef struct{
 	int index;
@@ -33,6 +34,10 @@ int getIndexDirectorio(char* ruta);
 
 char* generarArrayNodos();
 
+int levantarBitmapNodo(int numeroNodo);
+
+int buscarPrimerBloqueLibre(int numeroNodo, int sizeNodo);
+
 void actualizarArchivoNodos();
 
 int nodoRepetido(informacionNodo info);
@@ -41,4 +46,8 @@ void atenderSolicitudYama(int socketYama, void* envio);
 
 char* generarArrayBloque(int numeroNodo, int numeroBloque);
 
-void guardarEnNodos(char* path, char* nombre, char* tipo, int mockSizeArchivo);
+void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo);
+
+void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
+
+void actualizarBitmapNodo(int numeroNodo);
