@@ -38,11 +38,12 @@ typedef struct job{
 }job;
 
 typedef struct{
-	void* scriptTransformacion;//FIXMe POUEDE CAMBIAR POR EL TEMA DE MMAP
+	void* scriptTransformacion;//FIXMe PUEDE CAMBIAR POR EL TEMA DE MMAP
 	int bloque;
 	int bytesOcupados;
 	string archivoTemporal;
 }procesarTransformacion;
+
 /*----VARIABLES GLOBALES----*/
 t_log* loggerMaster;
 int socketYama;
@@ -71,5 +72,7 @@ void enviarArchivo(int socketPrograma, char* rutaArchivo);
 void enviarArchivoo(int socketPrograma, char* pathArchivo);
 
 job* crearJob(char* argv[]);
+
+//int dameUnID();
 
 #endif /* FUNCIONESMASTER_H_ */

@@ -18,7 +18,6 @@ int conectarseConFs() {
 	return socketFs;
 }
 
-void recibirArchivo();
 
 void levantarServidorYama(char* ip, int port) {
 	respuesta conexionNueva;
@@ -69,16 +68,18 @@ void levantarServidorYama(char* ip, int port) {
 			}
 		}
 	}
+
 }
 
 void recibirContenidoMaster() {
 	respuesta nuevoJob;
 	respuestaTransformacion* rtaTransf;
 
-	log_trace(logger, "Conexion de Master\n");
+	log_trace(logger, "Conexion de Master");
 	nuevoJob = desempaquetar(nuevoMaster);
 	solicitudTransformacion* solTransf =(solicitudTransformacion*) nuevoJob.envio;
-	log_trace(logger, "Me llego %d %d ", solTransf->rutaDatos.longitud,	solTransf->rutaResultado.longitud);
+
+	log_trace(logger, "Me llego %i %i",solTransf->rutaDatos.longitud, solTransf->rutaResultado.longitud);
 
 	rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);
@@ -106,6 +107,16 @@ respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solici
 	return rtaTransf;
 }
 
+
+void planificar(infoJob* job, infoBloque infoBloque){
+	//localizar los bloques en FS
+
+	//calcular carga/score de cada nodo. Recomendable aplicar funcion de Availability
+
+	//comparar cargas
+}
+
+void recibirArchivo();
 void recibirArchivo(){
 	respuesta paquete;
 
@@ -114,4 +125,10 @@ void recibirArchivo(){
 	char* hola = archivo->cadena;
 
 	printf("%s\n", hola);
+}
+
+char* dameUnNombreArchivoTemporal(){
+	char* nombre = string_new();
+	//string_from_format("Master-%i-temp%i",infoJob->id, inforBloque->bloque);
+	return nombre;
 }

@@ -24,9 +24,21 @@
 #include "Serializacion.h"
 #include <Configuracion.h>
 #include "Globales.h"
+#include <commons/collections/list.h>
 
 #define idMaster 2
 #define idDataNodes 3
+
+typedef struct{
+	int idJob;
+	char* pathOrigen;
+	char* pathResultado;
+}infoJob; //para planificar
+
+typedef struct{
+	char* pathArchivo;
+	int bloque;
+}infoBloque;//planificar
 
 fd_set master;   // conjunto maestro de descriptores de fichero
 fd_set read_fds; // conjunto temporal de descriptores de fichero para select()
@@ -41,6 +53,9 @@ struct sockaddr_in direccionCliente;
 
 t_log* logger;
 struct configuracionYama config;
+
+t_list* listaJobs;
+t_list* jobPendientes;
 
 int conectarseConFs();
 

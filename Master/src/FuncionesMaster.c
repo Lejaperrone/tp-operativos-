@@ -52,7 +52,8 @@ void enviarJobAYama() {
 	nuevaSol->rutaResultado.cadena = string_duplicate(miJob->rutaResultado);
 	nuevaSol->rutaResultado.longitud = string_length(miJob->rutaResultado);
 
-	empaquetar(socketYama,mensajeSolicitudTransformacion,0,nuevaSol);//
+	printf("%d%d\n",nuevaSol->rutaDatos.longitud, nuevaSol->rutaResultado.longitud);
+	empaquetar(socketYama,mensajeSolicitudTransformacion,0,nuevaSol);
 	log_trace(loggerMaster,"Enviando solicitud de etapa Transformacion a YAMA");
 
 	respuesta respuestaYama = desempaquetar(socketYama);
@@ -102,9 +103,10 @@ job* crearJob(char* argv[]){
 	return nuevo;
 }
 
-int dameUnID(){
-	return 1;//FIXME
-}
+/*int dameUnID(){
+	return ultimoIdMaster++;//FIXME
+}*/
+
 void controlarParametros(int cantParams){
 	if(cantParams < 6){
 		log_error(loggerMaster, "Parametros insuficientes");

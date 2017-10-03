@@ -20,11 +20,10 @@ int main(int argc, char *argv[]) {
 
 	conectarseConYama(config.YAMA_IP,config.YAMA_PUERTO);
 
-	//miJob = crearJob(argv);
+	miJob = crearJob(argv);
 
-	//enviarJobAYama();
+	enviarJobAYama();
 
-	enviarArchivo(socketYama,"/home/utnso/hola"); //Prueba del enviar archivo
 
 	esperarInstruccionesDeYama();
 
