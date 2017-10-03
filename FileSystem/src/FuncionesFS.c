@@ -507,10 +507,12 @@ void inicializarBitmaps(){ //TODO (y ver si aca hace falta mmap)
 }
 
 void atenderSolicitudYama(int socketYama, void* envio){
-	//respuestaTransformacion* rtaTransf;
-	//solicitudTransformacion* solTransf =(solicitudTransformacion*)envio;
+	respuestaTransformacion* rtaTransf;
+	solicitudTransformacion* solTransf =(solicitudTransformacion*)envio;
+
 
 	empaquetar(socketYama, mensajeInfoArchivo, 0 ,0);
+
 	//aca hay que aplicar la super funcion mockeada de @Ronan
 
 }

@@ -66,4 +66,8 @@ typedef struct{
 	int numeroNodo;
 } informacionNodo;
 
+typedef struct{
+	//YAMA recibe la lista de bloques que componen al archivo
+	//con la ubicacion de sus dos copias y espacio ocupado en cada bloque
+}informacionArchivoFsYama;
 #endif /* GLOBALES_H_ */
