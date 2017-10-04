@@ -16,11 +16,27 @@ void planificar(infoJob* job, infoNodo nodo){
 
 	//comparar cargas
 }
-
-t_list* nuevaCargaNodos(){
-	t_list *cargaNodos = malloc(sizeof(t_list));
-	cargaNodos = list_create();
-	return cargaNodos;
+int calcularDisponibilidadWorker(infoNodo worker){
+	if(esClock()){
+		return disponibilidadBase;
+	}
+	else{
+		return disponibilidadBase + calcularWorkLoad(worker);
+	}
+}
+uint32_t calcularWorkLoad(infoNodo* worker){
+	return workLoadGlobal() - worker->carga;
+}
+uint32_t workLoadGlobal(){
+	return 0; //FIXME
+}
+int getDisponibilidadBase(){
+	return disponibilidadBase;
+}
+t_list* nuevaCargaWorkers(){
+	t_list* cargaWorkers = malloc(sizeof(t_list));
+	cargaWorkers = list_create();
+	return cargaWorkers;
 }
 
 void agregarJobAPlanificar(infoJob* jobAPlanificar){

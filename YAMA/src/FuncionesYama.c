@@ -11,13 +11,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+int disponibilidadBase = config.DISPONIBILIDAD_BASE;
+
 int conectarseConFs() {
 	int socketFs = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 7000);
 	conectarCon(direccion, socketFs, 1);
 	return socketFs;
 }
-
 
 void levantarServidorYama(char* ip, int port) {
 	respuesta conexionNueva;
@@ -74,7 +75,7 @@ void levantarServidorYama(char* ip, int port) {
 void recibirContenidoMaster() {
 	respuesta nuevoJob;
 	respuestaTransformacion* rtaTransf;
-
+	//FIXME AGREGAR JOB A PLANIFICAR
 	log_trace(logger, "Conexion de Master");
 	nuevoJob = desempaquetar(nuevoMaster);
 	solicitudTransformacion* solTransf =(solicitudTransformacion*) nuevoJob.envio;
@@ -108,13 +109,6 @@ respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solici
 }
 
 
-void planificar(infoJob* job, infoBloque infoBloque){
-	//localizar los bloques en FS
-
-	//calcular carga/score de cada nodo. Recomendable aplicar funcion de Availability
-
-	//comparar cargas
-}
 
 void recibirArchivo();
 void recibirArchivo(){

@@ -29,17 +29,6 @@
 #define idMaster 2
 #define idDataNodes 3
 
-typedef struct{
-	int idJob;
-	char* pathOrigen;
-	char* pathResultado;
-}infoJob; //para planificar
-
-typedef struct{
-	char* pathArchivo;
-	int bloque;
-}infoBloque;//planificar
-
 fd_set master;   // conjunto maestro de descriptores de fichero
 fd_set read_fds; // conjunto temporal de descriptores de fichero para select()
 int fdmax;        // número máximo de descriptores de fichero

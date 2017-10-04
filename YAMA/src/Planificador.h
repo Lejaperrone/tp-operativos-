@@ -10,8 +10,7 @@
 
 #include "FuncionesYama.h"
 
-#define cargaDefault 1;
-#define cargaMaxima 10;
+//#define cargaMaxima 10;
 
 typedef struct{
 	int idJob;
@@ -23,7 +22,7 @@ typedef struct {
 	char* nombre;
 	char* ip;
 	char* puerto;
-	int carga;
+	uint32_t carga;
 	int bloque;
 }infoNodo;
 
