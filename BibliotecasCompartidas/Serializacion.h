@@ -43,6 +43,7 @@ typedef struct{
 typedef struct{
 	int idMensaje;
 	void* envio;
+	int size;
 } respuesta;
 
 void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete);

@@ -18,12 +18,14 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <commons/string.h>
+#include "Serial.h"
 
 #define mb 1048576
 
-char* path = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
+char* path =
+		"/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
 int cantBloques = 50;
-extern struct configuracionNodo  config;
+extern struct configuracionNodo config;
 extern sem_t pedidoFS;
 
 void enviarBloqueAFS(int numeroBloque) {
@@ -40,32 +42,47 @@ void conectarseConFs() {
 	conectarCon(direccion, socketFs, 3);
 	informacionNodo info;
 	info.sizeNodo = config.SIZE_NODO;
-	info.bloquesOcupados = -1;//levantarBitmap(config.NOMBRE_NODO);
-	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO,4));
+	info.bloquesOcupados = -1; //levantarBitmap(config.NOMBRE_NODO);
+	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO, 4));
 	printf("soy el nodo %d\n", info.numeroNodo);
 	info.socket = -1;
-	empaquetar(socketFs, mensajeInformacionNodo, sizeof(informacionNodo),&info );
+	empaquetar(socketFs, mensajeInformacionNodo, sizeof(informacionNodo),
+			&info);
 	escucharAlFS(socketFs);
 }
 
-void escucharAlFS(int socketFs){
-	respuesta pedido;
-	respuesta pedido2;
-	int bloqueMock;
-	//char* archivoMock = malloc(mb);
-	int success = 0;
-	char* envio;
-	while(1){
-		pedido = desempaquetar(socketFs);
-		memcpy(&bloqueMock, pedido.envio, sizeof(int));
-		pedido2 = desempaquetar(socketFs);
-		//memcpy(archivoMock, pedido.envio, strlen(pedido.envio));
-		string* archivo = (string*) pedido2.envio;
-		envio = archivo->cadena;
-		printf("El bloque tiene %s\n", envio);
-		success = setBloque(bloqueMock, envio);
-		//empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int), &success);
-		sem_post(&pedidoFS);
+void recibirMensajesFileSystem(int socketFs) {
+	respuesta pedido2 = desempaquetar(socketFs);
+	char* buffer = malloc(mb + 4);
+	int bloqueId;
+	char data[pedido2.size - 2];
+
+	switch (pedido2.idMensaje) {
+	case mensajeEnvioBloqueANodo:
+		recv(socketFs, buffer, mb + 4, 0);
+		serial_unpack(buffer, "h", &bloqueId);
+		memcpy(data, buffer + 4, pedido2.size);
+		printf("--------------------------%s\n ", data);
+		setBloque(bloqueId, data);
+		memset(data, 0, pedido2.size - 2);
+		break;
+
+	default:
+		break;
 	}
 }
+
+void escucharAlFS(int socketFs) {
+	int success = 1;
+	while (1) {
+		//pedido = desempaquetar(socketFs);
+		//memcpy(&bloqueMock, pedido.envio, sizeof(int));
+		recibirMensajesFileSystem(socketFs);
+		//free(envio);
+		//success = setBloque(bloqueMock, envio);
+		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int),
+				&success);
+	}
+}
+
 

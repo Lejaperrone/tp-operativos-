@@ -74,8 +74,6 @@ int main(void) {
 
 	inicializarTablaDirectorios();
 
-	printf("\n\n %s",  buscarRutaArchivo("hola/chau"));
-
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);
 

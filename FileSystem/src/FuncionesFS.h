@@ -51,3 +51,5 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo);
 void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
 
 void actualizarBitmapNodo(int numeroNodo);
+
+void enviarADataNode(char* map, int bloque, int tam, int size_bytes, int socket);

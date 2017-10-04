@@ -19,6 +19,7 @@
 #include "Serializacion.h"
 #include <dirent.h>
 #include <errno.h>
+#include "Serial.h"
 
 #define idDataNodes 3
 #define cantDataNodes 10
@@ -354,13 +355,13 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	int sizeAux = mapeoArchivo->longitud;
 	int cantNodosNecesarios = 0;
+	int ultimoSize = 0;
 
 	while(sizeAux > 0){
 		sizeAux -= mb;
 		++cantNodosNecesarios;
 	}
-
-	string* mapeosArchivo;
+	//--cantNodosNecesarios;
 
 	int sizeUltimoNodo = sizeAux+mb;
 
@@ -374,6 +375,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	int i, j, k, success = 1, bloqueLibre = -1;
 	int nodoAUtilizar = -1;
+	int offset = 0;
 
 	printf("nodos a usar %d\n",cantNodosNecesarios);
 	informacionNodo infoAux;
@@ -383,7 +385,6 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int masBloquesLibres[numeroCopiasBloque];
 	int nodosEnUso[cantidadNodos];
 	int indexNodoEnListaConectados[numeroCopiasBloque];
-	string* particion[cantNodosNecesarios];
 
 	for (i = 0; i < cantidadNodos; ++i){
 		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
@@ -425,30 +426,29 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 			bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[nodoAUtilizar], infoAux.sizeNodo);
 
-			empaquetar(infoAux.socket, mensajeEnvioBloqueANodo, sizeof(int),&bloqueLibre );
+			printf("bloque %d\n",bloqueLibre);
 
-			//empaquetar(infoAux.socket, mensajeEnvioArchivoANodo, strlen(mapeosArchivo[i]),mapeosArchivo[i] );
-
-			particion[i] = malloc(sizeof(string));
-			particion[i]->cadena = mapeoArchivo->cadena + mb*i;
-			//printf("envio %d\n", strlen(particion[i]));
 			if (i == cantNodosNecesarios-1){
-				particion[i]->longitud = sizeUltimoNodo;
-				empaquetar(infoAux.socket, mensajeArchivo, sizeUltimoNodo,particion[i]);
+				enviarADataNode(mapeoArchivo->cadena, bloqueLibre, offset, sizeUltimoNodo, infoAux.socket);
+				offset = 0;
+				ultimoSize = mb;
 			}
 			else{
-				particion[i]->longitud = mb;
-				empaquetar(infoAux.socket, mensajeArchivo, mb,particion[i]);
+				enviarADataNode(mapeoArchivo->cadena, bloqueLibre, offset, mb, infoAux.socket);
+				offset += mb;
+				ultimoSize = sizeUltimoNodo;
 			}
 
 			printf("bloque libre %d %d\n",bloqueLibre, infoAux.numeroNodo);
-			//respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
+			respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
 
-			//memcpy(&success,respuestaPedidoAlmacenar.envio, sizeof(int));
+			memcpy(&success,respuestaPedidoAlmacenar.envio, sizeof(int));
+
+			printf("success %d\n", success);
 
 			if (success == 1){
 				setearBloqueOcupadoEnBitmap(indexNodoEnListaConectados[nodoAUtilizar], bloqueLibre);
-				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(particion[i]->longitud));
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(ultimoSize));
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(masBloquesLibres[j], bloqueLibre));
 			}
 		}
@@ -470,13 +470,27 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 }
 
-void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
-	informacionNodo* infoAux;
-	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
-	bitarray_set_bit(bitarrayNodo,bloqueLibre);
-	infoAux = list_get(nodosConectados,numeroNodo);
-	++infoAux->bloquesOcupados;
-	actualizarBitmapNodo(numeroNodo);
+void enviarADataNode(char* map, int bloque, int tam, int size_bytes, int socket){
+	 unsigned char buffer[size_bytes + sizeof(int)];
+	 unsigned char buff[mb];
+	 header head;
+	 memcpy(buff, map+tam, size_bytes-1);
+	 if(size_bytes != mb) printf("%s\n", buff);
+
+	 head.tamanio = serial_pack(buffer,"hs",bloque,buff);
+	 head.idMensaje = mensajeEnvioBloqueANodo;
+
+	 empaquetar(socket, mensajeEnvioBloqueANodo, head.tamanio,buffer);
+	 memset(buff, 0, mb);
+}
+
+	void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
+		informacionNodo* infoAux;
+		t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
+		bitarray_set_bit(bitarrayNodo,bloqueLibre);
+		infoAux = list_get(nodosConectados,numeroNodo);
+		++infoAux->bloquesOcupados;
+		actualizarBitmapNodo(numeroNodo);
 }
 
 void actualizarBitmapNodo(int numeroNodo){
@@ -518,7 +532,6 @@ int buscarPrimerBloqueLibre(int numeroNodo, int sizeNodo){
 	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
 	int i, numeroBloque = 1;
 	for (i = 0; i < sizeNodo; ++i){
-		printf("testbit %d\n",bitarray_test_bit(bitarrayNodo,i));
 		if (bitarray_test_bit(bitarrayNodo,i) == 0){
 			numeroBloque = i;
 			break;
