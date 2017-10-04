@@ -43,9 +43,6 @@ struct sockaddr_in direccionCliente;
 t_log* logger;
 struct configuracionYama config;
 
-t_list* listaJobs;
-t_list* jobPendientes;
-
 int conectarseConFs();
 
 void levantarServidorYama(char* ip, int port);
@@ -53,6 +50,8 @@ void levantarServidorYama(char* ip, int port);
 void recibirContenidoMaster();
 
 respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solicitud);
+
+int getDisponibilidadBase();
 
 char* obtenerNombreArchivoResultadoTemporal();
 

@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int disponibilidadBase = config.DISPONIBILIDAD_BASE;
+int disponibilidadBase;
 
 int conectarseConFs() {
 	int socketFs = crearSocket();
@@ -108,8 +108,12 @@ respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solici
 	return rtaTransf;
 }
 
-
-
+int getDisponibilidadBase(){
+	return config.DISPONIBILIDAD_BASE;
+}
+int esClock(){
+	return strcmp("CLOCK" ,config.ALGORITMO_BALANCEO);
+}
 void recibirArchivo();
 void recibirArchivo(){
 	respuesta paquete;

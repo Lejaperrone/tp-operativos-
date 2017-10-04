@@ -26,6 +26,18 @@ typedef struct {
 	int bloque;
 }infoNodo;
 
-void planificar(infoJob* job, infoNodo nodo);
+void planificar(infoJob* job, infoNodo* nodo);
+uint32_t calcularCarga(infoNodo* worker);
+uint32_t workLoadGlobal();
+int calcularDisponibilidadWorker(infoNodo* worker);
+t_list* nuevaCargaWorkers();
+void agregarNodo(t_list* cargaNodo,infoNodo* nodo);
+void agregarJobAPlanificar(infoJob* jobAPlanificar);
+infoNodo* obtenerNodoDisponible(t_list* cargaNodos, t_list* listaNodosParaMap);
+t_list* obtenerNodosQueEstanEnLista(t_list* cargaNodos, t_list* listaNodos);
+infoNodo* obtenerNodoConNombre(t_list *listaNodos, char *nombreNodo);
+bool nodoConMenorCargaPrimero(void* argNodo1, void* argNodo2);
+uint32_t cargaMaxima();
+
 
 #endif /* PLANIFICADOR_H_ */
