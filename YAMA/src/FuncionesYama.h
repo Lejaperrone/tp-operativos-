@@ -48,7 +48,9 @@ int conectarseConFs();
 void levantarServidorYama(char* ip, int port);
 void recibirContenidoMaster();
 respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solicitud);
+
 int getDisponibilidadBase();
+
 char* obtenerNombreArchivoResultadoTemporal();
 int esClock();
 

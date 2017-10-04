@@ -41,5 +41,10 @@ void agregarNodos(t_list* cargaNodos, t_list* listaNodos);
 void iniciarListasPlanificacion();
 t_list* consultarDetallesBloqueArchivo(char *pathArchivo, int bloque);
 void calcularCargasDeWorkers();
+infoNodo* obtenerNodoConNombre(char *nombreNodo);
+bool nodoConMenorCargaPrimero(void* argNodo1, void* argNodo2);
+uint32_t cargaMaxima();
+void iniciarListasPlanificacion();
+
 
 #endif /* PLANIFICADOR_H_ */

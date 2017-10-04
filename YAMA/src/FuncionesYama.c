@@ -81,6 +81,7 @@ void recibirContenidoMaster() {
 	solicitudTransformacion* solTransf =(solicitudTransformacion*) nuevoJob.envio;
 	//agregarJobAPlanificar(solTransf->job);
 
+
 	log_trace(logger, "Me llego %i %i",solTransf->rutaDatos.longitud, solTransf->rutaResultado.longitud);
 
 	rtaTransf  = solicitarInformacionAFS(solTransf);

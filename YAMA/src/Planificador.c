@@ -9,6 +9,7 @@
 t_list* listaNodos;
 t_list* jobsAPlanificar;
 
+
 void iniciarListasPlanificacion(){
 	listaNodos = list_create();
 	jobsAPlanificar = list_create();
@@ -75,7 +76,6 @@ t_list* obtenerNodosQueEstanEnLista(t_list* cargaNodos, t_list* listaNodos){
 	for(i = 0; i < list_size(listaNodos); i++){
 		infoNodo* nodoEnLista = list_get(listaNodos, i);
 		list_add(resultado, obtenerNodoConNombre(nodoEnLista->nombre));
-
 	}
 
 	return resultado;
