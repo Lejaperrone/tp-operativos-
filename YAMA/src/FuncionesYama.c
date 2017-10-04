@@ -11,14 +11,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+int disponibilidadBase;
+
 int conectarseConFs() {
 	int socketFs = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 7000);
 	conectarCon(direccion, socketFs, 1);
 	return socketFs;
 }
-
-void recibirArchivo();
 
 void levantarServidorYama(char* ip, int port) {
 	respuesta conexionNueva;
@@ -69,16 +69,19 @@ void levantarServidorYama(char* ip, int port) {
 			}
 		}
 	}
+
 }
 
 void recibirContenidoMaster() {
 	respuesta nuevoJob;
 	respuestaTransformacion* rtaTransf;
-
-	log_trace(logger, "Conexion de Master\n");
+	//FIXME AGREGAR JOB A PLANIFICAR
+	log_trace(logger, "Conexion de Master");
 	nuevoJob = desempaquetar(nuevoMaster);
 	solicitudTransformacion* solTransf =(solicitudTransformacion*) nuevoJob.envio;
-	log_trace(logger, "Me llego %d %d ", solTransf->rutaDatos.longitud,	solTransf->rutaResultado.longitud);
+	//agregarJobAPlanificar(solTransf->job);
+
+	log_trace(logger, "Me llego %i %i",solTransf->rutaDatos.longitud, solTransf->rutaResultado.longitud);
 
 	rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);
@@ -106,6 +109,13 @@ respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solici
 	return rtaTransf;
 }
 
+int getDisponibilidadBase(){
+	return config.DISPONIBILIDAD_BASE;
+}
+int esClock(){
+	return strcmp("CLOCK" ,config.ALGORITMO_BALANCEO);
+}
+void recibirArchivo();
 void recibirArchivo(){
 	respuesta paquete;
 
@@ -114,4 +124,10 @@ void recibirArchivo(){
 	char* hola = archivo->cadena;
 
 	printf("%s\n", hola);
+}
+
+char* dameUnNombreArchivoTemporal(){
+	char* nombre = string_new();
+	//string_from_format("Master-%i-temp%i",infoJob->id, inforBloque->bloque);
+	return nombre;
 }

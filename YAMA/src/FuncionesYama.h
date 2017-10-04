@@ -24,6 +24,8 @@
 #include "Serializacion.h"
 #include <Configuracion.h>
 #include "Globales.h"
+#include <commons/collections/list.h>
+#include "Planificador.h"
 
 #define idMaster 2
 #define idDataNodes 3
@@ -43,13 +45,11 @@ t_log* logger;
 struct configuracionYama config;
 
 int conectarseConFs();
-
 void levantarServidorYama(char* ip, int port);
-
 void recibirContenidoMaster();
-
 respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solicitud);
-
+int getDisponibilidadBase();
 char* obtenerNombreArchivoResultadoTemporal();
+int esClock();
 
 #endif /* FUNCIONESYAMA_H_ */
