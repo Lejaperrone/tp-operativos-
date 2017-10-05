@@ -47,6 +47,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeEnvioBloqueANodo:
 			tamanio = tamanioS;
 			bloque = malloc(tamanio);
+			printf("size envio %d\n", tamanio);
 			memcpy(bloque,paquete,tamanio);
 			break;
 
@@ -102,9 +103,6 @@ respuesta desempaquetar(int socket){
 
 			case mensajeArchivo:
 				miRespuesta.envio = deserializarString(socket,cabecera->tamanio);
-				string* a = malloc(sizeof(string));
-				memcpy(a, miRespuesta.envio, cabecera->tamanio);
-				printf("cadena %s\n", a->cadena);
 				break;
 
 			case mensajeInfoArchivo://todo
@@ -177,7 +175,6 @@ string* deserializarString(int socket,int tamanio){
  	desplazamiento += longitudInt;
 
  	cadena->cadena = malloc(cadena->longitud+1);
- 	printf("cadena %s\n", cadena->cadena);
 
  	return cadena;
  }
