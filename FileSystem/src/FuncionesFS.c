@@ -135,49 +135,49 @@ void* consolaFS(){
 			log_trace(loggerFS, "File system formateado");
 		}
 		else if (string_starts_with(comando, "rm -d")) {
-			if (eliminarDirectorio(comando, 2) != -1)
+			if (eliminarDirectorio(comando) != -1)
 				log_trace(loggerFS, "Directorio eliminado");
 			else
-				log_trace(loggerFS, "No se pudo eliminar el directorio");
+				log_error(loggerFS, "No se pudo eliminar el directorio");
 		}
 		else if (string_starts_with(comando, "rm -b")) {
 			log_trace(loggerFS, "Bloque eliminado");
 		}
 		else if (string_starts_with(comando, "rm")) {
-			if (eliminarArchivo(comando, 1) != -1)
+			if (eliminarArchivo(comando) != -1)
 				log_trace(loggerFS, "archivo eliminado");
 			else
-				log_trace(loggerFS, "No se pudo eliminar el archivo");
+				log_error(loggerFS, "No se pudo eliminar el archivo");
 		}
 		else if (string_starts_with(comando, "rename")) {
-			if (cambiarNombre(comando, 1) == 1)
+			if (cambiarNombre(comando) == 1)
 				log_trace(loggerFS, "Renombrado");
 			else
-				log_trace(loggerFS, "No se pudo renombrar");
+				log_error(loggerFS, "No se pudo renombrar");
 
 		}
 		else if (string_starts_with(comando, "mv")) {
-			if (mover(comando,1) == 1)
+			if (mover(comando) == 1)
 				log_trace(loggerFS, "Archivo movido");
 			else
-				log_trace(loggerFS, "No se pudo mover el archivo");
+				log_error(loggerFS, "No se pudo mover el archivo");
 		}
 		else if (string_starts_with(comando, "cat")) {
-			if (mostrarArchivo(comando, 1) == 1){
+			if (mostrarArchivo(comando) == 1){
 			log_trace(loggerFS, "Archivo mostrado");
 			}else{
-				log_trace(loggerFS, "No se pudo mostrar el archivo");
+				log_error(loggerFS, "No se pudo mostrar el archivo");
 			}
 		}
 		else if (string_starts_with(comando, "mkdir")) {
-			if (crearDirectorio(comando,1) == 1){
+			if (crearDirectorio(comando) == 1){
 
 			log_trace(loggerFS, "Directorio creado");// avisar si ya existe
 			}else{
-				if (crearDirectorio(comando,1) == 2){
-				log_trace(loggerFS, "El directorio ya existe");
+				if (crearDirectorio(comando) == 2){
+					log_error(loggerFS, "El directorio ya existe");
 				}else{
-					log_trace(loggerFS, "No se pudo crear directorio");
+					log_error(loggerFS, "No se pudo crear directorio");
 				}
 			}
 		}
@@ -185,7 +185,7 @@ void* consolaFS(){
 			if (copiarArchivo(comando) == 1)
 				log_trace(loggerFS, "Archivo copiado a yamafs");
 			else
-				log_trace(loggerFS, "No se pudo copiar el archivo");
+				log_error(loggerFS, "No se pudo copiar el archivo");
 		}
 		else if (string_starts_with(comando, "cpto")) {
 			log_trace(loggerFS, "Archivo copiado desde yamafs");
@@ -194,21 +194,28 @@ void* consolaFS(){
 			log_trace(loggerFS, "Bloque copiado en el nodo");
 		}
 		else if (string_starts_with(comando, "md5")) {
-			log_trace(loggerFS, "MD5 del archivo");
+			if (generarArchivoMD5(comando) == 1)
+				log_trace(loggerFS, "MD5 del archivo");
+			else
+				log_error(loggerFS, "No se pudo obtener el MD5 del archivo");
+
 		}
 		else if (string_starts_with(comando, "ls")) {
-			listarArchivos(comando, 1);
-			log_trace(loggerFS, "Archivos listados");
+			if (listarArchivos(comando) == 1)
+				log_trace(loggerFS, "Archivos listados");
+			else
+				log_error(loggerFS, "El directorio no existe");
+
 		}
 		else if (string_starts_with(comando, "info")) {
-			if (informacion(comando,1) == 1)
+			if (informacion(comando) == 1)
 				log_trace(loggerFS, "Mostrando informacion del archivo");
 			else
-				log_trace(loggerFS, "No se pudo mostrar informacion del archivo");
+				log_error(loggerFS, "No se pudo mostrar informacion del archivo");
 		}
 		else {
 			printf("Comando invalido\n");
-			log_trace(loggerFS, "Comando invalido");
+			log_error(loggerFS, "Comando invalido");
 		}
 		free(comando);
 	}
@@ -290,7 +297,7 @@ void* levantarServidorFS(void* parametrosServidorFS){
 							if (nodoRepetido(info) == 0){
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
 								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo);
-								info.socket = nuevoDataNode;
+								//info.socket = nuevoDataNode;
 								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
 								list_add(nodosConectados,paqueteInfoNodo.envio);
 								cantidadNodos = list_size(nodosConectados);
@@ -696,7 +703,7 @@ void atenderSolicitudYama(int socketYama, void* envio){
 	solicitudTransformacion* solTransf =(solicitudTransformacion*)envio;
 
 
-	empaquetar(socketYama, mensajeInfoArchivo, 0 ,0);
+	//empaquetar(socketYama, mensajeInfoArchivo, 0 ,0);
 
 	//aca hay que aplicar la super funcion mockeada de @Ronan
 

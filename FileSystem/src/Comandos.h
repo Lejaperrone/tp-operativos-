@@ -25,6 +25,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <ctype.h>
+
+#define STR_VALUE(val) #val
+#define STR(name) STR_VALUE(name)
+
+#define PATH_LEN 256
+#define MD5_LEN 32
+
+bool CalcFileMD5(char *file_name, char *md5_sum);
 
 char* devolverRuta(char* comando, int cantidadDeComandos);
 
@@ -32,22 +41,24 @@ bool validarArchivo(char* path);
 
 bool validarDirectorio(char* path);
 
-int eliminarArchivo(char* comando, int cantidadDeComandos);//rm
+int eliminarArchivo(char* comando);//rm
 
-int eliminarDirectorio(char* comando, int cantidadDeComandos);//rm -d
+int eliminarDirectorio(char* comando);//rm -d
 
-void listarArchivos(char* comando, int cantidadDeComandos);//ls
+int listarArchivos(char* comando);//ls
 
-int crearDirectorio(char* comando, int cantidadDeComandos);//mkdir
+int crearDirectorio(char* comando);//mkdir
 
-int mostrarArchivo(char* comando, int cantidadDeComandos);//cat
+int mostrarArchivo(char* comando);//cat
 
-int cambiarNombre(char* comando, int cantidadDeComandos);//rename
+int cambiarNombre(char* comando);//rename
 
-int mover(char* comando, int cantidadDeComandos);//mv
+int mover(char* comando);//mv
 
-int informacion(char* comando, int cantidadDeComandos);//info
+int informacion(char* comando);//info
 
 int copiarArchivo(char* comando);
+
+int generarArchivoMD5(char* comando);//md5
 
 #endif /* FILESYSTEM_COMANDOS_H_ */
