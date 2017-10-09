@@ -44,16 +44,16 @@ void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
 	return 0;
 }
 
-void enviarJobAYama() {
-	solicitudTransformacion* nuevaSol = malloc(sizeof(solicitudTransformacion));
+void enviarJobAYama(job* miJob) {
+	/*solicitudTransformacion* nuevaSol = malloc(sizeof(solicitudTransformacion));
 
 	nuevaSol->rutaDatos.cadena = string_duplicate(miJob->rutaDatos);
 	nuevaSol->rutaDatos.longitud = string_length(miJob->rutaDatos);
 	nuevaSol->rutaResultado.cadena = string_duplicate(miJob->rutaResultado);
 	nuevaSol->rutaResultado.longitud = string_length(miJob->rutaResultado);
 
-	printf("%d%d\n",nuevaSol->rutaDatos.longitud, nuevaSol->rutaResultado.longitud);
-	empaquetar(socketYama,mensajeSolicitudTransformacion,0,nuevaSol);
+	printf("%d%d\n",nuevaSol->rutaDatos.longitud, nuevaSol->rutaResultado.longitud);*/
+	empaquetar(socketYama,mensajeSolicitudTransformacion, 0 ,miJob);
 	log_trace(loggerMaster,"Enviando solicitud de etapa Transformacion a YAMA");
 
 	respuesta respuestaYama = desempaquetar(socketYama);
@@ -95,10 +95,18 @@ char* recibirRuta(char* mensaje) {
 
 job* crearJob(char* argv[]){
 	job* nuevo = (job*)malloc(sizeof(job));
-	nuevo->rutaTransformador= argv[2];
-	nuevo->rutaReductor= argv[3];
-	nuevo->rutaDatos= argv[4];
-	nuevo->rutaResultado= argv[5];
+
+	nuevo->rutaTransformador.cadena = string_duplicate(argv[2]);
+	nuevo->rutaTransformador.longitud = string_length(nuevo->rutaTransformador.cadena);
+
+	nuevo->rutaReductor.cadena = string_duplicate(argv[3]);
+	nuevo->rutaReductor.longitud = string_length(nuevo->rutaReductor.cadena);
+
+	nuevo->rutaDatos.cadena= string_duplicate(argv[4]);
+	nuevo->rutaDatos.longitud = string_length(nuevo->rutaDatos.cadena);
+
+	nuevo->rutaResultado.cadena = string_duplicate(argv[5]);
+	nuevo->rutaResultado.longitud = string_length(nuevo->rutaResultado.cadena);
 
 	return nuevo;
 }

@@ -52,6 +52,9 @@ respuesta desempaquetar(int socket);
 void* serializarString(void* paquete,int *tamanio);
 string* deserializarString(int socket,int tamanio);
 
+void* serializarJob(void* paquete, int* tamanio);
+job* deserializarJob(int socket, int tamanio);
+
 void* serializarSolicitudTransformacion(void* paquete,int* tamanio);
 solicitudTransformacion* deserializarSolicitudTransformacion(int socket,int tamanio);
 

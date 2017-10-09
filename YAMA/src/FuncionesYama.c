@@ -75,16 +75,18 @@ void levantarServidorYama(char* ip, int port) {
 void recibirContenidoMaster() {
 	respuesta nuevoJob;
 	respuestaTransformacion* rtaTransf;
+	solicitudTransformacion* solTransf;
 	//FIXME AGREGAR JOB A PLANIFICAR
 	log_trace(logger, "Conexion de Master");
 	nuevoJob = desempaquetar(nuevoMaster);
-	solicitudTransformacion* solTransf =(solicitudTransformacion*) nuevoJob.envio;
-	//agregarJobAPlanificar(solTransf->job);
+	job* jobAPlanificar =(job*) nuevoJob.envio;
+
+	//list_add(jobAPlanificar, jobsAPlanificar);
 
 
-	log_trace(logger, "Me llego %i %i",solTransf->rutaDatos.longitud, solTransf->rutaResultado.longitud);
+	log_trace(logger, "Me llego %s %i",jobAPlanificar->rutaDatos.cadena, jobAPlanificar->rutaResultado.longitud);
 
-	rtaTransf  = solicitarInformacionAFS(solTransf);
+	//rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);
 	// logica con respuesta a Master
 	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);

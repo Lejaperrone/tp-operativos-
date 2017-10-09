@@ -29,14 +29,6 @@
 #define mensajeArchivo 2
 #define mensajeSolicitudTransformacion 4
 
-typedef struct job{
-	int id;
-	char* rutaTransformador;
-	char* rutaReductor;
-	char* rutaDatos;
-	char* rutaResultado;
-}job;
-
 typedef struct{
 	void* scriptTransformacion;//FIXMe PUEDE CAMBIAR POR EL TEMA DE MMAP
 	int bloque;
@@ -47,7 +39,6 @@ typedef struct{
 /*----VARIABLES GLOBALES----*/
 t_log* loggerMaster;
 int socketYama;
-job* miJob;
 /*--------------------------*/
 
 typedef struct{
@@ -62,7 +53,7 @@ void* conectarseConWorkers(parametrosConexionMaster* parametros);
 
 void controlarParametros();
 
-void enviarJobAYama();
+void enviarJobAYama(job* job);
 
 void esperarInstruccionesDeYama();
 

@@ -11,9 +11,9 @@
 #include "FuncionesMaster.h"
 
 struct configuracionMaster config;
-job* miJob;
 
 int main(int argc, char *argv[]) {
+	job* miJob;
 	loggerMaster = log_create("logMaster", "Master.c", 1, LOG_LEVEL_TRACE);
 	//controlarParametros(argc);
 	cargarConfiguracionMaster(&config,argv[1]);
@@ -22,8 +22,7 @@ int main(int argc, char *argv[]) {
 
 	miJob = crearJob(argv);
 
-	enviarJobAYama();
-
+	enviarJobAYama(miJob);
 
 	esperarInstruccionesDeYama();
 

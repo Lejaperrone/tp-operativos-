@@ -18,6 +18,14 @@ typedef struct string{
 	char* cadena;
 }string;
 
+typedef struct job{
+	int id;
+	string rutaTransformador;
+	string rutaReductor;
+	string rutaDatos;
+	string rutaResultado;
+}job;
+
 typedef enum {TRANSFORMACION, RED_LOCAL, RED_GLOBAL, ALM_FINAL}Etapa;
 
 typedef enum {EN_EJECUCION, ERROR, FINALIZADO_OK}Estado;

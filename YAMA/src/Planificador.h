@@ -11,7 +11,7 @@
 #include "FuncionesYama.h"
 
 //#define cargaMaxima 10;
-
+t_list* jobsAPlanificar;
 typedef struct{
 	int idJob;
 	char* pathOrigen;
