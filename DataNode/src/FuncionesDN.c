@@ -54,14 +54,14 @@ void conectarseConFs() {
 void recibirMensajesFileSystem(int socketFs) {
 	respuesta pedido2 = desempaquetar(socketFs);
 	//char* buffer = malloc(mb + 4);
-	int bloqueId;
+	int bloqueId = 0;
 	char data[pedido2.size - 2];
 
 	switch (pedido2.idMensaje) {
 	case mensajeEnvioBloqueANodo:
 		//serial_unpack(pedido2.envio + sizeof(header), "h", &bloqueId);
-		memcpy(data, pedido2.envio + sizeof(header), pedido2.size);
-		printf("--------------------------%d\n ", pedido2.idMensaje);
+		memcpy(data, pedido2.envio + sizeof(int), pedido2.size-sizeof(int));
+		printf("--------------------------%s\n ", data);
 		setBloque(bloqueId, data);
 		memset(data, 0, pedido2.size - 2);
 		break;

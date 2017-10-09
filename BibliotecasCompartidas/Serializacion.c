@@ -92,7 +92,6 @@ respuesta desempaquetar(int socket){
 		miRespuesta.idMensaje = cabecera->idMensaje;
 		switch (miRespuesta.idMensaje) {
 
-			case mensajeEnvioBloqueANodo:
 			case mensajeHandshake:
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);
@@ -135,6 +134,7 @@ respuesta desempaquetar(int socket){
 				free(bufferOk);
 				break;
 
+			case mensajeEnvioBloqueANodo:
 			case mensajeEnvioArchivoANodo:
 				bufferOk = malloc(cabecera->tamanio);
 				recv(socket,bufferOk,cabecera->tamanio,0);
