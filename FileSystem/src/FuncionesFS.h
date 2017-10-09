@@ -15,12 +15,21 @@
 #include "Globales.h"
 #include <commons/collections/list.h>
 #include <semaphore.h>
+#include <pthread.h>
 
 typedef struct{
 	int index;
 	char nombre[255];
 	int padre;
 } t_directory;
+
+typedef struct parametrosEnvioBloque {
+    int socket;
+    char* mapa;
+    int sizeBloque;
+    int offset;
+    int bloque;
+}parametrosEnvioBloque;
 
 void* consolaFS();
 
@@ -52,4 +61,4 @@ void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
 
 void actualizarBitmapNodo(int numeroNodo);
 
-void enviarADataNode(char* map, int bloque, int tam, int size_bytes, int socket);
+void* enviarADataNode(void* parametros);
