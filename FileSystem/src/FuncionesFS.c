@@ -36,7 +36,7 @@ extern int sizeTotalNodos, nodosLibres;
 extern t_list* bitmapsNodos;;
 extern t_list* nodosConectados;
 extern char* rutaBitmaps;
-char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+char* pathArchivoDirectorios = "../metadata/Directorios.dat";
 
 void inicializarTablaDirectorios(){
 	int i;
@@ -607,7 +607,7 @@ int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve
 
 void actualizarArchivoNodos(){
 
-	char* pathArchivo = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
+	char* pathArchivo = "../metadata/Nodos.bin";
 	FILE* archivoNodes = fopen(pathArchivo, "wb+");
 	fclose(archivoNodes); //para dejarlo vacio
 	int cantidadNodos = list_size(nodosConectados), i = 0;

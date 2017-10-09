@@ -22,8 +22,6 @@
 
 #define mb 1048576
 
-char* path =
-		"/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
 int cantBloques = 50;
 extern struct configuracionNodo config;
 extern sem_t pedidoFS;
