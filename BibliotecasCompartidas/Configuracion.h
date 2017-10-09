@@ -21,6 +21,7 @@ struct configuracionYama{
 	char* YAMA_IP;
 	int RETARDO_PLANIFICACION;
 	char* ALGORITMO_BALANCEO;
+	int DISPONIBILIDAD_BASE;
 }configuracionYama;
 
 struct configuracionNodo{

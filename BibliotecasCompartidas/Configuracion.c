@@ -45,6 +45,10 @@ void cargarConfiguracionYama(struct configuracionYama *config,char* rutaAConfig)
 		config->ALGORITMO_BALANCEO = config_get_string_value(configYama,"ALGORITMO_BALANCEO");
 		printf("El algoritmo de balanceo es %s \n",config->ALGORITMO_BALANCEO);
 	}
+	if (config_has_property(configYama, "DISPONIBILIDAD_BASE")){
+			config->DISPONIBILIDAD_BASE = config_get_int_value(configYama,"DISPONIBILIDAD_BASE");
+			printf("La disponibilidad base es: %d \n",config->DISPONIBILIDAD_BASE);
+		}
 }
 
 //Configuracion de Master
