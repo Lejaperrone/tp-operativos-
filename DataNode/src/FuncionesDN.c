@@ -19,30 +19,49 @@
 #include <stdbool.h>
 #include <commons/string.h>
 #include "Serial.h"
+#include <sys/types.h>
 
 #define mb 1048576
 
-char* path =
-		"/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
 int cantBloques = 50;
 extern struct configuracionNodo config;
 extern sem_t pedidoFS;
+FILE* databin;
 
 void enviarBloqueAFS(int numeroBloque) {
 
+}//cpfrom /home/utnso/hola2.txt hola/chau
+
+int setBloque(int numeroBloque, char* datos) {
+	int fd = open(config.RUTA_DATABIN, O_RDWR);
+	char* mapaDataBin = mmap(0, mb*config.SIZE_NODO, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	memcpy(mapaDataBin+mb*numeroBloque, datos, strlen(datos));
+	if (msync(mapaDataBin, strlen(datos), MS_SYNC) == -1)
+	{
+		perror("Could not sync the file to disk");
+	}
+	if (munmap(mapaDataBin, strlen(datos)) == -1)
+	{
+		close(fd);
+		perror("Error un-mmapping the file");
+		exit(EXIT_FAILURE);
+	}
+	close(fd);
+	return 1;
 }
 
-int setBloque(int numeroBloque, void* datos) {
-	return 1;
+void inicializarDataBin(){
+	databin = fopen(config.RUTA_DATABIN,"a+");
+	truncate(config.RUTA_DATABIN, config.SIZE_NODO*mb);
 }
 
 void conectarseConFs() {
 	int socketFs = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 7000);
+	struct sockaddr_in direccion = cargarDireccion(config.IP_FILESYSTEM, config.PUERTO_FILESYSTEM);
 	conectarCon(direccion, socketFs, 3);
 	informacionNodo info;
 	info.sizeNodo = config.SIZE_NODO;
-	info.bloquesOcupados = -1; //levantarBitmap(config.NOMBRE_NODO);
+	info.bloquesOcupados = -1;
 	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO, 4));
 	printf("soy el nodo %d\n", info.numeroNodo);
 	info.socket = -1;
@@ -52,24 +71,26 @@ void conectarseConFs() {
 }
 
 void recibirMensajesFileSystem(int socketFs) {
-	respuesta pedido2 = desempaquetar(socketFs);
-	char* buffer = malloc(mb + 4);
+	respuesta numeroBloque = desempaquetar(socketFs);
+	respuesta bloqueArchivo = desempaquetar(socketFs);
+	//char* buffer = malloc(mb + 4);
 	int bloqueId;
-	char data[pedido2.size - 2];
+	memcpy(&bloqueId, numeroBloque.envio, sizeof(int));
+	char* data = malloc(bloqueArchivo.size);
 
-	switch (pedido2.idMensaje) {
+	switch (bloqueArchivo.idMensaje) {
 	case mensajeEnvioBloqueANodo:
-		recv(socketFs, buffer, mb + 4, 0);
-		serial_unpack(buffer, "h", &bloqueId);
-		memcpy(data, buffer + 4, pedido2.size);
-		printf("--------------------------%s\n ", data);
+		//serial_unpack(pedido2.envio + sizeof(header), "h", &bloqueId);
+		memcpy(data, bloqueArchivo.envio + sizeof(int), bloqueArchivo.size-sizeof(int));
+		//printf("--------------------------%s\n\n\n ", data);
 		setBloque(bloqueId, data);
-		memset(data, 0, pedido2.size - 2);
 		break;
 
 	default:
+	printf("llegue %d %d\n", bloqueArchivo.idMensaje, mensajeEnvioBloqueANodo);
 		break;
 	}
+	free(data);
 }
 
 void escucharAlFS(int socketFs) {

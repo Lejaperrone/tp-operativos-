@@ -20,6 +20,7 @@ struct configuracionNodo  config;
 int main(int argc, char *argv[]) {
 	respuesta conexionConFS;
 	cargarConfiguracionNodo(&config,argv[1]);
+	inicializarDataBin();
 	conectarseConFs();
 	while(1){
 

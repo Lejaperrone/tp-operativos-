@@ -21,6 +21,7 @@
 #include <errno.h>
 #include "Serial.h"
 
+
 #define idDataNodes 3
 #define cantDataNodes 10
 #define mb 1048576
@@ -134,49 +135,49 @@ void* consolaFS(){
 			log_trace(loggerFS, "File system formateado");
 		}
 		else if (string_starts_with(comando, "rm -d")) {
-			if (eliminarDirectorio(comando, 2) != -1)
+			if (eliminarDirectorio(comando) != -1)
 				log_trace(loggerFS, "Directorio eliminado");
 			else
-				log_trace(loggerFS, "No se pudo eliminar el directorio");
+				log_error(loggerFS, "No se pudo eliminar el directorio");
 		}
 		else if (string_starts_with(comando, "rm -b")) {
 			log_trace(loggerFS, "Bloque eliminado");
 		}
 		else if (string_starts_with(comando, "rm")) {
-			if (eliminarArchivo(comando, 1) != -1)
+			if (eliminarArchivo(comando) != -1)
 				log_trace(loggerFS, "archivo eliminado");
 			else
-				log_trace(loggerFS, "No se pudo eliminar el archivo");
+				log_error(loggerFS, "No se pudo eliminar el archivo");
 		}
 		else if (string_starts_with(comando, "rename")) {
-			if (cambiarNombre(comando, 1) == 1)
+			if (cambiarNombre(comando) == 1)
 				log_trace(loggerFS, "Renombrado");
 			else
-				log_trace(loggerFS, "No se pudo renombrar");
+				log_error(loggerFS, "No se pudo renombrar");
 
 		}
 		else if (string_starts_with(comando, "mv")) {
-			if (mover(comando,1) == 1)
+			if (mover(comando) == 1)
 				log_trace(loggerFS, "Archivo movido");
 			else
-				log_trace(loggerFS, "No se pudo mover el archivo");
+				log_error(loggerFS, "No se pudo mover el archivo");
 		}
 		else if (string_starts_with(comando, "cat")) {
-			if (mostrarArchivo(comando, 1) == 1){
+			if (mostrarArchivo(comando) == 1){
 			log_trace(loggerFS, "Archivo mostrado");
 			}else{
-				log_trace(loggerFS, "No se pudo mostrar el archivo");
+				log_error(loggerFS, "No se pudo mostrar el archivo");
 			}
 		}
 		else if (string_starts_with(comando, "mkdir")) {
-			if (crearDirectorio(comando,1) == 1){
+			if (crearDirectorio(comando) == 1){
 
 			log_trace(loggerFS, "Directorio creado");// avisar si ya existe
 			}else{
-				if (crearDirectorio(comando,1) == 2){
-				log_trace(loggerFS, "El directorio ya existe");
+				if (crearDirectorio(comando) == 2){
+					log_error(loggerFS, "El directorio ya existe");
 				}else{
-					log_trace(loggerFS, "No se pudo crear directorio");
+					log_error(loggerFS, "No se pudo crear directorio");
 				}
 			}
 		}
@@ -184,7 +185,7 @@ void* consolaFS(){
 			if (copiarArchivo(comando) == 1)
 				log_trace(loggerFS, "Archivo copiado a yamafs");
 			else
-				log_trace(loggerFS, "No se pudo copiar el archivo");
+				log_error(loggerFS, "No se pudo copiar el archivo");
 		}
 		else if (string_starts_with(comando, "cpto")) {
 			log_trace(loggerFS, "Archivo copiado desde yamafs");
@@ -193,21 +194,28 @@ void* consolaFS(){
 			log_trace(loggerFS, "Bloque copiado en el nodo");
 		}
 		else if (string_starts_with(comando, "md5")) {
-			log_trace(loggerFS, "MD5 del archivo");
+			if (generarArchivoMD5(comando) == 1)
+				log_trace(loggerFS, "MD5 del archivo");
+			else
+				log_error(loggerFS, "No se pudo obtener el MD5 del archivo");
+
 		}
 		else if (string_starts_with(comando, "ls")) {
-			listarArchivos(comando, 1);
-			log_trace(loggerFS, "Archivos listados");
+			if (listarArchivos(comando) == 1)
+				log_trace(loggerFS, "Archivos listados");
+			else
+				log_error(loggerFS, "El directorio no existe");
+
 		}
 		else if (string_starts_with(comando, "info")) {
-			if (informacion(comando,1) == 1)
+			if (informacion(comando) == 1)
 				log_trace(loggerFS, "Mostrando informacion del archivo");
 			else
-				log_trace(loggerFS, "No se pudo mostrar informacion del archivo");
+				log_error(loggerFS, "No se pudo mostrar informacion del archivo");
 		}
 		else {
 			printf("Comando invalido\n");
-			log_trace(loggerFS, "Comando invalido");
+			log_error(loggerFS, "Comando invalido");
 		}
 		free(comando);
 	}
@@ -288,7 +296,7 @@ void* levantarServidorFS(void* parametrosServidorFS){
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
 							if (nodoRepetido(info) == 0){
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
-								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo);
+								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
 								info.socket = nuevoDataNode;
 								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
 								list_add(nodosConectados,paqueteInfoNodo.envio);
@@ -336,7 +344,6 @@ int nodoRepetido(informacionNodo info){
 }
 
 void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
-	int mockNumeroBloqueAsignado = 0;
 	int mockSizeArchivo = 2*mb;
 	respuesta respuestaPedidoAlmacenar;
 
@@ -385,7 +392,9 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int masBloquesLibres[numeroCopiasBloque];
 	int nodosEnUso[cantidadNodos];
 	int indexNodoEnListaConectados[numeroCopiasBloque];
+	parametrosEnvioBloque params;
 
+	params.mapa = mapeoArchivo->cadena;
 	for (i = 0; i < cantidadNodos; ++i){
 		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
 		bloquesLibreNodo[i] = infoAux.sizeNodo-infoAux.bloquesOcupados;
@@ -395,6 +404,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	for (i = 0; i < cantNodosNecesarios; ++i){	//Primer for: itera por cada bloque que ocupa el archivo
+		printf("-------------------offset %d\n", offset);
 		printf("--%d\n",cantNodosNecesarios);	//Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
 		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
 			masBloquesLibres[j] = -1;				//criterio
@@ -416,33 +426,38 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 				}
 			}
 		}
+		if (i < cantNodosNecesarios-1)
+			ultimoSize = mb;
+		else
+			ultimoSize = sizeUltimoNodo;
+
+		params.offset = offset;
+		params.sizeBloque = ultimoSize;
 		for (j = 0; j < numeroCopiasBloque; ++j){
 			for (k = 0; k < cantidadNodos; ++k)
 				if(masBloquesLibres[j] ==  indexNodos[k]){
 					nodoAUtilizar = k;
 				}
+			pthread_attr_t attr;
+			pthread_t nuevoHilo;
+
+			pthread_attr_init(&attr);
+			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
 			infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[nodoAUtilizar]);
 			printf("le mando el bloque a %d\n", infoAux.numeroNodo);
 
 			bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[nodoAUtilizar], infoAux.sizeNodo);
+			params.socket = infoAux.socket;
+			params.bloque = bloqueLibre;
 
-			printf("bloque %d\n",bloqueLibre);
-
-			if (i == cantNodosNecesarios-1){
-				enviarADataNode(mapeoArchivo->cadena, bloqueLibre, offset, sizeUltimoNodo, infoAux.socket);
-				offset = 0;
-				ultimoSize = mb;
-			}
-			else{
-				enviarADataNode(mapeoArchivo->cadena, bloqueLibre, offset, mb, infoAux.socket);
-				offset += mb;
-				ultimoSize = sizeUltimoNodo;
-			}
+			pthread_create(&nuevoHilo, &attr, &enviarADataNode,(void*) &params);
+			sem_wait(&pedidoFS);
 
 			printf("bloque libre %d %d\n",bloqueLibre, infoAux.numeroNodo);
-			respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
+			//respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
 
-			memcpy(&success,respuestaPedidoAlmacenar.envio, sizeof(int));
+			//memcpy(&success,respuestaPedidoAlmacenar.envio, sizeof(int));
 
 			printf("success %d\n", success);
 
@@ -452,45 +467,39 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(masBloquesLibres[j], bloqueLibre));
 			}
 		}
-
-	//Empaquetar bloques a guardar a los que esten en masBloquesLibres
-	//Desempaqutar notificacion success. si falla, -1
-		for (k = 0; k < cantNodosNecesarios; ++k){
-			printf("---nodo %d---\n", masBloquesLibres[k]);
-		}
-
-		if(success == 1){ //Por cada bloque agrego sus valores para la tabla
-			config_set_value(infoArchivo, "RUTA", rutaFinal);
-			config_set_value(infoArchivo, "TAMANIO", string_itoa(mockSizeArchivo));
-		}
+		if (i < cantNodosNecesarios-1)
+			offset += mb;
 
 
+	}
+	if(success == 1){ //Por cada bloque agrego sus valores para la tabla
+		config_set_value(infoArchivo, "RUTA", rutaFinal);
+		config_set_value(infoArchivo, "TAMANIO", string_itoa(mockSizeArchivo));
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
 
 }
 
-void enviarADataNode(char* map, int bloque, int tam, int size_bytes, int socket){
-	 unsigned char buffer[size_bytes + sizeof(int)];
-	 unsigned char buff[mb];
-	 header head;
-	 memcpy(buff, map+tam, size_bytes-1);
-	 if(size_bytes != mb) printf("%s\n", buff);
-
-	 head.tamanio = serial_pack(buffer,"hs",bloque,buff);
-	 head.idMensaje = mensajeEnvioBloqueANodo;
-
-	 empaquetar(socket, mensajeEnvioBloqueANodo, head.tamanio,buffer);
-	 memset(buff, 0, mb);
+void* enviarADataNode(void* parametros){
+	 struct parametrosEnvioBloque* params;
+	 params = (struct parametrosEnvioBloque*) parametros;
+	 char* buff = malloc(params->sizeBloque);
+	 printf("........................nro bloque %d\n", params->bloque);
+	 memcpy(buff, params->mapa+params->offset, params->sizeBloque);
+	 empaquetar(params->socket, mensajeNumeroBloqueANodo, sizeof(int),&params->bloque);
+	 empaquetar(params->socket, mensajeEnvioBloqueANodo, params->sizeBloque,buff);
+	 free(buff);
+	 sem_post(&pedidoFS);
+	 return 0;
 }
 
-	void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
-		informacionNodo* infoAux;
-		t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
-		bitarray_set_bit(bitarrayNodo,bloqueLibre);
-		infoAux = list_get(nodosConectados,numeroNodo);
-		++infoAux->bloquesOcupados;
-		actualizarBitmapNodo(numeroNodo);
+void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
+	informacionNodo* infoAux;
+	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
+	bitarray_set_bit(bitarrayNodo,bloqueLibre);
+	infoAux = list_get(nodosConectados,numeroNodo);
+	++infoAux->bloquesOcupados;
+	actualizarBitmapNodo(numeroNodo);
 }
 
 void actualizarBitmapNodo(int numeroNodo){
@@ -530,21 +539,21 @@ char* generarArrayBloque(int numeroNodo, int numeroBloque){
 
 int buscarPrimerBloqueLibre(int numeroNodo, int sizeNodo){
 	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
-	int i, numeroBloque = 1;
+	int i;
 	for (i = 0; i < sizeNodo; ++i){
 		if (bitarray_test_bit(bitarrayNodo,i) == 0){
-			numeroBloque = i;
-			break;
+			printf("------------------------------------i %d\n", i);
+			return i;
 		}
 	}
-	return numeroBloque;
+	return -1;
 }
 
-int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve la cantidad de bloques libres en el nodo
+int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a la vez devuelve la cantidad de bloques libres en el nodo
 	char* sufijo = ".bin";
 	t_bitarray* bitmap;
 
-	int BloquesOcupados = 0;
+	int BloquesOcupados = 0, i;
 	int longitudPath = strlen(rutaBitmaps);
 	char* nombreNodo = string_from_format("NODO%d",numeroNodo);
 	int longitudNombre = strlen(nombreNodo);
@@ -561,9 +570,16 @@ int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve
 	memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
 
 	printf("path %s", pathParticular);
+	FILE* bitmapFile;
 
-	FILE* bitmapFile = fopen(pathParticular, "r");
+	if (!validarArchivo(pathParticular) == 1){
+		bitmapFile = fopen(pathParticular, "w");
+		for(i = 0; i < 50; ++i)
+			fwrite("0",1,1, bitmapFile);
+		fclose(bitmapFile);
+	}
 
+	bitmapFile = fopen(pathParticular, "r");
 
 	bitmap = bitarray_create_with_mode(espacioBitarray, cantBloques, LSB_FIRST);
 
@@ -684,7 +700,7 @@ void atenderSolicitudYama(int socketYama, void* envio){
 	solicitudTransformacion* solTransf =(solicitudTransformacion*)envio;
 
 
-	empaquetar(socketYama, mensajeInfoArchivo, 0 ,0);
+	//empaquetar(socketYama, mensajeInfoArchivo, 0 ,0);
 
 	//aca hay que aplicar la super funcion mockeada de @Ronan
 

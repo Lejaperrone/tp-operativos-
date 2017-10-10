@@ -15,4 +15,4 @@ int levantarBitmap(char* nombreNodo);
 
 void escucharAlFS(int socketFs);
 
-int setBloque(int numeroBloque, void* datos);
+int setBloque(int numeroBloque, char* datos);

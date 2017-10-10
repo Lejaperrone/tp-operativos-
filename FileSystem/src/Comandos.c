@@ -10,6 +10,26 @@
 
 #define mb 1048576
 
+bool CalcFileMD5(char *file_name, char *md5_sum)
+{
+    #define MD5SUM_CMD_FMT "md5sum %." STR(PATH_LEN) "s 2>/dev/null"
+    char cmd[PATH_LEN + sizeof (MD5SUM_CMD_FMT)];
+    sprintf(cmd, MD5SUM_CMD_FMT, file_name);
+    #undef MD5SUM_CMD_FMT
+
+    FILE *p = popen(cmd, "r");
+    if (p == NULL) return false;
+
+    int i, ch;
+    for (i = 0; i < MD5_LEN && isxdigit(ch = fgetc(p)); i++) {
+        *md5_sum++ = ch;
+    }
+
+    *md5_sum = '\0';
+    pclose(p);
+    return i == MD5_LEN;
+}
+
 char* devolverRuta(char* comando, int numeroParametro)
 {
 	char* copiaComando = malloc(strlen(comando)+1);
@@ -20,6 +40,7 @@ char* devolverRuta(char* comando, int numeroParametro)
 	for (i = 0; i < numeroParametro; ++i){
 		ruta = strtok(NULL, " ");
 	}
+	//free(copiaComando);
 	return ruta;
 }
 
@@ -59,8 +80,10 @@ int copiarArchivo(char* comando){
 	printf("ruta normal %s\n", rutaNormal);
 
 	struct stat fileStat;
-	if(stat(rutaNormal,&fileStat) < 0)
+	if(stat(rutaNormal,&fileStat) < 0){
+		printf("no se pudo abrir\n");
 		exit(1);
+	}
 
 	int fd = open(rutaNormal,O_RDWR);
 	int size = fileStat.st_size;
@@ -73,6 +96,8 @@ int copiarArchivo(char* comando){
 
 	guardarEnNodos(rutaFS, nombre, tipo, mapeoArchivo);
 
+
+
 	free(tipo);
 	free(nombre);
 
@@ -83,10 +108,10 @@ int copiarArchivo(char* comando){
 bool validarArchivo(char* path) {
 	if (access(path, R_OK) == -1) {
 		printf("No existe el archivo %s en el FileSystem\n", path);
-		return false;
+		return 0;
 	} else {
 		printf("Existe el archivo %s en el FileSystem\n", path);
-		return true;
+		return 1;
 	}
 }
 
@@ -108,9 +133,9 @@ bool validarDirectorio(char* path){
 	}
 }
 
-int eliminarArchivo(char* comando, int cantidadDeComandos){
+int eliminarArchivo(char* comando){
 	int success = -1;
-	char* path = devolverRuta(comando, cantidadDeComandos);
+	char* path = devolverRuta(comando, 1);
 	if (validarArchivo(path)){
 		success = remove(path);
 		if (success == -1)
@@ -121,9 +146,9 @@ int eliminarArchivo(char* comando, int cantidadDeComandos){
 	return success;
 }
 
-int eliminarDirectorio(char* comando, int cantidadDeComandos){
+int eliminarDirectorio(char* comando){
 	int success = -1;
-	char* path = devolverRuta(comando, cantidadDeComandos);
+	char* path = devolverRuta(comando, 2);
 		if (validarDirectorio(path)){
 			success = remove(path);
 			if (success == -1)
@@ -134,9 +159,12 @@ int eliminarDirectorio(char* comando, int cantidadDeComandos){
 		return success;
 }
 
-void listarArchivos(char* comando, int cantidadDeComandos){
+int listarArchivos(char* comando){
 
-	char* path = devolverRuta(comando, cantidadDeComandos);
+	char* path = devolverRuta(comando, 1);
+
+	if (!validarDirectorio(path))
+		return 0;
 
 	DIR * directorio;
 	struct dirent * elemento;
@@ -148,11 +176,12 @@ void listarArchivos(char* comando, int cantidadDeComandos){
 		}
 	}
 	closedir(directorio);
+	return 1;
 }
 
-int crearDirectorio(char* comando, int cantidadDeComandos){
+int crearDirectorio(char* comando){
 
-	char* path = devolverRuta(comando, cantidadDeComandos);
+	char* path = devolverRuta(comando, 1);
 
 	if (validarDirectorio(path)){
 		return 2;
@@ -169,9 +198,9 @@ int crearDirectorio(char* comando, int cantidadDeComandos){
 	}
 }
 
-int mostrarArchivo(char* comando, int cantidadDeComandos){
+int mostrarArchivo(char* comando){
 
-	char* path = devolverRuta(comando, cantidadDeComandos);
+	char* path = devolverRuta(comando, 1);
 
 	FILE *fd;
 	int c;
@@ -189,10 +218,10 @@ int mostrarArchivo(char* comando, int cantidadDeComandos){
 	return 1;
 }
 
-int cambiarNombre(char* comando, int cantidadDeComandos){
+int cambiarNombre(char* comando){
 
-	char* rutaNombreViejo = devolverRuta(comando, cantidadDeComandos);
-	char* nombreNuevo = devolverRuta(comando, cantidadDeComandos + 1);
+	char* rutaNombreViejo = devolverRuta(comando, 1);
+	char* nombreNuevo = devolverRuta(comando, 2);
 	printf("--%s\n", rutaNombreViejo);
 	printf("--%s\n", nombreNuevo);
 
@@ -231,25 +260,41 @@ int cambiarNombre(char* comando, int cantidadDeComandos){
 	return 0;
 }
 
-int mover(char* comando, int cantidadDeComandos){
+int mover(char* comando){
 
-	char* rutaNombreViejo = devolverRuta(comando, cantidadDeComandos);
-	char* rutaNombreNuevo = devolverRuta(comando, (cantidadDeComandos + 1));
+	char* rutaNombreViejo = devolverRuta(comando, 1);
+	char* rutaNombreNuevo = devolverRuta(comando, 2);
+	printf("--%s\n",rutaNombreViejo);
+	printf("--%s\n",rutaNombreNuevo);
 
 	if (rename(rutaNombreViejo,rutaNombreNuevo) == 0){
-		free(rutaNombreViejo);
-		free(rutaNombreNuevo);
+		//free(rutaNombreViejo);
+		//free(rutaNombreNuevo);
 		return 1;
 	}else{
-		free(rutaNombreViejo);
-		free(rutaNombreNuevo);
+		//free(rutaNombreViejo);
+		//free(rutaNombreNuevo);
 		return 0;
 	}
 }
 
-int informacion(char* comando, int cantidadDeComandos){
+int generarArchivoMD5(char* comando){
 
-	char* path = devolverRuta(comando, cantidadDeComandos);
+	char* path = devolverRuta(comando, 1);
+	char md5[MD5_LEN + 1];
+
+	    if (!CalcFileMD5(path, md5)) {
+	        return 0;
+	    } else {
+	        printf("MD5 sum es: %s\n", md5);
+	    }
+	return 1;
+}
+
+
+int informacion(char* comando){
+
+	char* path = devolverRuta(comando, 1);
 
 	struct stat fileStat;
 		    if(stat(path,&fileStat) < 0)

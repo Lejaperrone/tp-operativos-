@@ -80,5 +80,7 @@ int main(void) {
 	pthread_join(hiloServidorFS, NULL);
 	pthread_join(hiloConsolaFS, NULL);
 
+	return 0;
+
 }
 

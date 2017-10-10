@@ -48,21 +48,18 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeEnvioBloqueANodo:
 			tamanio = tamanioS;
 			bloque = malloc(tamanio);
+			printf("size envio %d\n", tamanio);
 			memcpy(bloque,paquete,tamanio);
 			break;
 
 		case mensajeRespuestaEnvioArchivoANodo:
 		case mensajeRespuestaEnvioBloqueANodo:
+		case mensajeNumeroBloqueANodo:
 			tamanio = sizeof(int);
 			bloque = malloc(tamanio);
 			memcpy(bloque,paquete,tamanio);
 			break;
 
-		case mensajeEnvioArchivoANodo:
-			tamanio = tamanioS;
-			bloque = malloc(tamanio);
-			memcpy(bloque,paquete,tamanio);
-			break;
 	}
 
 	cabecera.tamanio = tamanio;
@@ -92,7 +89,6 @@ respuesta desempaquetar(int socket){
 		miRespuesta.idMensaje = cabecera->idMensaje;
 		switch (miRespuesta.idMensaje) {
 
-			case mensajeEnvioBloqueANodo:
 			case mensajeHandshake:
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);
@@ -103,9 +99,6 @@ respuesta desempaquetar(int socket){
 
 			case mensajeArchivo:
 				miRespuesta.envio = deserializarString(socket,cabecera->tamanio);
-				string* a = malloc(sizeof(string));
-				memcpy(a, miRespuesta.envio, cabecera->tamanio);
-				printf("cadena %s\n", a->cadena);
 				break;
 
 			case mensajeInfoArchivo://todo
@@ -132,16 +125,18 @@ respuesta desempaquetar(int socket){
 
 			case mensajeRespuestaEnvioArchivoANodo:
 			case mensajeRespuestaEnvioBloqueANodo:
+			case mensajeNumeroBloqueANodo:
 				bufferOk = malloc(sizeof(int));
-				recv(socket,bufferOk,sizeof(int),0);
+				recv(socket,bufferOk,sizeof(int),MSG_WAITALL);
 				miRespuesta.envio = malloc(sizeof(int));
 				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
 				free(bufferOk);
 				break;
 
-			case mensajeEnvioArchivoANodo:
+			case mensajeEnvioBloqueANodo:
 				bufferOk = malloc(cabecera->tamanio);
-				recv(socket,bufferOk,cabecera->tamanio,0);
+				printf("espero %d\n", cabecera->tamanio);
+				recv(socket,bufferOk,cabecera->tamanio,MSG_WAITALL);
 				miRespuesta.envio = malloc(cabecera->tamanio);
 				memcpy(miRespuesta.envio, bufferOk, cabecera->tamanio);
 				free(bufferOk);
@@ -179,7 +174,6 @@ string* deserializarString(int socket,int tamanio){
  	desplazamiento += longitudInt;
 
  	cadena->cadena = malloc(cadena->longitud+1);
- 	printf("cadena %s\n", cadena->cadena);
 
  	return cadena;
  }
