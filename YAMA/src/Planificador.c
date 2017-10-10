@@ -6,28 +6,33 @@
  */
 
 #include "Planificador.h"
-t_list* listaNodos;
-t_list* jobsAPlanificar;
-
 
 void iniciarListasPlanificacion(){
 	listaNodos = list_create();
 	jobsAPlanificar = list_create();
 }
 
-void planificar(infoJob* job, infoNodo* nodo){
-	void* clock;//FIXME
-	t_list* listaWorkersConBloques = list_create();
-	//localizar los bloques en FS TOdo
+void planificar(job* job, infoNodo* nodo){
+	t_list* listaWorkersConBloques = list_create();	//localizar los bloques en FS TOdo
 
 	calcularCargasDeWorkers();
 
-	infoNodo* workerCandidato = obtenerNodoDisponible(listaNodos, listaWorkersConBloques);
-	//posicionarClock(clock, listaWorkersConBloques);
+	//infoNodo* workerCandidato = obtenerNodoDisponible(listaNodos, listaWorkersConBloques);
+	posicionarClock(job, listaWorkersConBloques);
 	//comparar cargas
 }
 
-void posicionarClock(void* clock, t_list* listaWorkersConBloques){
+void posicionarClock(job* unJob, t_list* listaWorkersConBloques){
+	int i;
+	infoNodo* workerAsignado;
+	for(i=0;i<list_size(listaWorkersConBloques);i++){
+		//workerAsignado = obtenerNodosDisponibles(listaWorkersConBloques,i); FIXME PARA WCLOCK
+		workerAsignado = list_get(listaWorkersConBloques, i);//CLOCK ELIJO CUALQUIERA
+		asignarNodoA(unJob,workerAsignado);
+	}
+}
+
+void asignarNodoA(job* unJob, infoNodo* worker){
 
 }
 
@@ -61,7 +66,7 @@ uint32_t workLoadGlobal(){
 	return 0; //FIXME
 }
 
-void agregarJobAPlanificar(infoJob* jobAPlanificar){
+void agregarJobAPlanificar(job* jobAPlanificar){
 	list_add(jobsAPlanificar, jobAPlanificar);
 }
 

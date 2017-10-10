@@ -9,14 +9,13 @@
 #define PLANIFICADOR_H_
 
 #include "FuncionesYama.h"
+#include "../BibliotecasCompartidas/Globales.h"
+#include <pthread.h>
+#include <semaphore.h>
 
-//#define cargaMaxima 10;
 t_list* jobsAPlanificar;
-typedef struct{
-	int idJob;
-	char* pathOrigen;
-	char* pathResultado;
-}infoJob;
+t_list* listaNodos;
+pthread_mutex_t listaNodos_mutex;
 
 typedef struct {
 	char* nombre;
@@ -26,12 +25,12 @@ typedef struct {
 	int bloque;
 }infoNodo;
 
-void planificar(infoJob* job, infoNodo* nodo);
+void planificar(job* job, infoNodo* nodo);
 uint32_t calcularCarga(infoNodo* worker);
 uint32_t workLoadGlobal();
 int calcularDisponibilidadWorker(infoNodo* worker);
 void agregarNodo(t_list* cargaNodo,infoNodo* nodo);
-void agregarJobAPlanificar(infoJob* jobAPlanificar);
+void agregarJobAPlanificar(job* jobAPlanificar);
 infoNodo* obtenerNodoDisponible(t_list* cargaNodos, t_list* listaNodosParaMap);
 t_list* obtenerNodosQueEstanEnLista(t_list* cargaNodos, t_list* listaNodos);
 infoNodo* obtenerNodoConNombre(char *nombreNodo);
@@ -45,6 +44,8 @@ infoNodo* obtenerNodoConNombre(char *nombreNodo);
 bool nodoConMenorCargaPrimero(void* argNodo1, void* argNodo2);
 uint32_t cargaMaxima();
 void iniciarListasPlanificacion();
+void asignarNodoA(job* unJob, infoNodo* worker);
+void posicionarClock(job* unJob, t_list* listaWorkersConBloques);
 
 
 #endif /* PLANIFICADOR_H_ */

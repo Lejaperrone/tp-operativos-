@@ -8,6 +8,8 @@ int main(int argc, char *argv[]) {
 
 	levantarServidorYama(config.YAMA_IP,config.YAMA_PUERTO);
 
+	iniciarListasPlanificacion();
+
 	return EXIT_SUCCESS;
 }
 

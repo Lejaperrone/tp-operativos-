@@ -76,15 +76,14 @@ void recibirContenidoMaster() {
 	respuesta nuevoJob;
 	respuestaTransformacion* rtaTransf;
 	solicitudTransformacion* solTransf;
-	//FIXME AGREGAR JOB A PLANIFICAR
+
 	log_trace(logger, "Conexion de Master");
 	nuevoJob = desempaquetar(nuevoMaster);
 	job* jobAPlanificar =(job*) nuevoJob.envio;
 
-	//list_add(jobAPlanificar, jobsAPlanificar);
+	agregarJobAPlanificar(jobAPlanificar);
 
-
-	log_trace(logger, "Me llego %s %i",jobAPlanificar->rutaDatos.cadena, jobAPlanificar->rutaResultado.longitud);
+	log_trace(logger, "Me llego %s %i",jobAPlanificar->rutaDatos.cadena, jobAPlanificar->rutaDatos.longitud);
 
 	//rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);
@@ -130,7 +129,7 @@ void recibirArchivo(){
 }
 
 char* dameUnNombreArchivoTemporal(){
-	char* nombre = string_new();
+	char* nombre;// = string_new();
 	//string_from_format("Master-%i-temp%i",infoJob->id, inforBloque->bloque);
 	return nombre;
 }
