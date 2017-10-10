@@ -36,7 +36,7 @@ extern int sizeTotalNodos, nodosLibres;
 extern t_list* bitmapsNodos;;
 extern t_list* nodosConectados;
 extern char* rutaBitmaps;
-char* pathArchivoDirectorios = "../metadata/Directorios.dat";
+char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
 void inicializarTablaDirectorios(){
 	int i;
@@ -296,8 +296,8 @@ void* levantarServidorFS(void* parametrosServidorFS){
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
 							if (nodoRepetido(info) == 0){
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
-								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo);
-								//info.socket = nuevoDataNode;
+								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
+								info.socket = nuevoDataNode;
 								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
 								list_add(nodosConectados,paqueteInfoNodo.envio);
 								cantidadNodos = list_size(nodosConectados);
@@ -344,7 +344,6 @@ int nodoRepetido(informacionNodo info){
 }
 
 void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
-	int mockNumeroBloqueAsignado = 0;
 	int mockSizeArchivo = 2*mb;
 	respuesta respuestaPedidoAlmacenar;
 
@@ -446,13 +445,11 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
 			infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[nodoAUtilizar]);
-			params.socket = infoAux.socket;
-			params.bloque = bloqueLibre;
 			printf("le mando el bloque a %d\n", infoAux.numeroNodo);
 
 			bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[nodoAUtilizar], infoAux.sizeNodo);
-
-			printf("bloque %d\n",bloqueLibre);
+			params.socket = infoAux.socket;
+			params.bloque = bloqueLibre;
 
 			pthread_create(&nuevoHilo, &attr, &enviarADataNode,(void*) &params);
 			sem_wait(&pedidoFS);
@@ -486,19 +483,11 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 void* enviarADataNode(void* parametros){
 	 struct parametrosEnvioBloque* params;
 	 params = (struct parametrosEnvioBloque*) parametros;
-
-	 //unsigned char buffer[params->sizeBloque];
 	 char* buff = malloc(params->sizeBloque);
-	 printf("........................size bloque %d\n", params->sizeBloque);
-	 //header head;
+	 printf("........................nro bloque %d\n", params->bloque);
 	 memcpy(buff, params->mapa+params->offset, params->sizeBloque);
-	// if(params->sizeBloque != mb) printf("%s\n", buff);
-
-	 //head.tamanio = serial_pack(buffer,"hs",params->bloque,buff);
-	 //head.idMensaje = mensajeEnvioBloqueANodo;
-
+	 empaquetar(params->socket, mensajeNumeroBloqueANodo, sizeof(int),&params->bloque);
 	 empaquetar(params->socket, mensajeEnvioBloqueANodo, params->sizeBloque,buff);
-	 //memset(buff, 0, mb);
 	 free(buff);
 	 sem_post(&pedidoFS);
 	 return 0;
@@ -550,21 +539,21 @@ char* generarArrayBloque(int numeroNodo, int numeroBloque){
 
 int buscarPrimerBloqueLibre(int numeroNodo, int sizeNodo){
 	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
-	int i, numeroBloque = 1;
+	int i;
 	for (i = 0; i < sizeNodo; ++i){
 		if (bitarray_test_bit(bitarrayNodo,i) == 0){
-			numeroBloque = i;
-			break;
+			printf("------------------------------------i %d\n", i);
+			return i;
 		}
 	}
-	return numeroBloque;
+	return -1;
 }
 
-int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve la cantidad de bloques libres en el nodo
+int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a la vez devuelve la cantidad de bloques libres en el nodo
 	char* sufijo = ".bin";
 	t_bitarray* bitmap;
 
-	int BloquesOcupados = 0;
+	int BloquesOcupados = 0, i;
 	int longitudPath = strlen(rutaBitmaps);
 	char* nombreNodo = string_from_format("NODO%d",numeroNodo);
 	int longitudNombre = strlen(nombreNodo);
@@ -581,9 +570,16 @@ int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve
 	memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
 
 	printf("path %s", pathParticular);
+	FILE* bitmapFile;
 
-	FILE* bitmapFile = fopen(pathParticular, "r");
+	if (!validarArchivo(pathParticular) == 1){
+		bitmapFile = fopen(pathParticular, "w");
+		for(i = 0; i < 50; ++i)
+			fwrite("0",1,1, bitmapFile);
+		fclose(bitmapFile);
+	}
 
+	bitmapFile = fopen(pathParticular, "r");
 
 	bitmap = bitarray_create_with_mode(espacioBitarray, cantBloques, LSB_FIRST);
 
@@ -615,7 +611,7 @@ int levantarBitmapNodo(int numeroNodo) { //levanta el bitmap y a la vez devuelve
 
 void actualizarArchivoNodos(){
 
-	char* pathArchivo = "../metadata/Nodos.bin";
+	char* pathArchivo = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
 	FILE* archivoNodes = fopen(pathArchivo, "wb+");
 	fclose(archivoNodes); //para dejarlo vacio
 	int cantidadNodos = list_size(nodosConectados), i = 0;

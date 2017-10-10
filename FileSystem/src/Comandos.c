@@ -80,8 +80,10 @@ int copiarArchivo(char* comando){
 	printf("ruta normal %s\n", rutaNormal);
 
 	struct stat fileStat;
-	if(stat(rutaNormal,&fileStat) < 0)
+	if(stat(rutaNormal,&fileStat) < 0){
+		printf("no se pudo abrir\n");
 		exit(1);
+	}
 
 	int fd = open(rutaNormal,O_RDWR);
 	int size = fileStat.st_size;
@@ -94,6 +96,8 @@ int copiarArchivo(char* comando){
 
 	guardarEnNodos(rutaFS, nombre, tipo, mapeoArchivo);
 
+
+
 	free(tipo);
 	free(nombre);
 
@@ -104,10 +108,10 @@ int copiarArchivo(char* comando){
 bool validarArchivo(char* path) {
 	if (access(path, R_OK) == -1) {
 		printf("No existe el archivo %s en el FileSystem\n", path);
-		return false;
+		return 0;
 	} else {
 		printf("Existe el archivo %s en el FileSystem\n", path);
-		return true;
+		return 1;
 	}
 }
 

@@ -54,16 +54,12 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 		case mensajeRespuestaEnvioArchivoANodo:
 		case mensajeRespuestaEnvioBloqueANodo:
+		case mensajeNumeroBloqueANodo:
 			tamanio = sizeof(int);
 			bloque = malloc(tamanio);
 			memcpy(bloque,paquete,tamanio);
 			break;
 
-		case mensajeEnvioArchivoANodo:
-			tamanio = tamanioS;
-			bloque = malloc(tamanio);
-			memcpy(bloque,paquete,tamanio);
-			break;
 	}
 
 	cabecera.tamanio = tamanio;
@@ -129,15 +125,15 @@ respuesta desempaquetar(int socket){
 
 			case mensajeRespuestaEnvioArchivoANodo:
 			case mensajeRespuestaEnvioBloqueANodo:
+			case mensajeNumeroBloqueANodo:
 				bufferOk = malloc(sizeof(int));
-				recv(socket,bufferOk,sizeof(int),0);
+				recv(socket,bufferOk,sizeof(int),MSG_WAITALL);
 				miRespuesta.envio = malloc(sizeof(int));
 				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
 				free(bufferOk);
 				break;
 
 			case mensajeEnvioBloqueANodo:
-			case mensajeEnvioArchivoANodo:
 				bufferOk = malloc(cabecera->tamanio);
 				printf("espero %d\n", cabecera->tamanio);
 				recv(socket,bufferOk,cabecera->tamanio,MSG_WAITALL);

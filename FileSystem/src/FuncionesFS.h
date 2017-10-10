@@ -16,6 +16,7 @@
 #include <commons/collections/list.h>
 #include <semaphore.h>
 #include <pthread.h>
+#include "Comandos.h"
 
 typedef struct{
 	int index;
@@ -43,7 +44,7 @@ int getIndexDirectorio(char* ruta);
 
 char* generarArrayNodos();
 
-int levantarBitmapNodo(int numeroNodo);
+int levantarBitmapNodo(int numeroNodo, int sizeNodo);
 
 int buscarPrimerBloqueLibre(int numeroNodo, int sizeNodo);
 
