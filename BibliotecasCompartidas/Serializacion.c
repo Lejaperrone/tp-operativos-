@@ -139,7 +139,8 @@ respuesta desempaquetar(int socket){
 			case mensajeEnvioBloqueANodo:
 			case mensajeEnvioArchivoANodo:
 				bufferOk = malloc(cabecera->tamanio);
-				recv(socket,bufferOk,cabecera->tamanio,0);
+				printf("espero %d\n", cabecera->tamanio);
+				recv(socket,bufferOk,cabecera->tamanio,MSG_WAITALL);
 				miRespuesta.envio = malloc(cabecera->tamanio);
 				memcpy(miRespuesta.envio, bufferOk, cabecera->tamanio);
 				free(bufferOk);

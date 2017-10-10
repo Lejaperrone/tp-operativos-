@@ -455,6 +455,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			printf("bloque %d\n",bloqueLibre);
 
 			pthread_create(&nuevoHilo, &attr, &enviarADataNode,(void*) &params);
+			sem_wait(&pedidoFS);
 
 			printf("bloque libre %d %d\n",bloqueLibre, infoAux.numeroNodo);
 			//respuestaPedidoAlmacenar = desempaquetar(infoAux.socket);
@@ -474,7 +475,6 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 
 	}
-	sem_wait(&pedidoFS);
 	if(success == 1){ //Por cada bloque agrego sus valores para la tabla
 		config_set_value(infoArchivo, "RUTA", rutaFinal);
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(mockSizeArchivo));
@@ -500,6 +500,7 @@ void* enviarADataNode(void* parametros){
 	 empaquetar(params->socket, mensajeEnvioBloqueANodo, params->sizeBloque,buff);
 	 //memset(buff, 0, mb);
 	 free(buff);
+	 sem_post(&pedidoFS);
 	 return 0;
 }
 

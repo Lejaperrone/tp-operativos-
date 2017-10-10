@@ -36,11 +36,11 @@ int setBloque(int numeroBloque, void* datos) {
 
 void conectarseConFs() {
 	int socketFs = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 7000);
+	struct sockaddr_in direccion = cargarDireccion(config.IP_FILESYSTEM, config.PUERTO_FILESYSTEM);
 	conectarCon(direccion, socketFs, 3);
 	informacionNodo info;
 	info.sizeNodo = config.SIZE_NODO;
-	info.bloquesOcupados = -1; //levantarBitmap(config.NOMBRE_NODO);
+	info.bloquesOcupados = -1;
 	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO, 4));
 	printf("soy el nodo %d\n", info.numeroNodo);
 	info.socket = -1;
@@ -53,20 +53,22 @@ void recibirMensajesFileSystem(int socketFs) {
 	respuesta pedido2 = desempaquetar(socketFs);
 	//char* buffer = malloc(mb + 4);
 	int bloqueId = 0;
-	char data[pedido2.size - 2];
+	char* data = malloc(pedido2.size);
 
 	switch (pedido2.idMensaje) {
 	case mensajeEnvioBloqueANodo:
 		//serial_unpack(pedido2.envio + sizeof(header), "h", &bloqueId);
 		memcpy(data, pedido2.envio + sizeof(int), pedido2.size-sizeof(int));
-		printf("--------------------------%s\n ", data);
+		printf("--------------------------%s\n\n\n ", data);
 		setBloque(bloqueId, data);
 		memset(data, 0, pedido2.size - 2);
 		break;
 
 	default:
+	printf("llegue %d %d\n", pedido2.idMensaje, mensajeEnvioBloqueANodo);
 		break;
 	}
+	free(data);
 }
 
 void escucharAlFS(int socketFs) {
