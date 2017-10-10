@@ -1,6 +1,9 @@
 #include "FuncionesYama.h"
 
 int main(int argc, char *argv[]) {
+
+	jobsAPlanificar = list_create();
+
 	struct configuracionYama config;
 	logger = log_create("logYama", "YAMA.c", 1, LOG_LEVEL_TRACE);
 	//socketFs = conectarseConFs();

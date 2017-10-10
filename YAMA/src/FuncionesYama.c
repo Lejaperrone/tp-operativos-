@@ -83,9 +83,7 @@ void recibirContenidoMaster() {
 
 	agregarJobAPlanificar(jobAPlanificar);
 
-	log_trace(logger, "Me llego %s %i",jobAPlanificar->rutaDatos.cadena, jobAPlanificar->rutaDatos.longitud);
-
-	//rtaTransf  = solicitarInformacionAFS(solTransf);
+	rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);
 	// logica con respuesta a Master
 	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
@@ -114,10 +112,11 @@ respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solici
 int getDisponibilidadBase(){
 	return config.DISPONIBILIDAD_BASE;
 }
+
 int esClock(){
 	return strcmp("CLOCK" ,config.ALGORITMO_BALANCEO);
 }
-void recibirArchivo();
+
 void recibirArchivo(){
 	respuesta paquete;
 
