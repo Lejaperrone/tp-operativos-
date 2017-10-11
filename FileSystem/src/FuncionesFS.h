@@ -18,21 +18,20 @@
 #include <pthread.h>
 #include "Comandos.h"
 
-typedef struct{
-	int index;
-	char nombre[255];
-	int padre;
-} t_directory;
+#define idDataNodes 3
+#define cantDataNodes 10
+#define mb 1048576
 
-typedef struct parametrosEnvioBloque {
-    int socket;
-    char* mapa;
-    int sizeBloque;
-    int offset;
-    int bloque;
-}parametrosEnvioBloque;
-
-void* consolaFS();
+extern int numeroCopiasBloque;
+t_directory tablaDeDirectorios[100];
+extern char* rutaArchivos;
+extern t_log* loggerFS;
+extern int cantidadDirectorios;
+extern int cantBloques;
+extern int sizeTotalNodos, nodosLibres;
+extern t_list* bitmapsNodos;;
+extern t_list* nodosConectados;
+extern char* rutaBitmaps;
 
 void inicializarTablaDirectorios();
 
@@ -60,6 +59,10 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo);
 
 void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
 
-void actualizarBitmapNodo(int numeroNodo);
+void actualizarBitmapNodos();
 
 void* enviarADataNode(void* parametros);
+
+void establecerServidor(int servidorFS);
+
+int recibirConexionYama();

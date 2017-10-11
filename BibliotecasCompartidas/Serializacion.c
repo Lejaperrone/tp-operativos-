@@ -35,7 +35,6 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 		case mensajeSolicitudTransformacion:
 			bloque = serializarJob(paquete, &tamanio);
-			//bloque = serializarSolicitudTransformacion(paquete,&tamanio);
 			break;
 
 
@@ -58,6 +57,14 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			tamanio = sizeof(int);
 			bloque = malloc(tamanio);
 			memcpy(bloque,paquete,tamanio);
+			break;
+
+		case mensajeSolicitudInfoNodos:
+			bloque = serializarSolicitudInfoNodos(paquete,&tamanio);
+			break;
+
+		case mensajeRespuestaInfoNodos:
+			bloque = serializarRespuestaInfoNodos(paquete,&tamanio);
 			break;
 
 	}
@@ -111,7 +118,6 @@ respuesta desempaquetar(int socket){
 				break;
 
 			case mensajeSolicitudTransformacion:
-				//miRespuesta.envio = deserializarSolicitudTransformacion(socket,cabecera->tamanio);
 				miRespuesta.envio = deserializarJob(socket, cabecera->tamanio);//FIXME
 				break;
 
@@ -140,6 +146,14 @@ respuesta desempaquetar(int socket){
 				miRespuesta.envio = malloc(cabecera->tamanio);
 				memcpy(miRespuesta.envio, bufferOk, cabecera->tamanio);
 				free(bufferOk);
+				break;
+
+			case mensajeSolicitudInfoNodos:
+				miRespuesta.envio = deserializarSolicitudInfoNodos(socket,cabecera->tamanio);
+				break;
+
+			case mensajeRespuestaInfoNodos:
+				miRespuesta.envio = deserializarRespuestaInfoNodos(socket,cabecera->tamanio);
 				break;
 
 
@@ -251,11 +265,13 @@ job* deserializarJob(int socket, int tamanio){
 
 	return unJob;
 }
-void* serializarSolicitudTransformacion(void* paquete,int* tamanio){
-	solicitudTransformacion* unaSolicitud = (solicitudTransformacion*)paquete;
+
+void* serializarSolicitudInfoNodos(void* paquete,int* tamanio){
+
+	solicitudInfoNodos* unaSolicitud = (solicitudInfoNodos*)paquete;
 	int desplazamiento = 0;
 
-	*tamanio = sizeof(solicitudTransformacion) - (2* sizeof(int)) + unaSolicitud->rutaDatos.longitud + unaSolicitud->rutaResultado.longitud;
+	*tamanio = sizeof(solicitudInfoNodos) - (2* sizeof(int)) + unaSolicitud->rutaDatos.longitud + unaSolicitud->rutaResultado.longitud;
 	void * buffer = malloc(*tamanio);
 
 	memcpy(buffer + desplazamiento, &(unaSolicitud->rutaDatos.longitud), sizeof(int));
@@ -271,9 +287,9 @@ void* serializarSolicitudTransformacion(void* paquete,int* tamanio){
 	return buffer;
 }
 
-solicitudTransformacion* deserializarSolicitudTransformacion(int socket,int tamanio){
+solicitudInfoNodos* deserializarSolicitudInfoNodos(int socket,int tamanio){
 	int desplazamiento = 0;
-	solicitudTransformacion* unaSolicitud = malloc(sizeof(solicitudTransformacion));
+	solicitudInfoNodos* unaSolicitud = malloc(sizeof(solicitudInfoNodos));
 
 	void* buffer = malloc(tamanio);
 	recv(socket,buffer,tamanio,0);
@@ -293,4 +309,12 @@ solicitudTransformacion* deserializarSolicitudTransformacion(int socket,int tama
 	desplazamiento += unaSolicitud->rutaResultado.longitud;
 
 	return unaSolicitud;
+}
+
+void* serializarRespuestaInfoNodos(void* paquete,int* tamanio){
+
+}
+
+respuestaInfoNodos* deserializarRespuestaInfoNodos(int socket,int tamanio){
+
 }

@@ -67,7 +67,7 @@ uint32_t workLoadGlobal(){
 }
 
 void agregarJobAPlanificar(job* jobAPlanificar){
-	list_add(jobsAPlanificar, jobAPlanificar);
+	list_add(jobsAPlanificar,jobAPlanificar);
 }
 
 void agregarNodo(t_list* lista, infoNodo* nodo){

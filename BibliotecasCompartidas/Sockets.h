@@ -52,6 +52,4 @@ void levantarServidorYama(char* ip, int port);
 
 int crearServidorAsociado(char* ip, int puerto);
 
-void* levantarServidorFS(void* parametrosServidorFS);
-
 #endif /* SOCKETS_H_ */

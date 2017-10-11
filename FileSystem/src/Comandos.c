@@ -96,7 +96,14 @@ int copiarArchivo(char* comando){
 
 	guardarEnNodos(rutaFS, nombre, tipo, mapeoArchivo);
 
+	if (munmap(mapeoArchivo->cadena, mapeoArchivo->longitud) == -1)
+	{
+		close(fd);
+		perror("Error un-mmapping the file");
+		exit(EXIT_FAILURE);
+	}
 
+	actualizarBitmapNodos();
 
 	free(tipo);
 	free(nombre);

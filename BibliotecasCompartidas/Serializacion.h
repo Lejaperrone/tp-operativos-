@@ -34,6 +34,8 @@
 #define mensajeRespuestaEnvioBloqueANodo 17
 #define mensajeNumeroBloqueANodo 18
 #define mensajeRespuestaEnvioArchivoANodo 19
+#define mensajeSolicitudInfoNodos 20
+#define mensajeRespuestaInfoNodos 21
 
 typedef struct{
 	int idMensaje;
@@ -55,7 +57,10 @@ string* deserializarString(int socket,int tamanio);
 void* serializarJob(void* paquete, int* tamanio);
 job* deserializarJob(int socket, int tamanio);
 
-void* serializarSolicitudTransformacion(void* paquete,int* tamanio);
-solicitudTransformacion* deserializarSolicitudTransformacion(int socket,int tamanio);
+void* serializarSolicitudInfoNodos(void* paquete,int* tamanio);
+solicitudInfoNodos* deserializarSolicitudInfoNodos(int socket,int tamanio);
+
+void* serializarRespuestaInfoNodos(void* paquete,int* tamanio);
+respuestaInfoNodos* deserializarRespuestaInfoNodos(int socket,int tamanio);
 
 #endif /* SERIALIZACION_H_ */

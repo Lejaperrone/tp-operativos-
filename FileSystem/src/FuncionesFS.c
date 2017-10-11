@@ -20,23 +20,36 @@
 #include <dirent.h>
 #include <errno.h>
 #include "Serial.h"
+#include <Globales.h>
 
+char* pathArchivoDirectorios = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
-#define idDataNodes 3
-#define cantDataNodes 10
-#define mb 1048576
+void establecerServidor(int servidorFS){
+	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
+	int activado = 1;
+	setsockopt(servidorFS, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
 
-extern int numeroCopiasBloque;
-extern t_directory tablaDeDirectorios[100];
-extern char* rutaArchivos;
-extern t_log* loggerFS;
-extern int cantidadDirectorios;
-extern int cantBloques;
-extern int sizeTotalNodos, nodosLibres;
-extern t_list* bitmapsNodos;;
-extern t_list* nodosConectados;
-extern char* rutaBitmaps;
-char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+	asociarSocketA(direccionServidor, servidorFS);
+}
+
+int recibirConexionYama(int servidorFS){
+	struct sockaddr_in direccionCliente;
+	unsigned int tamanioDireccion = sizeof(direccionCliente);
+	respuesta respuestaId;
+	while(1){
+		int cliente =0;
+
+		if((cliente = accept(servidorFS, (struct sockaddr *)&direccionCliente, &tamanioDireccion)) != -1){
+			respuestaId = desempaquetar(cliente);
+			int id = *(int*)respuestaId.envio;
+			if(id == 1){//yama
+				log_trace(loggerFS, "Nueva Conexion de Yama");
+				empaquetar(cliente,mensajeOk,0,0);
+				return cliente;
+			}
+		}
+	}
+}
 
 void inicializarTablaDirectorios(){
 	int i;
@@ -115,219 +128,6 @@ char* buscarRutaArchivo(char* ruta){
 	memcpy(rutaGenerada, rutaArchivos, strlen(rutaArchivos));
 	memcpy(rutaGenerada + strlen(rutaArchivos), numeroIndexString, strlen(numeroIndexString));
 	return rutaGenerada; //poner free despues de usar
-}
-
-void* consolaFS(){
-
-	int sizeComando = 256;
-
-	while (1) {
-		printf("Introduzca comando: ");
-		char* comando = malloc(sizeof(char) * sizeComando);
-		bzero(comando, sizeComando);
-		comando = readline(">");
-		if (comando)
-			add_history(comando);
-
-		log_trace(loggerFS, "El usuario ingreso: %s", comando);
-
-		if (string_starts_with(comando, "format")) {
-			log_trace(loggerFS, "File system formateado");
-		}
-		else if (string_starts_with(comando, "rm -d")) {
-			if (eliminarDirectorio(comando) != -1)
-				log_trace(loggerFS, "Directorio eliminado");
-			else
-				log_error(loggerFS, "No se pudo eliminar el directorio");
-		}
-		else if (string_starts_with(comando, "rm -b")) {
-			log_trace(loggerFS, "Bloque eliminado");
-		}
-		else if (string_starts_with(comando, "rm")) {
-			if (eliminarArchivo(comando) != -1)
-				log_trace(loggerFS, "archivo eliminado");
-			else
-				log_error(loggerFS, "No se pudo eliminar el archivo");
-		}
-		else if (string_starts_with(comando, "rename")) {
-			if (cambiarNombre(comando) == 1)
-				log_trace(loggerFS, "Renombrado");
-			else
-				log_error(loggerFS, "No se pudo renombrar");
-
-		}
-		else if (string_starts_with(comando, "mv")) {
-			if (mover(comando) == 1)
-				log_trace(loggerFS, "Archivo movido");
-			else
-				log_error(loggerFS, "No se pudo mover el archivo");
-		}
-		else if (string_starts_with(comando, "cat")) {
-			if (mostrarArchivo(comando) == 1){
-			log_trace(loggerFS, "Archivo mostrado");
-			}else{
-				log_error(loggerFS, "No se pudo mostrar el archivo");
-			}
-		}
-		else if (string_starts_with(comando, "mkdir")) {
-			if (crearDirectorio(comando) == 1){
-
-			log_trace(loggerFS, "Directorio creado");// avisar si ya existe
-			}else{
-				if (crearDirectorio(comando) == 2){
-					log_error(loggerFS, "El directorio ya existe");
-				}else{
-					log_error(loggerFS, "No se pudo crear directorio");
-				}
-			}
-		}
-		else if (string_starts_with(comando, "cpfrom")) {
-			if (copiarArchivo(comando) == 1)
-				log_trace(loggerFS, "Archivo copiado a yamafs");
-			else
-				log_error(loggerFS, "No se pudo copiar el archivo");
-		}
-		else if (string_starts_with(comando, "cpto")) {
-			log_trace(loggerFS, "Archivo copiado desde yamafs");
-		}
-		else if (string_starts_with(comando, "cpblock")) {
-			log_trace(loggerFS, "Bloque copiado en el nodo");
-		}
-		else if (string_starts_with(comando, "md5")) {
-			if (generarArchivoMD5(comando) == 1)
-				log_trace(loggerFS, "MD5 del archivo");
-			else
-				log_error(loggerFS, "No se pudo obtener el MD5 del archivo");
-
-		}
-		else if (string_starts_with(comando, "ls")) {
-			if (listarArchivos(comando) == 1)
-				log_trace(loggerFS, "Archivos listados");
-			else
-				log_error(loggerFS, "El directorio no existe");
-
-		}
-		else if (string_starts_with(comando, "info")) {
-			if (informacion(comando) == 1)
-				log_trace(loggerFS, "Mostrando informacion del archivo");
-			else
-				log_error(loggerFS, "No se pudo mostrar informacion del archivo");
-		}
-		else {
-			printf("Comando invalido\n");
-			log_error(loggerFS, "Comando invalido");
-		}
-		free(comando);
-	}
-	return 0;
-}
-
-void* levantarServidorFS(void* parametrosServidorFS){
-
-	int maxDatanodes;
-	int nuevoDataNode;
-	int cantidadNodos;
-	informacionNodo info;
-	respuesta nuevaConexionYama;
-	respuesta solicitudInfoArchivo;
-
-	int i = 0, j = 0;
-	int addrlen;
-
-	struct parametrosServidorHilo*params;
-	params = (struct parametrosServidorHilo*) parametrosServidorFS;
-
-	int clienteYama = params->cliente;
-	int servidor = params->servidor;
-
-	char* buffer = malloc(300);
-	struct sockaddr_in direccionCliente;
-	unsigned int tamanioDireccion = sizeof(direccionCliente);
-	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
-	int activado = 1;
-	setsockopt(servidor, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
-
-	asociarSocketA(direccionServidor, servidor);
-
-	//cliente = accept(servidor, (struct sockaddr *) &direccionCliente, &tamanioDireccion);
-
-	//falta agregar el manejo de error cuando se desconecta el fs,
-	//handshake y el protocolo de envio de mensajes
-	free(buffer);
-
-	fd_set datanodes;
-	fd_set read_fds_datanodes;
-
-	respuesta conexionNueva, paqueteInfoNodo;
-	int bufferPrueba = 2;
-	FD_ZERO(&datanodes);    // borra los conjuntos datanodes y temporal
-	FD_ZERO(&read_fds_datanodes);
-	// añadir listener al conjunto maestro
-	FD_SET(servidor, &datanodes);
-	// seguir la pista del descriptor de fichero mayor
-	maxDatanodes = servidor; // por ahora es éste
-	// bucle principal
-	while(1){
-		read_fds_datanodes = datanodes; // cópialo
-		if (select(maxDatanodes+1, &read_fds_datanodes, NULL, NULL, NULL) == -1) {
-			perror("select");
-			exit(1);
-		}
-		// explorar conexiones existentes en busca de datos que leer
-		for(i = 0; i <= maxDatanodes; i++) {
-			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
-				if (i == servidor) {
-					// gestionar nuevas conexiones
-					addrlen = sizeof(direccionCliente);
-					if ((nuevoDataNode = accept(servidor, (struct sockaddr *)&direccionCliente,
-							&addrlen)) == -1) {
-						perror("accept");
-					} else {
-						FD_SET(nuevoDataNode, &datanodes); // añadir al conjunto maestro
-						if (nuevoDataNode > maxDatanodes) {    // actualizar el máximo
-							maxDatanodes = nuevoDataNode;
-						}
-						conexionNueva = desempaquetar(nuevoDataNode);
-						int idRecibido = *(int*)conexionNueva.envio;
-
-						if (idRecibido == idDataNodes){
-							//empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
-							paqueteInfoNodo = desempaquetar(nuevoDataNode);
-							info = *(informacionNodo*)paqueteInfoNodo.envio;
-							if (nodoRepetido(info) == 0){
-								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
-								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
-								info.socket = nuevoDataNode;
-								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
-								list_add(nodosConectados,paqueteInfoNodo.envio);
-								cantidadNodos = list_size(nodosConectados);
-								actualizarArchivoNodos();
-							}
-							else
-								log_trace(loggerFS, "DataNode repetido\n");
-						}
-						else if(idRecibido == 1){//idYAMA
-							log_trace(loggerFS, "Nueva Conexion de Yama");
-							solicitudInfoArchivo = desempaquetar(nuevoDataNode);
-
-							if(solicitudInfoArchivo.idMensaje == mensajeSolicitudTransformacion){
-								atenderSolicitudYama(nuevoDataNode, solicitudInfoArchivo.envio);
-								//cambiar NUEVO DATANODE POR OTRO NOMBRE FIXME
-								log_trace(loggerFS, "Me llego una solicitud para dar informacion de este archivo");
-							}
-						}
-
-						else {
-							// gestionar datos de un cliente
-
-						}
-					}
-				}
-			}
-		}
-	}
-	return 0;
-
 }
 
 
@@ -474,9 +274,10 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 	if(success == 1){ //Por cada bloque agrego sus valores para la tabla
 		config_set_value(infoArchivo, "RUTA", rutaFinal);
-		config_set_value(infoArchivo, "TAMANIO", string_itoa(mockSizeArchivo));
+		config_set_value(infoArchivo, "TAMANIO", string_itoa(mb*(cantNodosNecesarios-1)+sizeUltimoNodo));
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
+
 
 }
 
@@ -499,38 +300,49 @@ void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
 	bitarray_set_bit(bitarrayNodo,bloqueLibre);
 	infoAux = list_get(nodosConectados,numeroNodo);
 	++infoAux->bloquesOcupados;
-	actualizarBitmapNodo(numeroNodo);
 }
 
-void actualizarBitmapNodo(int numeroNodo){
+void actualizarBitmapNodos(){
 	char* sufijo = ".bin";
-	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
-	informacionNodo infoAux = *(informacionNodo*)list_get(nodosConectados,numeroNodo);
+	int cantidadNodos = list_size(nodosConectados);
+	int i,j;
 
-	int i;
-	int longitudPath = strlen(rutaBitmaps);
-	char* nombreNodo = string_from_format("NODO%d",infoAux.numeroNodo);
-	int longitudNombre = strlen(nombreNodo);
-	int longitudSufijo = strlen(sufijo);
+	t_bitarray* bitarrayNodo;
+	informacionNodo infoAux;
+	for (j = 0; j < cantidadNodos; j++){
+		bitarrayNodo = list_get(bitmapsNodos,j);
+		infoAux = *(informacionNodo*)list_get(nodosConectados,j);
 
-	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
+		int longitudPath = strlen(rutaBitmaps);
+		char* ruta = malloc(strlen(rutaBitmaps));
+		memcpy(ruta, rutaBitmaps, strlen(rutaBitmaps));
+		char* nombreNodo = string_from_format("NODO%d",infoAux.numeroNodo);
+		int longitudNombre = strlen(nombreNodo);
+		int longitudSufijo = strlen(sufijo);
+		char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
+		memset(pathParticular,0,longitudPath + longitudNombre + longitudSufijo +1);
 
-	memcpy(pathParticular, rutaBitmaps, longitudPath);
-	memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
-	memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
+		memcpy(pathParticular, ruta, longitudPath);
+		printf("partial path %s\n", rutaBitmaps);
+		memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
+		printf("partial path %d\n", longitudPath);
+		memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
 
-	printf("--path-- %s\n", pathParticular);
+		printf("numero nodo %s\n", sufijo);
 
-	FILE* archivoBitmap = fopen(pathParticular, "wb+");
+		printf("--path-- %s\n", pathParticular);
 
-	for (i = 0; i < infoAux.sizeNodo; ++i){
-		if (bitarray_test_bit(bitarrayNodo,i) == 0)
-			fwrite("0",1,1,archivoBitmap);
-		else
-			fwrite("1",1,1,archivoBitmap);
+		FILE* archivoBitmap = fopen(pathParticular, "wb+");
+
+		for (i = 0; i < infoAux.sizeNodo; ++i){
+			if (bitarray_test_bit(bitarrayNodo,i) == 0)
+				fwrite("0",1,1,archivoBitmap);
+			else
+				fwrite("1",1,1,archivoBitmap);
+		}
+		fclose(archivoBitmap);
+		free(pathParticular);
 	}
-	fclose(archivoBitmap);
-	free(pathParticular);
 }
 
 char* generarArrayBloque(int numeroNodo, int numeroBloque){
@@ -611,7 +423,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 void actualizarArchivoNodos(){
 
-	char* pathArchivo = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
+	char* pathArchivo = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
 	FILE* archivoNodes = fopen(pathArchivo, "wb+");
 	fclose(archivoNodes); //para dejarlo vacio
 	int cantidadNodos = list_size(nodosConectados), i = 0;
@@ -696,8 +508,7 @@ void inicializarBitmaps(){ //TODO (y ver si aca hace falta mmap)
 }
 
 void atenderSolicitudYama(int socketYama, void* envio){
-	respuestaTransformacion* rtaTransf;
-	solicitudTransformacion* solTransf =(solicitudTransformacion*)envio;
+
 
 
 	//empaquetar(socketYama, mensajeInfoArchivo, 0 ,0);

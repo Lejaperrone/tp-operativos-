@@ -25,14 +25,15 @@
 #include "FuncionesFS.h"
 #include <pthread.h>
 
+#include "FuncionesHilosFs.h"
+
 #define cantDataNodes 10
 
 int cantBloques = 10;
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
-t_directory tablaDeDirectorios[100];
-char* rutaBitmaps = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
-char* rutaArchivos = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/";
+char* rutaBitmaps = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
+char* rutaArchivos = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/";
 int cantidadDirectorios = 100;
 int numeroCopiasBloque = 2;
 //t_bitarray* bitmap[cantDataNodes];
@@ -41,14 +42,17 @@ int sizeTotalNodos = 0, nodosLibres = 0;
 t_list* nodosConectados;
 t_list* bitmapsNodos;
 extern sem_t pedidoFS;
+extern sem_t actualizarNodos;
+int clienteYama;
+int servidorFS;
 
 int main(void) {
 
 	sem_init(&pedidoFS,0,0);
+	sem_init(&actualizarNodos,1,0);
 	nodosConectados = list_create();
 	bitmapsNodos = list_create();
-	int clienteYama = 0;
-	int servidorFS = crearSocket();
+
 	pthread_t hiloServidorFS, hiloConsolaFS, hiloConexionYama;
 	parametrosServidorHilo parametrosServidorFS;
 
@@ -74,10 +78,18 @@ int main(void) {
 
 	inicializarTablaDirectorios();
 
+	servidorFS = crearSocket();
+
+	establecerServidor(servidorFS);
+
+	clienteYama = recibirConexionYama();
+
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
+	pthread_create(&hiloConexionYama,NULL,manejarConexionYama ,NULL);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);
 
 	pthread_join(hiloServidorFS, NULL);
+	pthread_join(hiloConexionYama, NULL);
 	pthread_join(hiloConsolaFS, NULL);
 
 	return 0;

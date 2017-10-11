@@ -83,7 +83,7 @@ void recibirMensajesFileSystem(int socketFs) {
 		//serial_unpack(pedido2.envio + sizeof(header), "h", &bloqueId);
 		memcpy(data, bloqueArchivo.envio + sizeof(int), bloqueArchivo.size-sizeof(int));
 		//printf("--------------------------%s\n\n\n ", data);
-		setBloque(bloqueId, data);
+		//setBloque(bloqueId, data);
 		break;
 
 	default:
@@ -91,6 +91,8 @@ void recibirMensajesFileSystem(int socketFs) {
 		break;
 	}
 	free(data);
+	free(numeroBloque.envio);
+	free(bloqueArchivo.envio);
 }
 
 void escucharAlFS(int socketFs) {

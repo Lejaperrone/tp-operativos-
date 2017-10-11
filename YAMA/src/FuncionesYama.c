@@ -17,6 +17,8 @@ int conectarseConFs() {
 	int socketFs = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 7000);
 	conectarCon(direccion, socketFs, 1);
+	desempaquetar(socketFs);
+	log_trace(logger, "Conexion exitosa con File System");
 	return socketFs;
 }
 
@@ -74,8 +76,8 @@ void levantarServidorYama(char* ip, int port) {
 
 void recibirContenidoMaster() {
 	respuesta nuevoJob;
-	respuestaTransformacion* rtaTransf;
-	solicitudTransformacion* solTransf;
+	respuestaInfoNodos* rtaTransf;
+	solicitudInfoNodos* solTransf;
 
 	iniciarListasPlanificacion();
 	log_trace(logger, "Conexion de Master");
@@ -86,23 +88,25 @@ void recibirContenidoMaster() {
 
 	log_trace(logger, "Job agregado para pre-planificacion %s",jobAPlanificar->rutaDatos.cadena);
 
-	//rtaTransf  = solicitarInformacionAFS(solTransf);
+	rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);
 	// logica con respuesta a Master
 	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
 
 }
 
-respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solicitud){
-	respuestaTransformacion* rtaTransf;
+respuestaInfoNodos* solicitarInformacionAFS(solicitudInfoNodos* solicitud){
+	respuestaInfoNodos* rtaTransf;
 	respuesta respuestaFs;
 
-	empaquetar(socketFs, mensajeSolicitudTransformacion, 0, solicitud);
+	printf("yupiii\n");
+
+	empaquetar(socketFs, mensajeSolicitudInfoNodos, 0, solicitud);
 
 	respuestaFs = desempaquetar(socketFs);
 
 	if(respuestaFs.idMensaje == mensajeInfoArchivo){
-		rtaTransf = (respuestaTransformacion*)respuestaFs.envio;
+		rtaTransf = (respuestaInfoNodos*)respuestaFs.envio;
 		log_trace(logger, "Me llego la informacion desde Fs correctamente");
 	}
 	else{
@@ -115,10 +119,11 @@ respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solici
 int getDisponibilidadBase(){
 	return config.DISPONIBILIDAD_BASE;
 }
+
 int esClock(){
 	return strcmp("CLOCK" ,config.ALGORITMO_BALANCEO);
 }
-void recibirArchivo();
+
 void recibirArchivo(){
 	respuesta paquete;
 
