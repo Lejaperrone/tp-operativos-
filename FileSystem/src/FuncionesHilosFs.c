@@ -109,7 +109,7 @@ void* consolaFS(){
 			log_trace(loggerFS, "File system formateado");
 		}
 		else if (string_starts_with(comando, "rm -d")) {
-			if (eliminarDirectorio(comando) != -1)
+			if (eliminarDirectorio(comando) == 0)
 				log_trace(loggerFS, "Directorio eliminado");
 			else
 				log_error(loggerFS, "No se pudo eliminar el directorio");
@@ -118,40 +118,40 @@ void* consolaFS(){
 			log_trace(loggerFS, "Bloque eliminado");
 		}
 		else if (string_starts_with(comando, "rm")) {
-			if (eliminarArchivo(comando) != -1)
+			if (eliminarArchivo(comando) == 0)
 				log_trace(loggerFS, "archivo eliminado");
 			else
 				log_error(loggerFS, "No se pudo eliminar el archivo");
 		}
 		else if (string_starts_with(comando, "rename")) {
-			if (cambiarNombre(comando) == 1)
+			if (cambiarNombre(comando) == 0)
 				log_trace(loggerFS, "Renombrado");
 			else
 				log_error(loggerFS, "No se pudo renombrar");
 
 		}
 		else if (string_starts_with(comando, "mv")) {
-			if (mover(comando) == 1)
+			if (mover(comando) == 0)
 				log_trace(loggerFS, "Archivo movido");
 			else
 				log_error(loggerFS, "No se pudo mover el archivo");
 		}
 		else if (string_starts_with(comando, "cat")) {
-			if (mostrarArchivo(comando) == 1){
+			if (mostrarArchivo(comando) == 0){
 			log_trace(loggerFS, "Archivo mostrado");
 			}else{
 				log_error(loggerFS, "No se pudo mostrar el archivo");
 			}
 		}
 		else if (string_starts_with(comando, "mkdir")) {
-			if (crearDirectorio(comando) == 1){
+			if (crearDirectorio(comando) == 0){
 
 			log_trace(loggerFS, "Directorio creado");// avisar si ya existe
 			}else{
-				if (crearDirectorio(comando) == 2){
+				if (crearDirectorio(comando) == 1){
 					log_error(loggerFS, "El directorio ya existe");
 				}else{
-					log_error(loggerFS, "No se pudo crear directorio");
+					log_error(loggerFS, "No se pudo crear el directorio");
 				}
 			}
 		}
@@ -168,21 +168,21 @@ void* consolaFS(){
 			log_trace(loggerFS, "Bloque copiado en el nodo");
 		}
 		else if (string_starts_with(comando, "md5")) {
-			if (generarArchivoMD5(comando) == 1)
+			if (generarArchivoMD5(comando) == 0)
 				log_trace(loggerFS, "MD5 del archivo");
 			else
 				log_error(loggerFS, "No se pudo obtener el MD5 del archivo");
 
 		}
 		else if (string_starts_with(comando, "ls")) {
-			if (listarArchivos(comando) == 1)
+			if (listarArchivos(comando) == 0)
 				log_trace(loggerFS, "Archivos listados");
 			else
 				log_error(loggerFS, "El directorio no existe");
 
 		}
 		else if (string_starts_with(comando, "info")) {
-			if (informacion(comando) == 1)
+			if (informacion(comando) == 0)
 				log_trace(loggerFS, "Mostrando informacion del archivo");
 			else
 				log_error(loggerFS, "No se pudo mostrar informacion del archivo");
