@@ -63,3 +63,5 @@ void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
 void actualizarBitmapNodos();
 
 void* enviarADataNode(void* parametros);
+
+informacionNodo* informacionNodosConectados();
