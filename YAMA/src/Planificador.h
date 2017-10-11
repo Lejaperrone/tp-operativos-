@@ -45,7 +45,7 @@ bool nodoConMenorCargaPrimero(void* argNodo1, void* argNodo2);
 uint32_t cargaMaxima();
 void iniciarListasPlanificacion();
 void asignarNodoA(job* unJob, infoNodo* worker);
-void posicionarClock(job* unJob, t_list* listaWorkersConBloques);
+void posicionarClock(t_list* listaWorkersConBloques);
 
 
 #endif /* PLANIFICADOR_H_ */

@@ -77,13 +77,14 @@ void recibirContenidoMaster() {
 	respuestaTransformacion* rtaTransf;
 	solicitudTransformacion* solTransf;
 
+	iniciarListasPlanificacion();
 	log_trace(logger, "Conexion de Master");
 	nuevoJob = desempaquetar(nuevoMaster);
 	job* jobAPlanificar =(job*) nuevoJob.envio;
 
 	agregarJobAPlanificar(jobAPlanificar);
 
-	log_trace(logger, "Me llego %s %i",jobAPlanificar->rutaDatos.cadena, jobAPlanificar->rutaDatos.longitud);
+	log_trace(logger, "Job agregado para pre-planificacion %s",jobAPlanificar->rutaDatos.cadena);
 
 	//rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);
