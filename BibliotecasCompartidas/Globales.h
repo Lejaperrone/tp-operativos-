@@ -12,6 +12,7 @@
 #include <semaphore.h>
 
 sem_t pedidoFS;
+sem_t actualizarNodos;
 
 typedef struct string{
 	int longitud;

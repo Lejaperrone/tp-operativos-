@@ -38,6 +38,7 @@ extern t_list* nodosConectados;
 extern char* rutaBitmaps;
 char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
+
 void inicializarTablaDirectorios(){
 	int i;
 	for (i = 0; i < 100; ++i){
@@ -474,9 +475,10 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 	if(success == 1){ //Por cada bloque agrego sus valores para la tabla
 		config_set_value(infoArchivo, "RUTA", rutaFinal);
-		config_set_value(infoArchivo, "TAMANIO", string_itoa(mockSizeArchivo));
+		config_set_value(infoArchivo, "TAMANIO", string_itoa(mb*(cantNodosNecesarios-1)+sizeUltimoNodo));
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
+
 
 }
 
@@ -499,38 +501,49 @@ void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
 	bitarray_set_bit(bitarrayNodo,bloqueLibre);
 	infoAux = list_get(nodosConectados,numeroNodo);
 	++infoAux->bloquesOcupados;
-	actualizarBitmapNodo(numeroNodo);
 }
 
-void actualizarBitmapNodo(int numeroNodo){
+void actualizarBitmapNodos(){
 	char* sufijo = ".bin";
-	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
-	informacionNodo infoAux = *(informacionNodo*)list_get(nodosConectados,numeroNodo);
+	int cantidadNodos = list_size(nodosConectados);
+	int i,j;
 
-	int i;
-	int longitudPath = strlen(rutaBitmaps);
-	char* nombreNodo = string_from_format("NODO%d",infoAux.numeroNodo);
-	int longitudNombre = strlen(nombreNodo);
-	int longitudSufijo = strlen(sufijo);
+	t_bitarray* bitarrayNodo;
+	informacionNodo infoAux;
+	for (j = 0; j < cantidadNodos; j++){
+		bitarrayNodo = list_get(bitmapsNodos,j);
+		infoAux = *(informacionNodo*)list_get(nodosConectados,j);
 
-	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
+		int longitudPath = strlen(rutaBitmaps);
+		char* ruta = malloc(strlen(rutaBitmaps));
+		memcpy(ruta, rutaBitmaps, strlen(rutaBitmaps));
+		char* nombreNodo = string_from_format("NODO%d",infoAux.numeroNodo);
+		int longitudNombre = strlen(nombreNodo);
+		int longitudSufijo = strlen(sufijo);
+		char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
+		memset(pathParticular,0,longitudPath + longitudNombre + longitudSufijo +1);
 
-	memcpy(pathParticular, rutaBitmaps, longitudPath);
-	memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
-	memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
+		memcpy(pathParticular, ruta, longitudPath);
+		printf("partial path %s\n", rutaBitmaps);
+		memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
+		printf("partial path %d\n", longitudPath);
+		memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
 
-	printf("--path-- %s\n", pathParticular);
+		printf("numero nodo %s\n", sufijo);
 
-	FILE* archivoBitmap = fopen(pathParticular, "wb+");
+		printf("--path-- %s\n", pathParticular);
 
-	for (i = 0; i < infoAux.sizeNodo; ++i){
-		if (bitarray_test_bit(bitarrayNodo,i) == 0)
-			fwrite("0",1,1,archivoBitmap);
-		else
-			fwrite("1",1,1,archivoBitmap);
+		FILE* archivoBitmap = fopen(pathParticular, "wb+");
+
+		for (i = 0; i < infoAux.sizeNodo; ++i){
+			if (bitarray_test_bit(bitarrayNodo,i) == 0)
+				fwrite("0",1,1,archivoBitmap);
+			else
+				fwrite("1",1,1,archivoBitmap);
+		}
+		fclose(archivoBitmap);
+		free(pathParticular);
 	}
-	fclose(archivoBitmap);
-	free(pathParticular);
 }
 
 char* generarArrayBloque(int numeroNodo, int numeroBloque){

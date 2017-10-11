@@ -41,10 +41,12 @@ int sizeTotalNodos = 0, nodosLibres = 0;
 t_list* nodosConectados;
 t_list* bitmapsNodos;
 extern sem_t pedidoFS;
+extern sem_t actualizarNodos;
 
 int main(void) {
 
 	sem_init(&pedidoFS,0,0);
+	sem_init(&actualizarNodos,1,0);
 	nodosConectados = list_create();
 	bitmapsNodos = list_create();
 	int clienteYama = 0;
