@@ -18,22 +18,22 @@ void planificar(job* job, infoNodo* nodo){
 	calcularCargasDeWorkers();
 
 	//infoNodo* workerCandidato = obtenerNodoDisponible(listaNodos, listaWorkersConBloques);
-	posicionarClock(job, listaWorkersConBloques);
+	posicionarClock(listaWorkersConBloques);
 	//comparar cargas
 }
 
-void posicionarClock(job* unJob, t_list* listaWorkersConBloques){
+void posicionarClock(t_list* listaWorkersConBloques){
 	int i;
 	infoNodo* workerAsignado;
 	for(i=0;i<list_size(listaWorkersConBloques);i++){
 		//workerAsignado = obtenerNodosDisponibles(listaWorkersConBloques,i); FIXME PARA WCLOCK
 		workerAsignado = list_get(listaWorkersConBloques, i);//CLOCK ELIJO CUALQUIERA
-		asignarNodoA(unJob,workerAsignado);
+
 	}
 }
 
 void asignarNodoA(job* unJob, infoNodo* worker){
-
+	//empaquetar designar worker
 }
 
 void calcularCargasDeWorkers(){

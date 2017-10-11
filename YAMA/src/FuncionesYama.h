@@ -47,7 +47,7 @@ struct configuracionYama config;
 int conectarseConFs();
 void levantarServidorYama(char* ip, int port);
 void recibirContenidoMaster();
-respuestaTransformacion* solicitarInformacionAFS(solicitudTransformacion* solicitud);
+respuestaInfoNodos* solicitarInformacionAFS(solicitudInfoNodos* solicitud);
 
 int getDisponibilidadBase();
 

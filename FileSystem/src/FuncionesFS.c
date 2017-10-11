@@ -20,24 +20,36 @@
 #include <dirent.h>
 #include <errno.h>
 #include "Serial.h"
+#include <Globales.h>
 
+char* pathArchivoDirectorios = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 
-#define idDataNodes 3
-#define cantDataNodes 10
-#define mb 1048576
+void establecerServidor(int servidorFS){
+	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
+	int activado = 1;
+	setsockopt(servidorFS, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
 
-extern int numeroCopiasBloque;
-extern t_directory tablaDeDirectorios[100];
-extern char* rutaArchivos;
-extern t_log* loggerFS;
-extern int cantidadDirectorios;
-extern int cantBloques;
-extern int sizeTotalNodos, nodosLibres;
-extern t_list* bitmapsNodos;;
-extern t_list* nodosConectados;
-extern char* rutaBitmaps;
-char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+	asociarSocketA(direccionServidor, servidorFS);
+}
 
+int recibirConexionYama(int servidorFS){
+	struct sockaddr_in direccionCliente;
+	unsigned int tamanioDireccion = sizeof(direccionCliente);
+	respuesta respuestaId;
+	while(1){
+		int cliente =0;
+
+		if((cliente = accept(servidorFS, (struct sockaddr *)&direccionCliente, &tamanioDireccion)) != -1){
+			respuestaId = desempaquetar(cliente);
+			int id = *(int*)respuestaId.envio;
+			if(id == 1){//yama
+				log_trace(loggerFS, "Nueva Conexion de Yama");
+				empaquetar(cliente,mensajeOk,0,0);
+				return cliente;
+			}
+		}
+	}
+}
 
 void inicializarTablaDirectorios(){
 	int i;
@@ -624,7 +636,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 void actualizarArchivoNodos(){
 
-	char* pathArchivo = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
+	char* pathArchivo = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
 	FILE* archivoNodes = fopen(pathArchivo, "wb+");
 	fclose(archivoNodes); //para dejarlo vacio
 	int cantidadNodos = list_size(nodosConectados), i = 0;
@@ -709,8 +721,7 @@ void inicializarBitmaps(){ //TODO (y ver si aca hace falta mmap)
 }
 
 void atenderSolicitudYama(int socketYama, void* envio){
-	respuestaTransformacion* rtaTransf;
-	solicitudTransformacion* solTransf =(solicitudTransformacion*)envio;
+
 
 
 	//empaquetar(socketYama, mensajeInfoArchivo, 0 ,0);
