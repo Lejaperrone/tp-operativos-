@@ -10,3 +10,5 @@
 void* levantarServidorFS();
 
 void* consolaFS();
+
+void* manejarConexionYama();

@@ -31,7 +31,6 @@ void* levantarServidorFS(){
 	// añadir listener al conjunto maestro
 	FD_SET(0, &datanodes);
 	FD_SET(servidorFS, &datanodes);
-	FD_SET(clienteYama, &datanodes);
 	// seguir la pista del descriptor de fichero mayor
 	maxDatanodes = clienteYama; // por ahora es éste
 	// bucle principal
@@ -79,22 +78,14 @@ void* levantarServidorFS(){
 
 					}
 				}
-				else if (i != clienteYama){
+				else {
 					conexionNueva = desempaquetar(nuevoDataNode);
 					switch(conexionNueva.idMensaje){
 
 					}
 
 				}
-				else{
-					conexionNueva = desempaquetar(nuevoDataNode);
-					switch(conexionNueva.idMensaje){
 
-					case mensajeSolicitudInfoNodos:
-						break;
-					}
-
-				}
 			}
 		}
 	}
@@ -206,3 +197,17 @@ void* consolaFS(){
 	}
 	return 0;
 }
+
+void* manejarConexionYama(){
+	respuesta respuestaYama;
+
+	while(1){
+		respuestaYama = desempaquetar(clienteYama);
+		switch(respuestaYama.idMensaje){
+
+		case mensajeSolicitudInfoNodos:
+			break;
+		}
+	}
+}
+
