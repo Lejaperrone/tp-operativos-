@@ -7,8 +7,6 @@
 
 #include "FuncionesFS.h"
 
-void* levantarServidorFS(void* parametrosServidorFS);
+void* levantarServidorFS();
 
 void* consolaFS();
-
-void* manejarConexionYama();

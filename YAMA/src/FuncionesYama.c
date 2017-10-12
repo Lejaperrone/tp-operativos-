@@ -99,8 +99,6 @@ respuestaInfoNodos* solicitarInformacionAFS(solicitudInfoNodos* solicitud){
 	respuestaInfoNodos* rtaTransf;
 	respuesta respuestaFs;
 
-	printf("yupiii\n");
-
 	empaquetar(socketFs, mensajeSolicitudInfoNodos, 0, solicitud);
 
 	respuestaFs = desempaquetar(socketFs);

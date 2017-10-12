@@ -87,11 +87,9 @@ int main(void) {
 	parametrosServidorFS.servidor = servidorFS;
 
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
-	pthread_create(&hiloConexionYama,NULL,manejarConexionYama ,NULL);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);
 
 	pthread_join(hiloServidorFS, NULL);
-	pthread_join(hiloConexionYama, NULL);
 	pthread_join(hiloConsolaFS, NULL);
 
 	return 0;
