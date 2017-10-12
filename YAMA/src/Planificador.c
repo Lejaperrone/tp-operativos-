@@ -10,38 +10,90 @@
 void iniciarListasPlanificacion(){
 	listaNodos = list_create();
 	jobsAPlanificar = list_create();
+	pthread_mutex_init(&listaNodos_mutex, 1);
 }
 
 void planificar(job* job, infoNodo* nodo){
 	t_list* listaWorkersConBloques = list_create();	//localizar los bloques en FS TOdo
-
-	calcularCargasDeWorkers();
+	pthread_mutex_lock(&listaNodos_mutex);
+	calcularCargasDeWorkers(listaNodos);
+	pthread_mutex_unlock(&listaNodos_mutex);
 
 	//infoNodo* workerCandidato = obtenerNodoDisponible(listaNodos, listaWorkersConBloques);
-	posicionarClock(job, listaWorkersConBloques);
+	posicionarClock(listaWorkersConBloques);
 	//comparar cargas
 }
 
-void posicionarClock(job* unJob, t_list* listaWorkersConBloques){
+void posicionarClock(t_list* listaWorkersConBloques){
 	int i;
 	infoNodo* workerAsignado;
 	for(i=0;i<list_size(listaWorkersConBloques);i++){
 		//workerAsignado = obtenerNodosDisponibles(listaWorkersConBloques,i); FIXME PARA WCLOCK
 		workerAsignado = list_get(listaWorkersConBloques, i);//CLOCK ELIJO CUALQUIERA
-		asignarNodoA(unJob,workerAsignado);
+
 	}
 }
 
 void asignarNodoA(job* unJob, infoNodo* worker){
-
+	//empaquetar designar worker
 }
 
-void calcularCargasDeWorkers(){
-	int i;
 
+//ELIMINA ELEMENTOS DE LA LISTA DE NODOS Y LA LISTA DE COPIAS DE CADA NODO A MODO QUE AL FINALIZAR SOLO QUEDEN NODOS CON COPIAS DE
+//BLOQUES AUN NO ASIGNADOS Y LOS NODOS SOLO POSEEN COPIAS SIN ASIGNAR
+/*void actualizarNodo(infoNodo* ultimoNodoSeleccionado, t_list* nodos){
+    pthread_mutex_lock( &listaNodos_mutex );
+    int indexNodos = 0;
+    int indexCopias = 0;
+    infoNodo* nodoAux;
+    infoNodo* copiaAux;
+    char* ipNodoSeleccionado = malloc( strlen( inet_ntoa(ultimoNodoSeleccionado->ip)) + 1);
+    strcpy( ipNodoSeleccionado, inet_ntoa(ultimoNodoSeleccionado->ip));
+
+    while(indexNodos < list_size(nodos))
+    {
+        nodoAux = list_get(nodos, indexNodos);
+        if(strcmp(ipNodoSeleccionado, inet_ntoa(nodoAux->ip)) == 0)
+        {
+           //SI EL NODO OBTENIDO DE LA LISTA ES EL MISMO QUE EL ULTIMO NODO SELECCIONADO, LO ELIMINO DE LA LISTA
+            list_remove(nodos, indexNodos);
+        }
+        else
+        {
+          /* while(indexCopias < list_size(nodoAux->copias))
+            {
+              copiaAux = (t_copiasPorNodo*)list_get(nodoAux->copias,indexCopias);
+              if(bitarray_test_bit(bitarray, copiaAux->bloqueDeArchivo) == true)
+
+                //SI LA COPIA DEL NODO OBTENIDA DE LA LISTA YA FUE ELEGIDA PARA OTRO NODO, BORRO LA COPIA DE LA LISTA DEL NODO
+
+                list_remove(nodoAux->copias, indexCopias);
+                else
+                    indexCopias++;
+
+            }
+        if(list_size(nodoAux->copias) == 0)
+        //SI EL NODO YA NO TIENE COPIAS SIN ASIGNAR ENTONCES LO BORRO DE LA LISTA
+            list_remove(nodos, indexNodos);
+        else
+            indexNodos++;
+
+        indexCopias = 0;
+        }
+
+    }
+    return;
+    pthread_mutex_unlock( &listaNodos_mutex );
+
+
+}*/
+
+void calcularCargasDeWorkers(t_list* listaNodos){
+	int i;
+	infoNodo* worker;
 	for(i = 0; i < list_size(listaNodos); i++){
-		infoNodo* worker = list_get(listaNodos, i);
-		worker->carga = calcularDisponibilidadWorker(worker);
+		worker = list_get(listaNodos, i);
+		//worker->carga+=;
 	}
 }
 
@@ -50,16 +102,16 @@ t_list* consultarDetallesBloqueArchivo(char *pathArchivo, int bloque){
 }
 
 int calcularDisponibilidadWorker(infoNodo* worker){
-	if(esClock() == 0){
-		return getDisponibilidadBase();
-	}
-	else{
-		return getDisponibilidadBase() + calcularCarga(worker);
-	}
+		return getDisponibilidadBase() + calcularPWL(worker);
 }
 
-uint32_t calcularCarga(infoNodo* worker){
-	return workLoadGlobal() - worker->carga;
+uint32_t calcularPWL(infoNodo* worker){
+	if(esClock() != 0){
+		return worker->carga + workLoadGlobal();
+	}
+	else{
+		return 0;
+	}
 }
 
 uint32_t workLoadGlobal(){
@@ -105,7 +157,7 @@ infoNodo* obtenerNodoDisponible(t_list* cargaNodos, t_list* listaNodos){
 
 	infoNodo* nodo =  list_get(listaDeNodosCandidatos, 0);
 
-	if(nodo->carga + calcularCarga(nodo) > cargaMaxima())
+	if(nodo->carga > cargaMaxima())
 		return NULL;
 
 	infoNodo* nodoAUsar;

@@ -64,6 +64,8 @@ void actualizarBitmapNodos();
 
 void* enviarADataNode(void* parametros);
 
+informacionNodo* informacionNodosConectados();
+
 void establecerServidor(int servidorFS);
 
 int recibirConexionYama();

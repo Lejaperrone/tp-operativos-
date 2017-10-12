@@ -10,25 +10,6 @@
 
 #define mb 1048576
 
-bool CalcFileMD5(char *file_name, char *md5_sum)
-{
-    #define MD5SUM_CMD_FMT "md5sum %." STR(PATH_LEN) "s 2>/dev/null"
-    char cmd[PATH_LEN + sizeof (MD5SUM_CMD_FMT)];
-    sprintf(cmd, MD5SUM_CMD_FMT, file_name);
-    #undef MD5SUM_CMD_FMT
-
-    FILE *p = popen(cmd, "r");
-    if (p == NULL) return false;
-
-    int i, ch;
-    for (i = 0; i < MD5_LEN && isxdigit(ch = fgetc(p)); i++) {
-        *md5_sum++ = ch;
-    }
-
-    *md5_sum = '\0';
-    pclose(p);
-    return i == MD5_LEN;
-}
 
 char* devolverRuta(char* comando, int numeroParametro)
 {
@@ -141,171 +122,132 @@ bool validarDirectorio(char* path){
 }
 
 int eliminarArchivo(char* comando){
-	int success = -1;
+	int success = 1;
 	char* path = devolverRuta(comando, 1);
-	if (validarArchivo(path)){
-		success = remove(path);
-		if (success == -1)
-			printf("No se pudo eliminar el archivo");
-		else
-			printf("El archivo fue eliminado correctamente");
-	}
+	if (!validarArchivo(path))
+		return success;
+	success = system(comando);
 	return success;
 }
 
 int eliminarDirectorio(char* comando){
-	int success = -1;
+	int success = 1;
 	char* path = devolverRuta(comando, 2);
-		if (validarDirectorio(path)){
-			success = remove(path);
-			if (success == -1)
-				printf("No se pudo eliminar el archivo");
-			else
-				printf("El archivo fue eliminado correctamente");
-		}
+	if (!validarDirectorio(path))
 		return success;
+	success = system(comando);
+	return success;
 }
 
 int listarArchivos(char* comando){
-
+	int success = 1;
 	char* path = devolverRuta(comando, 1);
 
 	if (!validarDirectorio(path))
-		return 0;
+		return success;
 
-	DIR * directorio;
-	struct dirent * elemento;
-	directorio = opendir(path);
+	success = system(comando);
 
-	while ((elemento = readdir(directorio)) != NULL){
-		if ((elemento->d_name) != (".") && (elemento->d_name) != ("..")){
-			printf("%s\n", elemento->d_name);
-		}
-	}
-	closedir(directorio);
-	return 1;
+	return success;
 }
 
 int crearDirectorio(char* comando){
-
+	int success = 1;
 	char* path = devolverRuta(comando, 1);
 
-	if (validarDirectorio(path)){
-		return 2;
-	}
+	if (validarDirectorio(path))
+		return success;
 
+	success = system(comando);
 
-	struct stat st = {0};
-
-	if (stat(path, &st) == -1) {
-	    mkdir(path, 0777);
-	    return 1;
-	}else{
-		return 0;
-	}
+	return success;
 }
 
 int mostrarArchivo(char* comando){
 
 	char* path = devolverRuta(comando, 1);
+	int success = 1;
+	if (!validarArchivo(path))
+			return success;
+	success = system(comando);
+	printf("\n");
 
-	FILE *fd;
-	int c;
-
-	fd = fopen(path, "r");
-
-	if(fd == NULL){
-		return printf("Error al tratar de leer el archivo");
-	}
-
-	while ((c=fgetc(fd)) != EOF){
-		putchar(c);
-	}
-	fclose(fd);
-	return 1;
+	return success;
 }
 
 int cambiarNombre(char* comando){
 
 	char* rutaNombreViejo = devolverRuta(comando, 1);
 	char* nombreNuevo = devolverRuta(comando, 2);
-	printf("--%s\n", rutaNombreViejo);
-	printf("--%s\n", nombreNuevo);
 
-	char* rutaNombreViejoReverse = strdup(string_reverse(rutaNombreViejo));
-	printf("--%s\n", rutaNombreViejoReverse);
+	char* rutaNombreViejoReverse = string_reverse(rutaNombreViejo);
 	int posicion = 0;
 	int longitudNombreOriginal = 0;
 
-	char* caracterActual = malloc(sizeof(char)*256);
-	caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
-	printf("---%s\n", caracterActual);
-	char* slash ="/";
+	char* caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
+	char* slash = "/";
 
-	while(caracterActual != slash){
+	while(strcmp(caracterActual,slash)){
 
 		++longitudNombreOriginal;
 		++posicion;
 		caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
 	}
-	free(caracterActual);
+
 	rutaNombreViejoReverse = string_substring_from(rutaNombreViejoReverse, longitudNombreOriginal + 1 );
-	printf("--%s\n", rutaNombreViejoReverse);
-	rutaNombreViejoReverse = strdup(string_reverse(rutaNombreViejoReverse));
-	printf("--%s\n", rutaNombreViejoReverse);
+	rutaNombreViejoReverse = string_reverse(rutaNombreViejoReverse);
+	int tamanioRutaNueva = sizeof(rutaNombreViejoReverse) + sizeof(slash) + sizeof(nombreNuevo);
+	char* rutaNuevaDefinitiva = malloc(tamanioRutaNueva);
+	memcpy(rutaNuevaDefinitiva, rutaNombreViejoReverse, strlen(rutaNombreViejoReverse));
+	memcpy(rutaNuevaDefinitiva + strlen(rutaNombreViejoReverse), slash, strlen(slash));
+	memcpy(rutaNuevaDefinitiva + strlen(rutaNombreViejoReverse) + strlen(slash), nombreNuevo, strlen(nombreNuevo) + 1);
 
-	strcat(rutaNombreViejoReverse, nombreNuevo);
-	char* rutaNombreNuevo = rutaNombreViejoReverse;
-	printf("--%s\n", rutaNombreNuevo);
-
-	if (rename(rutaNombreViejo,rutaNombreNuevo) == 0){
-		return 1;
-	}else{
+	if (rename(rutaNombreViejo,rutaNuevaDefinitiva) == 0){
+		free(rutaNuevaDefinitiva);
 		return 0;
+	}else{
+		free(rutaNuevaDefinitiva);
+		return 1;
 	}
-
-	return 0;
 }
 
 int mover(char* comando){
 
-	char* rutaNombreViejo = devolverRuta(comando, 1);
-	char* rutaNombreNuevo = devolverRuta(comando, 2);
-	printf("--%s\n",rutaNombreViejo);
-	printf("--%s\n",rutaNombreNuevo);
+	char* rutaArchivoVieja = devolverRuta(comando, 1);
+	int success = 1;
 
-	if (rename(rutaNombreViejo,rutaNombreNuevo) == 0){
-		//free(rutaNombreViejo);
-		//free(rutaNombreNuevo);
-		return 1;
-	}else{
-		//free(rutaNombreViejo);
-		//free(rutaNombreNuevo);
-		return 0;
-	}
+	if (!validarArchivo(rutaArchivoVieja))
+		return success;
+
+	success = system(comando);
+
+	return success;
 }
 
 int generarArchivoMD5(char* comando){
+	int success = 1;
+	char* ruta = devolverRuta(comando,1);
+	char* command = malloc(8 + strlen(ruta));
+	memcpy(command, "md5sum ", 7);
+	memcpy(command + 7, ruta, strlen(ruta)+1);
 
-	char* path = devolverRuta(comando, 1);
-	char md5[MD5_LEN + 1];
+	success = system(command);
+	printf("\n");
+	free(command);
 
-	    if (!CalcFileMD5(path, md5)) {
-	        return 0;
-	    } else {
-	        printf("MD5 sum es: %s\n", md5);
-	    }
-	return 1;
+	return success;
 }
 
 
 int informacion(char* comando){
-
+	int success = 1;
 	char* path = devolverRuta(comando, 1);
 
 	struct stat fileStat;
 		    if(stat(path,&fileStat) < 0)
-		        return 0;
+		        return success;
+		    else
+		    	success = 0;
 
 		    printf("Information for %s\n",path);
 		    printf("---------------------------\n");
@@ -314,5 +256,5 @@ int informacion(char* comando){
 		    printf("File inode: \t\t%d\n",(int) fileStat.st_ino);
 		    printf("Number of blocks: \t%d\n", (int) fileStat.st_blocks);
 
-		    return 1;
+		    return success;
 }
