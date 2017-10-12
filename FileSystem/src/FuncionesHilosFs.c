@@ -198,13 +198,13 @@ void* consolaFS(){
 
 void* manejarConexionYama(){
 	respuesta respuestaYama;
-
+	solicitudInfoNodos* solicitud;
 	while(1){
 		respuestaYama = desempaquetar(clienteYama);
 
 		switch(respuestaYama.idMensaje){
 			case mensajeSolicitudInfoNodos:
-				solicitudInfoNodos* solicitud = (solicitudInfoNodos*)respuestaYama.envio;
+				solicitud = (solicitudInfoNodos*)respuestaYama.envio;
 				break;
 		}
 	}

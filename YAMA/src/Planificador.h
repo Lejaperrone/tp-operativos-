@@ -26,7 +26,7 @@ typedef struct {
 }infoNodo;
 
 void planificar(job* job, infoNodo* nodo);
-uint32_t calcularCarga(infoNodo* worker);
+uint32_t calcularPWL(infoNodo* worker);
 uint32_t workLoadGlobal();
 int calcularDisponibilidadWorker(infoNodo* worker);
 void agregarNodo(t_list* cargaNodo,infoNodo* nodo);
@@ -39,7 +39,7 @@ uint32_t cargaMaxima();
 void agregarNodos(t_list* cargaNodos, t_list* listaNodos);
 void iniciarListasPlanificacion();
 t_list* consultarDetallesBloqueArchivo(char *pathArchivo, int bloque);
-void calcularCargasDeWorkers();
+void calcularCargasDeWorkers(t_list* listaNodos);
 infoNodo* obtenerNodoConNombre(char *nombreNodo);
 bool nodoConMenorCargaPrimero(void* argNodo1, void* argNodo2);
 uint32_t cargaMaxima();
