@@ -57,7 +57,7 @@ int main(void) {
 	parametrosServidorHilo parametrosServidorFS;
 
 	parametrosServidorFS.cliente = clienteYama;
-	parametrosServidorFS.servidor = servidorFS;
+
 
 	//inicializarBitmaps();
 
@@ -82,7 +82,9 @@ int main(void) {
 
 	establecerServidor(servidorFS);
 
-	clienteYama = recibirConexionYama();
+	clienteYama = recibirConexionYama(servidorFS);
+
+	parametrosServidorFS.servidor = servidorFS;
 
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
 	pthread_create(&hiloConexionYama,NULL,manejarConexionYama ,NULL);

@@ -23,6 +23,8 @@
 #include <Globales.h>
 
 char* pathArchivoDirectorios = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+struct sockaddr_in direccionCliente;
+unsigned int tamanioDireccion = sizeof(direccionCliente);
 
 void establecerServidor(int servidorFS){
 	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
@@ -33,8 +35,6 @@ void establecerServidor(int servidorFS){
 }
 
 int recibirConexionYama(int servidorFS){
-	struct sockaddr_in direccionCliente;
-	unsigned int tamanioDireccion = sizeof(direccionCliente);
 	respuesta respuestaId;
 	while(1){
 		int cliente =0;

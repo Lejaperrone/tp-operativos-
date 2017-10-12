@@ -8,6 +8,7 @@
 #include "FuncionesHilosFs.h"
 
 int clienteYama;
+struct sockaddr_in direccionCliente;
 
 void* levantarServidorFS(void* parametrosServidorFS){
 
@@ -15,9 +16,6 @@ void* levantarServidorFS(void* parametrosServidorFS){
 	int nuevoDataNode;
 	int cantidadNodos;
 	informacionNodo info;
-	respuesta solicitudInfoArchivo;
-	struct sockaddr_in direccionCliente;
-	unsigned int tamanioDireccion = sizeof(direccionCliente);
 
 	int i = 0, j = 0;
 	int addrlen;
@@ -31,7 +29,7 @@ void* levantarServidorFS(void* parametrosServidorFS){
 	fd_set read_fds_datanodes;
 
 	respuesta conexionNueva, paqueteInfoNodo;
-	int bufferPrueba = 2;
+
 	FD_ZERO(&datanodes);    // borra los conjuntos datanodes y temporal
 	FD_ZERO(&read_fds_datanodes);
 	// añadir listener al conjunto maestro
@@ -59,8 +57,10 @@ void* levantarServidorFS(void* parametrosServidorFS){
 						if (nuevoDataNode > maxDatanodes) {    // actualizar el máximo
 							maxDatanodes = nuevoDataNode;
 						}
+
 						conexionNueva = desempaquetar(nuevoDataNode);
 						int idRecibido = *(int*)conexionNueva.envio;
+
 
 						if (idRecibido == idDataNodes){
 							//empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
@@ -204,7 +204,7 @@ void* manejarConexionYama(){
 
 		switch(respuestaYama.idMensaje){
 			case mensajeSolicitudInfoNodos:
-				solicitudInfoNodos solicitud = (solicitudInfoNodos*)respuestaYama.envio;
+				//solicitudInfoNodos solicitud = (solicitudInfoNodos*)respuestaYama.envio;
 				break;
 		}
 	}

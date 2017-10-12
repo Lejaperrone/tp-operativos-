@@ -33,6 +33,7 @@ extern t_list* bitmapsNodos;;
 extern t_list* nodosConectados;
 extern char* rutaBitmaps;
 
+
 void inicializarTablaDirectorios();
 
 void guardarTablaDirectorios();
