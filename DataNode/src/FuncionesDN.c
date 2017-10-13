@@ -60,6 +60,9 @@ void conectarseConFs() {
 	struct sockaddr_in direccion = cargarDireccion(config.IP_FILESYSTEM, config.PUERTO_FILESYSTEM);
 	conectarCon(direccion, socketFs, 3);
 	informacionNodo info;
+	info.ip.cadena = strdup(config.IP_NODO);
+	info.ip.longitud = string_length(info.ip.cadena);
+	info.puerto = config.PUERTO_WORKER;
 	info.sizeNodo = config.SIZE_NODO;
 	info.bloquesOcupados = -1;
 	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO, 4));

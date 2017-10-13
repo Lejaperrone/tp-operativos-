@@ -21,11 +21,13 @@
 #include <errno.h>
 #include "Serial.h"
 #include <Globales.h>
+#include <math.h>
 
-char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+char* pathArchivoDirectorios = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
 struct sockaddr_in direccionCliente;
 unsigned int tamanioDireccion = sizeof(direccionCliente);
 int servidorFS;
+int sizeBloque;
 
 void establecerServidor(){
 	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
@@ -423,7 +425,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 void actualizarArchivoNodos(){
 
-	char* pathArchivo = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
+	char* pathArchivo = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
 	FILE* archivoNodes = fopen(pathArchivo, "wb+");
 	fclose(archivoNodes); //para dejarlo vacio
 	int cantidadNodos = list_size(nodosConectados), i = 0;
@@ -530,6 +532,58 @@ informacionNodo* informacionNodosConectados(){
 }
 
 informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
-	informacionArchivoFsYama a;
-	return a;
+	informacionArchivoFsYama info;
+	char* rutaArchivo = buscarRutaArchivo(rutaDatos.cadena);
+	strcat(rutaArchivo,"/");
+	strcat(rutaArchivo,rutaDatos.cadena);
+
+	printf("la ruta es %s \n",rutaArchivo);
+
+	char* rutaPrueba = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/1/as";
+
+	t_config* archivo = config_create(rutaPrueba);
+
+	info.tamanioTotal = config_get_int_value(archivo,"TAMANIO");
+
+	int cantBloques = redondearHaciaArriba(info.tamanioTotal / sizeBloque);
+
+	int i;
+	for(i=0;i<cantBloques;i++){
+		char* clave = calloc(1,8);
+		string_append_with_format(&clave,"BLOQUE%d",i);
+		printf("%s\n",clave);
+		infoBloque infoBloqueActual;
+		char* claveCopia0 = strdup(clave);
+		char* claveCopia1 = strdup(clave);
+		char* claveBytes = strdup(clave);
+
+		string_append(&claveCopia0,"COPIA0");
+		string_append(&claveCopia1,"COPIA1");
+		string_append(&claveBytes,"BYTES");
+
+		infoBloqueActual.bytesOcupados = config_get_int_value(archivo,claveBytes);
+		obtenerNumeroNodo(archivo,claveCopia0,&(infoBloqueActual.ubicacionCopia0));
+		obtenerInfoNodo(&infoBloqueActual.ubicacionCopia0);
+
+		obtenerNumeroNodo(archivo,claveCopia1,&(infoBloqueActual.ubicacionCopia1));
+		obtenerInfoNodo(&infoBloqueActual.ubicacionCopia1);
+		free(clave);
+		info.informacionBloques[i] = infoBloqueActual;
+	}
+	return info;
+}
+
+void obtenerInfoNodo(ubicacionBloque* ubicacion){
+	int i;
+	informacionNodo* info = malloc(sizeof(informacionNodo));
+	for(i=0;i<list_size(nodosConectados);i++){
+		info =(informacionNodo*)list_get(nodosConectados,i);
+		if(info->numeroNodo == ubicacion->numeroNodo){
+			ubicacion->ip.cadena = strdup(info->ip.cadena);
+			ubicacion->ip.longitud = info->ip.longitud;
+			ubicacion->puerto = info->puerto;
+		}
+	}
+
+	ubicacion->numeroNodo=2;
 }

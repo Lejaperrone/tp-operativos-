@@ -18,6 +18,8 @@
 struct configuracionNodo  config;
 
 int main(int argc, char *argv[]) {
+	limpiarPantalla();
+
 	respuesta conexionConFS;
 	cargarConfiguracionNodo(&config,argv[1]);
 	inicializarDataBin();

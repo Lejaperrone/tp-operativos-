@@ -211,6 +211,7 @@ void* manejarConexionYama(){
 			solicitud = (solicitudInfoNodos*)respuestaYama.envio;
 			printf("la ruta es %s\n",solicitud->rutaDatos.cadena);
 			informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
+
 			break;
 		}
 	}
