@@ -30,6 +30,8 @@
 #define idMaster 2
 #define idDataNodes 3
 
+pthread_mutex_t cantJobs_mutex;
+
 fd_set master;   // conjunto maestro de descriptores de fichero
 fd_set read_fds; // conjunto temporal de descriptores de fichero para select()
 int fdmax;        // número máximo de descriptores de fichero
@@ -44,6 +46,8 @@ struct sockaddr_in direccionCliente;
 t_log* logger;
 struct configuracionYama config;
 
+uint32_t cantJobs;
+
 int conectarseConFs();
 void levantarServidorYama(char* ip, int port);
 void recibirContenidoMaster();
@@ -53,5 +57,5 @@ int getDisponibilidadBase();
 
 char* obtenerNombreArchivoResultadoTemporal();
 int esClock();
-
+void inicializarEstructuras();
 #endif /* FUNCIONESYAMA_H_ */

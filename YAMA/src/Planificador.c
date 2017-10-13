@@ -11,7 +11,7 @@
 void iniciarListasPlanificacion(){
 	listaNodos = list_create();
 	jobsAPlanificar = list_create();
-	pthread_mutex_init(&listaNodos_mutex, 1);
+	pthread_mutex_init(&listaNodos_mutex, NULL);
 }
 
 void planificar(job* job){
@@ -44,7 +44,7 @@ infoNodo* buscarNodo(t_list* nodos, char* nombreNodo){
 		return string_equals_ignore_case(nodo->nombre, nombreNodo);
 	}
 
-	return list_find(nodos, nodoConNombre);
+	return list_find(nodos, (void*) nodoConNombre);
 }
 
 void calcularCargasDeWorkers(t_list* listaNodos){

@@ -203,6 +203,9 @@ void* serializarJob(void* paquete, int* tamanio){
 	memcpy(buffer + desplazamiento, &(unJob->id), sizeof(int));
 	desplazamiento += sizeof(int);
 
+	memcpy(buffer + desplazamiento, &(unJob->socketFd), sizeof(int));
+	desplazamiento += sizeof(int);
+
 	memcpy(buffer + desplazamiento, &(unJob->rutaDatos.longitud), sizeof(int));
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, unJob->rutaDatos.cadena, unJob->rutaDatos.longitud+1);
@@ -234,6 +237,9 @@ job* deserializarJob(int socket, int tamanio){
 	recv(socket,buffer,tamanio,0);
 
 	memcpy(&unJob->id, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	memcpy(&unJob->socketFd, buffer + desplazamiento, sizeof(int));
 	desplazamiento += sizeof(int);
 
 	memcpy(&unJob->rutaDatos.longitud, buffer + desplazamiento, sizeof(int) );

@@ -21,6 +21,7 @@ typedef struct string{
 
 typedef struct job{
 	int id;
+	int socketFd;
 	string rutaTransformador;
 	string rutaReductor;
 	string rutaDatos;
