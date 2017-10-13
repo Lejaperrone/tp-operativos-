@@ -84,9 +84,9 @@ void recibirContenidoMaster() {
 	nuevoJob = desempaquetar(nuevoMaster);
 	job* jobAPlanificar =(job*) nuevoJob.envio;
 
-	agregarJobAPlanificar(jobAPlanificar);
+	log_trace(logger, "Job recibido pre-planificacion %s",jobAPlanificar->rutaDatos.cadena);
 
-	log_trace(logger, "Job agregado para pre-planificacion %s",jobAPlanificar->rutaDatos.cadena);
+	planificar(jobAPlanificar);
 
 	rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);
