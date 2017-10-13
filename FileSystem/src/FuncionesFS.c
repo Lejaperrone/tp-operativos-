@@ -22,7 +22,7 @@
 #include "Serial.h"
 #include <Globales.h>
 
-char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+char* pathArchivoDirectorios = "../metadata/Directorios.dat";
 struct sockaddr_in direccionCliente;
 unsigned int tamanioDireccion = sizeof(direccionCliente);
 int servidorFS;
@@ -125,7 +125,8 @@ int getIndexDirectorio(char* ruta){
 char* buscarRutaArchivo(char* ruta){
 	int indexDirectorio = getIndexDirectorio(ruta);
 	char* numeroIndexString = string_itoa(indexDirectorio);
-	char* rutaGenerada = malloc(strlen(rutaArchivos) + strlen(numeroIndexString));
+	char* rutaGenerada = malloc(strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
+	memset(rutaGenerada,0,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memcpy(rutaGenerada, rutaArchivos, strlen(rutaArchivos));
 	memcpy(rutaGenerada + strlen(rutaArchivos), numeroIndexString, strlen(numeroIndexString));
 	return rutaGenerada; //poner free despues de usar
@@ -373,7 +374,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
 
-	char* espacioBitarray = malloc(cantBloques);
+	char* espacioBitarray = malloc(sizeNodo);
 	char* currentChar = malloc(sizeof(char));
 	int posicion = 0;
 
@@ -386,7 +387,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 	if (!validarArchivo(pathParticular) == 1){
 		bitmapFile = fopen(pathParticular, "w");
-		for(i = 0; i < 50; ++i)
+		for(i = 0; i < sizeNodo; ++i)
 			fwrite("0",1,1, bitmapFile);
 		fclose(bitmapFile);
 	}

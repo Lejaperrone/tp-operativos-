@@ -74,27 +74,25 @@ void recibirMensajesFileSystem(int socketFs) {
 	respuesta numeroBloque = desempaquetar(socketFs);
 	respuesta bloqueArchivo;
 	//char* buffer = malloc(mb + 4);
+	bloqueArchivo = desempaquetar(socketFs);
 	int bloqueId;
-	memcpy(&bloqueId, numeroBloque.envio, sizeof(int));
 	char* data;
 
-	switch (bloqueArchivo.idMensaje) {
-	case mensajeEnvioBloqueANodo:
-		bloqueArchivo = desempaquetar(socketFs);
+	switch (numeroBloque.idMensaje) {
+	case mensajeNumeroBloqueANodo:
+		memcpy(&bloqueId, numeroBloque.envio, sizeof(int));
 		data = malloc(bloqueArchivo.size);
-		//serial_unpack(pedido2.envio + sizeof(header), "h", &bloqueId);
-		memcpy(data, bloqueArchivo.envio + sizeof(int), bloqueArchivo.size-sizeof(int));
-		//printf("--------------------------%s\n\n\n ", data);
-		setBloque(bloqueId, data);
+		memcpy(data, bloqueArchivo.envio, bloqueArchivo.size);
+		printf("%s\n", data);
+		//setBloque(bloqueId, data);
 		free(data);
+		free(numeroBloque.envio);
+		free(bloqueArchivo.envio);
 		break;
 
 	default:
-	printf("llegue %d %d\n", bloqueArchivo.idMensaje, mensajeEnvioBloqueANodo);
 		break;
 	}
-	free(numeroBloque.envio);
-	free(bloqueArchivo.envio);
 }
 
 void escucharAlFS(int socketFs) {
