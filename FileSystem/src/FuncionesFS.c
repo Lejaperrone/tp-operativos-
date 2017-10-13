@@ -127,7 +127,7 @@ int getIndexDirectorio(char* ruta){
 char* buscarRutaArchivo(char* ruta){
 	int indexDirectorio = getIndexDirectorio(ruta);
 	char* numeroIndexString = string_itoa(indexDirectorio);
-	char* rutaGenerada = malloc(strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
+	char* rutaGenerada = calloc(1,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memset(rutaGenerada,0,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memcpy(rutaGenerada, rutaArchivos, strlen(rutaArchivos));
 	memcpy(rutaGenerada + strlen(rutaArchivos), numeroIndexString, strlen(numeroIndexString));
@@ -534,6 +534,7 @@ informacionNodo* informacionNodosConectados(){
 
 informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	informacionArchivoFsYama info;
+	//info.informacionBloques = calloc(1,sizeof(informacionArchivoFsYama));
 	char* rutaArchivo = buscarRutaArchivo(rutaDatos.cadena);
 	strcat(rutaArchivo,"/");
 	strcat(rutaArchivo,rutaDatos.cadena);
@@ -564,12 +565,12 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 
 		infoBloqueActual.bytesOcupados = config_get_int_value(archivo,claveBytes);
 		obtenerNumeroNodo(archivo,claveCopia0,&(infoBloqueActual.ubicacionCopia0));
-		obtenerInfoNodo(&infoBloqueActual.ubicacionCopia0);
+		//obtenerInfoNodo(&infoBloqueActual.ubicacionCopia0);
 
 		obtenerNumeroNodo(archivo,claveCopia1,&(infoBloqueActual.ubicacionCopia1));
-		obtenerInfoNodo(&infoBloqueActual.ubicacionCopia1);
+		//obtenerInfoNodo(&infoBloqueActual.ubicacionCopia1);
 		free(clave);
-		info.informacionBloques[i] = infoBloqueActual;
+		//info.informacionBloques[i] = infoBloqueActual;
 	}
 	return info;
 }

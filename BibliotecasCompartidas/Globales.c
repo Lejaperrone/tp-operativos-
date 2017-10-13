@@ -29,12 +29,12 @@ void obtenerNumeroNodo(t_config* archivo,char* claveCopia,ubicacionBloque* ubi){
 	char* numeroBloque= calloc(1,3);
 	int i =5;
 
-	while(copia[i]== ','){
+	while(copia[i]!= ','){
 		snprintf(numeroNodo,string_length(numeroNodo),"%s%c",numeroNodo,copia[i]);
 		i++;
 	}
 	i++;
-	while(copia[i]==']'){
+	while(copia[i]!=']'){
 		snprintf(numeroBloque,string_length(numeroBloque),"%s%c",numeroBloque,copia[i]);
 		i++;
 	}

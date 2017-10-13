@@ -245,28 +245,28 @@ job* deserializarJob(int socket, int tamanio){
 	memcpy(&unJob->rutaDatos.longitud, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
-	unJob->rutaDatos.cadena = malloc(unJob->rutaDatos.longitud+1);
+	unJob->rutaDatos.cadena = calloc(1,unJob->rutaDatos.longitud+1);
 	memcpy(unJob->rutaDatos.cadena, buffer + desplazamiento, unJob->rutaDatos.longitud);
 	desplazamiento += unJob->rutaDatos.longitud;
 
 	memcpy(&unJob->rutaResultado.longitud, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
-	unJob->rutaResultado.cadena = malloc(unJob->rutaResultado.longitud+1);
+	unJob->rutaResultado.cadena = calloc(1,unJob->rutaResultado.longitud+1);
 	memcpy(unJob->rutaResultado.cadena, buffer + desplazamiento, unJob->rutaResultado.longitud);
 	desplazamiento += unJob->rutaResultado.longitud;
 
 	memcpy(&unJob->rutaTransformador.longitud, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
-	unJob->rutaTransformador.cadena = malloc(unJob->rutaTransformador.longitud+1);
+	unJob->rutaTransformador.cadena = calloc(1,unJob->rutaTransformador.longitud+1);
 	memcpy(unJob->rutaTransformador.cadena, buffer + desplazamiento, unJob->rutaTransformador.longitud);
 	desplazamiento += unJob->rutaTransformador.longitud;
 
 	memcpy(&unJob->rutaReductor.longitud, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
-	unJob->rutaReductor.cadena = malloc(unJob->rutaReductor.longitud+1);
+	unJob->rutaReductor.cadena = calloc(1,unJob->rutaReductor.longitud+1);
 	memcpy(unJob->rutaReductor.cadena, buffer + desplazamiento, unJob->rutaReductor.longitud);
 
 	return unJob;
@@ -303,14 +303,14 @@ solicitudInfoNodos* deserializarSolicitudInfoNodos(int socket,int tamanio){
 	memcpy(&unaSolicitud->rutaDatos.longitud, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
-	unaSolicitud->rutaDatos.cadena = malloc(unaSolicitud->rutaDatos.longitud+1);
+	unaSolicitud->rutaDatos.cadena = calloc(1,unaSolicitud->rutaDatos.longitud+1);
 	memcpy(unaSolicitud->rutaDatos.cadena, buffer + desplazamiento, unaSolicitud->rutaDatos.longitud);
 	desplazamiento += unaSolicitud->rutaDatos.longitud;
 
 	memcpy(&unaSolicitud->rutaResultado.longitud, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
-	unaSolicitud->rutaResultado.cadena = malloc(unaSolicitud->rutaResultado.longitud+1);
+	unaSolicitud->rutaResultado.cadena = calloc(1,unaSolicitud->rutaResultado.longitud+1);
 	memcpy(unaSolicitud->rutaResultado.cadena, buffer + desplazamiento, unaSolicitud->rutaResultado.longitud);
 	desplazamiento += unaSolicitud->rutaResultado.longitud;
 
