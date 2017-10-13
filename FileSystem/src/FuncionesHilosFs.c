@@ -200,12 +200,17 @@ void* consolaFS(){
 
 void* manejarConexionYama(){
 	respuesta respuestaYama;
+	solicitudInfoNodos* solicitud;
 
 	while(1){
 		respuestaYama = desempaquetar(clienteYama);
 		switch(respuestaYama.idMensaje){
 
 		case mensajeSolicitudInfoNodos:
+			printf("me llega la solicitud\n");
+			solicitud = (solicitudInfoNodos*)respuestaYama.envio;
+			printf("la ruta es %s\n",solicitud->rutaDatos.cadena);
+			informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
 			break;
 		}
 	}

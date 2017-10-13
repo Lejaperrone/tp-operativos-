@@ -528,3 +528,8 @@ informacionNodo* informacionNodosConectados(){
 	}
 	return listaInfoNodos;
 }
+
+informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
+	informacionArchivoFsYama a;
+	return a;
+}

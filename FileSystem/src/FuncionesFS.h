@@ -69,3 +69,5 @@ informacionNodo* informacionNodosConectados();
 void establecerServidor();
 
 int recibirConexionYama();
+
+informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos);

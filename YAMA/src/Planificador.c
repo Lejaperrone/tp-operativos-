@@ -10,7 +10,7 @@
 void iniciarListasPlanificacion(){
 	listaNodos = list_create();
 	jobsAPlanificar = list_create();
-	pthread_mutex_init(&listaNodos_mutex, 1);
+	pthread_mutex_init(&listaNodos_mutex, NULL);
 }
 
 void planificar(job* job, infoNodo* nodo){
