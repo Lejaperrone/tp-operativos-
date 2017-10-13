@@ -96,6 +96,9 @@ char* recibirRuta(char* mensaje) {
 job* crearJob(char* argv[]){
 	job* nuevo = (job*)malloc(sizeof(job));
 
+	nuevo->id = 0;
+	nuevo->socketFd = NULL;
+
 	nuevo->rutaTransformador.cadena = string_duplicate(argv[2]);
 	nuevo->rutaTransformador.longitud = string_length(nuevo->rutaTransformador.cadena);
 

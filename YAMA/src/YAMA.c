@@ -6,6 +6,7 @@ int main(int argc, char *argv[]) {
 
 	struct configuracionYama config;
 	cargarConfiguracionYama(&config,argv[1]);
+	inicializarEstructuras();
 
 	socketFs = conectarseConFs();
 

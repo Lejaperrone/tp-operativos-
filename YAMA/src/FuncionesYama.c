@@ -79,13 +79,19 @@ void recibirContenidoMaster() {
 	respuestaInfoNodos* rtaTransf;
 
 	iniciarListasPlanificacion();
+
 	log_trace(logger, "Conexion de Master");
 	nuevoJob = desempaquetar(nuevoMaster);
 	job* jobAPlanificar =(job*) nuevoJob.envio;
 
-	agregarJobAPlanificar(jobAPlanificar);
+	pthread_mutex_lock(&cantJobs_mutex);
+	cantJobs++;
+	pthread_mutex_unlock(&cantJobs_mutex);
+	jobAPlanificar->id = cantJobs;
+	jobAPlanificar->socketFd = nuevoMaster;
+	log_trace(logger, "Job recibido pre-planificacion %i",jobAPlanificar->id);
 
-	log_trace(logger, "Job agregado para pre-planificacion %s",jobAPlanificar->rutaDatos.cadena);
+	//planificar(jobAPlanificar);
 
 	solicitudInfoNodos* solTransf = malloc(sizeof(solicitudInfoNodos));
 	solTransf->rutaDatos.cadena = strdup(jobAPlanificar->rutaDatos.cadena);
@@ -94,8 +100,7 @@ void recibirContenidoMaster() {
 	solTransf->rutaResultado.longitud = jobAPlanificar->rutaResultado.longitud;
 
 	rtaTransf  = solicitarInformacionAFS(solTransf);
-	empaquetar(nuevoMaster, mensajeOk, 0, 0);
-	// logica con respuesta a Master
+	empaquetar(nuevoMaster, mensajeOk, 0, 0);// logica con respuesta a Master
 	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
 
 }
@@ -141,4 +146,7 @@ char* dameUnNombreArchivoTemporal(){
 	char* nombre;// = string_new();
 	//string_from_format("Master-%i-temp%i",infoJob->id, inforBloque->bloque);
 	return nombre;
+}
+void inicializarEstructuras(){
+	pthread_mutex_init(&cantJobs_mutex, NULL);
 }

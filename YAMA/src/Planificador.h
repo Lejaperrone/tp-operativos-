@@ -25,7 +25,10 @@ typedef struct {
 	int bloque;
 }infoNodo;
 
-void planificar(job* job, infoNodo* nodo);
+void planificar(job* job);
+void seleccionarWorker(infoNodo* worker, int numeroBloque);
+bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);
+infoNodo* buscarNodo(t_list* nodos, char* nombreNodo);
 uint32_t calcularPWL(infoNodo* worker);
 uint32_t workLoadGlobal();
 int calcularDisponibilidadWorker(infoNodo* worker);
