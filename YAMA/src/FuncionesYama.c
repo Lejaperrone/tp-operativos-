@@ -77,7 +77,6 @@ void levantarServidorYama(char* ip, int port) {
 void recibirContenidoMaster() {
 	respuesta nuevoJob;
 	respuestaInfoNodos* rtaTransf;
-	solicitudInfoNodos* solTransf;
 
 	iniciarListasPlanificacion();
 
@@ -94,6 +93,12 @@ void recibirContenidoMaster() {
 
 	//planificar(jobAPlanificar);
 
+	solicitudInfoNodos* solTransf = malloc(sizeof(solicitudInfoNodos));
+	solTransf->rutaDatos.cadena = strdup(jobAPlanificar->rutaDatos.cadena);
+	solTransf->rutaDatos.longitud = jobAPlanificar->rutaDatos.longitud;
+	solTransf->rutaResultado.cadena = strdup(jobAPlanificar->rutaResultado.cadena);
+	solTransf->rutaResultado.longitud = jobAPlanificar->rutaResultado.longitud;
+
 	rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);// logica con respuesta a Master
 	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
@@ -101,10 +106,8 @@ void recibirContenidoMaster() {
 }
 
 respuestaInfoNodos* solicitarInformacionAFS(solicitudInfoNodos* solicitud){
-	respuestaInfoNodos* rtaTransf;
+	respuestaInfoNodos* rtaTransf = malloc(sizeof(respuestaInfoNodos));
 	respuesta respuestaFs;
-
-	printf("yupiii\n");
 
 	empaquetar(socketFs, mensajeSolicitudInfoNodos, 0, solicitud);
 

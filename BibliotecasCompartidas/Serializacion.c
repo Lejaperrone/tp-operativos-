@@ -277,17 +277,17 @@ void* serializarSolicitudInfoNodos(void* paquete,int* tamanio){
 	solicitudInfoNodos* unaSolicitud = (solicitudInfoNodos*)paquete;
 	int desplazamiento = 0;
 
-	*tamanio = sizeof(solicitudInfoNodos) - (2* sizeof(int)) + unaSolicitud->rutaDatos.longitud + unaSolicitud->rutaResultado.longitud;
+	*tamanio = 2+ sizeof(solicitudInfoNodos) - (2* sizeof(int)) + unaSolicitud->rutaDatos.longitud + unaSolicitud->rutaResultado.longitud;
 	void * buffer = malloc(*tamanio);
 
 	memcpy(buffer + desplazamiento, &(unaSolicitud->rutaDatos.longitud), sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, unaSolicitud->rutaDatos.cadena, unaSolicitud->rutaDatos.longitud);
+	memcpy(buffer + desplazamiento, unaSolicitud->rutaDatos.cadena, unaSolicitud->rutaDatos.longitud+1);
 	desplazamiento += unaSolicitud->rutaDatos.longitud;
 
 	memcpy(buffer + desplazamiento, &(unaSolicitud->rutaResultado.longitud), sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, unaSolicitud->rutaResultado.cadena, unaSolicitud->rutaResultado.longitud);
+	memcpy(buffer + desplazamiento, unaSolicitud->rutaResultado.cadena, unaSolicitud->rutaResultado.longitud+1);
 	desplazamiento += unaSolicitud->rutaResultado.longitud;
 
 	return buffer;

@@ -81,8 +81,20 @@ typedef struct{
 } informacionNodo;
 
 typedef struct{
-	//YAMA recibe la lista de bloques que componen al archivo
-	//con la ubicacion de sus dos copias y espacio ocupado en cada bloque
+	string ip;
+	int puerto;
+}ubicacionNodo;
+
+typedef struct {
+	int numeroBloque;
+	int bytesOcupados;
+	ubicacionNodo ubicacionCopia0;
+	ubicacionNodo ubicacionCopia1;
+}infoBloque;
+
+typedef struct{
+	int tamanioTotal;
+	infoBloque* informacionBloques;
 }informacionArchivoFsYama;
 
 typedef struct{

@@ -33,6 +33,7 @@ extern t_list* bitmapsNodos;;
 extern t_list* nodosConectados;
 extern char* rutaBitmaps;
 
+
 void inicializarTablaDirectorios();
 
 void guardarTablaDirectorios();
@@ -65,6 +66,8 @@ void* enviarADataNode(void* parametros);
 
 informacionNodo* informacionNodosConectados();
 
-void establecerServidor(int servidorFS);
+void establecerServidor();
 
 int recibirConexionYama();
+
+informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos);

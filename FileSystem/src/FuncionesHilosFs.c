@@ -8,50 +8,46 @@
 #include "FuncionesHilosFs.h"
 
 int clienteYama;
+int servidorFS;
+struct sockaddr_in direccionCliente;
 
-void* levantarServidorFS(void* parametrosServidorFS){
+void* levantarServidorFS(){
 
 	int maxDatanodes;
 	int nuevoDataNode;
 	int cantidadNodos;
 	informacionNodo info;
-	respuesta solicitudInfoArchivo;
-	struct sockaddr_in direccionCliente;
-	unsigned int tamanioDireccion = sizeof(direccionCliente);
 
-	int i = 0, j = 0;
+	int i = 0;
 	int addrlen;
-
-	struct parametrosServidorHilo*params;
-	params = (struct parametrosServidorHilo*) parametrosServidorFS;
-
-	int servidor = params->servidor;
 
 	fd_set datanodes;
 	fd_set read_fds_datanodes;
 
 	respuesta conexionNueva, paqueteInfoNodo;
-	int bufferPrueba = 2;
+
 	FD_ZERO(&datanodes);    // borra los conjuntos datanodes y temporal
 	FD_ZERO(&read_fds_datanodes);
 	// añadir listener al conjunto maestro
-	FD_SET(servidor, &datanodes);
+	FD_SET(0, &datanodes);
+	FD_SET(servidorFS, &datanodes);
 	// seguir la pista del descriptor de fichero mayor
-	maxDatanodes = servidor; // por ahora es éste
+	maxDatanodes = clienteYama; // por ahora es éste
 	// bucle principal
 	while(1){
 		read_fds_datanodes = datanodes; // cópialo
-		if (select(maxDatanodes+1, &read_fds_datanodes, NULL, NULL, NULL) == -1) {
+
+		if (select(maxDatanodes, &read_fds_datanodes, NULL, NULL, NULL) == -1) {
 			perror("select");
 			exit(1);
 		}
 		// explorar conexiones existentes en busca de datos que leer
 		for(i = 0; i <= maxDatanodes; i++) {
 			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
-				if (i == servidor) {
+				if (i == servidorFS) {
 					// gestionar nuevas conexiones
 					addrlen = sizeof(direccionCliente);
-					if ((nuevoDataNode = accept(servidor, (struct sockaddr *)&direccionCliente,
+					if ((nuevoDataNode = accept(servidorFS, (struct sockaddr *)&direccionCliente,
 							&addrlen)) == -1) {
 						perror("accept");
 					} else {
@@ -59,10 +55,10 @@ void* levantarServidorFS(void* parametrosServidorFS){
 						if (nuevoDataNode > maxDatanodes) {    // actualizar el máximo
 							maxDatanodes = nuevoDataNode;
 						}
-						conexionNueva = desempaquetar(nuevoDataNode);
-						int idRecibido = *(int*)conexionNueva.envio;
 
-						if (idRecibido == idDataNodes){
+						conexionNueva = desempaquetar(nuevoDataNode);
+
+						if (*(int*)conexionNueva.envio == idDataNodes){
 							//empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
 							paqueteInfoNodo = desempaquetar(nuevoDataNode);
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
@@ -75,15 +71,21 @@ void* levantarServidorFS(void* parametrosServidorFS){
 								cantidadNodos = list_size(nodosConectados);
 								actualizarArchivoNodos();
 							}
-							else
+							else{
 								log_trace(loggerFS, "DataNode repetido\n");
+							}
 						}
-						else {
-							// gestionar datos de un cliente
 
-						}
 					}
 				}
+				else {
+					conexionNueva = desempaquetar(nuevoDataNode);
+					switch(conexionNueva.idMensaje){
+
+					}
+
+				}
+
 			}
 		}
 	}
@@ -199,13 +201,18 @@ void* consolaFS(){
 void* manejarConexionYama(){
 	respuesta respuestaYama;
 	solicitudInfoNodos* solicitud;
+
 	while(1){
 		respuestaYama = desempaquetar(clienteYama);
-
 		switch(respuestaYama.idMensaje){
-			case mensajeSolicitudInfoNodos:
-				solicitud = (solicitudInfoNodos*)respuestaYama.envio;
-				break;
+
+		case mensajeSolicitudInfoNodos:
+			printf("me llega la solicitud\n");
+			solicitud = (solicitudInfoNodos*)respuestaYama.envio;
+			printf("la ruta es %s\n",solicitud->rutaDatos.cadena);
+			informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
+			break;
 		}
 	}
 }
+

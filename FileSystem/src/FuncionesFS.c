@@ -22,9 +22,12 @@
 #include "Serial.h"
 #include <Globales.h>
 
-char* pathArchivoDirectorios = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+struct sockaddr_in direccionCliente;
+unsigned int tamanioDireccion = sizeof(direccionCliente);
+int servidorFS;
 
-void establecerServidor(int servidorFS){
+void establecerServidor(){
 	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
 	int activado = 1;
 	setsockopt(servidorFS, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
@@ -32,9 +35,7 @@ void establecerServidor(int servidorFS){
 	asociarSocketA(direccionServidor, servidorFS);
 }
 
-int recibirConexionYama(int servidorFS){
-	struct sockaddr_in direccionCliente;
-	unsigned int tamanioDireccion = sizeof(direccionCliente);
+int recibirConexionYama(){
 	respuesta respuestaId;
 	while(1){
 		int cliente =0;
@@ -129,117 +130,6 @@ char* buscarRutaArchivo(char* ruta){
 	memcpy(rutaGenerada + strlen(rutaArchivos), numeroIndexString, strlen(numeroIndexString));
 	return rutaGenerada; //poner free despues de usar
 }
-
-
-
-void* levantarServidorFS(void* parametrosServidorFS){
-
-	int maxDatanodes;
-	int nuevoDataNode;
-	int cantidadNodos;
-	informacionNodo info;
-	respuesta nuevaConexionYama;
-	respuesta solicitudInfoArchivo;
-
-	int i = 0, j = 0;
-	int addrlen;
-
-	struct parametrosServidorHilo*params;
-	params = (struct parametrosServidorHilo*) parametrosServidorFS;
-
-	int clienteYama = params->cliente;
-	int servidor = params->servidor;
-
-	char* buffer = malloc(300);
-	struct sockaddr_in direccionCliente;
-	unsigned int tamanioDireccion = sizeof(direccionCliente);
-	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
-	int activado = 1;
-	setsockopt(servidor, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
-
-	asociarSocketA(direccionServidor, servidor);
-
-	//cliente = accept(servidor, (struct sockaddr *) &direccionCliente, &tamanioDireccion);
-
-	//falta agregar el manejo de error cuando se desconecta el fs,
-	//handshake y el protocolo de envio de mensajes
-	free(buffer);
-
-	fd_set datanodes;
-	fd_set read_fds_datanodes;
-
-	respuesta conexionNueva, paqueteInfoNodo;
-	int bufferPrueba = 2;
-	FD_ZERO(&datanodes);    // borra los conjuntos datanodes y temporal
-	FD_ZERO(&read_fds_datanodes);
-	// añadir listener al conjunto maestro
-	FD_SET(servidor, &datanodes);
-	// seguir la pista del descriptor de fichero mayor
-	maxDatanodes = servidor; // por ahora es éste
-	// bucle principal
-	while(1){
-		read_fds_datanodes = datanodes; // cópialo
-		if (select(maxDatanodes+1, &read_fds_datanodes, NULL, NULL, NULL) == -1) {
-			perror("select");
-			exit(1);
-		}
-		// explorar conexiones existentes en busca de datos que leer
-		for(i = 0; i <= maxDatanodes; i++) {
-			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
-				if (i == servidor) {
-					// gestionar nuevas conexiones
-					addrlen = sizeof(direccionCliente);
-					if ((nuevoDataNode = accept(servidor, (struct sockaddr *)&direccionCliente,
-							&addrlen)) == -1) {
-						perror("accept");
-					} else {
-						FD_SET(nuevoDataNode, &datanodes); // añadir al conjunto maestro
-						if (nuevoDataNode > maxDatanodes) {    // actualizar el máximo
-							maxDatanodes = nuevoDataNode;
-						}
-						conexionNueva = desempaquetar(nuevoDataNode);
-						int idRecibido = *(int*)conexionNueva.envio;
-
-						if (idRecibido == idDataNodes){
-							//empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
-							paqueteInfoNodo = desempaquetar(nuevoDataNode);
-							info = *(informacionNodo*)paqueteInfoNodo.envio;
-							if (nodoRepetido(info) == 0){
-								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
-								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
-								info.socket = nuevoDataNode;
-								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
-								list_add(nodosConectados,paqueteInfoNodo.envio);
-								cantidadNodos = list_size(nodosConectados);
-								actualizarArchivoNodos();
-							}
-							else
-								log_trace(loggerFS, "DataNode repetido\n");
-						}
-						else if(idRecibido == 1){//idYAMA
-							log_trace(loggerFS, "Nueva Conexion de Yama");
-							solicitudInfoArchivo = desempaquetar(nuevoDataNode);
-
-							if(solicitudInfoArchivo.idMensaje == mensajeSolicitudTransformacion){
-								atenderSolicitudYama(nuevoDataNode, solicitudInfoArchivo.envio);
-								//cambiar NUEVO DATANODE POR OTRO NOMBRE FIXME
-								log_trace(loggerFS, "Me llego una solicitud para dar informacion de este archivo");
-							}
-						}
-
-						else {
-							// gestionar datos de un cliente
-
-						}
-					}
-				}
-			}
-		}
-	}
-	return 0;
-
-}
-
 
 int nodoRepetido(informacionNodo info){
 	int cantidadNodos = list_size(nodosConectados);
@@ -533,7 +423,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 void actualizarArchivoNodos(){
 
-	char* pathArchivo = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
+	char* pathArchivo = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
 	FILE* archivoNodes = fopen(pathArchivo, "wb+");
 	fclose(archivoNodes); //para dejarlo vacio
 	int cantidadNodos = list_size(nodosConectados), i = 0;
@@ -637,4 +527,9 @@ informacionNodo* informacionNodosConectados(){
 		listaInfoNodos[i] = *(informacionNodo*) list_get(nodosConectados, i);
 	}
 	return listaInfoNodos;
+}
+
+informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
+	informacionArchivoFsYama a;
+	return a;
 }

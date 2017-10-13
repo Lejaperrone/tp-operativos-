@@ -32,8 +32,8 @@
 int cantBloques = 10;
 int sizeBloque = 1048576; // 1mb
 int mostrarLoggerPorPantalla = 1;
-char* rutaBitmaps = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
-char* rutaArchivos = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/";
+char* rutaBitmaps = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Bitmaps/";
+char* rutaArchivos = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/";
 int cantidadDirectorios = 100;
 int numeroCopiasBloque = 2;
 //t_bitarray* bitmap[cantDataNodes];
@@ -57,7 +57,7 @@ int main(void) {
 	parametrosServidorHilo parametrosServidorFS;
 
 	parametrosServidorFS.cliente = clienteYama;
-	parametrosServidorFS.servidor = servidorFS;
+
 
 	//inicializarBitmaps();
 
@@ -76,13 +76,16 @@ int main(void) {
 
 	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
+	//guardarTablaDirectorios();
 	inicializarTablaDirectorios();
 
 	servidorFS = crearSocket();
 
 	establecerServidor(servidorFS);
 
-	clienteYama = recibirConexionYama();
+	clienteYama = recibirConexionYama(servidorFS);
+
+	parametrosServidorFS.servidor = servidorFS;
 
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
 	pthread_create(&hiloConexionYama,NULL,manejarConexionYama ,NULL);
