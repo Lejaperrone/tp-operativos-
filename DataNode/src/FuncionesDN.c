@@ -34,13 +34,13 @@ void enviarBloqueAFS(int numeroBloque) {
 
 int setBloque(int numeroBloque, char* datos) {
 	int fd = open(config.RUTA_DATABIN, O_RDWR);
-	char* mapaDataBin = mmap(0, mb*config.SIZE_NODO, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	memcpy(mapaDataBin+mb*numeroBloque, datos, strlen(datos));
-	if (msync(mapaDataBin, strlen(datos), MS_SYNC) == -1)
+	char* mapaDataBin = mmap(0, mb, PROT_READ | PROT_WRITE, MAP_SHARED, fd, mb*numeroBloque);
+	memcpy(mapaDataBin, datos, strlen(datos));
+	if (msync(mapaDataBin, mb, MS_SYNC) == -1)
 	{
 		perror("Could not sync the file to disk");
 	}
-	if (munmap(mapaDataBin, strlen(datos)) == -1)
+	if (munmap(mapaDataBin, mb) == -1)
 	{
 		close(fd);
 		perror("Error un-mmapping the file");
@@ -72,25 +72,27 @@ void conectarseConFs() {
 
 void recibirMensajesFileSystem(int socketFs) {
 	respuesta numeroBloque = desempaquetar(socketFs);
-	respuesta bloqueArchivo = desempaquetar(socketFs);
+	respuesta bloqueArchivo;
 	//char* buffer = malloc(mb + 4);
 	int bloqueId;
 	memcpy(&bloqueId, numeroBloque.envio, sizeof(int));
-	char* data = malloc(bloqueArchivo.size);
+	char* data;
 
 	switch (bloqueArchivo.idMensaje) {
 	case mensajeEnvioBloqueANodo:
+		bloqueArchivo = desempaquetar(socketFs);
+		data = malloc(bloqueArchivo.size);
 		//serial_unpack(pedido2.envio + sizeof(header), "h", &bloqueId);
 		memcpy(data, bloqueArchivo.envio + sizeof(int), bloqueArchivo.size-sizeof(int));
 		//printf("--------------------------%s\n\n\n ", data);
-		//setBloque(bloqueId, data);
+		setBloque(bloqueId, data);
+		free(data);
 		break;
 
 	default:
 	printf("llegue %d %d\n", bloqueArchivo.idMensaje, mensajeEnvioBloqueANodo);
 		break;
 	}
-	free(data);
 	free(numeroBloque.envio);
 	free(bloqueArchivo.envio);
 }
