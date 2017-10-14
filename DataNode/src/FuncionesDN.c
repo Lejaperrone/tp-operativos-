@@ -26,7 +26,6 @@
 int cantBloques = 50;
 extern struct configuracionNodo config;
 extern sem_t pedidoFS;
-FILE* databin;
 
 void enviarBloqueAFS(int numeroBloque) {
 
@@ -51,7 +50,6 @@ int setBloque(int numeroBloque, char* datos) {
 }
 
 char* getBloque(int numeroBloque) {
-	printf("n %d\n",numeroBloque);
 	int fd = open(config.RUTA_DATABIN, O_RDWR);
 	char* mapaDataBin = mmap(0, mb, PROT_READ, MAP_SHARED, fd, mb*numeroBloque);
 	char* datos = malloc(mb+1);
@@ -68,8 +66,12 @@ char* getBloque(int numeroBloque) {
 }
 
 void inicializarDataBin(){
-	databin = fopen(config.RUTA_DATABIN,"a+");
-	truncate(config.RUTA_DATABIN, config.SIZE_NODO*mb);
+	if (!validarArchivo(config.RUTA_DATABIN)){
+		FILE* databin = fopen(config.RUTA_DATABIN,"w+");
+		truncate(config.RUTA_DATABIN, config.SIZE_NODO*mb);
+		//fwrite("0",1,config.SIZE_NODO*mb, databin);
+		fclose(databin);
+	}
 }
 
 void conectarseConFs() {

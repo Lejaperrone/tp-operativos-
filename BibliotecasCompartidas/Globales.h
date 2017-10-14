@@ -117,6 +117,8 @@ typedef struct parametrosEnvioBloque{
 
 int redondearHaciaArriba(double num);
 
+bool validarArchivo(char* path);
+
 void obtenerNumeroNodo(t_config* archivo,char* claveCopia,ubicacionBloque* ubi);
 
 void limpiarPantalla();
