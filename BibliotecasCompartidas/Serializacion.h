@@ -32,10 +32,11 @@
 #define mensajeInfoArchivo 15
 #define mensajeEnvioBloqueANodo 16
 #define mensajeRespuestaEnvioBloqueANodo 17
-#define mensajeNumeroBloqueANodo 18
-#define mensajeRespuestaEnvioArchivoANodo 19
+#define mensajeNumeroCopiaBloqueANodo 18
+#define mensajeRespuestaGetBloque 19
 #define mensajeSolicitudInfoNodos 20
 #define mensajeRespuestaInfoNodos 21
+#define mensajeNumeroLecturaBloqueANodo 22
 
 typedef struct{
 	int idMensaje;

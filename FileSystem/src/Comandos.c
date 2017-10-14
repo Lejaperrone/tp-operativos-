@@ -140,15 +140,18 @@ int eliminarDirectorio(char* comando){
 }
 
 int listarArchivos(char* comando){
-	int success = 1;
+	/*int success = 1;
 	char* path = devolverRuta(comando, 1);
 
 	if (!validarDirectorio(path))
 		return success;
 
-	success = system(comando);
+	success = system(comando);*/
+	informacionNodo info = *(informacionNodo*)list_get(nodosConectados,0);
+	int a = 1;
+	empaquetar(info.socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&a);
 
-	return success;
+	return 0;
 }
 
 int crearDirectorio(char* comando){

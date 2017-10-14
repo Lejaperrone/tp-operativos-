@@ -290,7 +290,7 @@ void* enviarADataNode(void* parametros){
 	 char* buff = malloc(params->sizeBloque);
 	 printf("........................nro bloque %d\n", params->bloque);
 	 memcpy(buff, params->mapa+params->offset, params->sizeBloque);
-	 empaquetar(params->socket, mensajeNumeroBloqueANodo, sizeof(int),&params->bloque);
+	 empaquetar(params->socket, mensajeNumeroCopiaBloqueANodo, sizeof(int),&params->bloque);
 	 empaquetar(params->socket, mensajeEnvioBloqueANodo, params->sizeBloque,buff);
 	 free(buff);
 	 sem_post(&pedidoFS);
@@ -426,7 +426,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 void actualizarArchivoNodos(){
 
-	char* pathArchivo = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
+	char* pathArchivo = "../metadata/Nodos.bin";
 	FILE* archivoNodes = fopen(pathArchivo, "wb+");
 	fclose(archivoNodes); //para dejarlo vacio
 	int cantidadNodos = list_size(nodosConectados), i = 0;
