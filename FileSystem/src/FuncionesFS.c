@@ -536,12 +536,10 @@ informacionNodo* informacionNodosConectados(){
 
 informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	informacionArchivoFsYama info;
-	//info.informacionBloques = calloc(1,sizeof(informacionArchivoFsYama));
+	info.informacionBloques = list_create();
 	char* rutaArchivo = buscarRutaArchivo(rutaDatos.cadena);
 	strcat(rutaArchivo,"/");
 	strcat(rutaArchivo,rutaDatos.cadena);
-
-	printf("la ruta es %s \n",rutaArchivo);
 
 	char* rutaPrueba = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/1/as";
 
@@ -567,12 +565,12 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 
 		infoBloqueActual.bytesOcupados = config_get_int_value(archivo,claveBytes);
 		obtenerNumeroNodo(archivo,claveCopia0,&(infoBloqueActual.ubicacionCopia0));
-		//obtenerInfoNodo(&infoBloqueActual.ubicacionCopia0);
+		obtenerInfoNodo(&infoBloqueActual.ubicacionCopia0);
 
 		obtenerNumeroNodo(archivo,claveCopia1,&(infoBloqueActual.ubicacionCopia1));
-		//obtenerInfoNodo(&infoBloqueActual.ubicacionCopia1);
+		obtenerInfoNodo(&infoBloqueActual.ubicacionCopia1);
 		free(clave);
-		//info.informacionBloques[i] = infoBloqueActual;
+		list_add(info.informacionBloques,&infoBloqueActual);
 	}
 	return info;
 }
@@ -582,12 +580,11 @@ void obtenerInfoNodo(ubicacionBloque* ubicacion){
 	informacionNodo* info = malloc(sizeof(informacionNodo));
 	for(i=0;i<list_size(nodosConectados);i++){
 		info =(informacionNodo*)list_get(nodosConectados,i);
+
 		if(info->numeroNodo == ubicacion->numeroNodo){
 			ubicacion->ip.cadena = strdup(info->ip.cadena);
 			ubicacion->ip.longitud = info->ip.longitud;
 			ubicacion->puerto = info->puerto;
 		}
 	}
-
-	ubicacion->numeroNodo=2;
 }
