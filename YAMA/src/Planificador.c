@@ -6,7 +6,6 @@
  */
 
 #include "Planificador.h"
-#include <string.h>
 
 void iniciarListasPlanificacion(){
 	listaNodos = list_create();
@@ -26,8 +25,8 @@ void asignarNodoA(job* unJob, infoNodo* worker){
 	//empaquetar designar worker
 }
 
-void seleccionarWorker(infoNodo* worker, int numeroBloque){
-	infoNodo* workerActual = buscarNodo(listaNodos, worker);
+void seleccionarWorker(infoNodo* worker, uint32_t numeroBloque){
+	infoNodo* workerActual = buscarNodo(listaNodos, worker->nombre);
 
 	if((worker == NULL || mayorDisponibilidad(workerActual, worker))){//&& estaActivo(workerActual)){
 		worker = workerActual;

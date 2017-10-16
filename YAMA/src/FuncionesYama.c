@@ -59,7 +59,6 @@ void levantarServidorYama(char* ip, int port) {
 						switch (idRecibido) {    //HANDSHAKE
 						case idMaster:
 							recibirContenidoMaster();
-							//recibirArchivo();
 							break;
 
 						}

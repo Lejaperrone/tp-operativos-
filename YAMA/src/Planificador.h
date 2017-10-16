@@ -12,6 +12,7 @@
 #include "../BibliotecasCompartidas/Globales.h"
 #include <pthread.h>
 #include <semaphore.h>
+#include <../commons/string.h>
 
 t_list* jobsAPlanificar;
 t_list* listaNodos;
@@ -26,7 +27,7 @@ typedef struct {
 }infoNodo;
 
 void planificar(job* job);
-void seleccionarWorker(infoNodo* worker, int numeroBloque);
+void seleccionarWorker(infoNodo* worker, uint32_t numeroBloque);
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);
 infoNodo* buscarNodo(t_list* nodos, char* nombreNodo);
 uint32_t calcularPWL(infoNodo* worker);
