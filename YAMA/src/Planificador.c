@@ -13,12 +13,28 @@ void iniciarListasPlanificacion(){
 	pthread_mutex_init(&listaNodos_mutex, NULL);
 }
 
+
 void planificar(job* job){
 	//pedido lista de bloques de job->rutaDatos
-	infoNodo* nodo = NULL;
-	uint32_t bloque;
+	informacionArchivoFsYama* infoArchivo = malloc(sizeof(informacionArchivoFsYama));
+	infoNodo* worker = NULL;
 
-	seleccionarWorker(nodo, bloque);
+	infoArchivo = recibirInfoArchivo(job);
+	void seleccionarWorkerConBloque(uint32_t bloque){
+		seleccionarWorker(worker, bloque);
+	}
+	list_iterate(infoArchivo->informacionBloques, (void*)seleccionarWorkerConBloque);
+}
+
+informacionArchivoFsYama* recibirInfoArchivo(job* job) {
+	solicitudInfoNodos* solTransf = malloc(sizeof(solicitudInfoNodos));
+
+	solTransf->rutaDatos.cadena = strdup(job->rutaDatos.cadena);
+	solTransf->rutaDatos.longitud = job->rutaDatos.longitud;
+	solTransf->rutaResultado.cadena = strdup(job->rutaResultado.cadena);
+	solTransf->rutaResultado.longitud = job->rutaResultado.longitud;
+
+	return solicitarInformacionAFS(solTransf);
 }
 
 void asignarNodoA(job* unJob, infoNodo* worker){

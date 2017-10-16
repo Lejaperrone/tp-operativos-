@@ -75,7 +75,7 @@ void levantarServidorYama(char* ip, int port) {
 
 void recibirContenidoMaster() {
 	respuesta nuevoJob;
-	respuestaInfoNodos* rtaTransf;
+	informacionArchivoFsYama* rtaTransf;
 
 	iniciarListasPlanificacion();
 
@@ -92,20 +92,14 @@ void recibirContenidoMaster() {
 
 	//planificar(jobAPlanificar);
 
-	solicitudInfoNodos* solTransf = malloc(sizeof(solicitudInfoNodos));
-	solTransf->rutaDatos.cadena = strdup(jobAPlanificar->rutaDatos.cadena);
-	solTransf->rutaDatos.longitud = jobAPlanificar->rutaDatos.longitud;
-	solTransf->rutaResultado.cadena = strdup(jobAPlanificar->rutaResultado.cadena);
-	solTransf->rutaResultado.longitud = jobAPlanificar->rutaResultado.longitud;
-
-	rtaTransf  = solicitarInformacionAFS(solTransf);
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);// logica con respuesta a Master
 	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
 
 }
 
-respuestaInfoNodos* solicitarInformacionAFS(solicitudInfoNodos* solicitud){
+informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud){
 	respuestaInfoNodos* rtaTransf = malloc(sizeof(respuestaInfoNodos));
+	informacionArchivoFsYama* rtaFs = malloc(sizeof(informacionArchivoFsYama));
 	respuesta respuestaFs;
 
 	empaquetar(socketFs, mensajeSolicitudInfoNodos, 0, solicitud);
@@ -113,14 +107,14 @@ respuestaInfoNodos* solicitarInformacionAFS(solicitudInfoNodos* solicitud){
 	respuestaFs = desempaquetar(socketFs);
 
 	if(respuestaFs.idMensaje == mensajeRespuestaInfoNodos){
-		rtaTransf = (informacionArchivoFsYama*)respuestaFs.envio;
+		rtaFs = (informacionArchivoFsYama*)respuestaFs.envio;
 		log_trace(logger, "Me llego la informacion desde Fs correctamente");
 	}
 	else{
 		log_error(logger, "Error al recibir la informacion del archivo desde FS");
 		exit(1);
 	}
-	return rtaTransf;
+	return rtaFs;
 }
 
 int getDisponibilidadBase(){

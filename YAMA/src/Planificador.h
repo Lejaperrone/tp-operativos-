@@ -48,6 +48,7 @@ infoNodo* obtenerNodoConNombre(char *nombreNodo);
 bool nodoConMenorCargaPrimero(void* argNodo1, void* argNodo2);
 uint32_t cargaMaxima();
 void iniciarListasPlanificacion();
+informacionArchivoFsYama* recibirInfoArchivo(job* job) ;
 void asignarNodoA(job* unJob, infoNodo* worker);
 void posicionarClock(t_list* listaWorkersConBloques);
 
