@@ -1,10 +1,3 @@
-/*
- * FuncionesDN.c
- *
- *  Created on: 12/9/2017
- *      Author: utnso
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "FuncionesDN.h"
@@ -67,6 +60,7 @@ char* getBloque(int numeroBloque) {
 
 void inicializarDataBin(){
 	if (!validarArchivo(config.RUTA_DATABIN)){
+		printf("Se crea el archivo data.bin\n");
 		FILE* databin = fopen(config.RUTA_DATABIN,"w+");
 		truncate(config.RUTA_DATABIN, config.SIZE_NODO*mb);
 		//fwrite("0",1,config.SIZE_NODO*mb, databin);
