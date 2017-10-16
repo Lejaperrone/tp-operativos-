@@ -21,11 +21,13 @@
 #include <errno.h>
 #include "Serial.h"
 #include <Globales.h>
+#include <math.h>
 
-char* pathArchivoDirectorios = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Directorios.dat";
+char* pathArchivoDirectorios = "../metadata/Directorios.dat";
 struct sockaddr_in direccionCliente;
 unsigned int tamanioDireccion = sizeof(direccionCliente);
 int servidorFS;
+int sizeBloque;
 
 void establecerServidor(){
 	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
@@ -85,7 +87,8 @@ int getIndexDirectorio(char* ruta){
 	char** arrayPath = string_split(ruta, "/");
 	char* arrayComparador[100];
 	while(arrayPath[index] != NULL){ // separo por '/' la ruta en un array
-		arrayComparador[index] = malloc(strlen(arrayPath[index]));
+		arrayComparador[index] = malloc(strlen(arrayPath[index])+1);
+		memset(arrayComparador[index],0 ,strlen(arrayPath[index])+1);
 		memcpy(arrayComparador[index],arrayPath[index],strlen(arrayPath[index]));
 		++index; // guardo cuantas partes tiene el array
 	}
@@ -125,7 +128,8 @@ int getIndexDirectorio(char* ruta){
 char* buscarRutaArchivo(char* ruta){
 	int indexDirectorio = getIndexDirectorio(ruta);
 	char* numeroIndexString = string_itoa(indexDirectorio);
-	char* rutaGenerada = malloc(strlen(rutaArchivos) + strlen(numeroIndexString));
+	char* rutaGenerada = calloc(1,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
+	memset(rutaGenerada,0,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memcpy(rutaGenerada, rutaArchivos, strlen(rutaArchivos));
 	memcpy(rutaGenerada + strlen(rutaArchivos), numeroIndexString, strlen(numeroIndexString));
 	return rutaGenerada; //poner free despues de usar
@@ -148,7 +152,8 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	respuesta respuestaPedidoAlmacenar;
 
 	char* ruta = buscarRutaArchivo(path);
-	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + 1);
+	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + strlen(tipo) + 2);
+	memset(rutaFinal, 0, strlen(ruta) + strlen(nombre) +  strlen(tipo) + 2);
 
 	if (!validarDirectorio(ruta))
 		mkdir(ruta,0777);
@@ -161,12 +166,12 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	printf("----ruta final    %s\n", rutaFinal);
 
 	int sizeAux = mapeoArchivo->longitud;
-	int cantNodosNecesarios = 0;
+	int cantBloquesArchivo = 0;
 	int ultimoSize = 0;
 
 	while(sizeAux > 0){
 		sizeAux -= mb;
-		++cantNodosNecesarios;
+		++cantBloquesArchivo;
 	}
 	//--cantNodosNecesarios;
 
@@ -184,7 +189,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int nodoAUtilizar = -1;
 	int offset = 0;
 
-	printf("nodos a usar %d\n",cantNodosNecesarios);
+	printf("bloques necesarios %d\n",cantBloquesArchivo);
 	informacionNodo infoAux;
 	int cantidadNodos = list_size(nodosConectados);
 	int bloquesLibreNodo[cantidadNodos];
@@ -203,9 +208,9 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		printf("bloques libres %d\n", bloquesLibreNodo[i]);
 	}
 
-	for (i = 0; i < cantNodosNecesarios; ++i){	//Primer for: itera por cada bloque que ocupa el archivo
+	for (i = 0; i < cantBloquesArchivo; ++i){	//Primer for: itera por cada bloque que ocupa el archivo
 		printf("-------------------offset %d\n", offset);
-		printf("--%d\n",cantNodosNecesarios);	//Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
+		printf("--%d\n",cantBloquesArchivo);	//Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
 		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
 			masBloquesLibres[j] = -1;				//criterio
 		for (j = 0; j < cantidadNodos; ++j)
@@ -226,7 +231,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 				}
 			}
 		}
-		if (i < cantNodosNecesarios-1)
+		if (i < cantBloquesArchivo-1)
 			ultimoSize = mb;
 		else
 			ultimoSize = sizeUltimoNodo;
@@ -267,17 +272,17 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(masBloquesLibres[j], bloqueLibre));
 			}
 		}
-		if (i < cantNodosNecesarios-1)
+		if (i < cantBloquesArchivo-1)
 			offset += mb;
 
 
 	}
 	if(success == 1){ //Por cada bloque agrego sus valores para la tabla
 		config_set_value(infoArchivo, "RUTA", rutaFinal);
-		config_set_value(infoArchivo, "TAMANIO", string_itoa(mb*(cantNodosNecesarios-1)+sizeUltimoNodo));
+		config_set_value(infoArchivo, "TAMANIO", string_itoa(mb*(cantBloquesArchivo-1)+sizeUltimoNodo));
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
-
+	free(rutaFinal);
 
 }
 
@@ -287,7 +292,7 @@ void* enviarADataNode(void* parametros){
 	 char* buff = malloc(params->sizeBloque);
 	 printf("........................nro bloque %d\n", params->bloque);
 	 memcpy(buff, params->mapa+params->offset, params->sizeBloque);
-	 empaquetar(params->socket, mensajeNumeroBloqueANodo, sizeof(int),&params->bloque);
+	 empaquetar(params->socket, mensajeNumeroCopiaBloqueANodo, sizeof(int),&params->bloque);
 	 empaquetar(params->socket, mensajeEnvioBloqueANodo, params->sizeBloque,buff);
 	 free(buff);
 	 sem_post(&pedidoFS);
@@ -373,7 +378,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
 
-	char* espacioBitarray = malloc(cantBloques);
+	char* espacioBitarray = malloc(sizeNodo);
 	char* currentChar = malloc(sizeof(char));
 	int posicion = 0;
 
@@ -386,7 +391,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 	if (!validarArchivo(pathParticular) == 1){
 		bitmapFile = fopen(pathParticular, "w");
-		for(i = 0; i < 50; ++i)
+		for(i = 0; i < sizeNodo; ++i)
 			fwrite("0",1,1, bitmapFile);
 		fclose(bitmapFile);
 	}
@@ -423,7 +428,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 void actualizarArchivoNodos(){
 
-	char* pathArchivo = "/home/utnso/Escritorio/tp-2017-2c-PEQL/FileSystem/metadata/Nodos.bin";
+	char* pathArchivo = "../metadata/Nodos.bin";
 	FILE* archivoNodes = fopen(pathArchivo, "wb+");
 	fclose(archivoNodes); //para dejarlo vacio
 	int cantidadNodos = list_size(nodosConectados), i = 0;
@@ -530,6 +535,56 @@ informacionNodo* informacionNodosConectados(){
 }
 
 informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
-	informacionArchivoFsYama a;
-	return a;
+	informacionArchivoFsYama info;
+	info.informacionBloques = list_create();
+	char* rutaArchivo = buscarRutaArchivo(rutaDatos.cadena);
+	strcat(rutaArchivo,"/");
+	strcat(rutaArchivo,rutaDatos.cadena);
+
+	char* rutaPrueba = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/1/as";
+
+	t_config* archivo = config_create(rutaPrueba);
+
+	info.tamanioTotal = config_get_int_value(archivo,"TAMANIO");
+
+	int cantBloques = redondearHaciaArriba(info.tamanioTotal / sizeBloque);
+
+	int i;
+	for(i=0;i<cantBloques;i++){
+		char* clave = calloc(1,8);
+		string_append_with_format(&clave,"BLOQUE%d",i);
+		printf("%s\n",clave);
+		infoBloque infoBloqueActual;
+		char* claveCopia0 = strdup(clave);
+		char* claveCopia1 = strdup(clave);
+		char* claveBytes = strdup(clave);
+
+		string_append(&claveCopia0,"COPIA0");
+		string_append(&claveCopia1,"COPIA1");
+		string_append(&claveBytes,"BYTES");
+
+		infoBloqueActual.bytesOcupados = config_get_int_value(archivo,claveBytes);
+		obtenerNumeroNodo(archivo,claveCopia0,&(infoBloqueActual.ubicacionCopia0));
+		obtenerInfoNodo(&infoBloqueActual.ubicacionCopia0);
+
+		obtenerNumeroNodo(archivo,claveCopia1,&(infoBloqueActual.ubicacionCopia1));
+		obtenerInfoNodo(&infoBloqueActual.ubicacionCopia1);
+		free(clave);
+		list_add(info.informacionBloques,&infoBloqueActual);
+	}
+	return info;
+}
+
+void obtenerInfoNodo(ubicacionBloque* ubicacion){
+	int i;
+	informacionNodo* info = malloc(sizeof(informacionNodo));
+	for(i=0;i<list_size(nodosConectados);i++){
+		info =(informacionNodo*)list_get(nodosConectados,i);
+
+		if(info->numeroNodo == ubicacion->numeroNodo){
+			ubicacion->ip.cadena = strdup(info->ip.cadena);
+			ubicacion->ip.longitud = info->ip.longitud;
+			ubicacion->puerto = info->puerto;
+		}
+	}
 }

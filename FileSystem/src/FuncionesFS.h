@@ -71,3 +71,5 @@ void establecerServidor();
 int recibirConexionYama();
 
 informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos);
+
+void obtenerInfoNodo(ubicacionBloque* ubicacion);

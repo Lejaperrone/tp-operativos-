@@ -207,10 +207,10 @@ void* manejarConexionYama(){
 		switch(respuestaYama.idMensaje){
 
 		case mensajeSolicitudInfoNodos:
-			printf("me llega la solicitud\n");
 			solicitud = (solicitudInfoNodos*)respuestaYama.envio;
-			printf("la ruta es %s\n",solicitud->rutaDatos.cadena);
 			informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
+			empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
+			desempaquetar(clienteYama);
 			break;
 		}
 	}

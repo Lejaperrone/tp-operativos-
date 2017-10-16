@@ -112,8 +112,8 @@ respuestaInfoNodos* solicitarInformacionAFS(solicitudInfoNodos* solicitud){
 
 	respuestaFs = desempaquetar(socketFs);
 
-	if(respuestaFs.idMensaje == mensajeInfoArchivo){
-		rtaTransf = (respuestaInfoNodos*)respuestaFs.envio;
+	if(respuestaFs.idMensaje == mensajeRespuestaInfoNodos){
+		rtaTransf = (informacionArchivoFsYama*)respuestaFs.envio;
 		log_trace(logger, "Me llego la informacion desde Fs correctamente");
 	}
 	else{

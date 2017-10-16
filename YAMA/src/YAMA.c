@@ -1,7 +1,7 @@
 #include "FuncionesYama.h"
 
 int main(int argc, char *argv[]) {
-
+	limpiarPantalla();
 	logger = log_create("logYama", "YAMA.c", 1, LOG_LEVEL_TRACE);
 
 	struct configuracionYama config;

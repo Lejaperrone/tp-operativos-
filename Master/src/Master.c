@@ -13,6 +13,7 @@
 struct configuracionMaster config;
 
 int main(int argc, char *argv[]) {
+	limpiarPantalla();
 	job* miJob;
 	loggerMaster = log_create("logMaster", "Master.c", 1, LOG_LEVEL_TRACE);
 	//controlarParametros(argc);

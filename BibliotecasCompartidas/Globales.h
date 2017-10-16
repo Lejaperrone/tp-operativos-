@@ -10,6 +10,8 @@
 
 #include <stdbool.h>
 #include <semaphore.h>
+#include <commons/config.h>
+#include <commons/collections/list.h>
 
 sem_t pedidoFS;
 sem_t actualizarNodos;
@@ -78,23 +80,26 @@ typedef struct{
 	int bloquesOcupados;
 	int numeroNodo;
 	int socket;
+	int puerto;
+	string ip;
 } informacionNodo;
 
 typedef struct{
 	string ip;
 	int puerto;
-}ubicacionNodo;
+	int numeroBloque;
+	int numeroNodo;
+}ubicacionBloque;
 
 typedef struct {
-	int numeroBloque;
 	int bytesOcupados;
-	ubicacionNodo ubicacionCopia0;
-	ubicacionNodo ubicacionCopia1;
+	ubicacionBloque ubicacionCopia0;
+	ubicacionBloque ubicacionCopia1;
 }infoBloque;
 
 typedef struct{
 	int tamanioTotal;
-	infoBloque* informacionBloques;
+	t_list* informacionBloques;
 }informacionArchivoFsYama;
 
 typedef struct{
@@ -110,5 +115,13 @@ typedef struct parametrosEnvioBloque{
     int offset;
     int bloque;
 }parametrosEnvioBloque;
+
+int redondearHaciaArriba(double num);
+
+bool validarArchivo(char* path);
+
+void obtenerNumeroNodo(t_config* archivo,char* claveCopia,ubicacionBloque* ubi);
+
+void limpiarPantalla();
 
 #endif /* GLOBALES_H_ */

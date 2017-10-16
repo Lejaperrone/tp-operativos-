@@ -14,6 +14,7 @@
 char* devolverRuta(char* comando, int numeroParametro)
 {
 	char* copiaComando = malloc(strlen(comando)+1);
+	memset(copiaComando,0, strlen(comando)+1);
 	memcpy(copiaComando, comando,strlen(comando)+1);
 	char* ruta = strtok(copiaComando, " ");
 	int i;
@@ -21,17 +22,18 @@ char* devolverRuta(char* comando, int numeroParametro)
 	for (i = 0; i < numeroParametro; ++i){
 		ruta = strtok(NULL, " ");
 	}
-	//free(copiaComando);
+	free(copiaComando);
 	return ruta;
 }
 
 int copiarArchivo(char* comando){
-	int indice = 0, indiceNom = 0;;
-	int mockSizeArchivo = 1024*1024*2;
+	int indice = 0, indiceNom = 0;
 	char* tipo = malloc(5); //.bin o .txt
+	memset(tipo,0,5);
 	char* rutaNormal = devolverRuta(comando, 1);
 	char* rutaFS = devolverRuta(comando, 2);
 	char* nombre = malloc(strlen(comando)-4); //El peor caso seria que el parametro sea el nombre sin ruta, tomo ese valor
+	memset(nombre,0,strlen(comando)-4);
 	char* rutaInvertida = string_reverse(rutaNormal);
 	char* slash = "/";
 	char* dot = ".";
@@ -93,16 +95,6 @@ int copiarArchivo(char* comando){
 }
 
 
-bool validarArchivo(char* path) {
-	if (access(path, R_OK) == -1) {
-		printf("No existe el archivo %s en el FileSystem\n", path);
-		return 0;
-	} else {
-		printf("Existe el archivo %s en el FileSystem\n", path);
-		return 1;
-	}
-}
-
 bool validarDirectorio(char* path){
 	DIR* dir = opendir(path);
 	if (dir)
@@ -140,15 +132,18 @@ int eliminarDirectorio(char* comando){
 }
 
 int listarArchivos(char* comando){
-	int success = 1;
+	/*int success = 1;
 	char* path = devolverRuta(comando, 1);
 
 	if (!validarDirectorio(path))
 		return success;
 
-	success = system(comando);
+	success = system(comando);*/
+	informacionNodo info = *(informacionNodo*)list_get(nodosConectados,0);
+	int a = 1;
+	empaquetar(info.socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&a);
 
-	return success;
+	return 0;
 }
 
 int crearDirectorio(char* comando){
