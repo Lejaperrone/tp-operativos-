@@ -15,7 +15,7 @@ int disponibilidadBase;
 
 int conectarseConFs() {
 	int socketFs = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion("127.0.0.1", 7000);
+	struct sockaddr_in direccion = cargarDireccion(config.FS_IP, config.FS_PUERTO);
 	conectarCon(direccion, socketFs, 1);
 	desempaquetar(socketFs);
 	log_trace(logger, "Conexion exitosa con File System");
