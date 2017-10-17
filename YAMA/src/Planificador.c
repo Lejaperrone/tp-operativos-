@@ -6,7 +6,6 @@
  */
 
 #include "Planificador.h"
-#include <string.h>
 
 void iniciarListasPlanificacion(){
 	listaNodos = list_create();
@@ -14,20 +13,36 @@ void iniciarListasPlanificacion(){
 	pthread_mutex_init(&listaNodos_mutex, NULL);
 }
 
+
 void planificar(job* job){
 	//pedido lista de bloques de job->rutaDatos
-	infoNodo* nodo = NULL;
-	uint32_t bloque;
+	informacionArchivoFsYama* infoArchivo = malloc(sizeof(informacionArchivoFsYama));
+	infoNodo* worker = NULL;
 
-	seleccionarWorker(nodo, bloque);
+	infoArchivo = recibirInfoArchivo(job);
+	void seleccionarWorkerConBloque(uint32_t bloque){
+		seleccionarWorker(worker, bloque);
+	}
+	list_iterate(infoArchivo->informacionBloques, (void*)seleccionarWorkerConBloque);
+}
+
+informacionArchivoFsYama* recibirInfoArchivo(job* job) {
+	solicitudInfoNodos* solTransf = malloc(sizeof(solicitudInfoNodos));
+
+	solTransf->rutaDatos.cadena = strdup(job->rutaDatos.cadena);
+	solTransf->rutaDatos.longitud = job->rutaDatos.longitud;
+	solTransf->rutaResultado.cadena = strdup(job->rutaResultado.cadena);
+	solTransf->rutaResultado.longitud = job->rutaResultado.longitud;
+
+	return solicitarInformacionAFS(solTransf);
 }
 
 void asignarNodoA(job* unJob, infoNodo* worker){
 	//empaquetar designar worker
 }
 
-void seleccionarWorker(infoNodo* worker, int numeroBloque){
-	infoNodo* workerActual = buscarNodo(listaNodos, worker);
+void seleccionarWorker(infoNodo* worker, uint32_t numeroBloque){
+	infoNodo* workerActual = buscarNodo(listaNodos, worker->nombre);
 
 	if((worker == NULL || mayorDisponibilidad(workerActual, worker))){//&& estaActivo(workerActual)){
 		worker = workerActual;

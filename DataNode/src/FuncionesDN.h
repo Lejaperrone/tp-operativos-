@@ -1,10 +1,3 @@
-/*
- * FuncionesDN.h
- *
- *  Created on: 12/9/2017
- *      Author: utnso
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <commons/bitarray.h>
@@ -16,3 +9,9 @@ int levantarBitmap(char* nombreNodo);
 void escucharAlFS(int socketFs);
 
 int setBloque(int numeroBloque, char* datos);
+
+char* getBloque(int numeroBloque);
+
+void inicializarDataBin();
+
+void recibirMensajesFileSystem(int socketFs);

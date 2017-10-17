@@ -51,7 +51,7 @@ uint32_t cantJobs;
 int conectarseConFs();
 void levantarServidorYama(char* ip, int port);
 void recibirContenidoMaster();
-respuestaInfoNodos* solicitarInformacionAFS(solicitudInfoNodos* solicitud);
+informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud);
 
 int getDisponibilidadBase();
 

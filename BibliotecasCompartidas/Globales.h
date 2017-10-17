@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <semaphore.h>
 #include <commons/config.h>
+#include <commons/collections/list.h>
 
 sem_t pedidoFS;
 sem_t actualizarNodos;
@@ -98,7 +99,7 @@ typedef struct {
 
 typedef struct{
 	int tamanioTotal;
-	infoBloque* informacionBloques;
+	t_list* informacionBloques;
 }informacionArchivoFsYama;
 
 typedef struct{
@@ -116,6 +117,8 @@ typedef struct parametrosEnvioBloque{
 }parametrosEnvioBloque;
 
 int redondearHaciaArriba(double num);
+
+bool validarArchivo(char* path);
 
 void obtenerNumeroNodo(t_config* archivo,char* claveCopia,ubicacionBloque* ubi);
 

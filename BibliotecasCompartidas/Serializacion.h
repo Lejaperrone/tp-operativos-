@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include "Globales.h"
+#include <commons/collections/list.h>
 
 #define mensajeHandshake 1
 #define mensajeArchivo 2
@@ -32,10 +33,11 @@
 #define mensajeInfoArchivo 15
 #define mensajeEnvioBloqueANodo 16
 #define mensajeRespuestaEnvioBloqueANodo 17
-#define mensajeNumeroBloqueANodo 18
-#define mensajeRespuestaEnvioArchivoANodo 19
+#define mensajeNumeroCopiaBloqueANodo 18
+#define mensajeRespuestaGetBloque 19
 #define mensajeSolicitudInfoNodos 20
 #define mensajeRespuestaInfoNodos 21
+#define mensajeNumeroLecturaBloqueANodo 22
 
 typedef struct{
 	int idMensaje;
@@ -60,7 +62,10 @@ job* deserializarJob(int socket, int tamanio);
 void* serializarSolicitudInfoNodos(void* paquete,int* tamanio);
 solicitudInfoNodos* deserializarSolicitudInfoNodos(int socket,int tamanio);
 
+void* serializarInformacionNodos(void* paquete,int* tamanio);
+informacionNodo* deserializarInformacionNodos(int socket,int tamanio);
+
 void* serializarRespuestaInfoNodos(void* paquete,int* tamanio);
-respuestaInfoNodos* deserializarRespuestaInfoNodos(int socket,int tamanio);
+informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio);
 
 #endif /* SERIALIZACION_H_ */
