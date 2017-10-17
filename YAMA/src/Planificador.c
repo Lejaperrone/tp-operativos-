@@ -15,15 +15,15 @@ void iniciarListasPlanificacion(){
 
 
 void planificar(job* job){
-	//pedido lista de bloques de job->rutaDatos
 	informacionArchivoFsYama* infoArchivo = malloc(sizeof(informacionArchivoFsYama));
-	infoNodo* worker = NULL;
+	infoNodo* worker = malloc(sizeof(infoNodo));
 
-	infoArchivo = recibirInfoArchivo(job);
-	void seleccionarWorkerConBloque(uint32_t bloque){
-		seleccionarWorker(worker, bloque);
-	}
-	list_iterate(infoArchivo->informacionBloques, (void*)seleccionarWorkerConBloque);
+	worker = posicionarClock(listaNodos);//POSICIONA EL CLOCK EN EL WORKER DE MAYOR DISPONIBILIDAD
+
+	infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
+
+	//todo
+
 }
 
 informacionArchivoFsYama* recibirInfoArchivo(job* job) {
@@ -37,17 +37,25 @@ informacionArchivoFsYama* recibirInfoArchivo(job* job) {
 	return solicitarInformacionAFS(solTransf);
 }
 
-void asignarNodoA(job* unJob, infoNodo* worker){
-	//empaquetar designar worker
+void bloqueEstaEnWorker(infoBloque* bloque, infoNodo* worker){
+	//TODO
 }
-
-void seleccionarWorker(infoNodo* worker, uint32_t numeroBloque){
+void seleccionarWorker(infoNodo* worker, infoBloque bloque){
 	infoNodo* workerActual = buscarNodo(listaNodos, worker->nombre);
 
-	if((worker == NULL || mayorDisponibilidad(workerActual, worker))){//&& estaActivo(workerActual)){
+	if((worker == NULL || mayorDisponibilidad(workerActual, worker)) && estaActivo(workerActual)){
 		worker = workerActual;
-		//asignar bloque
+		worker->bloque = bloque;
 	}
+}
+
+infoNodo* posicionarClock(t_list* listaWorkers){
+	infoNodo* workerDesignado;
+	list_sort(listaWorkers, (void*) mayorDisponibilidad);
+
+	workerDesignado = list_get(listaWorkers, 0);//FIXME DESEMPATAR POR MENOS TAREAS HISTORICAMENTE
+
+	return workerDesignado;
 }
 
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
@@ -62,15 +70,17 @@ infoNodo* buscarNodo(t_list* nodos, char* nombreNodo){
 	return list_find(nodos, (void*) nodoConNombre);
 }
 
-void calcularCargasDeWorkers(t_list* listaNodos){
+void calcularCargasDeWorkers(t_list* nodos){
 	int i;
 	infoNodo* worker;
-	for(i = 0; i < list_size(listaNodos); i++){
-		worker = list_get(listaNodos, i);
+	for(i = 0; i < list_size(nodos); i++){
+		worker = list_get(nodos, i);
 		//worker->carga+=;
 	}
 }
-
+bool estaActivo(infoNodo* worker){
+	return worker->activo == 1;
+}
 t_list* consultarDetallesBloqueArchivo(char *pathArchivo, int bloque){
 	return 0; //FIXME
 }
@@ -91,6 +101,7 @@ uint32_t calcularPWL(infoNodo* worker){
 uint32_t workLoadGlobal(){
 	int i;
 	uint32_t sum;
+
 	for(i=0; i < list_size(listaNodos); i++){
 		infoNodo* nodo = list_get(listaNodos, i);
 		sum += nodo->carga;
@@ -119,49 +130,8 @@ void agregarNodo(t_list* lista, infoNodo* nodo){
 	return resultado;
 }
 
-infoNodo* obtenerNodoConNombre(char *nombreNodo){
-	int i;
-	for (i = 0; i < list_size(listaNodos); i++){
-		infoNodo* nodo = list_get(listaNodos, i);
-		if (strcmp(nodo->nombre, nombreNodo) == 0)
-			return nodo;
-	}
 
-	return NULL;
-}
 
-infoNodo* obtenerNodoDisponible(t_list* cargaNodos, t_list* listaNodos){
-	agregarNodos(cargaNodos, listaNodos);
-
-	t_list* listaDeNodosCandidatos = obtenerNodosQueEstanEnLista(cargaNodos, listaNodos);
-	list_sort(listaDeNodosCandidatos, nodoConMenorCargaPrimero);
-
-	infoNodo* nodo =  list_get(listaDeNodosCandidatos, 0);
-
-	if(nodo->carga > cargaMaxima())
-		return NULL;
-
-	infoNodo* nodoAUsar;
-	int i;
-	for(i = 0; i < list_size(cargaNodos); i++){
-
-		nodoAUsar = list_get(listaNodos, i);
-		if (strcmp(nodoAUsar->nombre, nodo->nombre) == 0)
-			break;
-
-	}
-
-	nodo->bloque = nodoAUsar->bloque;
-	return nodo;
-}
-
-void agregarNodos(t_list* cargaNodos, t_list* listaNodos){
-	int i;
-	for(i=0;i < list_size(listaNodos);i++)	{
-		infoNodo* nodoEnLista = list_get(listaNodos, i);
-		agregarNodo(cargaNodos, nodoEnLista);
-	}
-}
 */
 
 
