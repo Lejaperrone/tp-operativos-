@@ -11,8 +11,7 @@
 #define mb 1048576
 
 
-char* devolverRuta(char* comando, int numeroParametro)
-{
+char* devolverRuta(char* comando, int numeroParametro){
 	char* copiaComando = malloc(strlen(comando)+1);
 	memset(copiaComando,0, strlen(comando)+1);
 	memcpy(copiaComando, comando,strlen(comando)+1);
@@ -141,7 +140,8 @@ int listarArchivos(char* comando){
 	success = system(comando);*/
 	informacionNodo info = *(informacionNodo*)list_get(nodosConectados,0);
 	int a = 1;
-	empaquetar(info.socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&a);
+	char* b;
+	b = leerArchivo("hola/chau/hola3.txt");
 
 	return 0;
 }

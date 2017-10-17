@@ -73,3 +73,5 @@ int recibirConexionYama();
 informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos);
 
 void obtenerInfoNodo(ubicacionBloque* ubicacion);
+
+char* leerArchivo(char* rutaArchivo);

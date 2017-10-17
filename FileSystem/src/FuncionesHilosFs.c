@@ -109,6 +109,7 @@ void* consolaFS(){
 
 		if (string_starts_with(comando, "format")) {
 			log_trace(loggerFS, "File system formateado");
+			leerArchivo("hola/chau/hola3.txt");
 		}
 		else if (string_starts_with(comando, "rm -d")) {
 			if (eliminarDirectorio(comando) == 0)
