@@ -23,11 +23,12 @@ typedef struct {
 	char* ip;
 	char* puerto;
 	uint32_t carga;
-	int bloque;
+	infoBloque bloque;
+	int activo;//1 activo 0 no activo;
 }infoNodo;
 
 void planificar(job* job);
-void seleccionarWorker(infoNodo* worker, uint32_t numeroBloque);
+void seleccionarWorker(infoNodo* worker, infoBloque bloque);
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);
 infoNodo* buscarNodo(t_list* nodos, char* nombreNodo);
 uint32_t calcularPWL(infoNodo* worker);
@@ -35,22 +36,15 @@ uint32_t workLoadGlobal();
 int calcularDisponibilidadWorker(infoNodo* worker);
 void agregarNodo(t_list* cargaNodo,infoNodo* nodo);
 void agregarJobAPlanificar(job* jobAPlanificar);
-infoNodo* obtenerNodoDisponible(t_list* cargaNodos, t_list* listaNodosParaMap);
-t_list* obtenerNodosQueEstanEnLista(t_list* cargaNodos, t_list* listaNodos);
-infoNodo* obtenerNodoConNombre(char *nombreNodo);
-bool nodoConMenorCargaPrimero(void* argNodo1, void* argNodo2);
 uint32_t cargaMaxima();
 void agregarNodos(t_list* cargaNodos, t_list* listaNodos);
 void iniciarListasPlanificacion();
 t_list* consultarDetallesBloqueArchivo(char *pathArchivo, int bloque);
 void calcularCargasDeWorkers(t_list* listaNodos);
-infoNodo* obtenerNodoConNombre(char *nombreNodo);
-bool nodoConMenorCargaPrimero(void* argNodo1, void* argNodo2);
-uint32_t cargaMaxima();
-void iniciarListasPlanificacion();
+void bloqueEstaEnWorker(infoBloque* bloque, infoNodo* worker);
 informacionArchivoFsYama* recibirInfoArchivo(job* job) ;
-void asignarNodoA(job* unJob, infoNodo* worker);
-void posicionarClock(t_list* listaWorkersConBloques);
+bool estaActivo(infoNodo* worker);
+infoNodo* posicionarClock(t_list* listaWorkersConBloques);
 
 
 #endif /* PLANIFICADOR_H_ */
