@@ -197,7 +197,7 @@ int cambiarNombre(char* comando){
 	rutaNombreViejoReverse = string_substring_from(rutaNombreViejoReverse, longitudNombreOriginal + 1 );
 	rutaNombreViejoReverse = string_reverse(rutaNombreViejoReverse);
 	int tamanioRutaNueva = sizeof(rutaNombreViejoReverse) + sizeof(slash) + sizeof(nombreNuevo);
-	char* rutaNuevaDefinitiva = malloc(tamanioRutaNueva);
+	char* rutaNuevaDefinitiva = malloc(tamanioRutaNueva + 1);
 	memcpy(rutaNuevaDefinitiva, rutaNombreViejoReverse, strlen(rutaNombreViejoReverse));
 	memcpy(rutaNuevaDefinitiva + strlen(rutaNombreViejoReverse), slash, strlen(slash));
 	memcpy(rutaNuevaDefinitiva + strlen(rutaNombreViejoReverse) + strlen(slash), nombreNuevo, strlen(nombreNuevo) + 1);
