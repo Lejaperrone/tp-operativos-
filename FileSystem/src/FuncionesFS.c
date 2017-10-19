@@ -147,6 +147,113 @@ int nodoRepetido(informacionNodo info){
 	return repetido;
 }
 
+char* leerArchivo(char* rutaArchivo){
+	int index = 0, sizeArchivo, cantBloquesArchivo = 0, sizeAux = 0, i, j, k, l;
+	int cantidadNodos = list_size(nodosConectados);
+	int cargaNodos[cantidadNodos], indexNodos[cantidadNodos], peticiones[cantidadNodos];
+	int numeroNodoDelBloque[numeroCopiasBloque], posicionCopiaEnIndexNodo[numeroCopiasBloque];
+	informacionNodo info;
+	char* rutaInvertida = string_reverse(rutaArchivo);
+	char* rutaFinal = malloc(strlen(rutaArchivo)+1);
+	char* currentChar = malloc(2);
+	char* nombreInvertido = malloc(strlen(rutaArchivo)+1);
+	char** arrayInfoBloque;
+	int posicionNodoAPedir = -1;
+	int numeroBloqueDataBin = -1;
+
+	memset(nombreInvertido,0,strlen(rutaArchivo)+1);
+	memset(rutaFinal,0,strlen(rutaArchivo)+1);
+	memset(currentChar,0,2);
+
+	currentChar = string_substring(rutaInvertida, index, 1);
+	while(strcmp(currentChar,"/")){
+		memcpy(nombreInvertido + index, currentChar, 1);
+		++index;
+		currentChar = string_substring(rutaInvertida, index, 1);
+	}
+
+
+	char* nombre = string_reverse(nombreInvertido);
+
+	memcpy(rutaFinal, rutaArchivo, strlen(rutaArchivo)-index);
+
+	char* rutaMetadata = buscarRutaArchivo(rutaFinal);
+	char* rutaArchivoEnMetadata = malloc(strlen(rutaArchivos)+strlen(nombre)+1);
+	memset(rutaArchivoEnMetadata,0,strlen(rutaArchivos)+strlen(nombre)+1);
+	memcpy(rutaArchivoEnMetadata, rutaMetadata, strlen(rutaMetadata));
+	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata), "/", 1);
+	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata) + 1, nombre, strlen(nombre));
+
+	printf("ruta a archivo %s\n", rutaArchivoEnMetadata);
+
+	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
+	FILE* informacionArchivo = fopen(rutaArchivoEnMetadata,"r");
+
+	if (config_has_property(infoArchivo, "TAMANIO")){
+		sizeArchivo = config_get_int_value(infoArchivo,"TAMANIO");
+		printf("size %d \n",sizeArchivo);
+	}
+
+	sizeAux = sizeArchivo;
+
+	while(sizeAux > 0){
+		sizeAux -= mb;
+		++cantBloquesArchivo;
+	}
+
+	for (j = 0; j < cantidadNodos; ++j)
+		peticiones[j] = 0;
+
+	for (j = 0; j < cantidadNodos; ++j){
+		info = *(informacionNodo*)list_get(nodosConectados, j);
+		indexNodos[j] = info.numeroNodo;
+	}
+
+	for (i = 0; i < cantBloquesArchivo; ++i){
+		for (l = 0; l < numeroCopiasBloque; ++l){
+			arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,l));
+			numeroNodoDelBloque[l] = atoi(string_substring_from(arrayInfoBloque[0], 4));
+			for (k = 0; k < cantidadNodos; ++k)
+				if (indexNodos[k] == numeroNodoDelBloque[l])
+					++cargaNodos[k];
+		}
+	}
+
+	for (i = 0; i < cantBloquesArchivo; ++i){
+		for (l = 0; l < numeroCopiasBloque; ++l){
+			arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,l));
+			numeroNodoDelBloque[l] = atoi(string_substring_from(arrayInfoBloque[0], 4));
+			for (k = 0; k < cantidadNodos; ++k)
+				if (indexNodos[k] == numeroNodoDelBloque[l])
+					posicionCopiaEnIndexNodo[l] = k;
+		}
+		posicionNodoAPedir = posicionCopiaEnIndexNodo[0];
+		for (l = 0; l < numeroCopiasBloque; ++l){
+
+			if (peticiones[posicionCopiaEnIndexNodo[l]] < peticiones[posicionNodoAPedir])
+				posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
+
+			else if (peticiones[posicionCopiaEnIndexNodo[l]] == peticiones[posicionNodoAPedir])
+				if(cargaNodos[posicionCopiaEnIndexNodo[l]] < cargaNodos[posicionNodoAPedir])
+
+					posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
+		}
+		info = *(informacionNodo*)list_get(nodosConectados,posicionNodoAPedir);
+		numeroBloqueDataBin = atoi(arrayInfoBloque[1]);
+		empaquetar(info.socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&numeroBloqueDataBin);
+	}
+
+
+	printf("ruta en metadata %s\n", rutaArchivoEnMetadata);
+
+	free(currentChar);
+	free(rutaArchivoEnMetadata);
+	free(nombre);
+	free(rutaFinal);
+	fclose(informacionArchivo);
+	return "a";
+}
+
 void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int mockSizeArchivo = 2*mb;
 	respuesta respuestaPedidoAlmacenar;
