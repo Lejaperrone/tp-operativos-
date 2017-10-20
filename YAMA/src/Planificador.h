@@ -25,6 +25,7 @@ typedef struct {
 	uint32_t carga;
 	infoBloque bloque;
 	int activo;//1 activo 0 no activo;
+	int cantTareasHistoricas;
 }infoNodo;
 
 void planificar(job* job);
