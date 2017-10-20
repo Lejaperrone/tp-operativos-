@@ -6,6 +6,7 @@ int main(int argc, char *argv[]) {
 
 	nodosConectados = list_create();
 	pthread_mutex_init(&mutex_NodosConectados, NULL);
+	pthread_mutex_init(&mutexLog, NULL);
 
 	cargarConfiguracionYama(&config,argv[1]);
 	inicializarEstructuras();

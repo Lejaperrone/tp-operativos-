@@ -19,7 +19,7 @@ void planificar(job* job){
 
 	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
 
-	llenarListaNodos(listaNodos,infoArchivo);
+	//llenarListaNodos(listaNodos,infoArchivo);
 
 	calcularDisponibilidadWorkers(listaNodos);
 
@@ -71,7 +71,6 @@ informacionArchivoFsYama* recibirInfoArchivo(job* job) {
 
 	return solicitarInformacionAFS(solTransf);
 }
-
 
 infoNodo* posicionarClock(t_list* listaWorkers){
 	infoNodo* workerDesignado;

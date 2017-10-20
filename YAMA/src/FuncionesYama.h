@@ -32,18 +32,12 @@
 
 t_list* nodosConectados;
 pthread_mutex_t mutex_NodosConectados;
+pthread_mutex_t mutexLog;
 
 pthread_mutex_t cantJobs_mutex;
 
-fd_set master;   // conjunto maestro de descriptores de fichero
-fd_set read_fds; // conjunto temporal de descriptores de fichero para select()
-int fdmax;        // número máximo de descriptores de fichero
-int servidor;     // descriptor de socket a la escucha
-int nuevoMaster, socketFs;        // descriptor de socket de nueva conexión aceptada
-char buf[256];    // buffer para datos del cliente
-int nbytes;
-int addrlen;
-int i, j;
+int servidor,socketFs;
+
 struct sockaddr_in direccionCliente;
 
 t_log* logger;
@@ -52,6 +46,8 @@ struct configuracionYama config;
 uint32_t cantJobs;
 
 int conectarseConFs();
+
+void *manejarConexionMaster(void *cliente);
 
 void levantarServidorYama(char* ip, int port);
 
@@ -71,7 +67,7 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 
 void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos);
 
-void llenarListaNodos(t_list* lista, informacionArchivoFsYama* infoArchivo);
+void llenarListaNodos(informacionArchivoFsYama* infoArchivo);
 
-void agregarBloqueANodo(t_list* listaNodos, ubicacionBloque ubicacion,int bloque);
+void agregarBloqueANodo(ubicacionBloque ubicacion,int bloque);
 #endif /* FUNCIONESYAMA_H_ */
