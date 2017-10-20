@@ -94,7 +94,7 @@ void inicializarTablaDirectorios(){
 
 void guardarTablaDirectorios(){
 	int escrito;
-	FILE* archivoDirectorios = fopen(pathArchivoDirectorios, "wb+");
+	FILE* archivoDirectorios = fopen(pathArchivoDirectorios, "w");
 	escrito = fwrite(tablaDeDirectorios,sizeof(t_directory), cantidadDirectorios, archivoDirectorios);
 	if (escrito == cantidadDirectorios)
 		log_trace(loggerFS, "Se escribieron los directorios correctamente");
@@ -106,20 +106,19 @@ void guardarTablaDirectorios(){
 int getIndexDirectorio(char* ruta){
 	int index = 0, i = 0, j = 0, indexFinal = 0;
 
-	if(strcmp(ruta, "/") == 0)
+	if(strcmp(ruta, "/") == 0) //si la ruta es root devuelvo 0
 		return 0;
 
 	char* rutaSinRoot = string_substring_from(ruta,1);
-	char** arrayPath = string_split(rutaSinRoot, "/");
+	char** arrayPath = string_split(rutaSinRoot, "/"); //le saco root a la ruta
 	char* arrayComparador[100];
 	while(arrayPath[index] != NULL){ // separo por '/' la ruta en un array
 		arrayComparador[index] = malloc(strlen(arrayPath[index])+1);
 		memset(arrayComparador[index],0 ,strlen(arrayPath[index])+1);
 		memcpy(arrayComparador[index],arrayPath[index],strlen(arrayPath[index]));
 		++index; // guardo cuantas partes tiene el array
-		printf("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb- %s\n");
 	}
-	indexFinal = index - 1;
+	indexFinal = index;
 	int indexDirectorios[index];
 
 	for (i = 0; i <= index; ++i)
@@ -131,8 +130,8 @@ int getIndexDirectorio(char* ruta){
 	for(i = 0; i <= index; --index){
 		for(j = 0; j < 100; ++j){ // busco en la tabla que posicion coincide con el fragmento de ruta del loop
 			if (strcmp(tablaDeDirectorios[j].nombre,arrayComparador[index]) == 0){ // me fijo si el padre de ese es el mismo que aparece en el fragmento anterior de la ruta
-				if (index != 0 && strcmp(tablaDeDirectorios[tablaDeDirectorios[j].padre].nombre,arrayComparador[index-1]) == 0){ // si es asi lo guardo
-					indexDirectorios[index] = tablaDeDirectorios[j].index;
+				if ((index != 0 && strcmp(tablaDeDirectorios[tablaDeDirectorios[j].padre].nombre,arrayComparador[index-1]) == 0) || (index == 0 && tablaDeDirectorios[j].padre == 0)){ // si es asi lo guardo
+					indexDirectorios[index+1] = tablaDeDirectorios[j].index;
 				}
 			}
 		}
@@ -154,7 +153,6 @@ int getIndexDirectorio(char* ruta){
 
 char* buscarRutaArchivo(char* ruta){
 	int indexDirectorio = getIndexDirectorio(ruta);
-	printf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa %d\n", indexDirectorio);
 	char* numeroIndexString = string_itoa(indexDirectorio);
 	char* rutaGenerada = calloc(1,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memset(rutaGenerada,0,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
@@ -695,32 +693,6 @@ char* generarArrayNodos(){
 }
 
 
-void almacenarArchivo(char* ruta, char* nombreArchivo, char tipo, char* datos);
-
-void inicializarBitmaps(){ //TODO (y ver si aca hace falta mmap)
-	/*char* path = "/Metadata/Bitmap.bin"; //cambiar
-	int fd = open(path,O_RDWR | O_TRUNC);
-	if (fd == -1)
-	{
-		perror("Error opening file for writing");
-		exit(EXIT_FAILURE);
-	}
-	if (lseek(fd, cantBloques-1, SEEK_SET) == -1)
-		{
-			close(fd);
-			perror("Error calling lseek() to 'stretch' the file");
-			exit(EXIT_FAILURE);
-	}
-	if (write(fd, "", 1) == -1)
-	{
-		close(fd);
-		perror("Error writing last byte of the file");
-		exit(EXIT_FAILURE);
-	}
-	char* mapa = mmap(0,cantBloques/8,PROT_READ | PROT_WRITE,MAP_SHARED,fd,0);
-
-	bitmap[0] = bitarray_create_with_mode(mapa, cantBloques/8 , LSB_FIRST);*/
-}
 
 void atenderSolicitudYama(int socketYama, void* envio){
 

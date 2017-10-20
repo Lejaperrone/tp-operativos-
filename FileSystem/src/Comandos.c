@@ -171,10 +171,8 @@ int crearDirectorio(char* comando){
 	if (success == -1){
 		rutaPadre = rutaSinArchivo(path);
 		indexPadre = getIndexDirectorio(rutaPadre);
-		printf("cccccccccccccccccccccc %s",buscarRutaArchivo(rutaPadre));
-		printf("ruta padre %s\n", rutaPadre);
 		if (indexPadre == -1)
-			printf("success %d\n", success);
+			printf("no existe ruta padre %d\n", success);
 		else{
 			while(tablaDeDirectorios[i].index != -1){
 				++i;
@@ -182,8 +180,8 @@ int crearDirectorio(char* comando){
 			tablaDeDirectorios[i].index = i;
 			tablaDeDirectorios[i].padre = indexPadre;
 			nombre = ultimaParteDeRuta(path);
-			printf("lalal %s\n", nombre);
-			//memcpy(tablaDeDirectorios[i].nombre,"hola",5);
+			memcpy(tablaDeDirectorios[i].nombre, nombre, strlen(nombre));
+			guardarTablaDirectorios();
 		}
 
 	}
