@@ -186,7 +186,6 @@ void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo){
 		infoBloque* infoBlo = list_get(infoArchivo->informacionBloques,i);
 		agregarBloqueANodo(listaNodos,infoBlo->ubicacionCopia0);
 		agregarBloqueANodo(listaNodos,infoBlo->ubicacionCopia1);
-
 	}
 }
 

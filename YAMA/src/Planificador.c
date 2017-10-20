@@ -55,7 +55,7 @@ void bloqueEstaEnWorker(infoBloque* bloque, infoNodo* worker){
 	//TODO
 }
 void seleccionarWorker(infoNodo* worker, infoBloque bloque){
-	infoNodo* workerActual = buscarNodo(listaNodos, worker->nombre);
+	infoNodo* workerActual = buscarNodo(listaNodos, worker->numero);
 
 	if((worker == NULL || mayorDisponibilidad(workerActual, worker)) && estaActivo(workerActual)){
 		worker = workerActual;
@@ -83,9 +83,9 @@ bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
 	}
 }
 
-infoNodo* buscarNodo(t_list* nodos, char* nombreNodo){
+infoNodo* buscarNodo(t_list* nodos, int nodo){
 	bool nodoConNombre(infoNodo* nodo){
-		return string_equals_ignore_case(nodo->nombre, nombreNodo);
+		return nodo->numero== nodo;
 	}
 
 	return list_find(nodos, (void*) nodoConNombre);

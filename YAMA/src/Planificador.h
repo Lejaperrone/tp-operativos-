@@ -23,6 +23,7 @@ typedef struct {
 	uint32_t carga;
 	t_list* bloques;
 	bool activo;
+	int cantTareasHistoricas;
 }infoNodo;
 
 pthread_mutex_t cantTareasHistoricas_mutex;
