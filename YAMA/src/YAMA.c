@@ -4,6 +4,9 @@ int main(int argc, char *argv[]) {
 	limpiarPantalla();
 	logger = log_create("logYama", "YAMA.c", 1, LOG_LEVEL_TRACE);
 
+	nodosConectados = list_create();
+	pthread_mutex_init(&mutex_NodosConectados, NULL);
+
 	cargarConfiguracionYama(&config,argv[1]);
 	inicializarEstructuras();
 

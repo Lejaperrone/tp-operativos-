@@ -27,6 +27,16 @@ typedef struct {
 	int activo;//1 activo 0 no activo;
 }infoNodo;
 
+
+/*typedef struct {
+	int numero;
+	char* ip;
+	char* puerto;
+	uint32_t carga;
+	int* bloques;
+	bool activo;
+}infoNodo;*/
+
 void planificar(job* job);
 void seleccionarWorker(infoNodo* worker, infoBloque bloque);
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);

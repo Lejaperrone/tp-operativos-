@@ -55,7 +55,7 @@ void obtenerNumeroNodo(t_config* archivo,char* claveCopia,ubicacionBloque* ubi){
 		i++;
 	}
 
-	ubi->numeroBloque = atoi(numeroBloque);
+	ubi->numeroBloqueEnNodo = atoi(numeroBloque);
 	ubi->numeroNodo = atoi(numeroNodo);
 }
 

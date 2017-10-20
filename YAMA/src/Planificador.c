@@ -10,17 +10,26 @@
 void iniciarListasPlanificacion(){
 	listaNodos = list_create();
 	jobsAPlanificar = list_create();
-	pthread_mutex_init(&listaNodos_mutex, NULL);
 }
 
 
 void planificar(job* job){
-	informacionArchivoFsYama* infoArchivo = malloc(sizeof(informacionArchivoFsYama));
 	infoNodo* worker = malloc(sizeof(infoNodo));
 	infoBloque* bloque = malloc(sizeof(infoBloque));
+
+	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
+
+	actualizarNodosConectados(infoArchivo);
+
 	worker = posicionarClock(listaNodos);//POSICIONA EL CLOCK EN EL WORKER DE MAYOR DISPONIBILIDAD
 
-	infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
+	int nodos,bloques;
+
+	calcularNodosYBloques(infoArchivo,&nodos,&bloques);
+
+	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques);
+
+
 	//CHEQUEADO QUE RECIBE TODO OK
 
 	//todo

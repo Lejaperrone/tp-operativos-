@@ -87,12 +87,13 @@ typedef struct{
 typedef struct{
 	string ip;
 	int puerto;
-	int numeroBloque;
+	int numeroBloqueEnNodo;
 	int numeroNodo;
 }ubicacionBloque;
 
 typedef struct {
 	int bytesOcupados;
+	int numeroBloque;
 	ubicacionBloque ubicacionCopia0;
 	ubicacionBloque ubicacionCopia1;
 }infoBloque;

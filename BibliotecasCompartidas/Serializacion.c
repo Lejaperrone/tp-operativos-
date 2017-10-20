@@ -397,13 +397,17 @@ void* serializarRespuestaInfoNodos(void* paquete,int* tamanio){
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		printf("HOLAHOLAHOLA :%d\n",infoBloq->bytesOcupados);
 		memcpy(buffer + desplazamiento, &infoBloq->bytesOcupados, sizeof(int));
 		desplazamiento += sizeof(int);
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia0.numeroBloque, sizeof(int));
+		memcpy(buffer + desplazamiento, &infoBloq->numeroBloque, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia0.numeroBloqueEnNodo, sizeof(int));
 		desplazamiento += sizeof(int);
 
 		*tamanio += sizeof(int);
@@ -428,7 +432,7 @@ void* serializarRespuestaInfoNodos(void* paquete,int* tamanio){
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia1.numeroBloque, sizeof(int));
+		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia1.numeroBloqueEnNodo, sizeof(int));
 		desplazamiento += sizeof(int);
 
 		*tamanio += sizeof(int);
@@ -478,7 +482,10 @@ informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio)
 		memcpy(&infoBloq->bytesOcupados, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
-		memcpy(&infoBloq->ubicacionCopia0.numeroBloque, buffer + desplazamiento, sizeof(int) );
+		memcpy(&infoBloq->numeroBloque, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		memcpy(&infoBloq->ubicacionCopia0.numeroBloqueEnNodo, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
 		memcpy(&infoBloq->ubicacionCopia0.numeroNodo, buffer + desplazamiento, sizeof(int) );
@@ -494,7 +501,7 @@ informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio)
 		memcpy(infoBloq->ubicacionCopia0.ip.cadena, buffer + desplazamiento, infoBloq->ubicacionCopia0.ip.longitud);
 		desplazamiento += infoBloq->ubicacionCopia0.ip.longitud;
 
-		memcpy(&infoBloq->ubicacionCopia1.numeroBloque, buffer + desplazamiento, sizeof(int) );
+		memcpy(&infoBloq->ubicacionCopia1.numeroBloqueEnNodo, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
 		memcpy(&infoBloq->ubicacionCopia1.numeroNodo, buffer + desplazamiento, sizeof(int) );

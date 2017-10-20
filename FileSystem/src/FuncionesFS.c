@@ -660,7 +660,6 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	for(i=0;i<cantBloques;i++){
 		char* clave = calloc(1,8);
 		string_append_with_format(&clave,"BLOQUE%d",i);
-		printf("%s\n",clave);
 		infoBloque* infoBloqueActual = malloc(sizeof(infoBloque));
 		char* claveCopia0 = strdup(clave);
 		char* claveCopia1 = strdup(clave);
@@ -669,6 +668,8 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 		string_append(&claveCopia0,"COPIA0");
 		string_append(&claveCopia1,"COPIA1");
 		string_append(&claveBytes,"BYTES");
+
+		infoBloqueActual->numeroBloque = i;
 
 		infoBloqueActual->bytesOcupados = config_get_int_value(archivo,claveBytes);
 		obtenerNumeroNodo(archivo,claveCopia0,&(infoBloqueActual->ubicacionCopia0));
