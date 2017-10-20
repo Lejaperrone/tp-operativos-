@@ -74,9 +74,9 @@ infoNodo* posicionarClock(t_list* listaWorkers){
 
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
 
-	if(calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker) == true){
+	if((calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker)) == true){
 		return true;
-	} else if (calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker) == false){
+	} else if ((calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker)) == false){
 		return false;
 	} else { //si son iguales, ordenar por carga historica
 		return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
