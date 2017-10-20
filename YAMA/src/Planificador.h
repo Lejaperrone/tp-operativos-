@@ -24,9 +24,11 @@ typedef struct {
 	t_list* bloques;
 	bool activo;
 	int cantTareasHistoricas;
+	int disponibilidad;
 }infoNodo;
 
 pthread_mutex_t cantTareasHistoricas_mutex;
+uint32_t wlMax;
 
 
 void planificar(job* job);
@@ -34,8 +36,11 @@ void seleccionarWorker(infoNodo* worker, infoBloque bloque);
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);
 infoNodo* buscarNodo(t_list* nodos, int numNodo);
 uint32_t calcularPWL(infoNodo* worker);
-uint32_t workLoadGlobal();
-int calcularDisponibilidadWorker(infoNodo* worker);
+uint32_t workLoadMaxima();
+void calcularWorkLoadMaxima(t_list* nodos);
+void calcularDisponibilidadWorkers(t_list* nodos);
+void calcularDisponibilidadWorker(infoNodo* worker);
+int obtenerDisponibilidadWorker(infoNodo* worker);
 void agregarNodo(t_list* cargaNodo,infoNodo* nodo);
 void agregarJobAPlanificar(job* jobAPlanificar);
 uint32_t cargaMaxima();
