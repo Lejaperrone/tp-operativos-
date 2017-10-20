@@ -32,6 +32,10 @@ void planificar(job* job){
 
 	//CHEQUEADO QUE RECIBE TODO OK
 
+	pthread_mutex_lock(&cantTareasHistoricas_mutex);
+	worker->cantTareasHistoricas++;
+	pthread_mutex_unlock(&cantTareasHistoricas_mutex);
+
 	//todo
 
 }
@@ -63,13 +67,20 @@ infoNodo* posicionarClock(t_list* listaWorkers){
 	infoNodo* workerDesignado;
 	list_sort(listaWorkers, (void*) mayorDisponibilidad);
 
-	workerDesignado = list_get(listaWorkers, 0);//FIXME DESEMPATAR POR MENOS TAREAS HISTORICAMENTE
+	workerDesignado = list_get(listaWorkers, 0);//Ya desempata por cantidad de tareas historicas (PROBAR)
 
 	return workerDesignado;
 }
 
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
-	return calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker);
+
+	if(calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker) == true){
+		return true;
+	} else if (calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker) == false){
+		return false;
+	} else { //si son iguales, ordenar por carga historica
+		return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
+	}
 }
 
 infoNodo* buscarNodo(t_list* nodos, char* nombreNodo){

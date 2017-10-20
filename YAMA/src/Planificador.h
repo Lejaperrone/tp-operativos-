@@ -25,7 +25,9 @@ typedef struct {
 	uint32_t carga;
 	infoBloque bloque;
 	int activo;//1 activo 0 no activo;
+	int cantTareasHistoricas;
 }infoNodo;
+
 
 
 /*typedef struct {
@@ -36,6 +38,9 @@ typedef struct {
 	int* bloques;
 	bool activo;
 }infoNodo;*/
+
+pthread_mutex_t cantTareasHistoricas_mutex;
+
 
 void planificar(job* job);
 void seleccionarWorker(infoNodo* worker, infoBloque bloque);
