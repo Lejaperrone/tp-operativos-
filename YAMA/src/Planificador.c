@@ -25,7 +25,7 @@ void planificar(job* job){
 
 	int nodos,bloques;
 
-	calcularNodosYBloques(infoArchivo,&nodos,&bloques);
+	calcularNodosYBloques(infoArchivo,&nodos);
 
 	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques);
 
@@ -74,18 +74,20 @@ infoNodo* posicionarClock(t_list* listaWorkers){
 
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
 
-	if((calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker)) == true){
-		return true;
-	} else if ((calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker)) == false){
-		return false;
-	} else { //si son iguales, ordenar por carga historica
+	int maxDisponibilidad = calcularDisponibilidadWorker(workerMasDisp);
+	int dispoinbilidad =  calcularDisponibilidadWorker(worker);
+
+	if(maxDisponibilidad == dispoinbilidad){
 		return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
 	}
+
+	return maxDisponibilidad > dispoinbilidad;
+
 }
 
-infoNodo* buscarNodo(t_list* nodos, int nodo){
+infoNodo* buscarNodo(t_list* nodos, int numNodo){
 	bool nodoConNombre(infoNodo* nodo){
-		return nodo->numero== nodo;
+		return nodo->numero == numNodo;
 	}
 
 	return list_find(nodos, (void*) nodoConNombre);

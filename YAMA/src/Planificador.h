@@ -19,7 +19,7 @@ t_list* jobsAPlanificar;
 typedef struct {
 	int numero;
 	string ip;
-	char* puerto;
+	int puerto;
 	uint32_t carga;
 	t_list* bloques;
 	bool activo;
@@ -32,7 +32,7 @@ pthread_mutex_t cantTareasHistoricas_mutex;
 void planificar(job* job);
 void seleccionarWorker(infoNodo* worker, infoBloque bloque);
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);
-infoNodo* buscarNodo(t_list* nodos, char* nombreNodo);
+infoNodo* buscarNodo(t_list* nodos, int numNodo);
 uint32_t calcularPWL(infoNodo* worker);
 uint32_t workLoadGlobal();
 int calcularDisponibilidadWorker(infoNodo* worker);
