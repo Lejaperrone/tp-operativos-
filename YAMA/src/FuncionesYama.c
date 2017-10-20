@@ -180,8 +180,36 @@ void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int* bloque
 	*nodos = max;
 }
 
-void actualizarNodosConectados(informacionArchivoFsYama* infoArchivo){
-	t_list* lista = list_create();
+void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo){
 	int i;
+	for(i=0;i<list_size(infoArchivo->informacionBloques);i++){
+		infoBloque* infoBlo = list_get(infoArchivo->informacionBloques,i);
+		agregarBloqueANodo(listaNodos,infoBlo->ubicacionCopia0);
+		agregarBloqueANodo(listaNodos,infoBlo->ubicacionCopia1);
 
+	}
+}
+
+void agregarBloqueANodo(t_list* listaNodos, ubicacionBloque ubicacion,int bloque){
+	bool existeNodo = false;
+
+	bool funcionFind(void *nodo) {
+		return(((infoNodo*)nodo)->numero == ubicacion->numeroNodo);
+	}
+
+	if (list_find(listaNodos,funcionFind)) {
+		infoNodo* nodo = (infoNodo*)list_find(&listaNodos,funcionFind);
+		list_add(nodo->bloques,bloque);
+	}
+	else{
+		infoNodo* nuevoNodo = malloc(sizeof(infoNodo));
+		nuevoNodo->activo = true;
+		list_add(nuevoNodo->bloques,bloque);
+		nuevoNodo->carga=0;
+		nuevoNodo->ip.cadena = strdup(ubicacion.ip.cadena);
+		nuevoNodo->ip.longitud = ubicacion.ip.longitud;
+		nuevoNodo->numero = ubicacion.numeroNodo;
+		nuevoNodo->puerto = ubicacion.puerto;
+		list_add(listaNodos,nuevoNodo);
+	}
 }

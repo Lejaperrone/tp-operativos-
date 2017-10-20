@@ -15,29 +15,15 @@
 #include <../commons/string.h>
 
 t_list* jobsAPlanificar;
-t_list* listaNodos;
-pthread_mutex_t listaNodos_mutex;
 
 typedef struct {
-	char* nombre;
-	char* ip;
-	char* puerto;
-	uint32_t carga;
-	infoBloque bloque;
-	int activo;//1 activo 0 no activo;
-	int cantTareasHistoricas;
-}infoNodo;
-
-
-
-/*typedef struct {
 	int numero;
-	char* ip;
+	string ip;
 	char* puerto;
 	uint32_t carga;
-	int* bloques;
+	t_list* bloques;
 	bool activo;
-}infoNodo;*/
+}infoNodo;
 
 pthread_mutex_t cantTareasHistoricas_mutex;
 

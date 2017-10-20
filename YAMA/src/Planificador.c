@@ -8,18 +8,18 @@
 #include "Planificador.h"
 
 void iniciarListasPlanificacion(){
-	listaNodos = list_create();
+
 	jobsAPlanificar = list_create();
 }
 
 
 void planificar(job* job){
 	infoNodo* worker = malloc(sizeof(infoNodo));
-	infoBloque* bloque = malloc(sizeof(infoBloque));
+	t_list* listaNodos = list_create();
 
 	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
 
-	actualizarNodosConectados(infoArchivo);
+	llenarListaNodos(listaNodos,infoArchivo);
 
 	worker = posicionarClock(listaNodos);//POSICIONA EL CLOCK EN EL WORKER DE MAYOR DISPONIBILIDAD
 
