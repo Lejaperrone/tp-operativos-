@@ -145,14 +145,18 @@ void inicializarEstructuras(){
 }
 
 bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques){
-	bool** matriz = (bool**)malloc(nodos*sizeof(bool));
+	int j;
+	bool **matriz = malloc(sizeof(bool*) * nodos);
+	if(matriz){
+	  for (j = 0; j < nodos; j++){
+	    matriz[j] = malloc(sizeof(bool) * bloques);
+	  }
+	}
 
-	int j,k;
-
+	int k;
 	for(j=0;j<nodos;j++){
-		matriz[j] = (bool*)malloc( bloques*sizeof(bool));
 		for(k=0;k<bloques;k++){
-			matriz[j][k]=false;
+			matriz[j][k] = false;
 		}
 	}
 
@@ -182,21 +186,21 @@ void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos){
 	*nodos = max;
 }
 
-void llenarListaNodos(informacionArchivoFsYama* infoArchivo){
+void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo){
 	int i;
 	for(i=0;i<list_size(infoArchivo->informacionBloques);i++){
 		infoBloque* infoBlo = list_get(infoArchivo->informacionBloques,i);
-		agregarBloqueANodo(infoBlo->ubicacionCopia0,infoBlo->numeroBloque);
-		agregarBloqueANodo(infoBlo->ubicacionCopia1,infoBlo->numeroBloque);
+		agregarBloqueANodo(listaNodos,infoBlo->ubicacionCopia0,infoBlo->numeroBloque);
+		agregarBloqueANodo(listaNodos,infoBlo->ubicacionCopia1,infoBlo->numeroBloque);
 	}
 }
 
-void agregarBloqueANodo(ubicacionBloque ubicacion,int bloque){
+void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque){
 
 	bool funcionFind(void *nodo) {
 		return(((infoNodo*)nodo)->numero == ubicacion.numeroNodo);
 	}
-	/*
+
 	if (list_find(listaNodos,funcionFind)) {
 		infoNodo* nodo = (infoNodo*)list_find(listaNodos,funcionFind);
 		list_add(nodo->bloques,&bloque);
@@ -204,6 +208,7 @@ void agregarBloqueANodo(ubicacionBloque ubicacion,int bloque){
 	else{
 		infoNodo* nuevoNodo = malloc(sizeof(infoNodo));
 		nuevoNodo->activo = true;
+		nuevoNodo->bloques = list_create();
 		list_add(nuevoNodo->bloques,&bloque);
 		nuevoNodo->carga=0;
 		nuevoNodo->ip.cadena = strdup(ubicacion.ip.cadena);
@@ -212,5 +217,5 @@ void agregarBloqueANodo(ubicacionBloque ubicacion,int bloque){
 		nuevoNodo->puerto = ubicacion.puerto;
 		list_add(listaNodos,nuevoNodo);
 	}
-	*/
+
 }

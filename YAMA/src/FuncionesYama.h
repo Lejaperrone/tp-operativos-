@@ -67,7 +67,8 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 
 void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos);
 
-void llenarListaNodos(informacionArchivoFsYama* infoArchivo);
+void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
 
-void agregarBloqueANodo(ubicacionBloque ubicacion,int bloque);
+void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque);
+
 #endif /* FUNCIONESYAMA_H_ */
