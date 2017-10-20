@@ -74,7 +74,8 @@ void esperarInstruccionesDeYama() {
 
 		switch (instruccionesYama.idMensaje) {
 
-		case mensajeDesignarWorker:
+		case mensajeRespuestaTransformacion:
+			//ACA RECIBE LO QUE YAMA PLANIFICA Y SE CONECTA A LOS WORKERS SELECCIONADOS
 			crearHilosConexion();
 			break;
 		}

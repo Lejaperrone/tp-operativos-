@@ -36,6 +36,15 @@ typedef enum {EN_EJECUCION, ERROR, FINALIZADO_OK}Estado;
 
 typedef struct {
 	int nodo;
+	string ip;
+	int puerto;
+	t_list* bloques;
+	int bytesOcupado;//FIXME
+	string rutaArchivoTemp;
+}respuestaSolicitudTransformacion;
+
+typedef struct {
+	int nodo;
 	char* ip;
 	int puerto;
 	int bloque;
