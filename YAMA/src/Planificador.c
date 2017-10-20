@@ -17,10 +17,11 @@ void iniciarListasPlanificacion(){
 void planificar(job* job){
 	informacionArchivoFsYama* infoArchivo = malloc(sizeof(informacionArchivoFsYama));
 	infoNodo* worker = malloc(sizeof(infoNodo));
-
+	infoBloque* bloque = malloc(sizeof(infoBloque));
 	worker = posicionarClock(listaNodos);//POSICIONA EL CLOCK EN EL WORKER DE MAYOR DISPONIBILIDAD
 
 	infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
+	//CHEQUEADO QUE RECIBE TODO OK
 
 	//todo
 

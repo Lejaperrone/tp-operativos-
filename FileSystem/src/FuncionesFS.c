@@ -661,7 +661,7 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 		char* clave = calloc(1,8);
 		string_append_with_format(&clave,"BLOQUE%d",i);
 		printf("%s\n",clave);
-		infoBloque infoBloqueActual;
+		infoBloque* infoBloqueActual = malloc(sizeof(infoBloque));
 		char* claveCopia0 = strdup(clave);
 		char* claveCopia1 = strdup(clave);
 		char* claveBytes = strdup(clave);
@@ -670,14 +670,14 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 		string_append(&claveCopia1,"COPIA1");
 		string_append(&claveBytes,"BYTES");
 
-		infoBloqueActual.bytesOcupados = config_get_int_value(archivo,claveBytes);
-		obtenerNumeroNodo(archivo,claveCopia0,&(infoBloqueActual.ubicacionCopia0));
-		obtenerInfoNodo(&infoBloqueActual.ubicacionCopia0);
+		infoBloqueActual->bytesOcupados = config_get_int_value(archivo,claveBytes);
+		obtenerNumeroNodo(archivo,claveCopia0,&(infoBloqueActual->ubicacionCopia0));
+		obtenerInfoNodo(&infoBloqueActual->ubicacionCopia0);
 
-		obtenerNumeroNodo(archivo,claveCopia1,&(infoBloqueActual.ubicacionCopia1));
-		obtenerInfoNodo(&infoBloqueActual.ubicacionCopia1);
+		obtenerNumeroNodo(archivo,claveCopia1,&(infoBloqueActual->ubicacionCopia1));
+		obtenerInfoNodo(&infoBloqueActual->ubicacionCopia1);
 		free(clave);
-		list_add(info.informacionBloques,&infoBloqueActual);
+		list_add(info.informacionBloques,infoBloqueActual);
 	}
 	return info;
 }

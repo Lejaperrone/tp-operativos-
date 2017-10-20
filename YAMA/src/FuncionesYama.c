@@ -90,7 +90,7 @@ void recibirContenidoMaster() {
 	jobAPlanificar->socketFd = nuevoMaster;
 	log_trace(logger, "Job recibido pre-planificacion %i",jobAPlanificar->id);
 
-	//planificar(jobAPlanificar);
+	planificar(jobAPlanificar);
 
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);// logica con respuesta a Master
 	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
@@ -107,7 +107,7 @@ informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud)
 	respuestaFs = desempaquetar(socketFs);
 
 	if(respuestaFs.idMensaje == mensajeRespuestaInfoNodos){
-		rtaFs = (informacionArchivoFsYama*)respuestaFs.envio;
+		memcpy(rtaFs, respuestaFs.envio, sizeof(informacionArchivoFsYama));
 		log_trace(logger, "Me llego la informacion desde Fs correctamente");
 	}
 	else{

@@ -381,7 +381,7 @@ void* serializarRespuestaInfoNodos(void* paquete,int* tamanio){
 	int desplazamiento = 0;
 
 	*tamanio = sizeof(int);
-	void * buffer = malloc(*tamanio );
+	void * buffer = malloc(*tamanio);
 	memcpy(buffer + desplazamiento, &(respuesta->tamanioTotal), sizeof(int));
 	desplazamiento += sizeof(int);
 
@@ -397,6 +397,7 @@ void* serializarRespuestaInfoNodos(void* paquete,int* tamanio){
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
+		printf("HOLAHOLAHOLA :%d\n",infoBloq->bytesOcupados);
 		memcpy(buffer + desplazamiento, &infoBloq->bytesOcupados, sizeof(int));
 		desplazamiento += sizeof(int);
 
@@ -472,7 +473,7 @@ informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio)
 
 	int j;
 	for (j = 0; j < longitud; ++j) {
-		infoBloque* infoBloq = malloc(sizeof(infoBloq));
+		infoBloque* infoBloq = malloc(sizeof(infoBloque));
 
 		memcpy(&infoBloq->bytesOcupados, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
