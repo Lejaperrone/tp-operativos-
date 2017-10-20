@@ -17,7 +17,15 @@ void conectarseConYama(char* ip, int port) {
 	socketYama = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(ip, port);
 	conectarCon(direccion, socketYama, 2); //2 id master
-	log_trace(loggerMaster, "Conexion con Yama establecida"); //FIXME: FALTA CONTROL DE ERROR
+	respuesta respuestaHandShake = desempaquetar(socketYama);
+
+	if(respuestaHandShake.idMensaje != mensajeOk){
+		log_error(loggerMaster, "Conexion fallida con YAMA");
+		perror("Conexion fallida con YAMA");
+		log_destroy(loggerMaster);
+		exit(1);
+	}
+	log_trace(loggerMaster, "Conexion con Yama establecida");
 }
 void crearHilosConexion() {
 	pthread_t hiloConexion;
@@ -45,14 +53,6 @@ void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
 }
 
 void enviarJobAYama(job* miJob) {
-	/*solicitudTransformacion* nuevaSol = malloc(sizeof(solicitudTransformacion));
-
-	nuevaSol->rutaDatos.cadena = string_duplicate(miJob->rutaDatos);
-	nuevaSol->rutaDatos.longitud = string_length(miJob->rutaDatos);
-	nuevaSol->rutaResultado.cadena = string_duplicate(miJob->rutaResultado);
-	nuevaSol->rutaResultado.longitud = string_length(miJob->rutaResultado);
-
-	printf("%d%d\n",nuevaSol->rutaDatos.longitud, nuevaSol->rutaResultado.longitud);*/
 	empaquetar(socketYama,mensajeSolicitudTransformacion, 0 ,miJob);
 	log_trace(loggerMaster,"Enviando solicitud de etapa Transformacion a YAMA");
 

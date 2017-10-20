@@ -19,7 +19,7 @@ void planificar(job* job){
 
 	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
 
-	llenarListaNodos(listaNodos,infoArchivo);
+	//llenarListaNodos(listaNodos,infoArchivo);
 
 	worker = posicionarClock(listaNodos);//POSICIONA EL CLOCK EN EL WORKER DE MAYOR DISPONIBILIDAD
 
@@ -55,11 +55,12 @@ void bloqueEstaEnWorker(infoBloque* bloque, infoNodo* worker){
 	//TODO
 }
 void seleccionarWorker(infoNodo* worker, infoBloque bloque){
+	t_list* listaNodos;
 	infoNodo* workerActual = buscarNodo(listaNodos, worker->numero);
 
 	if((worker == NULL || mayorDisponibilidad(workerActual, worker)) && estaActivo(workerActual)){
 		worker = workerActual;
-		worker->bloque = bloque;
+		//worker->bloque = bloque;
 	}
 }
 
@@ -125,10 +126,10 @@ uint32_t workLoadGlobal(){
 	int i;
 	uint32_t sum;
 
-	for(i=0; i < list_size(listaNodos); i++){
+	/*for(i=0; i < list_size(listaNodos); i++){
 		infoNodo* nodo = list_get(listaNodos, i);
 		sum += nodo->carga;
-	}
+	}*/
 	return sum;
 }
 
