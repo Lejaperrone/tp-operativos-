@@ -31,7 +31,7 @@ void planificar(job* job){
 
 	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques);
 
-	//moverClock(worker, listaNodos);
+	//moverClock(worker, listaNodos, matrix, infoArchivo);
 
 	pthread_mutex_lock(&cantTareasHistoricas_mutex);
 	worker->cantTareasHistoricas++;
@@ -39,8 +39,26 @@ void planificar(job* job){
 
 }
 
-void moverClock(infoNodo* worker, t_list* listaNodos){
 
+void moverClock(infoNodo* worker, t_list* listaNodos, bool** nodosPorBloque, informacionArchivoFsYama* infoArchivo){
+	int i;
+	int cantidadBloques = list_size(infoArchivo->informacionBloques);
+	infoBloque* bloque = malloc(sizeof(infoBloque));
+	for(i=0;i<cantidadBloques;i++){
+		bloque = list_get(infoArchivo->informacionBloques, i);
+
+		if(bloqueEstaEn(worker,nodosPorBloque,i)){
+			worker->disponibilidad--;
+			//ASIGNAR BLOQUES TODO
+		}
+		//LEER EL ENUNCIADO(ANEXO II) LA PARTE DE REGLAS DE FUNCIONAMIENTO TODO
+	}
+
+}
+
+bool bloqueEstaEn(infoNodo* nodo,bool** nodoXbloque, int bloque){
+	int posNodo = nodo->numero;
+	return nodoXbloque[posNodo][bloque];
 }
 
 informacionArchivoFsYama* recibirInfoArchivo(job* job) {
@@ -98,9 +116,10 @@ void calcularDisponibilidadWorker(infoNodo* worker){
 	worker->disponibilidad = getDisponibilidadBase() + calcularPWL(worker);
 }
 
-int obtenerDisponibilidadWorker(infoNodo* worker){
+int obtenerDisponibilidadWorker(infoNodo* worker){//getter
 	return worker->disponibilidad;
 }
+
 uint32_t calcularPWL(infoNodo* worker){
 	if(esClock() != 0){
 		return workLoadMaxima() - worker->carga;
@@ -121,7 +140,7 @@ void calcularWorkLoadMaxima(t_list* nodos){
 	wlMax = worker->carga;
 }
 
-uint32_t workLoadMaxima(){
+uint32_t workLoadMaxima(){//getter
 	return wlMax;
 }
 void agregarJobAPlanificar(job* jobAPlanificar){
