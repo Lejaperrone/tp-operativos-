@@ -28,6 +28,8 @@ typedef struct {
 	int cantTareasHistoricas;
 }infoNodo;
 
+pthread_mutex_t cantTareasHistoricas_mutex;
+
 void planificar(job* job);
 void seleccionarWorker(infoNodo* worker, infoBloque bloque);
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);

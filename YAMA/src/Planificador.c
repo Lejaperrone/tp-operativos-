@@ -23,6 +23,10 @@ void planificar(job* job){
 	infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
 	//CHEQUEADO QUE RECIBE TODO OK
 
+	pthread_mutex_lock(&cantTareasHistoricas_mutex);
+	worker->cantTareasHistoricas++;
+	pthread_mutex_unlock(&cantTareasHistoricas_mutex);
+
 	//todo
 
 }
