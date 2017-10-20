@@ -78,8 +78,8 @@ int main(void) {
 
 	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
-	//guardarTablaDirectorios();
 	inicializarTablaDirectorios();
+	guardarTablaDirectorios();
 
 	servidorFS = crearSocket();
 

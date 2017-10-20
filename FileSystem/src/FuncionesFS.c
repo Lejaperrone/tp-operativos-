@@ -56,19 +56,40 @@ int recibirConexionYama(){
 
 void inicializarTablaDirectorios(){
 	int i;
-	for (i = 0; i < 100; ++i){
+	struct stat fileStat;
+	FILE* archivoDirectorios;
+
+	tablaDeDirectorios[0].index = 0;
+	tablaDeDirectorios[0].padre = -1;
+	memcpy(tablaDeDirectorios[0].nombre,"/",1);
+
+	for (i = 1; i < 100; ++i){
 		tablaDeDirectorios[i].index = -1;
 		tablaDeDirectorios[i].padre = -1;
 		memcpy(tablaDeDirectorios[i].nombre," ",1);
 	}
+
+	archivoDirectorios = fopen(pathArchivoDirectorios, "ab");
+	fclose(archivoDirectorios);
+
 	int leido;
-	FILE* archivoDirectorios = fopen(pathArchivoDirectorios, "r");
-	leido = fread(tablaDeDirectorios,sizeof(t_directory), cantidadDirectorios, archivoDirectorios);
+	if(stat(pathArchivoDirectorios,&fileStat) < 0){
+		printf("no se pudo abrir\n");
+		exit(1);
+	}
+
+	if (fileStat.st_size != 0){
+		archivoDirectorios = fopen(pathArchivoDirectorios, "r");
+		leido = fread(tablaDeDirectorios,sizeof(t_directory), cantidadDirectorios, archivoDirectorios);
+		fclose(archivoDirectorios);
+	}
+	else
+		leido = 0;
+
 	if (leido == cantidadDirectorios)
 		log_trace(loggerFS, "Se cargaron los directorios correctamente");
 	else
 		log_trace(loggerFS, "No se pudieron cargar todos los directorios");
-	fclose(archivoDirectorios);
 }
 
 void guardarTablaDirectorios(){
@@ -84,24 +105,30 @@ void guardarTablaDirectorios(){
 
 int getIndexDirectorio(char* ruta){
 	int index = 0, i = 0, j = 0, indexFinal = 0;
-	char** arrayPath = string_split(ruta, "/");
+
+	if(strcmp(ruta, "/") == 0)
+		return 0;
+
+	char* rutaSinRoot = string_substring_from(ruta,1);
+	char** arrayPath = string_split(rutaSinRoot, "/");
 	char* arrayComparador[100];
 	while(arrayPath[index] != NULL){ // separo por '/' la ruta en un array
 		arrayComparador[index] = malloc(strlen(arrayPath[index])+1);
 		memset(arrayComparador[index],0 ,strlen(arrayPath[index])+1);
 		memcpy(arrayComparador[index],arrayPath[index],strlen(arrayPath[index]));
 		++index; // guardo cuantas partes tiene el array
+		printf("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb- %s\n");
 	}
 	indexFinal = index - 1;
 	int indexDirectorios[index];
 
-	--index;
-	for (i = 0; i < index; ++i)
+	for (i = 0; i <= index; ++i)
 		indexDirectorios[i] = -1; // inicializo todo en -1, si al final me queda alguno en algun lado del array, significa que la ruta que pase no existe
+	--index;
 
 	indexDirectorios[0] = 0;
 
-	for(i = 0; i < index; --index){
+	for(i = 0; i <= index; --index){
 		for(j = 0; j < 100; ++j){ // busco en la tabla que posicion coincide con el fragmento de ruta del loop
 			if (strcmp(tablaDeDirectorios[j].nombre,arrayComparador[index]) == 0){ // me fijo si el padre de ese es el mismo que aparece en el fragmento anterior de la ruta
 				if (index != 0 && strcmp(tablaDeDirectorios[tablaDeDirectorios[j].padre].nombre,arrayComparador[index-1]) == 0){ // si es asi lo guardo
@@ -113,8 +140,8 @@ int getIndexDirectorio(char* ruta){
 
 	for (i = 0; i < indexFinal; ++i)
 		if (indexDirectorios[i] == -1){
-			for (i = 0; i < indexFinal; ++i){
-				free(arrayComparador[i]);
+			for (j = 0; j < indexFinal; ++j){
+				free(arrayComparador[j]);
 			}
 			return -1;
 		} //me fijo si quedo algun -1, si es asi no existe la ruta
@@ -127,6 +154,7 @@ int getIndexDirectorio(char* ruta){
 
 char* buscarRutaArchivo(char* ruta){
 	int indexDirectorio = getIndexDirectorio(ruta);
+	printf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa %d\n", indexDirectorio);
 	char* numeroIndexString = string_itoa(indexDirectorio);
 	char* rutaGenerada = calloc(1,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memset(rutaGenerada,0,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
@@ -145,6 +173,82 @@ int nodoRepetido(informacionNodo info){
 			repetido = 1;
 	}
 	return repetido;
+}
+
+int validarArchivoYamaFS(char* ruta){
+	if (string_starts_with(ruta,"yamafs:/")){
+		printf("ruta valida\n");
+		return 1;
+	}
+	printf("ruta invalida\n");
+	return 0;
+}
+
+char* rutaSinPrefijoYama(char* ruta){
+	return string_substring_from(ruta, 7);
+}
+
+char* rutaSinArchivo(char* rutaArchivo){
+	int index = 0, cantidadPartesRuta = 0;
+	char* rutaInvertida = string_reverse(rutaArchivo);
+	char* rutaFinal = malloc(strlen(rutaArchivo)+1);
+	char* currentChar = malloc(2);
+	char* nombreInvertido = malloc(strlen(rutaArchivo)+1);
+	char** arrayPath = string_split(rutaArchivo, "/");
+
+	while(arrayPath[cantidadPartesRuta] != NULL)
+		++cantidadPartesRuta;
+
+	if (cantidadPartesRuta == 1)
+		return "/";
+
+	memset(nombreInvertido,0,strlen(rutaArchivo)+1);
+	memset(rutaFinal,0,strlen(rutaArchivo)+1);
+	memset(currentChar,0,2);
+
+	currentChar = string_substring(rutaInvertida, index, 1);
+	while(strcmp(currentChar,"/")){
+		memcpy(nombreInvertido + index, currentChar, 1);
+		++index;
+		currentChar = string_substring(rutaInvertida, index, 1);
+	}
+
+
+	memcpy(rutaFinal, rutaArchivo, strlen(rutaArchivo)-index-1);
+
+	printf("ruta sin archivo %s\n", rutaFinal);
+
+	free(rutaFinal);
+	free(currentChar);
+	free(nombreInvertido);
+
+	return rutaFinal;
+}
+
+char* ultimaParteDeRuta(char* rutaArchivo){
+	int index = 0;
+	char* rutaInvertida = string_reverse(rutaArchivo);
+	char* currentChar = malloc(2);
+	char* nombreInvertido = malloc(strlen(rutaArchivo)+1);
+
+	memset(nombreInvertido,0,strlen(rutaArchivo)+1);
+	memset(currentChar,0,2);
+
+	currentChar = string_substring(rutaInvertida, index, 1);
+	while(strcmp(currentChar,"/")){
+		memcpy(nombreInvertido + index, currentChar, 1);
+		++index;
+		currentChar = string_substring(rutaInvertida, index, 1);
+	}
+
+	free(currentChar);
+	free(nombreInvertido);
+
+	char* nombre = string_reverse(nombreInvertido);
+
+	printf("nombre archivo %s\n", nombre);
+
+	return nombre;
 }
 
 char* leerArchivo(char* rutaArchivo){
@@ -259,6 +363,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	respuesta respuestaPedidoAlmacenar;
 
 	char* ruta = buscarRutaArchivo(path);
+	printf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa %s\n", ruta);
 	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + strlen(tipo) + 2);
 	memset(rutaFinal, 0, strlen(ruta) + strlen(nombre) +  strlen(tipo) + 2);
 
@@ -269,8 +374,6 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	memcpy(rutaFinal + strlen(ruta), "/", 1);
 	memcpy(rutaFinal + strlen(ruta) + 1, nombre, strlen(nombre));
 	memcpy(rutaFinal + strlen(ruta) + 1 + strlen(nombre), tipo, strlen(tipo));
-
-	printf("----ruta final    %s\n", rutaFinal);
 
 	int sizeAux = mapeoArchivo->longitud;
 	int cantBloquesArchivo = 0;
