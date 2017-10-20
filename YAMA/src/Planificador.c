@@ -10,17 +10,31 @@
 void iniciarListasPlanificacion(){
 	listaNodos = list_create();
 	jobsAPlanificar = list_create();
-	pthread_mutex_init(&listaNodos_mutex, NULL);
 }
 
 
 void planificar(job* job){
-	informacionArchivoFsYama* infoArchivo = malloc(sizeof(informacionArchivoFsYama));
 	infoNodo* worker = malloc(sizeof(infoNodo));
+	infoBloque* bloque = malloc(sizeof(infoBloque));
+
+	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
+
+	actualizarNodosConectados(infoArchivo);
 
 	worker = posicionarClock(listaNodos);//POSICIONA EL CLOCK EN EL WORKER DE MAYOR DISPONIBILIDAD
 
-	infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
+	int nodos,bloques;
+
+	calcularNodosYBloques(infoArchivo,&nodos,&bloques);
+
+	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques);
+
+
+	//CHEQUEADO QUE RECIBE TODO OK
+
+	pthread_mutex_lock(&cantTareasHistoricas_mutex);
+	worker->cantTareasHistoricas++;
+	pthread_mutex_unlock(&cantTareasHistoricas_mutex);
 
 	//todo
 
@@ -53,13 +67,20 @@ infoNodo* posicionarClock(t_list* listaWorkers){
 	infoNodo* workerDesignado;
 	list_sort(listaWorkers, (void*) mayorDisponibilidad);
 
-	workerDesignado = list_get(listaWorkers, 0);//FIXME DESEMPATAR POR MENOS TAREAS HISTORICAMENTE
+	workerDesignado = list_get(listaWorkers, 0);//Ya desempata por cantidad de tareas historicas (PROBAR)
 
 	return workerDesignado;
 }
 
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
-	return calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker);
+
+	if((calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker)) == true){
+		return true;
+	} else if ((calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker)) == false){
+		return false;
+	} else { //si son iguales, ordenar por carga historica
+		return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
+	}
 }
 
 infoNodo* buscarNodo(t_list* nodos, char* nombreNodo){

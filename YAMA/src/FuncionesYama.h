@@ -30,6 +30,9 @@
 #define idMaster 2
 #define idDataNodes 3
 
+t_list* nodosConectados;
+pthread_mutex_t mutex_NodosConectados;
+
 pthread_mutex_t cantJobs_mutex;
 
 fd_set master;   // conjunto maestro de descriptores de fichero
@@ -49,13 +52,24 @@ struct configuracionYama config;
 uint32_t cantJobs;
 
 int conectarseConFs();
+
 void levantarServidorYama(char* ip, int port);
+
 void recibirContenidoMaster();
+
 informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud);
 
 int getDisponibilidadBase();
 
 char* obtenerNombreArchivoResultadoTemporal();
+
 int esClock();
+
 void inicializarEstructuras();
+
+bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques);
+
+void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int* bloques);
+
+void actualizarNodosConectados(informacionArchivoFsYama* infoArchivo);
 #endif /* FUNCIONESYAMA_H_ */

@@ -75,7 +75,6 @@ void levantarServidorYama(char* ip, int port) {
 
 void recibirContenidoMaster() {
 	respuesta nuevoJob;
-	informacionArchivoFsYama* rtaTransf;
 
 	iniciarListasPlanificacion();
 
@@ -90,7 +89,7 @@ void recibirContenidoMaster() {
 	jobAPlanificar->socketFd = nuevoMaster;
 	log_trace(logger, "Job recibido pre-planificacion %i",jobAPlanificar->id);
 
-	//planificar(jobAPlanificar);
+	planificar(jobAPlanificar);
 
 	empaquetar(nuevoMaster, mensajeOk, 0, 0);// logica con respuesta a Master
 	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
@@ -98,7 +97,6 @@ void recibirContenidoMaster() {
 }
 
 informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud){
-	respuestaInfoNodos* rtaTransf = malloc(sizeof(respuestaInfoNodos));
 	informacionArchivoFsYama* rtaFs = malloc(sizeof(informacionArchivoFsYama));
 	respuesta respuestaFs;
 
@@ -142,4 +140,48 @@ char* dameUnNombreArchivoTemporal(){
 }
 void inicializarEstructuras(){
 	pthread_mutex_init(&cantJobs_mutex, NULL);
+}
+
+bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques){
+	bool** matriz = (bool**)malloc(nodos*sizeof(bool));
+
+	int j,k;
+
+	for(j=0;j<nodos;j++){
+		matriz[j] = (bool*)malloc( bloques*sizeof(bool));
+		for(k=0;k<bloques;k++){
+			matriz[j][k]=false;
+		}
+	}
+
+	int i;
+	for(i=0;i< list_size(infoArchivo->informacionBloques);i++){
+		infoBloque* info = list_get(infoArchivo->informacionBloques,i);
+		matriz[info->ubicacionCopia0.numeroNodo][info->numeroBloque] = true;
+		matriz[info->ubicacionCopia1.numeroNodo][info->numeroBloque] = true;
+	}
+	return matriz;
+}
+
+void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int* bloques){
+	*nodos = list_size(info->informacionBloques);
+
+	int max =0;
+	int i;
+	for(i=0;i<list_size(info->informacionBloques);i++){
+		infoBloque* infoBlo = list_get(info->informacionBloques,i);
+		if(infoBlo->ubicacionCopia0.numeroNodo > max){
+			max = infoBlo->ubicacionCopia0.numeroNodo;
+		}
+		if(infoBlo->ubicacionCopia1.numeroNodo > max){
+			max = infoBlo->ubicacionCopia1.numeroNodo;
+		}
+	}
+	*nodos = max;
+}
+
+void actualizarNodosConectados(informacionArchivoFsYama* infoArchivo){
+	t_list* lista = list_create();
+	int i;
+
 }
