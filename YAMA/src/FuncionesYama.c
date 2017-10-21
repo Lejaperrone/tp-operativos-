@@ -22,63 +22,65 @@ int conectarseConFs() {
 	return socketFs;
 }
 
-void levantarServidorYama(char* ip, int port) {
-	respuesta conexionNueva;
+void *manejarConexionMaster(void *cliente) {
+	int nuevoMaster;
+	memcpy(&nuevoMaster,cliente,sizeof(int));
+
+	recibirContenidoMaster(nuevoMaster);
+	return 0;
+}
+
+void levantarServidorYama(char* ip, int port){
+	struct sockaddr_in direccionCliente;
+	unsigned int tamanioDireccion = sizeof(direccionCliente);
+	respuesta respuestaId;
+	void* cliente;
+
 	servidor = crearServidorAsociado(ip, port);
-	FD_ZERO(&master);    // borra los conjuntos maestro y temporal
-	FD_ZERO(&read_fds);
-	// añadir listener al conjunto maestro
-	FD_SET(servidor, &master);
-	// seguir la pista del descriptor de fichero mayor
-	fdmax = servidor; // por ahora es éste
-	// bucle principal
+
 	while (1) {
-		read_fds = master; // cópialo
-		if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
-			perror("select");
-			exit(1);
-		}
-		// explorar conexiones existentes en busca de datos que leer
-		for (i = 0; i <= fdmax; i++) {
-			if (FD_ISSET(i, &read_fds)) { // ¡¡tenemos datos!!
-				if (i == servidor) {
-					// gestionar nuevas conexiones
-					addrlen = sizeof(direccionCliente);
-					if ((nuevoMaster = accept(servidor,
-							(struct sockaddr *) &direccionCliente, &addrlen))
-							== -1) {
-						perror("accept");
-					} else {
-						FD_SET(nuevoMaster, &master); // añadir al conjunto maestro
-						if (nuevoMaster > fdmax) {    // actualizar el máximo
-							fdmax = nuevoMaster;
-						}
-						conexionNueva = desempaquetar(nuevoMaster);
-						int idRecibido = *(int*) conexionNueva.envio;
+		int nuevoCliente;
+		if ((nuevoCliente = accept(servidor,(struct sockaddr *) &direccionCliente, &tamanioDireccion))!= -1) {
 
-						switch (idRecibido) {    //HANDSHAKE
-						case idMaster:
-							recibirContenidoMaster();
-							break;
+			pthread_t nuevoHilo;
+			pthread_attr_t attr;
 
-						}
-					}
-				} else {
-					// gestionar datos de un cliente
+			pthread_attr_init(&attr);
+			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+			respuestaId = desempaquetar(nuevoCliente);
+			int id = *(int*)respuestaId.envio;
 
+			if(id == idMaster){
+				pthread_mutex_lock(&mutexLog);
+				log_trace(logger, "Nueva conexion de un Master\n");
+				pthread_mutex_unlock(&mutexLog);
+
+				empaquetar(nuevoCliente,mensajeOk,0,0);
+
+				cliente= malloc(sizeof(int));
+				memcpy(cliente,&nuevoCliente,sizeof(int));
+
+				if (pthread_create(&nuevoHilo, &attr, &manejarConexionMaster,cliente) == -1) {
+					log_error(logger, "could not create thread");
+					perror("could not create thread");
+					log_destroy(logger);
+					exit(1);
 				}
+			}
+			else{
+				pthread_mutex_lock(&mutexLog);
+				log_trace(logger, "Conexion invalida\n");
+				pthread_mutex_unlock(&mutexLog);
 			}
 		}
 	}
-
 }
 
-void recibirContenidoMaster() {
+void recibirContenidoMaster(int nuevoMaster) {
 	respuesta nuevoJob;
 
 	iniciarListasPlanificacion();
 
-	log_trace(logger, "Conexion de Master");
 	nuevoJob = desempaquetar(nuevoMaster);
 	job* jobAPlanificar =(job*) nuevoJob.envio;
 
@@ -123,7 +125,7 @@ int esClock(){
 	return strcmp("CLOCK" ,config.ALGORITMO_BALANCEO);
 }
 
-void recibirArchivo(){
+void recibirArchivo(int nuevoMaster){
 	respuesta paquete;
 
 	paquete = desempaquetar(nuevoMaster);
@@ -134,7 +136,7 @@ void recibirArchivo(){
 }
 
 char* dameUnNombreArchivoTemporal(){
-	char* nombre;// = string_new();
+	char* nombre= string_new();
 	//string_from_format("Master-%i-temp%i",infoJob->id, inforBloque->bloque);
 	return nombre;
 }
@@ -163,7 +165,7 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 	return matriz;
 }
 
-void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int* bloques){
+void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos){
 	*nodos = list_size(info->informacionBloques);
 
 	int max =0;
@@ -180,8 +182,35 @@ void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int* bloque
 	*nodos = max;
 }
 
-void actualizarNodosConectados(informacionArchivoFsYama* infoArchivo){
-	t_list* lista = list_create();
+void llenarListaNodos(informacionArchivoFsYama* infoArchivo){
 	int i;
+	for(i=0;i<list_size(infoArchivo->informacionBloques);i++){
+		infoBloque* infoBlo = list_get(infoArchivo->informacionBloques,i);
+		agregarBloqueANodo(infoBlo->ubicacionCopia0,infoBlo->numeroBloque);
+		agregarBloqueANodo(infoBlo->ubicacionCopia1,infoBlo->numeroBloque);
+	}
+}
 
+void agregarBloqueANodo(ubicacionBloque ubicacion,int bloque){
+
+	bool funcionFind(void *nodo) {
+		return(((infoNodo*)nodo)->numero == ubicacion.numeroNodo);
+	}
+	/*
+	if (list_find(listaNodos,funcionFind)) {
+		infoNodo* nodo = (infoNodo*)list_find(listaNodos,funcionFind);
+		list_add(nodo->bloques,&bloque);
+	}
+	else{
+		infoNodo* nuevoNodo = malloc(sizeof(infoNodo));
+		nuevoNodo->activo = true;
+		list_add(nuevoNodo->bloques,&bloque);
+		nuevoNodo->carga=0;
+		nuevoNodo->ip.cadena = strdup(ubicacion.ip.cadena);
+		nuevoNodo->ip.longitud = ubicacion.ip.longitud;
+		nuevoNodo->numero = ubicacion.numeroNodo;
+		nuevoNodo->puerto = ubicacion.puerto;
+		list_add(listaNodos,nuevoNodo);
+	}
+	*/
 }

@@ -8,36 +8,57 @@
 #include "Planificador.h"
 
 void iniciarListasPlanificacion(){
-	listaNodos = list_create();
+
 	jobsAPlanificar = list_create();
 }
 
 
 void planificar(job* job){
 	infoNodo* worker = malloc(sizeof(infoNodo));
-	infoBloque* bloque = malloc(sizeof(infoBloque));
+	t_list* listaNodos = list_create();
 
 	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
 
-	actualizarNodosConectados(infoArchivo);
+	//llenarListaNodos(listaNodos,infoArchivo);
+
+	calcularDisponibilidadWorkers(listaNodos);
 
 	worker = posicionarClock(listaNodos);//POSICIONA EL CLOCK EN EL WORKER DE MAYOR DISPONIBILIDAD
 
 	int nodos,bloques;
 
-	calcularNodosYBloques(infoArchivo,&nodos,&bloques);
+	calcularNodosYBloques(infoArchivo,&nodos);
 
 	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques);
 
-
-	//CHEQUEADO QUE RECIBE TODO OK
+	//moverClock(worker, listaNodos, matrix, infoArchivo);
 
 	pthread_mutex_lock(&cantTareasHistoricas_mutex);
 	worker->cantTareasHistoricas++;
 	pthread_mutex_unlock(&cantTareasHistoricas_mutex);
 
-	//todo
+}
 
+
+void moverClock(infoNodo* worker, t_list* listaNodos, bool** nodosPorBloque, informacionArchivoFsYama* infoArchivo){
+	int i;
+	int cantidadBloques = list_size(infoArchivo->informacionBloques);
+	infoBloque* bloque = malloc(sizeof(infoBloque));
+	for(i=0;i<cantidadBloques;i++){
+		bloque = list_get(infoArchivo->informacionBloques, i);
+
+		if(bloqueEstaEn(worker,nodosPorBloque,i)){
+			worker->disponibilidad--;
+			//ASIGNAR BLOQUES TODO
+		}
+		//LEER EL ENUNCIADO(ANEXO II) LA PARTE DE REGLAS DE FUNCIONAMIENTO TODO
+	}
+
+}
+
+bool bloqueEstaEn(infoNodo* nodo,bool** nodoXbloque, int bloque){
+	int posNodo = nodo->numero;
+	return nodoXbloque[posNodo][bloque];
 }
 
 informacionArchivoFsYama* recibirInfoArchivo(job* job) {
@@ -51,18 +72,6 @@ informacionArchivoFsYama* recibirInfoArchivo(job* job) {
 	return solicitarInformacionAFS(solTransf);
 }
 
-void bloqueEstaEnWorker(infoBloque* bloque, infoNodo* worker){
-	//TODO
-}
-void seleccionarWorker(infoNodo* worker, infoBloque bloque){
-	infoNodo* workerActual = buscarNodo(listaNodos, worker->nombre);
-
-	if((worker == NULL || mayorDisponibilidad(workerActual, worker)) && estaActivo(workerActual)){
-		worker = workerActual;
-		worker->bloque = bloque;
-	}
-}
-
 infoNodo* posicionarClock(t_list* listaWorkers){
 	infoNodo* workerDesignado;
 	list_sort(listaWorkers, (void*) mayorDisponibilidad);
@@ -74,62 +83,66 @@ infoNodo* posicionarClock(t_list* listaWorkers){
 
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
 
-	if((calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker)) == true){
-		return true;
-	} else if ((calcularDisponibilidadWorker(workerMasDisp) > calcularDisponibilidadWorker(worker)) == false){
-		return false;
-	} else { //si son iguales, ordenar por carga historica
+	int maxDisponibilidad = obtenerDisponibilidadWorker(workerMasDisp);
+	int dispoinbilidad =  obtenerDisponibilidadWorker(worker);
+
+	if(maxDisponibilidad == dispoinbilidad){
 		return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
 	}
+
+	return maxDisponibilidad > dispoinbilidad;
+
 }
 
-infoNodo* buscarNodo(t_list* nodos, char* nombreNodo){
+infoNodo* buscarNodo(t_list* nodos, int numNodo){
 	bool nodoConNombre(infoNodo* nodo){
-		return string_equals_ignore_case(nodo->nombre, nombreNodo);
+		return nodo->numero == numNodo;
 	}
 
 	return list_find(nodos, (void*) nodoConNombre);
 }
 
-void calcularCargasDeWorkers(t_list* nodos){
-	int i;
-	infoNodo* worker;
-	for(i = 0; i < list_size(nodos); i++){
-		worker = list_get(nodos, i);
-		//worker->carga+=;
-	}
-}
+
 bool estaActivo(infoNodo* worker){
 	return worker->activo == 1;
 }
-t_list* consultarDetallesBloqueArchivo(char *pathArchivo, int bloque){
-	return 0; //FIXME
+
+void calcularDisponibilidadWorkers(t_list* nodos){
+	calcularWorkLoadMaxima(nodos);
+	list_iterate(nodos, (void*)calcularDisponibilidadWorker);
 }
 
-int calcularDisponibilidadWorker(infoNodo* worker){
-		return getDisponibilidadBase() + calcularPWL(worker);
+void calcularDisponibilidadWorker(infoNodo* worker){
+	worker->disponibilidad = getDisponibilidadBase() + calcularPWL(worker);
+}
+
+int obtenerDisponibilidadWorker(infoNodo* worker){//getter
+	return worker->disponibilidad;
 }
 
 uint32_t calcularPWL(infoNodo* worker){
 	if(esClock() != 0){
-		return workLoadGlobal() - worker->carga;
+		return workLoadMaxima() - worker->carga;
 	}
 	else{
 		return 0;
 	}
 }
 
-uint32_t workLoadGlobal(){
-	int i;
-	uint32_t sum;
-
-	for(i=0; i < list_size(listaNodos); i++){
-		infoNodo* nodo = list_get(listaNodos, i);
-		sum += nodo->carga;
+void calcularWorkLoadMaxima(t_list* nodos){
+	infoNodo* worker;
+	bool mayorCarga(infoNodo* nodoMasCarga, infoNodo* nodo){
+		return nodoMasCarga->carga > nodo->carga;
 	}
-	return sum;
+	list_sort(nodos,(void*)mayorCarga);
+
+	worker = list_get(nodos, 0);
+	wlMax = worker->carga;
 }
 
+uint32_t workLoadMaxima(){//getter
+	return wlMax;
+}
 void agregarJobAPlanificar(job* jobAPlanificar){
 	list_add(jobsAPlanificar,jobAPlanificar);
 }
@@ -138,22 +151,6 @@ void agregarNodo(t_list* lista, infoNodo* nodo){
 	list_add(lista,nodo);
 }
 
-
-/*t_list* obtenerNodosQueEstanEnLista(t_list* cargaNodos, t_list* listaNodos){
-	t_list* resultado = list_create();
-	int i;
-
-	for(i = 0; i < list_size(listaNodos); i++){
-		infoNodo* nodoEnLista = list_get(listaNodos, i);
-		list_add(resultado, obtenerNodoConNombre(nodoEnLista->nombre));
-	}
-
-	return resultado;
-}
-
-
-
-*/
 
 
 

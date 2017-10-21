@@ -15,40 +15,32 @@
 #include <../commons/string.h>
 
 t_list* jobsAPlanificar;
-t_list* listaNodos;
-pthread_mutex_t listaNodos_mutex;
 
 typedef struct {
-	char* nombre;
-	char* ip;
-	char* puerto;
+	int numero;
+	string ip;
+	int puerto;
 	uint32_t carga;
-	infoBloque bloque;
-	int activo;//1 activo 0 no activo;
+	t_list* bloques;
+	bool activo;
 	int cantTareasHistoricas;
+	int disponibilidad;
 }infoNodo;
 
-
-
-/*typedef struct {
-	int numero;
-	char* ip;
-	char* puerto;
-	uint32_t carga;
-	int* bloques;
-	bool activo;
-}infoNodo;*/
-
 pthread_mutex_t cantTareasHistoricas_mutex;
+uint32_t wlMax;
 
 
 void planificar(job* job);
 void seleccionarWorker(infoNodo* worker, infoBloque bloque);
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);
-infoNodo* buscarNodo(t_list* nodos, char* nombreNodo);
+infoNodo* buscarNodo(t_list* nodos, int numNodo);
 uint32_t calcularPWL(infoNodo* worker);
-uint32_t workLoadGlobal();
-int calcularDisponibilidadWorker(infoNodo* worker);
+uint32_t workLoadMaxima();
+void calcularWorkLoadMaxima(t_list* nodos);
+void calcularDisponibilidadWorkers(t_list* nodos);
+void calcularDisponibilidadWorker(infoNodo* worker);
+int obtenerDisponibilidadWorker(infoNodo* worker);
 void agregarNodo(t_list* cargaNodo,infoNodo* nodo);
 void agregarJobAPlanificar(job* jobAPlanificar);
 uint32_t cargaMaxima();
@@ -60,6 +52,7 @@ void bloqueEstaEnWorker(infoBloque* bloque, infoNodo* worker);
 informacionArchivoFsYama* recibirInfoArchivo(job* job) ;
 bool estaActivo(infoNodo* worker);
 infoNodo* posicionarClock(t_list* listaWorkersConBloques);
+bool bloqueEstaEn(infoNodo* nodo,bool** nodoXbloque, int bloque);
 
 
 #endif /* PLANIFICADOR_H_ */
