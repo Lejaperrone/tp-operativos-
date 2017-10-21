@@ -26,13 +26,13 @@ void enviarBloqueAFS(int numeroBloque) {
 
 int setBloque(int numeroBloque, char* datos) {
 	int fd = open(config.RUTA_DATABIN, O_RDWR);
-	char* mapaDataBin = mmap(0, strlen(datos), PROT_READ | PROT_WRITE, MAP_SHARED, fd, mb*numeroBloque);
+	char* mapaDataBin = mmap(0, strlen(datos)+1, PROT_READ | PROT_WRITE, MAP_SHARED, fd, mb*numeroBloque);
 	memcpy(mapaDataBin, datos, strlen(datos));
 	if (msync(mapaDataBin, strlen(datos), MS_SYNC) == -1)
 	{
 		perror("Could not sync the file to disk");
 	}
-	if (munmap(mapaDataBin, strlen(datos)) == -1)
+	if (munmap(mapaDataBin, strlen(datos)+1) == -1)
 	{
 		close(fd);
 		perror("Error un-mmapping the file");
