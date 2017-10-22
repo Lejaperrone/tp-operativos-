@@ -145,7 +145,7 @@ void inicializarEstructuras(){
 }
 
 bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques){
-	bool** matriz = (bool**)malloc(nodos*sizeof(bool));
+	bool** matriz = (bool**)malloc(nodos*sizeof(bool*));
 
 	int j,k;
 
