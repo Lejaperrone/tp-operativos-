@@ -24,11 +24,11 @@ void esperarJobDeMaster() {
 		int status;
 		if ((status = system(command)) < 0) {
 			log_error(logger,"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA TRANSFORMACION");
-			//Enviar codigo error a master
+			empaquetar(socketMaster,mensajeError,0,&status);
 		}
 		free(command);
 		log_trace(logger,"Status transformacion:%d", status);
-		//Enviar codigo OK a master
+		empaquetar(socketMaster,mensajeOk,0,&status);
 
 		break;
 
