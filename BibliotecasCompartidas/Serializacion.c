@@ -22,11 +22,19 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeInfoArchivo:
 		case mensajeProcesarTransformacion:
 		case mensajeDesignarWorker:
+
 		case mensajeOk:
 			tamanio =1;
 			bloque = malloc(1);
 			char a = 'a';
 			memcpy(bloque,&a,1);
+			break;
+
+		case mensajeError:
+			tamanio =1;
+			bloque = malloc(1);
+			char b = 'b';
+			memcpy(bloque,&b,1);
 			break;
 
 		case mensajeArchivo:
@@ -43,6 +51,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeEnvioBloqueANodo:
+
 		case mensajeRespuestaGetBloque:
 			tamanio = tamanioS;
 			bloque = malloc(tamanio);
@@ -52,6 +61,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 		case mensajeRespuestaEnvioBloqueANodo:
 		case mensajeNumeroCopiaBloqueANodo:
+
 		case mensajeNumeroLecturaBloqueANodo:
 			tamanio = sizeof(int);
 			bloque = malloc(tamanio);
@@ -111,6 +121,12 @@ respuesta desempaquetar(int socket){
 			case mensajeProcesarTransformacion://todo
 			case mensajeDesignarWorker://todo
 			case mensajeOk:
+				bufferOk = malloc(sizeof(char));
+				recv(socket,bufferOk,sizeof(char),0);
+				free(bufferOk);
+				break;
+
+			case mensajeError:
 				bufferOk = malloc(sizeof(char));
 				recv(socket,bufferOk,sizeof(char),0);
 				free(bufferOk);

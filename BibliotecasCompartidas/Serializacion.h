@@ -39,6 +39,7 @@
 #define mensajeRespuestaInfoNodos 21
 #define mensajeNumeroLecturaBloqueANodo 22
 #define mensajeRespuestaTransformacion 23
+#define mensajeError 24
 
 typedef struct{
 	int idMensaje;
