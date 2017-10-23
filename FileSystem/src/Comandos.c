@@ -21,7 +21,7 @@ char* devolverRuta(char* comando, int numeroParametro){
 	for (i = 0; i < numeroParametro; ++i){
 		ruta = strtok(NULL, " ");
 	}
-	free(copiaComando);
+	//free(copiaComando);
 	return ruta;
 }
 
@@ -58,8 +58,6 @@ int copiarArchivo(char* comando){
 	}
 
 	nombre = string_reverse(nombre);
-
-	printf("ruta normal %s\n", rutaNormal);
 
 	struct stat fileStat;
 	if(stat(rutaNormal,&fileStat) < 0){
@@ -141,7 +139,7 @@ int listarArchivos(char* comando){
 	informacionNodo info = *(informacionNodo*)list_get(nodosConectados,0);
 	int a = 1;
 	char* b;
-	b = leerArchivo("hola/chau/hola3.txt");
+	b = leerArchivo("/hola/chau/hola3.txt");
 
 	return 0;
 }

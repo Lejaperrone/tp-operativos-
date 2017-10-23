@@ -39,6 +39,8 @@ void inicializarTablaDirectorios();
 
 char* rutaSinPrefijoYama(char* ruta);
 
+int bytesACortar(char* mapa);
+
 void guardarTablaDirectorios();
 
 char* buscarRutaArchivo(char* ruta);
