@@ -20,10 +20,5 @@ int main(int argc, char *argv[]) {
 	esperarConexionesMaster(config.IP_NODO, config.PUERTO_WORKER);
 	//levantarServidorWorker(config.IP_NODO, config.PUERTO_WORKER);
 
-	esperarJobDeMaster();
-
-	while(1){
-
-	}
 	return EXIT_SUCCESS;
 }

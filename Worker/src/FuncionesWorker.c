@@ -1,24 +1,39 @@
-/*
- * FuncionesWorker.c
- *
- *  Created on: 24/9/2017
- *      Author: utnso
- */
 #include "FuncionesWorker.h"
 
-void esperarConexionesMaster(char* ip, int port){
-	levantarServidorWorker(ip,port);//FIXME: CAMBIAR ARCHIVO CONFIGURACION CON IP NODO
+void esperarConexionesMaster(char* ip, int port) {
+	levantarServidorWorker(ip, port);
 }
 
-void esperarJobDeMaster(){
+void esperarJobDeMaster() {
 	respuesta instruccionMaster;
-	log_trace(logger,"Esperando instruccion de Master");
+	log_trace(logger, "Esperando instruccion de Master");
 
 	instruccionMaster = desempaquetar(socketMaster);
 
-	switch(instruccionMaster.idMensaje){
+	switch (instruccionMaster.idMensaje) {
 	case mensajeProcesarTransformacion:
-		ejecutarTransformacion();//LE TIENE QUE LLEGAR EL ARCHIVO DE ORIGEN EL DE DESTINO Y EL SCRIPT A EJECUTAR
+
+		log_trace(logger, "Iniciando Transformacion");
+
+		//Recibir script, bloqueId, y bytesRestantes
+
+		char* contenidoScript = "transformador";
+		FILE* script = crearScript(contenidoScript, mensajeProcesarTransformacion);
+
+		char* command = string_from_format("echo Ejecutando Transformacion");
+		int status;
+		if ((status = system(command)) < 0) {
+			log_error(logger,"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA TRANSFORMACION");
+			//Enviar codigo error a master
+		}
+		free(command);
+		log_trace(logger,"Status transformacion:%d", status);
+		//Enviar codigo OK a master
+
+		break;
+
+		break;
+
 		break;
 	case mensajeProcesarRedLocal:
 		break;
@@ -28,20 +43,45 @@ void esperarJobDeMaster(){
 	//forkear por cada tarea recibida por el master
 }
 
-void ejecutarTransformacion(){//PARA PROBAR
-	/*pid_t pid;
-	pid = fork();
-	if(pid == -1){
-		log_error(logger,"Error al crear el hijo");
-	}else if(pid == 0){
-		//logica del hijo
-	}else{
-		//logica del padre
-	}*/
-	//system("echo Ejecutando Transformacion | ./script_prueba > /tmp/resultado" );
-	system("echo Ejecutando Transformacion" );
+FILE* crearScript(char * bufferScript, int etapa) {
+	int aux, auxChmod;
+	char mode[] = "0777";
+	FILE* script;
+	aux = string_length(bufferScript);
+	printf("size archivo:%d\n", aux);
+	if (etapa == mensajeProcesarTransformacion) {
+		printf("Se crea el archivo transformador\n");
+		char* ruta = string_from_format("%s/transformador.sh",config.RUTA_DATABIN);
+		script = fopen(ruta, "w+");
+	} else {
+		printf("Se crea el archivo reductor\n");
+		char* ruta = string_from_format("%s/reductor.sh",config.RUTA_DATABIN);
+		script = fopen(ruta, "w+");
+	}
+	fwrite(bufferScript, sizeof(char), aux, script);
+	auxChmod = strtol(mode, 0, 8);
+	if (chmod(config.RUTA_DATABIN, auxChmod) < 0) {
+		log_error(logger,"NO SE PUDO DAR PERMISOS DE EJECUCION AL ARCHIVO");
+	}
+	fclose(script);
+	return script;
 }
-void levantarServidorWorker(char* ip, int port){
+
+void ejecutarTransformacion() {		//PARA PROBAR
+	/*pid_t pid;
+	 pid = fork();
+	 if(pid == -1){
+	 log_error(logger,"Error al crear el hijo");
+	 }else if(pid == 0){
+	 //logica del hijo
+	 }else{
+	 //logica del padre
+	 }*/
+	//system("echo Ejecutando Transformacion | ./script_prueba > /tmp/resultado" );
+	system("echo Ejecutando Transformacion");
+}
+
+void levantarServidorWorker(char* ip, int port) {
 	struct sockaddr_in direccionCliente;
 	int server;
 	fd_set master;
@@ -69,8 +109,9 @@ void levantarServidorWorker(char* ip, int port){
 				if (i == server) {
 					// gestionar nuevas conexiones
 					tamanioDireccion = sizeof(direccionCliente);
-					if ((socketMaster = accept(server,(struct sockaddr *) &direccionCliente, &tamanioDireccion))
-							== -1) {
+					if ((socketMaster = accept(server,
+							(struct sockaddr *) &direccionCliente,
+							&tamanioDireccion)) == -1) {
 						perror("accept");
 					} else {
 						FD_SET(socketMaster, &master);
@@ -90,12 +131,12 @@ void levantarServidorWorker(char* ip, int port){
 	}
 }
 
-void realizarHandshake(int socket){
+void realizarHandshake(int socket) {
 	respuesta conexionNueva;
 	conexionNueva = desempaquetar(socket);
 
-	if(conexionNueva.idMensaje == 1){
-		if(*(int*)conexionNueva.envio == 2){
+	if (conexionNueva.idMensaje == 1) {
+		if (*(int*) conexionNueva.envio == 2) {
 			log_trace(logger, "Conexion con Master establecida");
 		}
 	}
