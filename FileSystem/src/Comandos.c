@@ -129,19 +129,21 @@ int eliminarDirectorio(char* comando){
 }
 
 int listarArchivos(char* comando){
-	/*int success = 1;
-	char* path = devolverRuta(comando, 1);
+	int success = 1;
+	char* rutaYamafs = devolverRuta(comando, 1);
+	rutaYamafs = rutaSinPrefijoYama(rutaYamafs);
+	printf("%s\n", rutaYamafs);
+	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
 
-	if (!validarDirectorio(path))
-		return success;
+	char* command = malloc(strlen(rutaFsLocal) + 4);
+	memset(command, 0,strlen(rutaFsLocal) + 4);
+	memcpy(command, "ls ", 3);
+	memcpy(command + 3, rutaFsLocal, strlen(rutaFsLocal));
+	printf("-->%s\n", command);
 
-	success = system(comando);*/
-	informacionNodo info = *(informacionNodo*)list_get(nodosConectados,0);
-	int a = 1;
-	char* b;
-	b = leerArchivo("/hola/chau/hola3.txt");
+	success = system(command);
 
-	return 0;
+	return success;
 }
 
 int crearDirectorio(char* comando){
@@ -159,7 +161,7 @@ int crearDirectorio(char* comando){
 
 	path = rutaSinPrefijoYama(pathComando);
 	if (strcmp("/", path) == 0){
-		printf("no se creo el directorio, el directorio no puede se root\n");
+		printf("no se creo el directorio, el directorio no puede ser root\n");
 		return 0;
 	}
 
