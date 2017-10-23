@@ -65,7 +65,7 @@ void inicializarEstructuras();
 
 bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques);
 
-void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos);
+void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques);
 
 void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
 

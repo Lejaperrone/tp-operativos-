@@ -97,7 +97,8 @@ void recibirMensajesFileSystem(int socketFs) {
 	case mensajeNumeroCopiaBloqueANodo:
 		bloqueArchivo = desempaquetar(socketFs);
 		memcpy(&bloqueId, numeroBloque.envio, sizeof(int));
-		data = malloc(bloqueArchivo.size);
+		data = malloc(bloqueArchivo.size + 1);
+		memset(data, 0, bloqueArchivo.size + 1);
 		memcpy(data, bloqueArchivo.envio, bloqueArchivo.size);
 		setBloque(bloqueId, data);
 		free(data);

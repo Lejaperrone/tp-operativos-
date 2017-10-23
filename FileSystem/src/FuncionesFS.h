@@ -33,8 +33,13 @@ extern t_list* bitmapsNodos;;
 extern t_list* nodosConectados;
 extern char* rutaBitmaps;
 
+int validarArchivoYamaFS(char* ruta);
 
 void inicializarTablaDirectorios();
+
+char* rutaSinPrefijoYama(char* ruta);
+
+int bytesACortar(char* mapa);
 
 void guardarTablaDirectorios();
 
@@ -75,3 +80,7 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos);
 void obtenerInfoNodo(ubicacionBloque* ubicacion);
 
 char* leerArchivo(char* rutaArchivo);
+
+char* rutaSinArchivo(char* rutaArchivo);
+
+char* ultimaParteDeRuta(char* rutaArchivo);

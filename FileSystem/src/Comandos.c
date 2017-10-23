@@ -21,7 +21,7 @@ char* devolverRuta(char* comando, int numeroParametro){
 	for (i = 0; i < numeroParametro; ++i){
 		ruta = strtok(NULL, " ");
 	}
-	free(copiaComando);
+	//free(copiaComando);
 	return ruta;
 }
 
@@ -58,8 +58,6 @@ int copiarArchivo(char* comando){
 	}
 
 	nombre = string_reverse(nombre);
-
-	printf("ruta normal %s\n", rutaNormal);
 
 	struct stat fileStat;
 	if(stat(rutaNormal,&fileStat) < 0){
@@ -141,21 +139,57 @@ int listarArchivos(char* comando){
 	informacionNodo info = *(informacionNodo*)list_get(nodosConectados,0);
 	int a = 1;
 	char* b;
-	b = leerArchivo("hola/chau/hola3.txt");
+	b = leerArchivo("/hola/chau/hola3.txt");
 
 	return 0;
 }
 
 int crearDirectorio(char* comando){
-	int success = 1;
-	char* path = devolverRuta(comando, 1);
+	int success = 1, i = 0;
+	char* pathComando = devolverRuta(comando, 1);
+	char* path;
+	char* rutaPadre;
+	int indexPadre = 0;
+	char* nombre;
 
-	if (validarDirectorio(path))
-		return success;
+	if (validarArchivoYamaFS(pathComando) == 0){
+		printf("no se creo el directorio, ruta invalida\n");
+		return 0;
+	}
 
-	success = system(comando);
+	path = rutaSinPrefijoYama(pathComando);
+	if (strcmp("/", path) == 0){
+		printf("no se creo el directorio, el directorio no puede se root\n");
+		return 0;
+	}
 
-	return success;
+	success = getIndexDirectorio(path);
+	printf("success %d\n", success);
+
+	if (success == -1){
+		rutaPadre = rutaSinArchivo(path);
+		indexPadre = getIndexDirectorio(rutaPadre);
+		if (indexPadre == -1)
+			printf("no existe ruta padre %d\n", success);
+		else{
+			while(tablaDeDirectorios[i].index != -1){
+				++i;
+			}
+			tablaDeDirectorios[i].index = i;
+			tablaDeDirectorios[i].padre = indexPadre;
+			nombre = ultimaParteDeRuta(path);
+			memcpy(tablaDeDirectorios[i].nombre, nombre, strlen(nombre));
+			guardarTablaDirectorios();
+		}
+
+	}
+	else
+		printf("ya existe el directorio\n");
+
+
+	//success = system(comando);
+
+	return 0;
 }
 
 int mostrarArchivo(char* comando){

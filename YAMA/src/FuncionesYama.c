@@ -145,16 +145,11 @@ void inicializarEstructuras(){
 }
 
 bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques){
-	int j;
-	bool **matriz = malloc(sizeof(bool*) * nodos);
-	if(matriz){
-	  for (j = 0; j < nodos; j++){
-	    matriz[j] = malloc(sizeof(bool) * bloques);
-	  }
-	}
+	bool** matriz = (bool**)malloc((nodos+1)*sizeof(bool*));
 
-	int k;
-	for(j=0;j<nodos;j++){
+	int j,k;
+	for(j=0;j<=nodos;j++){
+		matriz[j]= malloc(bloques * sizeof(bool));
 		for(k=0;k<bloques;k++){
 			matriz[j][k] = false;
 		}
@@ -169,8 +164,8 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 	return matriz;
 }
 
-void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos){
-	*nodos = list_size(info->informacionBloques);
+void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques){
+	*bloques = list_size(info->informacionBloques);
 
 	int max =0;
 	int i;

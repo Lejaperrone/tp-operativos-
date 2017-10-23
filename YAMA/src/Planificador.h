@@ -32,6 +32,8 @@ uint32_t wlMax;
 
 
 void planificar(job* job);
+infoNodo* inicializarWorker();
+void iniciarListasPlanificacion();
 void seleccionarWorker(infoNodo* worker, infoBloque bloque);
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);
 infoNodo* buscarNodo(t_list* nodos, int numNodo);

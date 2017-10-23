@@ -124,6 +124,7 @@ typedef struct parametrosEnvioBloque{
     int sizeBloque;
     int offset;
     int bloque;
+    int restanteAnterior;
 }parametrosEnvioBloque;
 
 int redondearHaciaArriba(double num);
