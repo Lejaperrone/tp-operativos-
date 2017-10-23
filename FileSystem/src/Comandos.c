@@ -257,10 +257,19 @@ int mover(char* comando){
 
 int generarArchivoMD5(char* comando){
 	int success = 1;
-	char* ruta = devolverRuta(comando,1);
-	char* command = malloc(8 + strlen(ruta));
+	char* rutaArchivoYamafs = devolverRuta(comando,1);
+	printf("-->%s\n",rutaArchivoYamafs);
+	char* rutaYamafs = rutaSinArchivo(rutaArchivoYamafs);
+	printf("-->%s\n",rutaYamafs);
+	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
+	printf("-->%s\n",rutaFsLocal);
+	char* nombreArchivo = string_substring_from(rutaArchivoYamafs, strlen(rutaYamafs));
+	printf("-->%s\n",nombreArchivo);
+	char* command = malloc(8 + strlen(rutaFsLocal) + strlen(nombreArchivo));
 	memcpy(command, "md5sum ", 7);
-	memcpy(command + 7, ruta, strlen(ruta)+1);
+	memcpy(command + 7, rutaFsLocal, strlen(rutaFsLocal));
+	memcpy(command + 7 + strlen(rutaFsLocal), nombreArchivo, strlen(nombreArchivo)+1);
+	printf("-->%s\n",command);
 
 	success = system(command);
 	printf("\n");

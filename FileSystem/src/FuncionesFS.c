@@ -216,7 +216,7 @@ char* rutaSinArchivo(char* rutaArchivo){
 
 	printf("ruta sin archivo %s\n", rutaFinal);
 
-	free(rutaFinal);
+	//free(rutaFinal);
 	free(currentChar);
 	free(nombreInvertido);
 
