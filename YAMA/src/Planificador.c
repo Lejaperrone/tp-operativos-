@@ -24,7 +24,7 @@ void planificar(job* job){
 
 	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
 
-	//llenarListaNodos(listaNodos,infoArchivo);
+	llenarListaNodos(listaNodos,infoArchivo);
 
 	calcularDisponibilidadWorkers(listaNodos);
 
@@ -70,17 +70,17 @@ void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBl
 	}
 
 }
-infoNodo* avanzarClock(infoNodo* worker, t_list* listaNodos){
+void avanzarClock(infoNodo* worker, t_list* listaNodos){
 	bool nodoConNumero(infoNodo* nodo){
 		return nodo->numero == worker->numero;
 	}
-	infoNodo* siguienteWorker;
+	//infoNodo* siguienteWorker;
 
-	list_remove_by_condition(listaNodos, nodoConNumero);
+	list_remove_by_condition(listaNodos,nodoConNumero);
 	list_add_in_index(listaNodos, list_size(listaNodos), worker);
 
-	siguienteWorker = list_get(listaNodos, 0);
-	return siguienteWorker;//FIJARSE DE IGUALAR WORKER A SIGUIENTE WORKER FIXME
+	//siguienteWorker = list_get(listaNodos, 0);
+	//return siguienteWorker;//FIJARSE DE IGUALAR WORKER A SIGUIENTE WORKER FIXME
 }
 bool bloqueEstaEn(infoNodo* nodo,bool** nodoXbloque, int bloque){
 	int posNodo = nodo->numero;
