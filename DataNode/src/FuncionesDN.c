@@ -109,7 +109,6 @@ void recibirMensajesFileSystem(int socketFs) {
 	case mensajeNumeroLecturaBloqueANodo:
 		memcpy(&bloqueId, numeroBloque.envio, sizeof(int));
 		data = getBloque(bloqueId);
-		printf("data %s\n",data);
 		empaquetar(socketFs, mensajeRespuestaGetBloque, strlen(data),data);
 		free(numeroBloque.envio);
 		break;

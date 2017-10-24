@@ -260,6 +260,7 @@ char* leerArchivo(char* rutaArchivo){
 	char** arrayInfoBloque;
 	int posicionNodoAPedir = -1;
 	int numeroBloqueDataBin = -1;
+	parametrosLecturaBloque params;
 
 	memset(nombreInvertido,0,strlen(rutaArchivo)+1);
 	memset(rutaFinal,0,strlen(rutaArchivo)+1);
@@ -273,18 +274,18 @@ char* leerArchivo(char* rutaArchivo){
 	}
 
 
-	char* nombre = string_reverse(nombreInvertido);
+	char* nombre = malloc(index + 1);
+	memset(nombre,0,index + 1);
+	memcpy(nombre, string_reverse(nombreInvertido), index);
 
 	memcpy(rutaFinal, rutaArchivo, strlen(rutaArchivo)-index);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaFinal);
-	char* rutaArchivoEnMetadata = malloc(strlen(rutaArchivos)+strlen(nombre)+1);
-	memset(rutaArchivoEnMetadata,0,strlen(rutaArchivos)+strlen(nombre)+1);
+	char* rutaArchivoEnMetadata = malloc(strlen(rutaArchivos) + strlen(nombre) + 2);
+	memset(rutaArchivoEnMetadata,0,strlen(rutaArchivos) + strlen(nombre) + 2);
 	memcpy(rutaArchivoEnMetadata, rutaMetadata, strlen(rutaMetadata));
 	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata), "/", 1);
 	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata) + 1, nombre, strlen(nombre));
-
-	printf("ruta a archivo %s\n", rutaArchivoEnMetadata);
 
 	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
 	FILE* informacionArchivo = fopen(rutaArchivoEnMetadata,"r");
@@ -300,6 +301,7 @@ char* leerArchivo(char* rutaArchivo){
 		sizeAux -= mb;
 		++cantBloquesArchivo;
 	}
+	char* respuestas[cantBloquesArchivo];
 
 	for (j = 0; j < cantidadNodos; ++j)
 		peticiones[j] = 0;
@@ -335,16 +337,30 @@ char* leerArchivo(char* rutaArchivo){
 
 			else if (peticiones[posicionCopiaEnIndexNodo[l]] == peticiones[posicionNodoAPedir])
 				if(cargaNodos[posicionCopiaEnIndexNodo[l]] < cargaNodos[posicionNodoAPedir])
-
 					posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
+
 		}
 		info = *(informacionNodo*)list_get(nodosConectados,posicionNodoAPedir);
 		numeroBloqueDataBin = atoi(arrayInfoBloque[1]);
-		empaquetar(info.socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&numeroBloqueDataBin);
+
+		pthread_attr_t attr;
+		pthread_t nuevoHilo;
+
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+		params.bloque = numeroBloqueDataBin;
+		params.socket = info.socket;
+		params.contenidoBloque = respuestas[i];
+
+		pthread_create(&nuevoHilo, &attr, &leerDeDataNode,(void*) &params);
+		sem_wait(&pedidoFS);
+
+
 	}
 
 
-	printf("ruta en metadata %s\n", rutaArchivoEnMetadata);
+	printf("ruta en metadata %s\n", respuestas[0]);
 
 	free(currentChar);
 	free(rutaArchivoEnMetadata);
@@ -354,8 +370,20 @@ char* leerArchivo(char* rutaArchivo){
 	return "a";
 }
 
+void* leerDeDataNode(void* parametros){
+	 struct parametrosLecturaBloque* params;
+	 params = (struct parametrosLecturaBloque*) parametros;
+	 respuesta respuesta;
+	 empaquetar(params->socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&params->bloque);
+	 respuesta = desempaquetar(params->socket);
+	 params->contenidoBloque = malloc(respuesta.size + 1);
+	 memset(params->contenidoBloque, 0, respuesta.size + 1);
+	 memcpy(params->contenidoBloque, respuesta.envio, respuesta.size);
+	 sem_post(&pedidoFS);
+	 return 0;
+}
+
 void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
-	int mockSizeArchivo = 2*mb;
 	respuesta respuestaPedidoAlmacenar;
 	int totalRestante = 0;
 
@@ -417,9 +445,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		printf("bloques libres %d\n", bloquesLibreNodo[i]);
 	}
 
-	for (i = 0; i < cantBloquesArchivo; ++i){	//Primer for: itera por cada bloque que ocupa el archivo
-		printf("-------------------offset %d\n", offset);
-		printf("--%d\n",cantBloquesArchivo);	//Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
+	for (i = 0; i < cantBloquesArchivo; ++i){	//Primer for: itera por cada bloque que ocupa el archivo //Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
 		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
 			masBloquesLibres[j] = -1;				//criterio
 		for (j = 0; j < cantidadNodos; ++j)
