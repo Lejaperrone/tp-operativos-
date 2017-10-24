@@ -216,7 +216,7 @@ char* rutaSinArchivo(char* rutaArchivo){
 
 	printf("ruta sin archivo %s\n", rutaFinal);
 
-	free(rutaFinal);
+	//free(rutaFinal);
 	free(currentChar);
 	free(nombreInvertido);
 
@@ -240,11 +240,9 @@ char* ultimaParteDeRuta(char* rutaArchivo){
 	}
 
 	free(currentChar);
-	free(nombreInvertido);
 
 	char* nombre = string_reverse(nombreInvertido);
-
-	printf("nombre archivo %s\n", nombre);
+	free(nombreInvertido);
 
 	return nombre;
 }
@@ -262,6 +260,7 @@ char* leerArchivo(char* rutaArchivo){
 	char** arrayInfoBloque;
 	int posicionNodoAPedir = -1;
 	int numeroBloqueDataBin = -1;
+	parametrosLecturaBloque params;
 
 	memset(nombreInvertido,0,strlen(rutaArchivo)+1);
 	memset(rutaFinal,0,strlen(rutaArchivo)+1);
@@ -275,18 +274,18 @@ char* leerArchivo(char* rutaArchivo){
 	}
 
 
-	char* nombre = string_reverse(nombreInvertido);
+	char* nombre = malloc(index + 1);
+	memset(nombre,0,index + 1);
+	memcpy(nombre, string_reverse(nombreInvertido), index);
 
 	memcpy(rutaFinal, rutaArchivo, strlen(rutaArchivo)-index);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaFinal);
-	char* rutaArchivoEnMetadata = malloc(strlen(rutaArchivos)+strlen(nombre)+1);
-	memset(rutaArchivoEnMetadata,0,strlen(rutaArchivos)+strlen(nombre)+1);
+	char* rutaArchivoEnMetadata = malloc(strlen(rutaArchivos) + strlen(nombre) + 2);
+	memset(rutaArchivoEnMetadata,0,strlen(rutaArchivos) + strlen(nombre) + 2);
 	memcpy(rutaArchivoEnMetadata, rutaMetadata, strlen(rutaMetadata));
 	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata), "/", 1);
 	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata) + 1, nombre, strlen(nombre));
-
-	printf("ruta a archivo %s\n", rutaArchivoEnMetadata);
 
 	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
 	FILE* informacionArchivo = fopen(rutaArchivoEnMetadata,"r");
@@ -302,6 +301,7 @@ char* leerArchivo(char* rutaArchivo){
 		sizeAux -= mb;
 		++cantBloquesArchivo;
 	}
+	char* respuestas[cantBloquesArchivo];
 
 	for (j = 0; j < cantidadNodos; ++j)
 		peticiones[j] = 0;
@@ -337,16 +337,30 @@ char* leerArchivo(char* rutaArchivo){
 
 			else if (peticiones[posicionCopiaEnIndexNodo[l]] == peticiones[posicionNodoAPedir])
 				if(cargaNodos[posicionCopiaEnIndexNodo[l]] < cargaNodos[posicionNodoAPedir])
-
 					posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
+
 		}
 		info = *(informacionNodo*)list_get(nodosConectados,posicionNodoAPedir);
 		numeroBloqueDataBin = atoi(arrayInfoBloque[1]);
-		empaquetar(info.socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&numeroBloqueDataBin);
+
+		pthread_attr_t attr;
+		pthread_t nuevoHilo;
+
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+		params.bloque = numeroBloqueDataBin;
+		params.socket = info.socket;
+		params.contenidoBloque = respuestas[i];
+
+		pthread_create(&nuevoHilo, &attr, &leerDeDataNode,(void*) &params);
+		sem_wait(&pedidoFS);
+
+
 	}
 
 
-	printf("ruta en metadata %s\n", rutaArchivoEnMetadata);
+	printf("ruta en metadata %s\n", respuestas[0]);
 
 	free(currentChar);
 	free(rutaArchivoEnMetadata);
@@ -356,8 +370,20 @@ char* leerArchivo(char* rutaArchivo){
 	return "a";
 }
 
+void* leerDeDataNode(void* parametros){
+	 struct parametrosLecturaBloque* params;
+	 params = (struct parametrosLecturaBloque*) parametros;
+	 respuesta respuesta;
+	 empaquetar(params->socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&params->bloque);
+	 respuesta = desempaquetar(params->socket);
+	 params->contenidoBloque = malloc(respuesta.size + 1);
+	 memset(params->contenidoBloque, 0, respuesta.size + 1);
+	 memcpy(params->contenidoBloque, respuesta.envio, respuesta.size);
+	 sem_post(&pedidoFS);
+	 return 0;
+}
+
 void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
-	int mockSizeArchivo = 2*mb;
 	respuesta respuestaPedidoAlmacenar;
 	int totalRestante = 0;
 
@@ -419,9 +445,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		printf("bloques libres %d\n", bloquesLibreNodo[i]);
 	}
 
-	for (i = 0; i < cantBloquesArchivo; ++i){	//Primer for: itera por cada bloque que ocupa el archivo
-		printf("-------------------offset %d\n", offset);
-		printf("--%d\n",cantBloquesArchivo);	//Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
+	for (i = 0; i < cantBloquesArchivo; ++i){	//Primer for: itera por cada bloque que ocupa el archivo //Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
 		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
 			masBloquesLibres[j] = -1;				//criterio
 		for (j = 0; j < cantidadNodos; ++j)
@@ -552,23 +576,18 @@ void actualizarBitmapNodos(){
 		infoAux = *(informacionNodo*)list_get(nodosConectados,j);
 
 		int longitudPath = strlen(rutaBitmaps);
-		char* ruta = malloc(strlen(rutaBitmaps));
+		char* ruta = malloc(strlen(rutaBitmaps) + 1);
+		memset(ruta, 0, strlen(rutaBitmaps) + 1);
 		memcpy(ruta, rutaBitmaps, strlen(rutaBitmaps));
 		char* nombreNodo = string_from_format("NODO%d",infoAux.numeroNodo);
 		int longitudNombre = strlen(nombreNodo);
 		int longitudSufijo = strlen(sufijo);
-		char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
+		char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo + 1);
 		memset(pathParticular,0,longitudPath + longitudNombre + longitudSufijo +1);
 
 		memcpy(pathParticular, ruta, longitudPath);
-		printf("partial path %s\n", rutaBitmaps);
 		memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
-		printf("partial path %d\n", longitudPath);
 		memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
-
-		printf("numero nodo %s\n", sufijo);
-
-		printf("--path-- %s\n", pathParticular);
 
 		FILE* archivoBitmap = fopen(pathParticular, "wb+");
 
@@ -608,17 +627,19 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 	int longitudNombre = strlen(nombreNodo);
 	int longitudSufijo = strlen(sufijo);
 
-	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo);
+	char* pathParticular = malloc(longitudPath + longitudNombre + longitudSufijo + 1);
+	memset(pathParticular, 0, longitudPath + longitudNombre + longitudSufijo + 1);
 
-	char* espacioBitarray = malloc(sizeNodo);
-	char* currentChar = malloc(sizeof(char));
+	char* espacioBitarray = malloc(sizeNodo+1);
+	char* currentChar = malloc(sizeof(char)+1);
+	memset(espacioBitarray, 0, sizeNodo + 1);
+	memset(currentChar, 0, 2);
 	int posicion = 0;
 
 	memcpy(pathParticular, rutaBitmaps, longitudPath);
 	memcpy(pathParticular + longitudPath, nombreNodo, longitudNombre);
 	memcpy(pathParticular + longitudPath + longitudNombre, sufijo, longitudSufijo);
 
-	printf("path %s", pathParticular);
 	FILE* bitmapFile;
 
 	if (!validarArchivo(pathParticular) == 1){
@@ -644,7 +665,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 		fread(currentChar, 1, 1, bitmapFile);
 	}
 
-	int contador = 0;
+	/*int contador = 0;
 	while(contador < posicion){
 		printf("bit %d\n", bitarray_test_bit(bitmap,contador));
 		++contador;
@@ -690,6 +711,8 @@ void actualizarArchivoNodos(){
 	config_set_value(nodos, "NODOS", arrayNodos);
 
 	config_save_in_file(nodos, pathArchivo);
+
+	free(arrayNodos);
 }
 
 char* generarArrayNodos(){
@@ -704,7 +727,8 @@ char* generarArrayNodos(){
 		indexes[i] = info.numeroNodo;
 		longitudSting += strlen(string_itoa(info.numeroNodo));
 	}
-	array = malloc(longitudSting);
+	array = malloc(longitudSting + 1);
+	memset(array, 0,longitudSting + 1);
 	memcpy(array,"[",1);
 	++longitudEscrito;
 	for (i = 0; i < cantidadNodos; ++i){

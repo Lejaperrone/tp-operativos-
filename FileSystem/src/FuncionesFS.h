@@ -41,6 +41,8 @@ char* rutaSinPrefijoYama(char* ruta);
 
 int bytesACortar(char* mapa);
 
+void* leerDeDataNode(void* parametros);
+
 void guardarTablaDirectorios();
 
 char* buscarRutaArchivo(char* ruta);

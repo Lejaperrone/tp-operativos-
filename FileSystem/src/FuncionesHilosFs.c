@@ -99,8 +99,8 @@ void* consolaFS(){
 
 	while (1) {
 		printf("Introduzca comando: ");
-		char* comando = malloc(sizeof(char) * sizeComando);
-		bzero(comando, sizeComando);
+		char* comando = malloc(sizeof(char) * sizeComando + 1);
+		memset(comando, 0,sizeComando + 1);
 		comando = readline(">");
 		if (comando)
 			add_history(comando);

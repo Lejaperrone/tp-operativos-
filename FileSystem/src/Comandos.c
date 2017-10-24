@@ -21,7 +21,7 @@ char* devolverRuta(char* comando, int numeroParametro){
 	for (i = 0; i < numeroParametro; ++i){
 		ruta = strtok(NULL, " ");
 	}
-	free(copiaComando);
+	//free(copiaComando);
 	return ruta;
 }
 
@@ -58,8 +58,6 @@ int copiarArchivo(char* comando){
 	}
 
 	nombre = string_reverse(nombre);
-
-	printf("ruta normal %s\n", rutaNormal);
 
 	struct stat fileStat;
 	if(stat(rutaNormal,&fileStat) < 0){
@@ -131,19 +129,21 @@ int eliminarDirectorio(char* comando){
 }
 
 int listarArchivos(char* comando){
-	/*int success = 1;
-	char* path = devolverRuta(comando, 1);
+	int success = 1;
+	char* rutaYamafs = devolverRuta(comando, 1);
+	rutaYamafs = rutaSinPrefijoYama(rutaYamafs);
+	printf("%s\n", rutaYamafs);
+	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
 
-	if (!validarDirectorio(path))
-		return success;
+	char* command = malloc(strlen(rutaFsLocal) + 4);
+	memset(command, 0,strlen(rutaFsLocal) + 4);
+	memcpy(command, "ls ", 3);
+	memcpy(command + 3, rutaFsLocal, strlen(rutaFsLocal));
+	printf("-->%s\n", command);
 
-	success = system(comando);*/
-	informacionNodo info = *(informacionNodo*)list_get(nodosConectados,0);
-	int a = 1;
-	char* b;
-	b = leerArchivo("/hola/chau/hola3.txt");
+	success = system(command);
 
-	return 0;
+	return success;
 }
 
 int crearDirectorio(char* comando){
@@ -161,7 +161,7 @@ int crearDirectorio(char* comando){
 
 	path = rutaSinPrefijoYama(pathComando);
 	if (strcmp("/", path) == 0){
-		printf("no se creo el directorio, el directorio no puede se root\n");
+		printf("no se creo el directorio, el directorio no puede ser root\n");
 		return 0;
 	}
 
@@ -228,7 +228,7 @@ int cambiarNombre(char* comando){
 	rutaNombreViejoReverse = string_substring_from(rutaNombreViejoReverse, longitudNombreOriginal + 1 );
 	rutaNombreViejoReverse = string_reverse(rutaNombreViejoReverse);
 	int tamanioRutaNueva = sizeof(rutaNombreViejoReverse) + sizeof(slash) + sizeof(nombreNuevo);
-	char* rutaNuevaDefinitiva = malloc(tamanioRutaNueva);
+	char* rutaNuevaDefinitiva = malloc(tamanioRutaNueva + 1);
 	memcpy(rutaNuevaDefinitiva, rutaNombreViejoReverse, strlen(rutaNombreViejoReverse));
 	memcpy(rutaNuevaDefinitiva + strlen(rutaNombreViejoReverse), slash, strlen(slash));
 	memcpy(rutaNuevaDefinitiva + strlen(rutaNombreViejoReverse) + strlen(slash), nombreNuevo, strlen(nombreNuevo) + 1);
@@ -257,10 +257,19 @@ int mover(char* comando){
 
 int generarArchivoMD5(char* comando){
 	int success = 1;
-	char* ruta = devolverRuta(comando,1);
-	char* command = malloc(8 + strlen(ruta));
+	char* rutaArchivoYamafs = devolverRuta(comando,1);
+	printf("-->%s\n",rutaArchivoYamafs);
+	char* rutaYamafs = rutaSinArchivo(rutaArchivoYamafs);
+	printf("-->%s\n",rutaYamafs);
+	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
+	printf("-->%s\n",rutaFsLocal);
+	char* nombreArchivo = string_substring_from(rutaArchivoYamafs, strlen(rutaYamafs));
+	printf("-->%s\n",nombreArchivo);
+	char* command = malloc(8 + strlen(rutaFsLocal) + strlen(nombreArchivo));
 	memcpy(command, "md5sum ", 7);
-	memcpy(command + 7, ruta, strlen(ruta)+1);
+	memcpy(command + 7, rutaFsLocal, strlen(rutaFsLocal));
+	memcpy(command + 7 + strlen(rutaFsLocal), nombreArchivo, strlen(nombreArchivo)+1);
+	printf("-->%s\n",command);
 
 	success = system(command);
 	printf("\n");

@@ -65,9 +65,10 @@ void inicializarEstructuras();
 
 bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques);
 
-void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos);
+void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques);
 
-void llenarListaNodos(informacionArchivoFsYama* infoArchivo);
+void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
 
-void agregarBloqueANodo(ubicacionBloque ubicacion,int bloque);
+void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque);
+
 #endif /* FUNCIONESYAMA_H_ */

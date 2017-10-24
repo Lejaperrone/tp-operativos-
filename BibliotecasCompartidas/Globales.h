@@ -127,6 +127,12 @@ typedef struct parametrosEnvioBloque{
     int restanteAnterior;
 }parametrosEnvioBloque;
 
+typedef struct parametrosLecturaBloque{
+    int socket;
+    int bloque;
+    char* contenidoBloque;
+}parametrosLecturaBloque;
+
 int redondearHaciaArriba(double num);
 
 bool validarArchivo(char* path);

@@ -1,10 +1,3 @@
-/*
- * FuncionesWorker.h
- *
- *  Created on: 24/9/2017
- *      Author: utnso
- */
-
 #ifndef FUNCIONESWORKER_H_
 #define FUNCIONESWORKER_H_
 
@@ -16,6 +9,8 @@
 #include "Serializacion.h"
 #include <commons/log.h>
 #include "FuncionesWorker.h"
+#include <commons/string.h>
+#include <sys/stat.h>
 
 /*------VARIABLES-------------*/
 struct configuracionNodo config;
@@ -28,5 +23,6 @@ void esperarJobDeMaster();
 void levantarServidorWorker(char* ip, int port);
 void realizarHandshake(int socket);
 void ejecutarTransformacion();
+FILE* crearScript(char * bufferScript, int etapa);
 
 #endif /* FUNCIONESWORKER_H_ */

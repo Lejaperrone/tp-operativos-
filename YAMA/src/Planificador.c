@@ -32,7 +32,7 @@ void planificar(job* job){
 
 	int nodos,bloques;
 
-	calcularNodosYBloques(infoArchivo,&nodos);
+	calcularNodosYBloques(infoArchivo,&nodos,&bloques);
 
 	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques);
 
