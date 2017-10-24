@@ -11,6 +11,7 @@
 #include "FuncionesWorker.h"
 #include <commons/string.h>
 #include <sys/stat.h>
+#include "Globales.h"
 
 /*------VARIABLES-------------*/
 struct configuracionNodo config;
@@ -23,6 +24,6 @@ void esperarJobDeMaster();
 void levantarServidorWorker(char* ip, int port);
 void realizarHandshake(int socket);
 void ejecutarTransformacion();
-FILE* crearScript(char * bufferScript, int etapa);
+void crearScript(char * bufferScript, int etapa);
 
 #endif /* FUNCIONESWORKER_H_ */

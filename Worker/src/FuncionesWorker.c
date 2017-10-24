@@ -14,13 +14,19 @@ void esperarJobDeMaster() {
 	case mensajeProcesarTransformacion:
 
 		log_trace(logger, "Iniciando Transformacion");
-
-		//Recibir script, bloqueId, y bytesRestantes
-
+		//Recibir script, origen de datos (porcion databin) y destino (archivo temporal)
+		char* destino = "/tmp/resultado";
 		char* contenidoScript = "transformador";
-		FILE* script = crearScript(contenidoScript, mensajeProcesarTransformacion);
+		int offset = 100;
+		int bytesOcupados = 50;
 
-		char* command = string_from_format("echo Ejecutando Transformacion");
+		crearScript(contenidoScript, mensajeProcesarTransformacion);
+		free(contenidoScript);
+
+		char* command = string_from_format("head -c %d < %s | tail -c %d | sh %s/transformador.sh | sort > %s",
+				offset, config.RUTA_DATABIN, bytesOcupados,
+				config.RUTA_DATABIN, destino);
+
 		int status;
 		if ((status = system(command)) < 0) {
 			log_error(logger,"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA TRANSFORMACION");
@@ -31,19 +37,23 @@ void esperarJobDeMaster() {
 		empaquetar(socketMaster,mensajeOk,0,&status);
 
 		break;
-
-		break;
-
-		break;
 	case mensajeProcesarRedLocal:
+
+		log_trace(logger, "Iniciando Reduccion Local");
+
+		//Recibir script, origen de datos (archivo temporal del fs local) y destino (archivo temporal del fs local)
+
 		break;
 	case mensajeProcesarRedGlobal:
+
+		log_trace(logger, "Iniciando Reduccion Global");
+
+		//Recibir script, origen de datos (archivo temporal del fs local) y destino (archivo temporal del fs local)
 		break;
 	}
-	//forkear por cada tarea recibida por el master
 }
 
-FILE* crearScript(char * bufferScript, int etapa) {
+void crearScript(char * bufferScript, int etapa) {
 	int aux, auxChmod;
 	char mode[] = "0777";
 	FILE* script;
@@ -64,7 +74,6 @@ FILE* crearScript(char * bufferScript, int etapa) {
 		log_error(logger,"NO SE PUDO DAR PERMISOS DE EJECUCION AL ARCHIVO");
 	}
 	fclose(script);
-	return script;
 }
 
 void ejecutarTransformacion() {		//PARA PROBAR
