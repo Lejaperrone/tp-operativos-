@@ -1,10 +1,6 @@
 #include "FuncionesWorker.h"
 
-void esperarConexionesMaster(char* ip, int port) {
-	levantarServidorWorker(ip, port);
-}
-
-void esperarJobDeMaster() {
+void handlerMaster() {
 	respuesta instruccionMaster;
 	log_trace(logger, "Esperando instruccion de Master");
 
@@ -24,19 +20,22 @@ void esperarJobDeMaster() {
 		crearScript(contenidoScript, mensajeProcesarTransformacion);
 		free(contenidoScript);
 
-		char* command = string_from_format("head -c %d < %s | tail -c %d | ./%s/transformador.sh | sort > %s",
-				offset, config.RUTA_DATABIN, bytesRestantes,
-				config.RUTA_DATABIN, destino);
+		char* command =
+				string_from_format(
+						"head -c %d < %s | tail -c %d | ./%s/transformador.sh | sort > %s",
+						offset, config.RUTA_DATABIN, bytesRestantes,
+						config.RUTA_DATABIN, destino);
 
 		int status;
 		if ((status = system(command)) < 0) {
-			log_error(logger,"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA TRANSFORMACION");
+			log_error(logger,
+					"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA TRANSFORMACION");
 			empaquetar(socketMaster, mensajeError, 0, 0);
 			free(command);
 			break;
 		}
 		free(command);
-		log_trace(logger,"Status transformacion:%d", status);
+		log_trace(logger, "Status transformacion:%d", status);
 		empaquetar(socketMaster, mensajeOk, 0, 0);
 		break;
 	case mensajeProcesarRedLocal:
@@ -63,33 +62,24 @@ void crearScript(char * bufferScript, int etapa) {
 	printf("size archivo:%d\n", aux);
 	if (etapa == mensajeProcesarTransformacion) {
 		printf("Se crea el archivo transformador\n");
-		char* ruta = string_from_format("%s/transformador.sh",config.RUTA_DATABIN);
+		char* ruta = string_from_format("%s/transformador.sh",
+				config.RUTA_DATABIN);
 		script = fopen(ruta, "w+");
 	} else {
 		printf("Se crea el archivo reductor\n");
-		char* ruta = string_from_format("%s/reductor.sh",config.RUTA_DATABIN);
+		char* ruta = string_from_format("%s/reductor.sh", config.RUTA_DATABIN);
 		script = fopen(ruta, "w+");
 	}
 	fwrite(bufferScript, sizeof(char), aux, script);
 	auxChmod = strtol(mode, 0, 8);
 	if (chmod(config.RUTA_DATABIN, auxChmod) < 0) {
-		log_error(logger,"NO SE PUDO DAR PERMISOS DE EJECUCION AL ARCHIVO");
+		log_error(logger, "NO SE PUDO DAR PERMISOS DE EJECUCION AL ARCHIVO");
 	}
 	fclose(script);
 }
 
-void ejecutarTransformacion() {		//PARA PROBAR
-	/*pid_t pid;
-	 pid = fork();
-	 if(pid == -1){
-	 log_error(logger,"Error al crear el hijo");
-	 }else if(pid == 0){
-	 //logica del hijo
-	 }else{
-	 //logica del padre
-	 }*/
-	//system("echo Ejecutando Transformacion | ./script_prueba > /tmp/resultado" );
-	system("echo Ejecutando Transformacion");
+void handlerWorker() {
+
 }
 
 void levantarServidorWorker(char* ip, int port) {
@@ -99,46 +89,41 @@ void levantarServidorWorker(char* ip, int port) {
 	while (1) {
 		struct sockaddr_in their_addr;
 		socklen_t size = sizeof(struct sockaddr_in);
-		socketMaster = accept(sock, (struct sockaddr*)&their_addr, &size);
+		socketMaster = accept(sock, (struct sockaddr*) &their_addr, &size);
 		int pid;
 
 		if (socketMaster == -1) {
 			perror("accept");
 		}
 
-		printf("Got a connection from %s on port %d\n", inet_ntoa(their_addr.sin_addr),htons(their_addr.sin_port));
+		printf("Got a connection from %s on port %d\n",
+				inet_ntoa(their_addr.sin_addr), htons(their_addr.sin_port));
 
 		pid = fork();
 		if (pid == 0) {
 			/* Proceso hijo */
 			close(sock);
 
-			realizarHandshake(socketMaster);
+			respuesta conexionNueva;
+			conexionNueva = desempaquetar(socketMaster);
 
-			esperarJobDeMaster();
-
-		}
-		else {
+			if (conexionNueva.idMensaje == 1) {
+				if (*(int*) conexionNueva.envio == 2) {
+					log_trace(logger, "Conexion con Master establecida");
+					handlerMaster();
+				} else if (*(int*) conexionNueva.envio == 100) { //Averiguar cual es el id del worker
+					log_trace(logger, "Conexion con Worker establecida");
+					handlerWorker();
+				}
+			}
+		} else {
 			/* Proceso padre */
 			if (pid == -1) {
 				perror("fork");
-			}
-			else {
+			} else {
 				close(socketMaster);
 			}
 		}
 	}
 	close(sock);
 }
-
-void realizarHandshake(int socket) {
-	respuesta conexionNueva;
-	conexionNueva = desempaquetar(socket);
-
-	if (conexionNueva.idMensaje == 1) {
-		if (*(int*) conexionNueva.envio == 2) {
-			log_trace(logger, "Conexion con Master establecida");
-		}
-	}
-}
-

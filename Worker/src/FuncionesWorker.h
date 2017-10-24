@@ -22,10 +22,9 @@ t_log* logger;
 
 
 /*----PROTOTIPOS--------------------*/
-void esperarConexionesMaster(char* ip, int port);
-void esperarJobDeMaster();
+void handlerMaster();
+void handlerWorker();
 void levantarServidorWorker(char* ip, int port);
-void realizarHandshake(int socket);
 void ejecutarTransformacion();
 void crearScript(char * bufferScript, int etapa);
 
