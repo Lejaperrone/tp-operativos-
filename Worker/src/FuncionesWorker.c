@@ -14,28 +14,30 @@ void esperarJobDeMaster() {
 	case mensajeProcesarTransformacion:
 
 		log_trace(logger, "Iniciando Transformacion");
-		//Recibir script, origen de datos (porcion databin) y destino (archivo temporal)
-		char* destino = "/tmp/resultado";
+		//Recibir de master script, origen de datos (bloque y bytesRestantes) y destino (archivo temporal)
 		char* contenidoScript = "transformador";
-		int offset = 100;
-		int bytesOcupados = 50;
+		int bloqueId = 1;
+		int bytesRestantes = 50;
+		char* destino = "/tmp/resultado";
+		int offset = bloqueId * mb + bytesRestantes;
 
 		crearScript(contenidoScript, mensajeProcesarTransformacion);
 		free(contenidoScript);
 
-		char* command = string_from_format("head -c %d < %s | tail -c %d | sh %s/transformador.sh | sort > %s",
-				offset, config.RUTA_DATABIN, bytesOcupados,
+		char* command = string_from_format("head -c %d < %s | tail -c %d | ./%s/transformador.sh | sort > %s",
+				offset, config.RUTA_DATABIN, bytesRestantes,
 				config.RUTA_DATABIN, destino);
 
 		int status;
 		if ((status = system(command)) < 0) {
 			log_error(logger,"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA TRANSFORMACION");
-			empaquetar(socketMaster,mensajeError,0,&status);
+			empaquetar(socketMaster, mensajeError, 0, 0);
+			free(command);
+			break;
 		}
 		free(command);
 		log_trace(logger,"Status transformacion:%d", status);
-		empaquetar(socketMaster,mensajeOk,0,&status);
-
+		empaquetar(socketMaster, mensajeOk, 0, 0);
 		break;
 	case mensajeProcesarRedLocal:
 
@@ -91,53 +93,42 @@ void ejecutarTransformacion() {		//PARA PROBAR
 }
 
 void levantarServidorWorker(char* ip, int port) {
-	struct sockaddr_in direccionCliente;
-	int server;
-	fd_set master;
-	fd_set read_fds;
-	int fdmax;
-	int i, j;
-	int tamanioDireccion;
-	respuesta conexionNueva;
-	server = crearServidorAsociado(ip, port);
-	FD_ZERO(&master);
-	FD_ZERO(&read_fds);
-	FD_SET(server, &master);
-
-	fdmax = server;
+	int sock;
+	sock = crearServidorAsociado(ip, port);
 
 	while (1) {
-		read_fds = master;
-		if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
-			perror("select");
-			exit(1);
+		struct sockaddr_in their_addr;
+		socklen_t size = sizeof(struct sockaddr_in);
+		socketMaster = accept(sock, (struct sockaddr*)&their_addr, &size);
+		int pid;
+
+		if (socketMaster == -1) {
+			perror("accept");
 		}
 
-		for (i = 0; i <= fdmax; i++) {
-			if (FD_ISSET(i, &read_fds)) {
-				if (i == server) {
-					// gestionar nuevas conexiones
-					tamanioDireccion = sizeof(direccionCliente);
-					if ((socketMaster = accept(server,
-							(struct sockaddr *) &direccionCliente,
-							&tamanioDireccion)) == -1) {
-						perror("accept");
-					} else {
-						FD_SET(socketMaster, &master);
-						if (socketMaster > fdmax) {
-							fdmax = socketMaster;
-						}
-						realizarHandshake(socketMaster);
+		printf("Got a connection from %s on port %d\n", inet_ntoa(their_addr.sin_addr),htons(their_addr.sin_port));
 
-						esperarJobDeMaster();
-					}
-				} else {
-					// gestionar datos de un cliente
+		pid = fork();
+		if (pid == 0) {
+			/* Proceso hijo */
+			close(sock);
 
-				}
+			realizarHandshake(socketMaster);
+
+			esperarJobDeMaster();
+
+		}
+		else {
+			/* Proceso padre */
+			if (pid == -1) {
+				perror("fork");
+			}
+			else {
+				close(socketMaster);
 			}
 		}
 	}
+	close(sock);
 }
 
 void realizarHandshake(int socket) {

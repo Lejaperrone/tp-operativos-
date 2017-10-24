@@ -13,10 +13,13 @@
 #include <sys/stat.h>
 #include "Globales.h"
 
+#define mb 1048576
+
 /*------VARIABLES-------------*/
 struct configuracionNodo config;
 int socketMaster;
 t_log* logger;
+
 
 /*----PROTOTIPOS--------------------*/
 void esperarConexionesMaster(char* ip, int port);
