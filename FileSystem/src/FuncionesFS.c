@@ -353,7 +353,8 @@ char* leerArchivo(char* rutaArchivo){
 		params.socket = info.socket;
 		params.contenidoBloque = respuestas[i];
 
-		pthread_create(&nuevoHilo, &attr, &leerDeDataNode,(void*) &params);
+		pthread_create(&nuevoHilo, NULL, &leerDeDataNode,(void*) &params);
+		pthread_join(nuevoHilo, respuestas[i]);
 		sem_wait(&pedidoFS);
 
 
@@ -380,7 +381,7 @@ void* leerDeDataNode(void* parametros){
 	 memset(params->contenidoBloque, 0, respuesta.size + 1);
 	 memcpy(params->contenidoBloque, respuesta.envio, respuesta.size);
 	 sem_post(&pedidoFS);
-	 return 0;
+	 return 0;//(void*)params->contenidoBloque;
 }
 
 void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
