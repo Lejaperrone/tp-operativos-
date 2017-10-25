@@ -44,6 +44,7 @@ int sizeTotalNodos = 0, nodosLibres = 0;
 t_list* nodosConectados;
 t_list* bitmapsNodos;
 extern sem_t pedidoFS;
+sem_t pedidoLecturaFS[];
 extern sem_t actualizarNodos;
 int clienteYama;
 int servidorFS;

@@ -27,6 +27,7 @@ char* pathArchivoDirectorios = "../metadata/Directorios.dat";
 struct sockaddr_in direccionCliente;
 unsigned int tamanioDireccion = sizeof(direccionCliente);
 int servidorFS;
+extern sem_t pedidoLecturaFS[];
 int sizeBloque;
 
 void establecerServidor(){
@@ -43,6 +44,7 @@ int recibirConexionYama(){
 		int cliente =0;
 
 		if((cliente = accept(servidorFS, (struct sockaddr *)&direccionCliente, &tamanioDireccion)) != -1){
+			printf("asdasd\n");
 			respuestaId = desempaquetar(cliente);
 			int id = *(int*)respuestaId.envio;
 			if(id == 1){//yama
@@ -260,7 +262,6 @@ char* leerArchivo(char* rutaArchivo){
 	char** arrayInfoBloque;
 	int posicionNodoAPedir = -1;
 	int numeroBloqueDataBin = -1;
-	parametrosLecturaBloque params;
 
 	memset(nombreInvertido,0,strlen(rutaArchivo)+1);
 	memset(rutaFinal,0,strlen(rutaArchivo)+1);
@@ -302,13 +303,18 @@ char* leerArchivo(char* rutaArchivo){
 		++cantBloquesArchivo;
 	}
 	char* respuestas[cantBloquesArchivo];
-
-	for (j = 0; j < cantidadNodos; ++j)
-		peticiones[j] = 0;
+	parametrosLecturaBloque params[cantBloquesArchivo];
+	for (j = 0; j < cantBloquesArchivo; ++j){
+		respuestas[j] = malloc(mb+1);
+		memset(respuestas[j], 0, mb + 1);
+	}
+	pthread_t nuevoHilo[cantBloquesArchivo];
 
 	for (j = 0; j < cantidadNodos; ++j){
 		info = *(informacionNodo*)list_get(nodosConectados, j);
 		indexNodos[j] = info.numeroNodo;
+		cargaNodos[j] = 0;
+		peticiones[j] = 0;
 	}
 
 	for (i = 0; i < cantBloquesArchivo; ++i){
@@ -332,36 +338,42 @@ char* leerArchivo(char* rutaArchivo){
 		posicionNodoAPedir = posicionCopiaEnIndexNodo[0];
 		for (l = 0; l < numeroCopiasBloque; ++l){
 
-			if (peticiones[posicionCopiaEnIndexNodo[l]] < peticiones[posicionNodoAPedir])
+			if (peticiones[posicionCopiaEnIndexNodo[l]] < peticiones[posicionNodoAPedir]){
 				posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
-
+			}
 			else if (peticiones[posicionCopiaEnIndexNodo[l]] == peticiones[posicionNodoAPedir])
-				if(cargaNodos[posicionCopiaEnIndexNodo[l]] < cargaNodos[posicionNodoAPedir])
+				if(cargaNodos[posicionCopiaEnIndexNodo[l]] < cargaNodos[posicionNodoAPedir]){
 					posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
 
+				}
+
 		}
+
 		info = *(informacionNodo*)list_get(nodosConectados,posicionNodoAPedir);
+		++peticiones[posicionNodoAPedir];
 		numeroBloqueDataBin = atoi(arrayInfoBloque[1]);
 
-		pthread_attr_t attr;
-		pthread_t nuevoHilo;
 
-		pthread_attr_init(&attr);
-		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+		params[i].bloque = numeroBloqueDataBin;
+		params[i].socket = info.socket;
+		params[i].sem = posicionNodoAPedir;
 
-		params.bloque = numeroBloqueDataBin;
-		params.socket = info.socket;
-		params.contenidoBloque = respuestas[i];
+		printf("lala\n");
 
-		pthread_create(&nuevoHilo, NULL, &leerDeDataNode,(void*) &params);
-		pthread_join(nuevoHilo, respuestas[i]);
-		sem_wait(&pedidoFS);
+		pthread_create(&nuevoHilo[i], NULL, &leerDeDataNode,(void*) &params[i]);
+		//sem_wait(&pedidoFS);
+
+		//printf("size bloque yay %d\n", strlen(respuestas[i]));
 
 
 	}
+	for (i = 0; i < cantBloquesArchivo; ++i){
+		pthread_join(nuevoHilo[i], (void**)&respuestas[i]);
+		//free(respuestas[i]);
+	}
+	//printf("ruta en metadata %s\n", respuestas[0]);
 
 
-	printf("ruta en metadata %s\n", respuestas[0]);
 
 	free(currentChar);
 	free(rutaArchivoEnMetadata);
@@ -374,14 +386,16 @@ char* leerArchivo(char* rutaArchivo){
 void* leerDeDataNode(void* parametros){
 	 struct parametrosLecturaBloque* params;
 	 params = (struct parametrosLecturaBloque*) parametros;
+	 sem_wait(&pedidoLecturaFS[params->sem]);
 	 respuesta respuesta;
 	 empaquetar(params->socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&params->bloque);
 	 respuesta = desempaquetar(params->socket);
+	 printf("nodo a pedir %d\n", params->socket);
 	 params->contenidoBloque = malloc(respuesta.size + 1);
 	 memset(params->contenidoBloque, 0, respuesta.size + 1);
 	 memcpy(params->contenidoBloque, respuesta.envio, respuesta.size);
-	 sem_post(&pedidoFS);
-	 return 0;//(void*)params->contenidoBloque;
+	 sem_post(&pedidoLecturaFS[params->sem]);
+	 pthread_exit(params->contenidoBloque);//(void*)params->contenidoBloque;
 }
 
 void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
@@ -498,7 +512,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 				 totalRestante += sizeRestante;
 			 }
 			 else if(totalAsignado == 0){
-				params.sizeBloque += totalRestante;
+				params.sizeBloque += sizeRestante;
 				totalAsignado = 1;
 			 }
 

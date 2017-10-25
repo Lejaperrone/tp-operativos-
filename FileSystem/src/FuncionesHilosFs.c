@@ -10,6 +10,7 @@
 int clienteYama;
 int servidorFS;
 struct sockaddr_in direccionCliente;
+extern sem_t pedidoLecturaFS[];
 
 void* levantarServidorFS(){
 
@@ -70,6 +71,7 @@ void* levantarServidorFS(){
 								list_add(nodosConectados,paqueteInfoNodo.envio);
 								cantidadNodos = list_size(nodosConectados);
 								actualizarArchivoNodos();
+								sem_init(&pedidoLecturaFS[list_size(nodosConectados)-1],0,1);
 							}
 							else{
 								log_trace(loggerFS, "DataNode repetido\n");
@@ -79,7 +81,7 @@ void* levantarServidorFS(){
 					}
 				}
 				else {
-					conexionNueva = desempaquetar(nuevoDataNode);
+					//conexionNueva = desempaquetar(nuevoDataNode);
 					switch(conexionNueva.idMensaje){
 
 					}
@@ -205,6 +207,7 @@ void* manejarConexionYama(){
 
 	while(1){
 		respuestaYama = desempaquetar(clienteYama);
+		printf("asdasd\n");
 		switch(respuestaYama.idMensaje){
 
 		case mensajeSolicitudInfoNodos:
