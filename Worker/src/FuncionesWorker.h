@@ -28,5 +28,7 @@ void levantarServidorWorker(char* ip, int port);
 void ejecutarTransformacion();
 void crearScript(char * bufferScript, int etapa);
 void apareoArchivosLocales();
+t_list* crearListaParaReducir();
+void ejecutarComando(char* command, int socketMaster);
 
 #endif /* FUNCIONESWORKER_H_ */

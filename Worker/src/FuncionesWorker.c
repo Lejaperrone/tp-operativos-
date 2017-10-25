@@ -9,8 +9,9 @@ void handlerMaster() {
 	char* destino;
 	char* contenidoScript;
 	char* command;
-	int status;
+	char* archivoAReducir;
 	t_list* listaArchivosTemporales;
+	t_list* archivosAReducir;
 	switch (instruccionMaster.idMensaje) {
 	case mensajeProcesarTransformacion:
 		log_trace(logger, "Iniciando Transformacion");
@@ -27,50 +28,64 @@ void handlerMaster() {
 						"head -c %d < %s | tail -c %d | ./%s/transformador.sh | sort > %s",
 						offset, config.RUTA_DATABIN, bytesRestantes,
 						config.RUTA_DATABIN, destino);
-		if ((status = system(command)) < 0) {
-			log_error(logger,
-					"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA TRANSFORMACION");
-			empaquetar(socketMaster, mensajeError, 0, 0);
-			free(command);
-			break;
-		}
+		ejecutarComando(command,socketMaster);
 		free(command);
-		log_trace(logger, "Status transformacion:%d", status);
 		empaquetar(socketMaster, mensajeOk, 0, 0);
 		exit(1);
 		break;
 	case mensajeProcesarRedLocal:
 		log_trace(logger, "Iniciando Reduccion Local");
 		//Recibir script, origen de datos (archivos temporales del fs local) y destino (archivo temporal del fs local)
-		contenidoScript = "contenidoScript reductor";
+		contenidoScript = "contenidoScript reductorLocal";
 		listaArchivosTemporales = list_create();
 		destino = "/tmp/resultado";
-		char* archivoPreReduccion = "preReduccion";
+		archivoAReducir = "preReduccion";
 		crearScript(contenidoScript, mensajeProcesarRedLocal);
-		apareoArchivosLocales(listaArchivosTemporales, archivoPreReduccion);
+		apareoArchivosLocales(listaArchivosTemporales, archivoAReducir);
 		FILE* archivoTemporalDeReduccionLocal = fopen(destino, "w+");
 		command = string_from_format(" %s | ./%s/reductor.sh > %s ",
-				archivoPreReduccion, config.RUTA_DATABIN,
+				archivoAReducir, config.RUTA_DATABIN,
 				archivoTemporalDeReduccionLocal);
-		if ((status = system(command)) < 0) {
-			log_error(logger,
-					"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA REDUCCION LOCAL");
-			empaquetar(socketMaster, mensajeError, 0, 0);
-			free(command);
-			break;
-		}
+		ejecutarComando(command,socketMaster);
 		free(command);
-		log_trace(logger, "Status reduccion local:%d", status);
 		empaquetar(socketMaster, mensajeOk, 0, 0);
 		exit(1);
 		break;
 	case mensajeProcesarRedGlobal:
-
 		log_trace(logger, "Iniciando Reduccion Global");
-
 		//Recibir script, origen de datos (archivo temporal del fs local) y destino (archivo temporal del fs local)
+		contenidoScript = "contenidoScript reductorGlobal";
+		archivoAReducir = "preReduccion";
+		destino = "/tmp/resultado";
+		crearScript(contenidoScript, mensajeProcesarRedGlobal);
+		archivosAReducir = crearListaParaReducir();
+		apareoArchivosLocales(archivosAReducir, archivoAReducir);
+		FILE* archivoTemporalDeReduccionGlobal = fopen(destino, "w+");
+		command = string_from_format("%s | ./%s/reductorGlobal.sh > %s", archivoAReducir,
+				config.RUTA_DATABIN, archivoTemporalDeReduccionGlobal);
+		ejecutarComando(command,socketMaster);
+		free(command);
+		empaquetar(socketMaster, mensajeOk, 0, 0);
+		exit(1);
 		break;
 	}
+}
+
+void ejecutarComando(char * command, int socketMaster) {
+	int status;
+	if ((status = system(command)) < 0) {
+		log_error(logger,
+				"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA REDUCCION LOCAL");
+		empaquetar(socketMaster, mensajeError, 0, 0);
+		free(command);
+		exit(1);
+	}
+}
+
+t_list* crearListaParaReducir() {
+	//Aca hay que conectarse al worker capitan, mandar el contenido del archivo reducido y que ese lo aparee
+	t_list* archivosAReducir = list_create();
+	return archivosAReducir;
 }
 
 void apareoArchivosLocales(t_list *sources, const char *target) {
@@ -88,9 +103,14 @@ void crearScript(char * bufferScript, int etapa) {
 		char* ruta = string_from_format("%s/transformador.sh",
 				config.RUTA_DATABIN);
 		script = fopen(ruta, "w+");
-	} else {
-		printf("Se crea el archivo reductor\n");
+	} else if (etapa == mensajeProcesarRedLocal) {
+		printf("Se crea el archivo reductor local\n");
 		char* ruta = string_from_format("%s/reductor.sh", config.RUTA_DATABIN);
+		script = fopen(ruta, "w+");
+	} else {
+		printf("Se crea el archivo reductor global\n");
+		char* ruta = string_from_format("%s/reductorGlobal.sh",
+				config.RUTA_DATABIN);
 		script = fopen(ruta, "w+");
 	}
 	fwrite(bufferScript, sizeof(char), aux, script);
