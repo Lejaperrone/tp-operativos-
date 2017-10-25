@@ -137,7 +137,7 @@ int listarArchivos(char* comando){
 	informacionNodo info = *(informacionNodo*)list_get(nodosConectados,0);
 	int a = 1;
 	char* b;
-	b = leerArchivo("/hola/chau/hola3.txt");
+	b = leerArchivo("/hola/hola3.txt");
 
 return 0;
 }
