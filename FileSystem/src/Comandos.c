@@ -258,22 +258,27 @@ int mover(char* comando){
 int generarArchivoMD5(char* comando){
 	int success = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
-	printf("-->%s\n",rutaArchivoYamafs);
-	char* rutaYamafs = rutaSinArchivo(rutaArchivoYamafs);
-	printf("-->%s\n",rutaYamafs);
-	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
-	printf("-->%s\n",rutaFsLocal);
-	char* nombreArchivo = string_substring_from(rutaArchivoYamafs, strlen(rutaYamafs));
-	printf("-->%s\n",nombreArchivo);
-	char* command = malloc(8 + strlen(rutaFsLocal) + strlen(nombreArchivo));
-	memcpy(command, "md5sum ", 7);
-	memcpy(command + 7, rutaFsLocal, strlen(rutaFsLocal));
-	memcpy(command + 7 + strlen(rutaFsLocal), nombreArchivo, strlen(nombreArchivo)+1);
-	printf("-->%s\n",command);
+	//char* contenido = leerArchivo(rutaArchivoYamafs);
+	char* contenido = "Prueba";
+	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 
-	success = system(command);
+	FILE* archivo = fopen(nombreArchivo, "a");
+	fwrite(contenido, sizeof(char*), sizeof(contenido), archivo);
+
+	char* MD5 = malloc(8 + strlen(nombreArchivo));
+	memcpy(MD5, "md5sum ", 7);
+	memcpy(MD5 + 7, nombreArchivo, strlen(nombreArchivo)+1);
+
+	char* RM = malloc(4 + strlen(nombreArchivo));
+	memcpy(RM, "rm ", 3);
+	memcpy(RM + 3, nombreArchivo, strlen(nombreArchivo)+1);
+
+	success = system(MD5);
 	printf("\n");
-	free(command);
+	fclose(archivo);
+	success = system(RM);
+	free(MD5);
+	free(RM);
 
 	return success;
 }
