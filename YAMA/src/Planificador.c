@@ -16,6 +16,8 @@ infoNodo* inicializarWorker(){
 	worker->bloques  = list_create();
 	worker->carga = 0;
 	worker->disponibilidad = 0;
+	worker->cantTareasHistoricas = 0;
+	wlMax = 1;
 	return worker;
 }
 void planificar(job* job){
@@ -36,7 +38,7 @@ void planificar(job* job){
 
 	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques);
 
-	//moverClock(worker, listaNodos, matrix, infoArchivo);
+	moverClock(worker, listaNodos, matrix, infoArchivo);
 
 	pthread_mutex_lock(&cantTareasHistoricas_mutex);
 	worker->cantTareasHistoricas++;
@@ -48,11 +50,13 @@ void planificar(job* job){
 void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBloque, informacionArchivoFsYama* infoArchivo){
 	int i;
 	int cantidadBloques = list_size(infoArchivo->informacionBloques);
+	infoNodo* worker= malloc(sizeof(infoNodo));
 	infoBloque* bloque = malloc(sizeof(infoBloque));
 	respuestaSolicitudTransformacion* respuestaAMaster = malloc(sizeof(respuestaSolicitudTransformacion));
 
 	respuestaAMaster->ip = workerDesignado->ip;
 	respuestaAMaster->puerto = workerDesignado->puerto;
+	respuestaAMaster->bloques = list_create();
 
 	for(i=0;i<cantidadBloques;i++){
 		bloque = list_get(infoArchivo->informacionBloques, i);
@@ -61,26 +65,35 @@ void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBl
 			workerDesignado->disponibilidad--;
 			list_add(respuestaAMaster->bloques, bloque);
 
-			log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
-
-			//avanzarClock(workerDesignado, listaNodos);
+			avanzarClock(workerDesignado, listaNodos);
 		}
-
+		else {
+			worker = encontrarWorkerDisponible(listaNodos);
+			list_add(respuestaAMaster->bloques,listaNodos);
+		}
+		log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
 		//LEER EL ENUNCIADO(ANEXO II) LA PARTE DE REGLAS DE FUNCIONAMIENTO TODO
 	}
 
 }
-infoNodo* avanzarClock(infoNodo* worker, t_list* listaNodos){
+
+infoNodo* encontrarWorkerDisponible(t_list* listaNodos){
+	bool disponiblidadMayorA0(infoNodo* worker){
+		return worker->disponibilidad > 0;
+	}
+	return list_find(listaNodos, disponiblidadMayorA0);
+}
+void avanzarClock(infoNodo* worker, t_list* listaNodos){
 	bool nodoConNumero(infoNodo* nodo){
 		return nodo->numero == worker->numero;
 	}
-	infoNodo* siguienteWorker;
+	//infoNodo* siguienteWorker;
 
-	list_remove_by_condition(listaNodos, nodoConNumero);
+	list_remove_by_condition(listaNodos,nodoConNumero);
 	list_add_in_index(listaNodos, list_size(listaNodos), worker);
 
-	siguienteWorker = list_get(listaNodos, 0);
-	return siguienteWorker;//FIJARSE DE IGUALAR WORKER A SIGUIENTE WORKER FIXME
+	//siguienteWorker = list_get(listaNodos, 0);
+	//return siguienteWorker;//FIJARSE DE IGUALAR WORKER A SIGUIENTE WORKER FIXME
 }
 bool bloqueEstaEn(infoNodo* nodo,bool** nodoXbloque, int bloque){
 	int posNodo = nodo->numero;
@@ -99,7 +112,7 @@ informacionArchivoFsYama* recibirInfoArchivo(job* job) {
 }
 
 infoNodo* posicionarClock(t_list* listaWorkers){
-	infoNodo* workerDesignado;
+	infoNodo* workerDesignado = malloc(sizeof(infoNodo));
 	list_sort(listaWorkers, (void*) mayorDisponibilidad);
 
 	workerDesignado = list_get(listaWorkers, 0);//Ya desempata por cantidad de tareas historicas (PROBAR)
@@ -111,13 +124,14 @@ infoNodo* posicionarClock(t_list* listaWorkers){
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
 
 	int maxDisponibilidad = obtenerDisponibilidadWorker(workerMasDisp);
-	int dispoinbilidad =  obtenerDisponibilidadWorker(worker);
+	int disponibilidad =  obtenerDisponibilidadWorker(worker);
 
-	if(maxDisponibilidad == dispoinbilidad){
-		return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
-	}
+	//if(maxDisponibilidad == disponibilidad){
+		//return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
+		//FIXME FALLA VALGRIND ACA PORQUE NUNCA SE INICIALIZA
+//	}
 
-	return maxDisponibilidad > dispoinbilidad;
+	return maxDisponibilidad > disponibilidad;
 
 }
 

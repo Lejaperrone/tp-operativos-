@@ -55,6 +55,8 @@ informacionArchivoFsYama* recibirInfoArchivo(job* job) ;
 bool estaActivo(infoNodo* worker);
 infoNodo* posicionarClock(t_list* listaWorkersConBloques);
 bool bloqueEstaEn(infoNodo* nodo,bool** nodoXbloque, int bloque);
-
+void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBloque, informacionArchivoFsYama* infoArchivo);
+void avanzarClock(infoNodo* worker, t_list* listaNodos);
+infoNodo* encontrarWorkerDisponible(t_list* listaNodos);
 
 #endif /* PLANIFICADOR_H_ */
