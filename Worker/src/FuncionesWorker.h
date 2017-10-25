@@ -27,5 +27,6 @@ void handlerWorker();
 void levantarServidorWorker(char* ip, int port);
 void ejecutarTransformacion();
 void crearScript(char * bufferScript, int etapa);
+void apareoArchivosLocales();
 
 #endif /* FUNCIONESWORKER_H_ */

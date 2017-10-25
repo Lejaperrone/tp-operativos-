@@ -1,10 +1,3 @@
-/*
- * FuncionesMaster.c
- *
- *  Created on: 10/9/2017
- *      Author: utnso
- */
-
 #include "FuncionesMaster.h"
 #include <sys/mman.h>
 #include <Globales.h>
@@ -29,7 +22,6 @@ void conectarseConYama(char* ip, int port) {
 }
 void crearHilosConexion() {
 	pthread_t hiloConexion;
-
 	parametrosConexionMaster* parametrosConexion = malloc(sizeof(parametrosConexionMaster));
 	//para probar conexion por hilos
 	parametrosConexion->ip = "127.0.0.1";
@@ -68,7 +60,7 @@ void enviarJobAYama(job* miJob) {
 }
 
 void esperarInstruccionesDeYama() {
-	respuesta instruccionesYama ;//= malloc(sizeof(respuesta));
+	respuesta instruccionesYama;//= malloc(sizeof(respuesta));
 	while (1) {
 		instruccionesYama = desempaquetar(socketYama);
 
@@ -118,12 +110,6 @@ job* crearJob(char* argv[]){
 /*int dameUnID(){
 	return ultimoIdMaster++;//FIXME
 }*/
-
-void controlarParametros(int cantParams){
-	if(cantParams < 6){
-		log_error(loggerMaster, "Parametros insuficientes");
-	}
-}
 
 void enviarArchivo(int socketPrograma, char* pathArchivo){
 	struct stat fileStat;

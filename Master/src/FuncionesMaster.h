@@ -1,10 +1,3 @@
-/*
- * FuncionesMaster.h
- *
- *  Created on: 10/9/2017
- *      Author: utnso
- */
-
 #ifndef FUNCIONESMASTER_H_
 #define FUNCIONESMASTER_H_
 
@@ -50,8 +43,6 @@ typedef struct{
 void conectarseConYama(char* ip, int port);
 
 void* conectarseConWorkers(parametrosConexionMaster* parametros);
-
-void controlarParametros();
 
 void enviarJobAYama(job* job);
 

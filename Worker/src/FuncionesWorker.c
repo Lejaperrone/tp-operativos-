@@ -6,27 +6,27 @@ void handlerMaster() {
 
 	instruccionMaster = desempaquetar(socketMaster);
 
+	char* destino;
+	char* contenidoScript;
+	char* command;
+	int status;
+	t_list* listaArchivosTemporales;
 	switch (instruccionMaster.idMensaje) {
 	case mensajeProcesarTransformacion:
-
 		log_trace(logger, "Iniciando Transformacion");
 		//Recibir de master script, origen de datos (bloque y bytesRestantes) y destino (archivo temporal)
-		char* contenidoScript = "transformador";
+		contenidoScript = "contenidoScript transformador";
 		int bloqueId = 1;
 		int bytesRestantes = 50;
-		char* destino = "/tmp/resultado";
+		destino = "/tmp/resultado";
 		int offset = bloqueId * mb + bytesRestantes;
-
 		crearScript(contenidoScript, mensajeProcesarTransformacion);
 		free(contenidoScript);
-
-		char* command =
+		command =
 				string_from_format(
 						"head -c %d < %s | tail -c %d | ./%s/transformador.sh | sort > %s",
 						offset, config.RUTA_DATABIN, bytesRestantes,
 						config.RUTA_DATABIN, destino);
-
-		int status;
 		if ((status = system(command)) < 0) {
 			log_error(logger,
 					"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA TRANSFORMACION");
@@ -37,13 +37,32 @@ void handlerMaster() {
 		free(command);
 		log_trace(logger, "Status transformacion:%d", status);
 		empaquetar(socketMaster, mensajeOk, 0, 0);
+		exit(1);
 		break;
 	case mensajeProcesarRedLocal:
-
 		log_trace(logger, "Iniciando Reduccion Local");
-
-		//Recibir script, origen de datos (archivo temporal del fs local) y destino (archivo temporal del fs local)
-
+		//Recibir script, origen de datos (archivos temporales del fs local) y destino (archivo temporal del fs local)
+		contenidoScript = "contenidoScript reductor";
+		listaArchivosTemporales = list_create();
+		destino = "/tmp/resultado";
+		char* archivoPreReduccion = "preReduccion";
+		crearScript(contenidoScript, mensajeProcesarRedLocal);
+		apareoArchivosLocales(listaArchivosTemporales, archivoPreReduccion);
+		FILE* archivoTemporalDeReduccionLocal = fopen(destino, "w+");
+		command = string_from_format(" %s | ./%s/reductor.sh > %s ",
+				archivoPreReduccion, config.RUTA_DATABIN,
+				archivoTemporalDeReduccionLocal);
+		if ((status = system(command)) < 0) {
+			log_error(logger,
+					"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA REDUCCION LOCAL");
+			empaquetar(socketMaster, mensajeError, 0, 0);
+			free(command);
+			break;
+		}
+		free(command);
+		log_trace(logger, "Status reduccion local:%d", status);
+		empaquetar(socketMaster, mensajeOk, 0, 0);
+		exit(1);
 		break;
 	case mensajeProcesarRedGlobal:
 
@@ -52,6 +71,10 @@ void handlerMaster() {
 		//Recibir script, origen de datos (archivo temporal del fs local) y destino (archivo temporal del fs local)
 		break;
 	}
+}
+
+void apareoArchivosLocales(t_list *sources, const char *target) {
+
 }
 
 void crearScript(char * bufferScript, int etapa) {
