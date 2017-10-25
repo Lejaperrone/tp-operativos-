@@ -38,24 +38,6 @@ void establecerServidor(){
 	asociarSocketA(direccionServidor, servidorFS);
 }
 
-int recibirConexionYama(){
-	respuesta respuestaId;
-	while(1){
-		int cliente =0;
-
-		if((cliente = accept(servidorFS, (struct sockaddr *)&direccionCliente, &tamanioDireccion)) != -1){
-			printf("asdasd\n");
-			respuestaId = desempaquetar(cliente);
-			int id = *(int*)respuestaId.envio;
-			if(id == 1){//yama
-				log_trace(loggerFS, "Nueva Conexion de Yama");
-				empaquetar(cliente,mensajeOk,0,0);
-				return cliente;
-			}
-		}
-	}
-}
-
 void inicializarTablaDirectorios(){
 	int i;
 	struct stat fileStat;

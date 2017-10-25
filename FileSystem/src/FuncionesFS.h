@@ -19,6 +19,7 @@
 #include "Comandos.h"
 
 #define idDataNodes 3
+#define idYAMA 1
 #define cantDataNodes 10
 #define mb 1048576
 

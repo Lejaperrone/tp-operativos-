@@ -12,87 +12,78 @@ int servidorFS;
 struct sockaddr_in direccionCliente;
 extern sem_t pedidoLecturaFS[];
 
-void* levantarServidorFS(){
-
-	int maxDatanodes;
-	int nuevoDataNode;
-	int cantidadNodos;
+void levantarServidorFS(){
+	struct sockaddr_in direccionCliente;
+	unsigned int tamanioDireccion = sizeof(direccionCliente);
+	respuesta paqueteInfoNodo,respuestaId;
 	informacionNodo info;
+	int cantidadNodos;
+	bool noSeConecteYama = true;
 
-	int i = 0;
-	int addrlen;
+	while (noSeConecteYama) {
+		int nuevoCliente;
+		if ((nuevoCliente = accept(servidorFS,(struct sockaddr *) &direccionCliente, &tamanioDireccion))!= -1) {
 
-	fd_set datanodes;
-	fd_set read_fds_datanodes;
+			pthread_t nuevoHilo;
+			pthread_attr_t attr;
 
-	respuesta conexionNueva, paqueteInfoNodo;
+			pthread_attr_init(&attr);
+			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+			respuestaId = desempaquetar(nuevoCliente);
+			int id = *(int*)respuestaId.envio;
 
-	FD_ZERO(&datanodes);    // borra los conjuntos datanodes y temporal
-	FD_ZERO(&read_fds_datanodes);
-	// añadir listener al conjunto maestro
-	FD_SET(0, &datanodes);
-	FD_SET(servidorFS, &datanodes);
-	// seguir la pista del descriptor de fichero mayor
-	maxDatanodes = clienteYama; // por ahora es éste
-	// bucle principal
-	while(1){
-		read_fds_datanodes = datanodes; // cópialo
+			if(id == idDataNodes){
+				paqueteInfoNodo = desempaquetar(nuevoCliente);
+				info = *(informacionNodo*)paqueteInfoNodo.envio;
+				if (nodoRepetido(info) == 0){
+					pthread_mutex_lock(loggerFS);
+					log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
+					pthread_mutex_unlock(loggerFS);
 
-		if (select(maxDatanodes, &read_fds_datanodes, NULL, NULL, NULL) == -1) {
-			perror("select");
-			exit(1);
-		}
-		// explorar conexiones existentes en busca de datos que leer
-		for(i = 0; i <= maxDatanodes; i++) {
-			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
-				if (i == servidorFS) {
-					// gestionar nuevas conexiones
-					addrlen = sizeof(direccionCliente);
-					if ((nuevoDataNode = accept(servidorFS, (struct sockaddr *)&direccionCliente,
-							&addrlen)) == -1) {
-						perror("accept");
-					} else {
-						FD_SET(nuevoDataNode, &datanodes); // añadir al conjunto maestro
-						if (nuevoDataNode > maxDatanodes) {    // actualizar el máximo
-							maxDatanodes = nuevoDataNode;
-						}
+					info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
+					info.socket = nuevoCliente;
+					memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
+					list_add(nodosConectados,paqueteInfoNodo.envio);
+					cantidadNodos = list_size(nodosConectados);
+					actualizarArchivoNodos();
+					sem_init(&pedidoLecturaFS[list_size(nodosConectados)-1],0,1);
 
-						conexionNueva = desempaquetar(nuevoDataNode);
-
-						if (*(int*)conexionNueva.envio == idDataNodes){
-							//empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
-							paqueteInfoNodo = desempaquetar(nuevoDataNode);
-							info = *(informacionNodo*)paqueteInfoNodo.envio;
-							if (nodoRepetido(info) == 0){
-								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
-								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
-								info.socket = nuevoDataNode;
-								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
-								list_add(nodosConectados,paqueteInfoNodo.envio);
-								cantidadNodos = list_size(nodosConectados);
-								actualizarArchivoNodos();
-								sem_init(&pedidoLecturaFS[list_size(nodosConectados)-1],0,1);
-							}
-							else{
-								log_trace(loggerFS, "DataNode repetido\n");
-							}
-						}
-
+					if (pthread_create(&nuevoHilo, &attr, &manejarConexionDataNode,NULL) == -1) {
+						log_error(loggerFS, "could not create thread");
+						perror("could not create thread");
+						log_destroy(loggerFS);
+						exit(1);
 					}
 				}
-				else {
-					//conexionNueva = desempaquetar(nuevoDataNode);
-					switch(conexionNueva.idMensaje){
+				else{
+					pthread_mutex_lock(loggerFS);
+					log_trace(loggerFS, "DataNode repetido\n");
+					pthread_mutex_unlock(loggerFS);
+				}
+			}
+			else if (id == idYAMA){
+				pthread_mutex_lock(loggerFS);
+				log_trace(loggerFS, "Conexion de YAMA");
+				pthread_mutex_unlock(loggerFS);
+				empaquetar(nuevoCliente,mensajeOk,0,0);
+				clienteYama = nuevoCliente;
+				noSeConecteYama= false;
 
-					}
-
+				if (pthread_create(&nuevoHilo, &attr, &manejarConexionYama,NULL) == -1) {
+					log_error(loggerFS, "could not create thread");
+					perror("could not create thread");
+					log_destroy(loggerFS);
+					exit(1);
 				}
 
 			}
+			else{
+				pthread_mutex_lock(loggerFS);
+				log_trace(loggerFS, "Conexion invalida\n");
+				pthread_mutex_unlock(loggerFS);
+			}
 		}
 	}
-	return 0;
-
 }
 
 void* consolaFS(){
@@ -207,7 +198,7 @@ void* manejarConexionYama(){
 
 	while(1){
 		respuestaYama = desempaquetar(clienteYama);
-		printf("asdasd\n");
+
 		switch(respuestaYama.idMensaje){
 
 		case mensajeSolicitudInfoNodos:
@@ -220,3 +211,8 @@ void* manejarConexionYama(){
 	}
 }
 
+void* manejarConexionDataNode(){
+	while(1){
+
+	}
+}

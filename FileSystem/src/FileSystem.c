@@ -56,26 +56,9 @@ int main(void) {
 	nodosConectados = list_create();
 	bitmapsNodos = list_create();
 
-	pthread_t hiloServidorFS, hiloConsolaFS, hiloConexionYama;
-	parametrosServidorHilo parametrosServidorFS;
-
-	parametrosServidorFS.cliente = clienteYama;
-
+	pthread_t hiloConsolaFS;
 
 	//inicializarBitmaps();
-
-	/*tablaDeDirectorios[0].index = 0;
-	tablaDeDirectorios[1].index = 1;
-	tablaDeDirectorios[2].index = 2;		//para probar cosas
-	tablaDeDirectorios[3].index = 3;
-	tablaDeDirectorios[0].padre = -1;
-	tablaDeDirectorios[1].padre = 0;
-	tablaDeDirectorios[2].padre = 1;
-	tablaDeDirectorios[3].padre = 0;
-	memcpy(tablaDeDirectorios[0].nombre,"hola",5);
-	memcpy(tablaDeDirectorios[1].nombre,"chau",5);
-	memcpy(tablaDeDirectorios[2].nombre,"bla",4);
-	memcpy(tablaDeDirectorios[3].nombre,"bla",4);*/
 
 	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
@@ -85,16 +68,9 @@ int main(void) {
 
 	establecerServidor(servidorFS);
 
-	clienteYama = recibirConexionYama(servidorFS);
+	levantarServidorFS();
 
-	parametrosServidorFS.servidor = servidorFS;
-
-	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
-	pthread_create(&hiloConexionYama,NULL,manejarConexionYama ,NULL);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);
-
-	pthread_join(hiloServidorFS, NULL);
-	pthread_join(hiloConexionYama, NULL);
 	pthread_join(hiloConsolaFS, NULL);
 
 	return 0;
