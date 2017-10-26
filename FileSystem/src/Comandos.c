@@ -94,13 +94,14 @@ int copiarArchivo(char* comando){
 int copiarArchivoAFs(char* comando){
 	int success = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
-	if (buscarRutaArchivo(rutaArchivoYamafs) == string_itoa(-1))
+	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
+	if (string_starts_with(string_reverse(buscarRutaArchivo(directorioYamafs)), "-1"))
 		return success;
-	char* rutaDirFs = devolverRuta(comando,2);
 
 	char* contenido = leerArchivo(rutaArchivoYamafs);
-	printf("llegue\n");
+	printf("%s\n", contenido);
 	char* nombre = ultimaParteDeRuta(rutaArchivoYamafs);
+	char* rutaDirFs = devolverRuta(comando,2);
 	char* rutaFinal = malloc(strlen(rutaDirFs) + strlen(nombre) + 2);
 	memset(rutaFinal, 0, strlen(rutaDirFs) + strlen(nombre) + 2);
 	memcpy(rutaFinal, rutaDirFs, strlen(rutaDirFs));
@@ -108,7 +109,7 @@ int copiarArchivoAFs(char* comando){
 	memcpy(rutaFinal + strlen(rutaDirFs) + 1, nombre, strlen(nombre));
 
 	FILE* archivo = fopen(rutaFinal,"a");
-	fwrite(contenido, sizeof(char*), sizeof(contenido), archivo);
+	fwrite(contenido, sizeof(contenido), strlen(contenido), archivo);
 
 	fclose(archivo);
 	free(rutaFinal);
@@ -136,20 +137,37 @@ bool validarDirectorio(char* path){
 }
 
 int eliminarArchivo(char* comando){
-	int success = 1;
+	/*int success = 1;
 	char* path = devolverRuta(comando, 1);
 	if (!validarArchivo(path))
 		return success;
 	success = system(comando);
-	return success;
+	return success;*/
+	char* rutaDirectorioYamfs = devolverRuta(comando,2);
+	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamfs);
+	printf("%s\n",rutaDirectorioMetadata);
+	int numeroTablaDirectorio = atoi(ultimaParteDeRuta(rutaDirectorioMetadata));
+	printf("%d\n",numeroTablaDirectorio);
+
+	return 0;
 }
 
 int eliminarDirectorio(char* comando){
 	int success = 1;
-	char* path = devolverRuta(comando, 2);
-	if (!validarDirectorio(path))
+
+	char* rutaDirectorioYamfs = devolverRuta(comando,2);
+	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamfs);
+	int numeroTablaDirectorio = atoi(ultimaParteDeRuta(rutaDirectorioMetadata));
+
+	if (numeroTablaDirectorio == -1)
 		return success;
-	success = system(comando);
+
+	tablaDeDirectorios[numeroTablaDirectorio].index = -1;
+	tablaDeDirectorios[numeroTablaDirectorio].padre = -1;
+	memcpy(tablaDeDirectorios[numeroTablaDirectorio].nombre," ",1);
+
+	success = 0;
+
 	return success;
 }
 
@@ -282,14 +300,15 @@ int mover(char* comando){
 int generarArchivoMD5(char* comando){
 	int success = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
-	if (buscarRutaArchivo(rutaArchivoYamafs) == string_itoa(-1))
+	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
+	if (string_starts_with(string_reverse(buscarRutaArchivo(directorioYamafs)), "-1"))
 		return success;
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	printf("%s\n", contenido);
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 
 	FILE* archivo = fopen(nombreArchivo, "a");
-	fwrite(contenido, sizeof(char*), sizeof(contenido), archivo);
+	fwrite(contenido, sizeof(contenido), strlen(contenido), archivo);
 
 	char* MD5 = malloc(8 + strlen(nombreArchivo));
 	memcpy(MD5, "md5sum ", 7);
@@ -299,6 +318,7 @@ int generarArchivoMD5(char* comando){
 	memcpy(RM, "rm ", 3);
 	memcpy(RM + 3, nombreArchivo, strlen(nombreArchivo)+1);
 
+	printf("%s\n", MD5);
 	success = system(MD5);
 	printf("\n");
 	fclose(archivo);
