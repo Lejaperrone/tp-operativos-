@@ -114,7 +114,7 @@ void recibirMensajesFileSystem(int socketFs) {
 		break;
 
 	default:
-		printf("mal %d\n",numeroBloque.idMensaje);
+		//printf("mal %d\n",numeroBloque.idMensaje);
 		//cpfrom /home/utnso/hola3.txt hola/chau
 		break;
 	}
@@ -128,8 +128,7 @@ void escucharAlFS(int socketFs) {
 		recibirMensajesFileSystem(socketFs);
 		//free(envio);
 		//success = setBloque(bloqueMock, envio);
-		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int),
-				&success);
+		//empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int),&success);
 	}
 }
 
