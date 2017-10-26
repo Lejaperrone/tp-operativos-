@@ -57,44 +57,61 @@ void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBl
 	respuestaAMaster->ip = workerDesignado->ip;
 	respuestaAMaster->puerto = workerDesignado->puerto;
 	respuestaAMaster->bloques = list_create();
+	int j;
 
 	for(i=0;i<cantidadBloques;i++){
 		bloque = list_get(infoArchivo->informacionBloques, i);
 
-		if(bloqueEstaEn(workerDesignado,nodosPorBloque,i) && (workerDesignado->disponibilidad > 0)){
-			workerDesignado->disponibilidad--;
-			list_add(respuestaAMaster->bloques, bloque);
+			if(bloqueEstaEn(workerDesignado,nodosPorBloque,i) && (workerDesignado->disponibilidad > 0)){
+				modificarCargayDisponibilidad(workerDesignado);
+				list_add(respuestaAMaster->bloques, bloque);
 
-			avanzarClock(workerDesignado, listaNodos);
-		}
-		else {
-			worker = encontrarWorkerDisponible(listaNodos);
-			list_add(respuestaAMaster->bloques,listaNodos);
-		}
-		log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
-		//LEER EL ENUNCIADO(ANEXO II) LA PARTE DE REGLAS DE FUNCIONAMIENTO TODO
+				log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
+
+				workerDesignado = avanzarClock(workerDesignado, listaNodos);
+			}
+			else if(!bloqueEstaEn(workerDesignado,nodosPorBloque,i) && (workerDesignado->disponibilidad > 0)){
+				list_add(respuestaAMaster->bloques,bloque);
+
+				modificarCargayDisponibilidad(workerDesignado);
+				log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
+			}
+			else{
+				restaurarDisponibilidad(workerDesignado);//POSIBLE SOLUCION PORQUE NO ENTRA A LOS OTROS 2 IF
+			}
+			/*SI EL CLOCK VUELVE A CAER EN EL WORKER DE MAYOR DISPONIBILIDAD QUE ELEGIS AL PRINCIPIO
+			 *OSEA QUE DA TODA UNA VUELTA HAY QUE SUMARLE A TODOS LOS WORKERS EL VALOR DE LA DISPONIBILIDAD
+			 *BASE TODO
+			 *tambien si cualquier worker se queda sin disponibilidad hay que restaurarle
+			 **/
+
 	}
 
 }
-
+void restaurarDisponibilidad(infoNodo* worker){
+	worker->disponibilidad += getDisponibilidadBase();
+}
 infoNodo* encontrarWorkerDisponible(t_list* listaNodos){
 	bool disponiblidadMayorA0(infoNodo* worker){
 		return worker->disponibilidad > 0;
 	}
+
 	return list_find(listaNodos, disponiblidadMayorA0);
 }
-void avanzarClock(infoNodo* worker, t_list* listaNodos){
+
+infoNodo* avanzarClock(infoNodo* worker, t_list* listaNodos){
 	bool nodoConNumero(infoNodo* nodo){
 		return nodo->numero == worker->numero;
 	}
-	//infoNodo* siguienteWorker;
-
-	list_remove_by_condition(listaNodos,nodoConNumero);
+	infoNodo* siguienteWorker = malloc(sizeof(infoNodo));
+	list_remove_by_condition(listaNodos, nodoConNumero);
 	list_add_in_index(listaNodos, list_size(listaNodos), worker);
 
-	//siguienteWorker = list_get(listaNodos, 0);
-	//return siguienteWorker;//FIJARSE DE IGUALAR WORKER A SIGUIENTE WORKER FIXME
+	siguienteWorker = list_get(listaNodos, 0);
+
+	return siguienteWorker;
 }
+
 bool bloqueEstaEn(infoNodo* nodo,bool** nodoXbloque, int bloque){
 	int posNodo = nodo->numero;
 	return nodoXbloque[posNodo][bloque];
@@ -119,7 +136,6 @@ infoNodo* posicionarClock(t_list* listaWorkers){
 
 	return workerDesignado;
 }
-
 
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
 
@@ -192,6 +208,8 @@ void agregarNodo(t_list* lista, infoNodo* nodo){
 	list_add(lista,nodo);
 }
 
-
-
+void modificarCargayDisponibilidad(infoNodo* worker){
+	worker->disponibilidad--;
+	worker->carga++;
+}
 
