@@ -30,6 +30,5 @@ void crearScript(char * bufferScript);
 void apareoArchivosLocales();
 t_list* crearListaParaReducir();
 void ejecutarComando(char* command, int socketMaster);
-void testWorker();
 
 #endif /* FUNCIONESWORKER_H_ */
