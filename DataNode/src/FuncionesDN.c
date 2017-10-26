@@ -81,8 +81,7 @@ void conectarseConFs() {
 	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO, 4));
 	printf("soy el nodo %d\n", info.numeroNodo);
 	info.socket = -1;
-	empaquetar(socketFs, mensajeInformacionNodo, sizeof(informacionNodo),
-			&info);
+	empaquetar(socketFs, mensajeInformacionNodo, sizeof(informacionNodo), &info);
 	escucharAlFS(socketFs);
 }
 
@@ -109,11 +108,13 @@ void recibirMensajesFileSystem(int socketFs) {
 	case mensajeNumeroLecturaBloqueANodo:
 		memcpy(&bloqueId, numeroBloque.envio, sizeof(int));
 		data = getBloque(bloqueId);
+		printf("envioooo %d\n", strlen(data));
 		empaquetar(socketFs, mensajeRespuestaGetBloque, strlen(data),data);
 		free(numeroBloque.envio);
 		break;
 
 	default:
+		//printf("mal %d\n",numeroBloque.idMensaje);
 		//cpfrom /home/utnso/hola3.txt hola/chau
 		break;
 	}
@@ -127,8 +128,7 @@ void escucharAlFS(int socketFs) {
 		recibirMensajesFileSystem(socketFs);
 		//free(envio);
 		//success = setBloque(bloqueMock, envio);
-		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int),
-				&success);
+		//empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int),&success);
 	}
 }
 

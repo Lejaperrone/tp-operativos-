@@ -11,18 +11,24 @@
 #include "FuncionesWorker.h"
 #include <commons/string.h>
 #include <sys/stat.h>
+#include "Globales.h"
+
+#define mb 1048576
 
 /*------VARIABLES-------------*/
 struct configuracionNodo config;
 int socketMaster;
 t_log* logger;
 
+
 /*----PROTOTIPOS--------------------*/
-void esperarConexionesMaster(char* ip, int port);
-void esperarJobDeMaster();
+void handlerMaster();
+void handlerWorker();
 void levantarServidorWorker(char* ip, int port);
-void realizarHandshake(int socket);
 void ejecutarTransformacion();
-FILE* crearScript(char * bufferScript, int etapa);
+void crearScript(char * bufferScript, int etapa);
+void apareoArchivosLocales();
+t_list* crearListaParaReducir();
+void ejecutarComando(char* command, int socketMaster);
 
 #endif /* FUNCIONESWORKER_H_ */

@@ -131,6 +131,7 @@ typedef struct parametrosLecturaBloque{
     int socket;
     int bloque;
     char* contenidoBloque;
+    int sem;
 }parametrosLecturaBloque;
 
 int redondearHaciaArriba(double num);

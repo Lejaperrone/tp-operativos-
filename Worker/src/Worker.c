@@ -17,8 +17,7 @@ int main(int argc, char *argv[]) {
 	logger = log_create("logWorker", "Worker.c", 1, LOG_LEVEL_TRACE);
 	cargarConfiguracionNodo(&config,argv[1]);
 
-	esperarConexionesMaster(config.IP_NODO, config.PUERTO_WORKER);
-	//levantarServidorWorker(config.IP_NODO, config.PUERTO_WORKER);
+	levantarServidorWorker(config.IP_NODO, config.PUERTO_WORKER);
 
 	return EXIT_SUCCESS;
 }
