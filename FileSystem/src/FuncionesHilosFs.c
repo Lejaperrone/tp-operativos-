@@ -167,7 +167,10 @@ void* consolaFS(){
 				log_error(loggerFS, "No se pudo copiar el archivo");
 		}
 		else if (string_starts_with(comando, "cpto")) {
-			log_trace(loggerFS, "Archivo copiado desde yamafs");
+			if (copiarArchivoAFs(comando) == 0)
+				log_trace(loggerFS, "Archivo copiado desde yamafs");
+			else
+				log_error(loggerFS, "No se pudo copiar el archivo desde yamafs");
 		}
 		else if (string_starts_with(comando, "cpblock")) {
 			log_trace(loggerFS, "Bloque copiado en el nodo");

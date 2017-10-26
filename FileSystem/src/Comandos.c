@@ -91,6 +91,31 @@ int copiarArchivo(char* comando){
 	return 1;
 }
 
+int copiarArchivoAFs(char* comando){
+	int success = 1;
+	char* rutaArchivoYamafs = devolverRuta(comando,1);
+	if (buscarRutaArchivo(rutaArchivoYamafs) == string_itoa(-1))
+		return success;
+	char* rutaDirFs = devolverRuta(comando,2);
+
+	char* contenido = leerArchivo(rutaArchivoYamafs);
+	printf("llegue\n");
+	char* nombre = ultimaParteDeRuta(rutaArchivoYamafs);
+	char* rutaFinal = malloc(strlen(rutaDirFs) + strlen(nombre) + 2);
+	memset(rutaFinal, 0, strlen(rutaDirFs) + strlen(nombre) + 2);
+	memcpy(rutaFinal, rutaDirFs, strlen(rutaDirFs));
+	memcpy(rutaFinal + strlen(rutaDirFs), "/", 1);
+	memcpy(rutaFinal + strlen(rutaDirFs) + 1, nombre, strlen(nombre));
+
+	FILE* archivo = fopen(rutaFinal,"a");
+	fwrite(contenido, sizeof(char*), sizeof(contenido), archivo);
+
+	fclose(archivo);
+	free(rutaFinal);
+	success = 0;
+
+	return success;
+}
 
 bool validarDirectorio(char* path){
 	DIR* dir = opendir(path);
@@ -129,17 +154,20 @@ int eliminarDirectorio(char* comando){
 }
 
 int listarArchivos(char* comando){
-	/*int success = 1;
-	char* path = devolverRuta(comando, 1);
-	if (!validarDirectorio(path))
+	int success = 1;
+	char* rutaYamafs = devolverRuta(comando, 1);
+	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
+	if (rutaFsLocal == string_itoa(-1))
 		return success;
-	success = system(comando);*/
-	informacionNodo info = *(informacionNodo*)list_get(nodosConectados,0);
-	int a = 1;
-	char* b;
-	b = leerArchivo("/hola/hola3.txt");
 
-return 0;
+	char* command = malloc(strlen(rutaFsLocal) + 4);
+	memset(command, 0,strlen(rutaFsLocal) + 4);
+	memcpy(command, "ls ", 3);
+	memcpy(command + 3, rutaFsLocal, strlen(rutaFsLocal));
+
+	success = system(command);
+
+	return success;
 }
 
 int crearDirectorio(char* comando){
@@ -192,12 +220,12 @@ int crearDirectorio(char* comando){
 
 int mostrarArchivo(char* comando){
 
-	char* path = devolverRuta(comando, 1);
 	int success = 1;
-	if (!validarArchivo(path))
-			return success;
-	success = system(comando);
-	printf("\n");
+	char* rutaArchivoYamafs = devolverRuta(comando,1);
+	if (buscarRutaArchivo(rutaArchivoYamafs) == string_itoa(-1))
+		return success;
+	char* contenido = leerArchivo(rutaArchivoYamafs);
+	printf("%s\n", contenido);
 
 	return success;
 }
@@ -254,8 +282,10 @@ int mover(char* comando){
 int generarArchivoMD5(char* comando){
 	int success = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
-	//char* contenido = leerArchivo(rutaArchivoYamafs);
-	char* contenido = "Prueba";
+	if (buscarRutaArchivo(rutaArchivoYamafs) == string_itoa(-1))
+		return success;
+	char* contenido = leerArchivo(rutaArchivoYamafs);
+	printf("%s\n", contenido);
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 
 	FILE* archivo = fopen(nombreArchivo, "a");

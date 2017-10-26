@@ -154,6 +154,7 @@ int getIndexDirectorio(char* ruta){
 }
 
 char* buscarRutaArchivo(char* ruta){
+	ruta = rutaSinPrefijoYama(ruta);
 	int indexDirectorio = getIndexDirectorio(ruta);
 	char* numeroIndexString = string_itoa(indexDirectorio);
 	char* rutaGenerada = calloc(1,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
@@ -185,7 +186,10 @@ int validarArchivoYamaFS(char* ruta){
 }
 
 char* rutaSinPrefijoYama(char* ruta){
-	return string_substring_from(ruta, 7);
+	if (validarArchivoYamaFS(ruta) == 0)
+		return ruta;
+	else
+		return string_substring_from(ruta, 7);
 }
 
 char* rutaSinArchivo(char* rutaArchivo){
