@@ -296,6 +296,9 @@ char* leerArchivo(char* rutaArchivo){
 		printf("size %d \n",sizeArchivo);
 	}
 
+	char* lectura = malloc(sizeArchivo + 1);
+	memset(lectura, 0, sizeArchivo + 1);
+
 	sizeAux = sizeArchivo;
 
 	while(sizeAux > 0){
@@ -358,8 +361,6 @@ char* leerArchivo(char* rutaArchivo){
 		params[i].socket = info.socket;
 		params[i].sem = posicionNodoAPedir;
 
-		printf("lala\n");
-
 		pthread_create(&nuevoHilo[i], NULL, &leerDeDataNode,(void*) &params[i]);
 		//sem_wait(&pedidoFS);
 
@@ -367,12 +368,15 @@ char* leerArchivo(char* rutaArchivo){
 
 
 	}
+	int contador = 0;
 	for (i = 0; i < cantBloquesArchivo; ++i){
 		pthread_join(nuevoHilo[i], (void**)&respuestas[i]);
+	}
+	for (i = 0; i < cantBloquesArchivo; ++i){
+		memcpy(lectura + contador, respuestas[i], strlen(respuestas[i]));
+		contador += strlen(respuestas[i]);
 		//free(respuestas[i]);
 	}
-	//printf("ruta en metadata %s\n", respuestas[0]);
-
 
 
 	free(currentChar);
@@ -380,7 +384,7 @@ char* leerArchivo(char* rutaArchivo){
 	free(nombre);
 	free(rutaFinal);
 	fclose(informacionArchivo);
-	return "a";
+	return lectura;
 }
 
 void* leerDeDataNode(void* parametros){
@@ -390,7 +394,6 @@ void* leerDeDataNode(void* parametros){
 	 respuesta respuesta;
 	 empaquetar(params->socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&params->bloque);
 	 respuesta = desempaquetar(params->socket);
-	 printf("nodo a pedir %d\n", params->socket);
 	 params->contenidoBloque = malloc(respuesta.size + 1);
 	 memset(params->contenidoBloque, 0, respuesta.size + 1);
 	 memcpy(params->contenidoBloque, respuesta.envio, respuesta.size);
@@ -449,6 +452,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int nodosEnUso[cantidadNodos];
 	int indexNodoEnListaConectados[numeroCopiasBloque];
 	parametrosEnvioBloque params;
+	int sizeTotal = 0;
 
 	params.restanteAnterior = 0;
 	params.mapa = mapeoArchivo->cadena;
@@ -513,8 +517,11 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			 }
 			 else if(totalAsignado == 0){
 				params.sizeBloque += sizeRestante;
+				sizeUltimoNodo = params.sizeBloque;
 				totalAsignado = 1;
 			 }
+			if (j == 0)
+				sizeTotal += params.sizeBloque;
 
 			pthread_create(&nuevoHilo, &attr, &enviarADataNode,(void*) &params);
 			sem_wait(&pedidoFS);
@@ -540,7 +547,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 	if(success == 1){ //Por cada bloque agrego sus valores para la tabla
 		config_set_value(infoArchivo, "RUTA", rutaFinal);
-		config_set_value(infoArchivo, "TAMANIO", string_itoa(mb*(cantBloquesArchivo-1)+sizeUltimoNodo));
+		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
 	free(rutaFinal);
