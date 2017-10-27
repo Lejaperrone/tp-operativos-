@@ -17,7 +17,7 @@ infoNodo* inicializarWorker(){
 	worker->carga = 0;
 	worker->disponibilidad = 0;
 	worker->cantTareasHistoricas = 0;
-	wlMax = 1;
+	wlMax = 0;
 	return worker;
 }
 void planificar(job* job){
@@ -50,19 +50,19 @@ void planificar(job* job){
 void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBloque, informacionArchivoFsYama* infoArchivo){
 	int i;
 	int cantidadBloques = list_size(infoArchivo->informacionBloques);
-	infoNodo* worker= malloc(sizeof(infoNodo));
+	infoNodo* workerAux = malloc(sizeof(infoNodo));
 	infoBloque* bloque = malloc(sizeof(infoBloque));
 	respuestaSolicitudTransformacion* respuestaAMaster = malloc(sizeof(respuestaSolicitudTransformacion));
 
 	respuestaAMaster->ip = workerDesignado->ip;
 	respuestaAMaster->puerto = workerDesignado->puerto;
 	respuestaAMaster->bloques = list_create();
-	int j;
 
 	for(i=0;i<cantidadBloques;i++){
-		bloque = list_get(infoArchivo->informacionBloques, i);
+		bloque = (infoBloque*)list_get(infoArchivo->informacionBloques, i);
 
-			if(bloqueEstaEn(workerDesignado,nodosPorBloque,i) && (workerDesignado->disponibilidad > 0)){
+		if(workerDesignado->disponibilidad > 0){
+			if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
 				modificarCargayDisponibilidad(workerDesignado);
 				list_add(respuestaAMaster->bloques, bloque);
 
@@ -70,15 +70,20 @@ void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBl
 
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
 			}
-			else if(!bloqueEstaEn(workerDesignado,nodosPorBloque,i) && (workerDesignado->disponibilidad > 0)){
-				list_add(respuestaAMaster->bloques,bloque);
+			else {
+				printf("worker %d no tiene el bloque %d, DISP ANTERIOR: %d\n",workerDesignado->numero,bloque->numeroBloque,workerDesignado->disponibilidad);
+				//FIXME ACA HAY QUE BUSCAR EL SIGUIENTE NODO SIN MOVER EL CLOCK QUE TENGA EL BLOQUE!!!!!!!
 
-				modificarCargayDisponibilidad(workerDesignado);
-				log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
+
+				//list_add(respuestaAMaster->bloques,bloque);
+				//modificarCargayDisponibilidad(workerDesignado);
+				//log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerAux->numero, workerAux->disponibilidad);
 			}
-			else{
-				restaurarDisponibilidad(workerDesignado);//POSIBLE SOLUCION PORQUE NO ENTRA A LOS OTROS 2 IF
-			}
+		}
+		else{
+			printf("paso por aca el worker: %d\n",workerDesignado->numero);
+			restaurarDisponibilidad(workerDesignado);//POSIBLE SOLUCION PORQUE NO ENTRA A LOS OTROS 2 IF
+		}
 			/*SI EL CLOCK VUELVE A CAER EN EL WORKER DE MAYOR DISPONIBILIDAD QUE ELEGIS AL PRINCIPIO
 			 *OSEA QUE DA TODA UNA VUELTA HAY QUE SUMARLE A TODOS LOS WORKERS EL VALOR DE LA DISPONIBILIDAD
 			 *BASE TODO
@@ -91,9 +96,10 @@ void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBl
 void restaurarDisponibilidad(infoNodo* worker){
 	worker->disponibilidad += getDisponibilidadBase();
 }
-infoNodo* encontrarWorkerDisponible(t_list* listaNodos){
+
+infoNodo* encontrarWorkerDisponible(t_list* listaNodos, bool** nodoXbloque,int bloque){
 	bool disponiblidadMayorA0(infoNodo* worker){
-		return worker->disponibilidad > 0;
+		return bloqueEstaEn(worker, nodoXbloque, bloque);
 	}
 
 	return list_find(listaNodos, disponiblidadMayorA0);
@@ -103,6 +109,7 @@ infoNodo* avanzarClock(infoNodo* worker, t_list* listaNodos){
 	bool nodoConNumero(infoNodo* nodo){
 		return nodo->numero == worker->numero;
 	}
+
 	infoNodo* siguienteWorker = malloc(sizeof(infoNodo));
 	list_remove_by_condition(listaNodos, nodoConNumero);
 	list_add_in_index(listaNodos, list_size(listaNodos), worker);
@@ -142,10 +149,10 @@ bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
 	int maxDisponibilidad = obtenerDisponibilidadWorker(workerMasDisp);
 	int disponibilidad =  obtenerDisponibilidadWorker(worker);
 
-	if(maxDisponibilidad == disponibilidad){
-		return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
+	//if(maxDisponibilidad == disponibilidad){
+	//	return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
 		//FIXME FALLA VALGRIND ACA PORQUE NUNCA SE INICIALIZA
-	}
+	//}
 
 	return maxDisponibilidad > disponibilidad;
 
@@ -165,7 +172,7 @@ bool estaActivo(infoNodo* worker){
 }
 
 void calcularDisponibilidadWorkers(t_list* nodos){
-	//calcularWorkLoadMaxima(nodos);
+	calcularWorkLoadMaxima(nodos);
 	list_iterate(nodos, (void*)calcularDisponibilidadWorker);
 }
 
@@ -187,7 +194,7 @@ uint32_t calcularPWL(infoNodo* worker){
 }
 
 void calcularWorkLoadMaxima(t_list* nodos){
-	infoNodo* worker;
+	infoNodo* worker = malloc(sizeof(infoNodo));
 	bool mayorCarga(infoNodo* nodoMasCarga, infoNodo* nodo){
 		return nodoMasCarga->carga > nodo->carga;
 	}
@@ -198,7 +205,7 @@ void calcularWorkLoadMaxima(t_list* nodos){
 }
 
 uint32_t workLoadMaxima(){//getter
-	return wlMax = 0;
+	return wlMax;
 }
 void agregarJobAPlanificar(job* jobAPlanificar){
 	list_add(jobsAPlanificar,jobAPlanificar);
