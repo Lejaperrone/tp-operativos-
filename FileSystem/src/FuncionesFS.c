@@ -456,7 +456,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int nodosEnUso[cantidadNodos];
 	int indexNodoEnListaConectados[numeroCopiasBloque];
 	parametrosEnvioBloque params;
-	int sizeTotal = 0;
+	int sizeTotal = 0, ultimoUtilizado = 0;
 
 	params.restanteAnterior = 0;
 	params.mapa = mapeoArchivo->cadena;
@@ -471,17 +471,22 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	for (i = 0; i < cantBloquesArchivo; ++i){	//Primer for: itera por cada bloque que ocupa el archivo //Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
 		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
 			masBloquesLibres[j] = -1;				//criterio
+
 		for (j = 0; j < cantidadNodos; ++j)
 			nodosEnUso[j] = 0;
-		for (j = 0; j < cantidadNodos; ++j){
-			for (k = 0; k < numeroCopiasBloque; ++k){
+
+		for (k = 0; k < numeroCopiasBloque; ++k){
+			for (j = 0; j < cantidadNodos; ++j){
 				if (nodosEnUso[j] != 1){
 					if (masBloquesLibres[k] == -1){
 						masBloquesLibres[k] = indexNodos[j];
+						ultimoUtilizado = j;
 						nodosEnUso[j] = 1;
 						bloquesLibreNodo[j] -= 1;
 					}
-					else if(bloquesLibreNodo[masBloquesLibres[k]] < bloquesLibreNodo[j]){
+					else if(bloquesLibreNodo[ultimoUtilizado] < bloquesLibreNodo[j]){
+						nodosEnUso[ultimoUtilizado] = 0;
+						++bloquesLibreNodo[ultimoUtilizado];
 						masBloquesLibres[k] = indexNodos[j];
 						nodosEnUso[j] = 1;
 						bloquesLibreNodo[j] -= 1;
@@ -588,6 +593,7 @@ void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
 	bitarray_set_bit(bitarrayNodo,bloqueLibre);
 	infoAux = list_get(nodosConectados,numeroNodo);
 	++infoAux->bloquesOcupados;
+	printf("lala %d %d\n", infoAux->bloquesOcupados, infoAux->numeroNodo);
 }
 
 void actualizarBitmapNodos(){
@@ -690,6 +696,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 		++posicion;
 		fread(currentChar, 1, 1, bitmapFile);
 	}
+	printf("ocupados %d\n", BloquesOcupados);
 
 	/*int contador = 0;
 	while(contador < posicion){

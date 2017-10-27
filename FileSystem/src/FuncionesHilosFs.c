@@ -65,7 +65,7 @@ void* levantarServidorFS(){
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
 							if (nodoRepetido(info) == 0){
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
-								info.bloquesOcupados = info.sizeNodo - levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
+								info.bloquesOcupados = levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
 								info.socket = nuevoDataNode;
 								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
 								list_add(nodosConectados,paqueteInfoNodo.envio);
@@ -107,7 +107,7 @@ void* consolaFS(){
 		if (comando)
 			add_history(comando);
 
-		log_trace(loggerFS, "El usuario ingreso: %s", comando);
+		//log_trace(loggerFS, "El usuario ingreso: %s", comando);
 
 		if (string_starts_with(comando, "format")) {
 			log_trace(loggerFS, "File system formateado");
@@ -162,7 +162,8 @@ void* consolaFS(){
 		}
 		else if (string_starts_with(comando, "cpfrom")) {
 			if (copiarArchivo(comando) == 1)
-				log_trace(loggerFS, "Archivo copiado a yamafs");
+				printf("asd");
+				//log_trace(loggerFS, "Archivo copiado a yamafs");
 			else
 				log_error(loggerFS, "No se pudo copiar el archivo");
 		}
