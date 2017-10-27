@@ -116,6 +116,7 @@ void recibirMensajesFileSystem(int socketFs) {
 	default:
 		//printf("mal %d\n",numeroBloque.idMensaje);
 		//cpfrom /home/utnso/hola3.txt hola/chau
+		exit(1);
 		break;
 	}
 }
