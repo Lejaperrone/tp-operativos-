@@ -191,26 +191,41 @@ void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo){
 }
 
 void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque){
+	infoNodo* nodoAPlanificar = malloc(sizeof(infoNodo));
 
 	bool funcionFind(void *nodo) {
 		return(((infoNodo*)nodo)->numero == ubicacion.numeroNodo);
 	}
 
-	if (list_find(listaNodos,funcionFind)) {
+	pthread_mutex_lock(&mutex_NodosConectados);
+
+	if(list_find(listaNodos,funcionFind)){
 		infoNodo* nodo = (infoNodo*)list_find(listaNodos,funcionFind);
 		list_add(nodo->bloques,&bloque);
 	}
+	else if (list_find(nodosConectados,funcionFind)) {
+		infoNodo* nodo = (infoNodo*)list_find(nodosConectados,funcionFind);
+		memcpy(nodoAPlanificar,nodo,sizeof(infoNodo));
+		list_add(nodoAPlanificar->bloques,&bloque);
+		list_add(listaNodos,nodoAPlanificar);
+	}
 	else{
 		infoNodo* nuevoNodo = malloc(sizeof(infoNodo));
-		nuevoNodo->activo = true;
-		nuevoNodo->bloques = list_create();
-		list_add(nuevoNodo->bloques,&bloque);
 		nuevoNodo->carga=0;
+		nuevoNodo->cantTareasHistoricas=0;
+		nuevoNodo->activo = true;
 		nuevoNodo->ip.cadena = strdup(ubicacion.ip.cadena);
 		nuevoNodo->ip.longitud = ubicacion.ip.longitud;
 		nuevoNodo->numero = ubicacion.numeroNodo;
 		nuevoNodo->puerto = ubicacion.puerto;
-		list_add(listaNodos,nuevoNodo);
+		list_add(nodosConectados,nuevoNodo);
+
+		memcpy(nodoAPlanificar,nuevoNodo,sizeof(infoNodo));
+		nodoAPlanificar->bloques = list_create();
+		list_add(nodoAPlanificar->bloques,&bloque);
+		list_add(listaNodos,nodoAPlanificar);
+
 	}
+	pthread_mutex_unlock(&mutex_NodosConectados);
 
 }

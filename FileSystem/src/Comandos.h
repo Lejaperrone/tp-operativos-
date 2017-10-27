@@ -49,7 +49,9 @@ int mover(char* comando);//mv
 
 int informacion(char* comando);//info
 
-int copiarArchivo(char* comando);
+int copiarArchivo(char* comando);//cpfrom
+
+int copiarArchivoAFs(char* comando);//cpto
 
 int generarArchivoMD5(char* comando);//md5
 

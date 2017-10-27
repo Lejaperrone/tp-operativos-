@@ -21,15 +21,12 @@ void handlerMaster() {
 		int bytesRestantes = 50;
 		destino = "/tmp/resultado";
 		int offset = bloqueId * mb + bytesRestantes;
-		crearScript(contenidoScript, mensajeProcesarTransformacion);
-		free(contenidoScript);
+		crearScript(contenidoScript);
 		command =
 				string_from_format(
-						"head -c %d < %s | tail -c %d | ./%s/transformador.sh | sort > %s",
-						offset, config.RUTA_DATABIN, bytesRestantes,
-						config.RUTA_DATABIN, destino);
-		ejecutarComando(command,socketMaster);
-		free(command);
+						"head -c %d < %s | tail -c %d | ./home/utnso/scripts/script.sh | sort > %s",
+						offset, config.RUTA_DATABIN, bytesRestantes, destino);
+		ejecutarComando(command, socketMaster);
 		empaquetar(socketMaster, mensajeOk, 0, 0);
 		exit(1);
 		break;
@@ -40,14 +37,13 @@ void handlerMaster() {
 		listaArchivosTemporales = list_create();
 		destino = "/tmp/resultado";
 		archivoAReducir = "preReduccion";
-		crearScript(contenidoScript, mensajeProcesarRedLocal);
+		crearScript(contenidoScript);
 		apareoArchivosLocales(listaArchivosTemporales, archivoAReducir);
 		FILE* archivoTemporalDeReduccionLocal = fopen(destino, "w+");
 		command = string_from_format(" %s | ./%s/reductor.sh > %s ",
 				archivoAReducir, config.RUTA_DATABIN,
 				archivoTemporalDeReduccionLocal);
-		ejecutarComando(command,socketMaster);
-		free(command);
+		ejecutarComando(command, socketMaster);
 		empaquetar(socketMaster, mensajeOk, 0, 0);
 		exit(1);
 		break;
@@ -57,14 +53,14 @@ void handlerMaster() {
 		contenidoScript = "contenidoScript reductorGlobal";
 		archivoAReducir = "preReduccion";
 		destino = "/tmp/resultado";
-		crearScript(contenidoScript, mensajeProcesarRedGlobal);
+		crearScript(contenidoScript);
 		archivosAReducir = crearListaParaReducir();
 		apareoArchivosLocales(archivosAReducir, archivoAReducir);
 		FILE* archivoTemporalDeReduccionGlobal = fopen(destino, "w+");
-		command = string_from_format("%s | ./%s/reductorGlobal.sh > %s", archivoAReducir,
-				config.RUTA_DATABIN, archivoTemporalDeReduccionGlobal);
-		ejecutarComando(command,socketMaster);
-		free(command);
+		command = string_from_format("%s | ./%s/reductorGlobal.sh > %s",
+				archivoAReducir, config.RUTA_DATABIN,
+				archivoTemporalDeReduccionGlobal);
+		ejecutarComando(command, socketMaster);
 		empaquetar(socketMaster, mensajeOk, 0, 0);
 		exit(1);
 		break;
@@ -77,7 +73,6 @@ void ejecutarComando(char * command, int socketMaster) {
 		log_error(logger,
 				"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA REDUCCION LOCAL");
 		empaquetar(socketMaster, mensajeError, 0, 0);
-		free(command);
 		exit(1);
 	}
 }
@@ -92,30 +87,17 @@ void apareoArchivosLocales(t_list *sources, const char *target) {
 
 }
 
-void crearScript(char * bufferScript, int etapa) {
+void crearScript(char * bufferScript) {
 	int aux, auxChmod;
 	char mode[] = "0777";
 	FILE* script;
 	aux = string_length(bufferScript);
-	printf("size archivo:%d\n", aux);
-	if (etapa == mensajeProcesarTransformacion) {
-		printf("Se crea el archivo transformador\n");
-		char* ruta = string_from_format("%s/transformador.sh",
-				config.RUTA_DATABIN);
-		script = fopen(ruta, "w+");
-	} else if (etapa == mensajeProcesarRedLocal) {
-		printf("Se crea el archivo reductor local\n");
-		char* ruta = string_from_format("%s/reductor.sh", config.RUTA_DATABIN);
-		script = fopen(ruta, "w+");
-	} else {
-		printf("Se crea el archivo reductor global\n");
-		char* ruta = string_from_format("%s/reductorGlobal.sh",
-				config.RUTA_DATABIN);
-		script = fopen(ruta, "w+");
-	}
+	printf("Size Archivo:%d\n", aux);
+	printf("Se crea el script\n");
+	script = fopen("/home/utnso/scripts/script.sh", "w+");
 	fwrite(bufferScript, sizeof(char), aux, script);
 	auxChmod = strtol(mode, 0, 8);
-	if (chmod(config.RUTA_DATABIN, auxChmod) < 0) {
+	if (chmod("/home/utnso/scripts/script.sh", auxChmod) < 0) {
 		log_error(logger, "NO SE PUDO DAR PERMISOS DE EJECUCION AL ARCHIVO");
 	}
 	fclose(script);

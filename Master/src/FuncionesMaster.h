@@ -32,6 +32,7 @@ typedef struct{
 /*----VARIABLES GLOBALES----*/
 t_log* loggerMaster;
 int socketYama;
+estadisticaProceso* estadisticas;
 /*--------------------------*/
 
 typedef struct{
@@ -51,9 +52,20 @@ void esperarInstruccionesDeYama();
 char* recibirRuta(char* mensaje);
 
 void enviarArchivo(int socketPrograma, char* rutaArchivo);
+
 void enviarArchivoo(int socketPrograma, char* pathArchivo);
 
 job* crearJob(char* argv[]);
+
+estadisticaProceso* crearEstadisticasProceso();
+
+void setearFechaTransfromacion();
+
+void setearFechaReduccionGlobal();
+
+void setearFechaReduccionLoacl();
+
+void calcularYMostrarEstadisticas();
 
 //int dameUnID();
 

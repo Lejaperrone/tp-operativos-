@@ -26,7 +26,7 @@ void handlerMaster();
 void handlerWorker();
 void levantarServidorWorker(char* ip, int port);
 void ejecutarTransformacion();
-void crearScript(char * bufferScript, int etapa);
+void crearScript(char * bufferScript);
 void apareoArchivosLocales();
 t_list* crearListaParaReducir();
 void ejecutarComando(char* command, int socketMaster);

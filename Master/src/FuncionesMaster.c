@@ -93,7 +93,7 @@ job* crearJob(char* argv[]){
 	job* nuevo = (job*)malloc(sizeof(job));
 
 	nuevo->id = 0;
-	nuevo->socketFd = NULL;
+	nuevo->socketFd = 0;
 
 	nuevo->rutaTransformador.cadena = string_duplicate(argv[2]);
 	nuevo->rutaTransformador.longitud = string_length(nuevo->rutaTransformador.cadena);
@@ -107,6 +107,7 @@ job* crearJob(char* argv[]){
 	nuevo->rutaResultado.cadena = string_duplicate(argv[5]);
 	nuevo->rutaResultado.longitud = string_length(nuevo->rutaResultado.cadena);
 
+	estadisticas = crearEstadisticasProceso();
 	return nuevo;
 }
 
@@ -130,4 +131,31 @@ void enviarArchivo(int socketPrograma, char* pathArchivo){
 				printf("%s\n", "todo no joya");
 	close(fd);
 	free(paquete);
+}
+
+estadisticaProceso* crearEstadisticasProceso(){
+	estadisticaProceso* estadisticas = malloc(sizeof(estadisticaProceso));
+	estadisticas->cantImpresiones = 0;
+	estadisticas->tiempoInicio= time(NULL);
+	estadisticas->cantFallos=0;
+	estadisticas->cantTareas=0;
+	return estadisticas;
+}
+
+void setearFechaTransfromacion(){
+	estadisticas->tiempoInicioTrans = time(NULL);
+}
+
+void setearFechaReduccionGlobal(){
+	estadisticas->tiempoInicioRedGlobal = time(NULL);
+}
+
+void setearFechaReduccionLoacl(){
+	estadisticas->tiempoInicioRedLocal = time(NULL);
+}
+
+void calcularYMostrarEstadisticas(){
+	time_t fin= time(NULL);
+
+
 }
