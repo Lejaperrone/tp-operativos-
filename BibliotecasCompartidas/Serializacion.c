@@ -45,7 +45,6 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			bloque = serializarJob(paquete, &tamanio);
 			break;
 
-
 		case mensajeInformacionNodo:
 			bloque = serializarInformacionNodos(paquete, &tamanio);
 			break;
@@ -73,6 +72,10 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 		case mensajeRespuestaInfoNodos:
 			bloque = serializarRespuestaInfoNodos(paquete,&tamanio);
+			break;
+
+		case mensajeRespuestaTransformacion:
+			bloque = serializarRespuestaTransformacion(paquete,&tamanio);
 			break;
 
 	}
@@ -167,6 +170,9 @@ respuesta desempaquetar(int socket){
 				miRespuesta.envio = deserializarRespuestaInfoNodos(socket,cabecera->tamanio);
 				break;
 
+			case mensajeRespuestaTransformacion:
+				miRespuesta.envio = deserializarRespuestaTransformacion(socket,cabecera->tamanio);
+				break;
 
 		}
 	}
@@ -536,4 +542,132 @@ informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio)
 	}
 
 	return info;
+}
+
+void* serializarRespuestaTransformacion(void* paquete,int* tamanio){
+	respuestaSolicitudTransformacion* respuesta = (respuestaSolicitudTransformacion*)paquete;
+	int desplazamiento = 0;
+
+	*tamanio = sizeof(int);
+	void * buffer = malloc(*tamanio);
+	int longitud = list_size(respuesta->workers);
+	memcpy(buffer + desplazamiento, &longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	int i,j;
+	for (j = 0; j < list_size(respuesta->workers); ++j) {
+		workerEnSolicitudTransformacion* infoWorker = (workerEnSolicitudTransformacion*)list_get(respuesta->workers, j);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &infoWorker->numeroWorker, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &infoWorker->puerto, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &infoWorker->ip.longitud, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += infoWorker->ip.longitud;
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, infoWorker->ip.cadena, infoWorker->ip.longitud);
+		desplazamiento += infoWorker->ip.longitud;
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		int longitud = list_size(infoWorker->bloquesConSusArchivos);
+		memcpy(buffer + desplazamiento, &longitud, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		for (i = 0; i < list_size(infoWorker->bloquesConSusArchivos); ++i) {
+			bloquesConSusArchivos* bloquesArchivos = (bloquesConSusArchivos*)list_get(infoWorker->bloquesConSusArchivos, i);
+
+			*tamanio += sizeof(int);
+			buffer = realloc(buffer, *tamanio);
+			memcpy(buffer + desplazamiento, &bloquesArchivos->numBloque, sizeof(int));
+			desplazamiento += sizeof(int);
+
+			*tamanio += sizeof(int);
+			buffer = realloc(buffer, *tamanio);
+			memcpy(buffer + desplazamiento, &bloquesArchivos->numBloqueEnNodo, sizeof(int));
+			desplazamiento += sizeof(int);
+
+			*tamanio += sizeof(int);
+			buffer = realloc(buffer, *tamanio);
+			memcpy(buffer + desplazamiento, &bloquesArchivos->archivoTemporal.longitud, sizeof(int));
+			desplazamiento += sizeof(int);
+
+			*tamanio += bloquesArchivos->archivoTemporal.longitud;
+			buffer = realloc(buffer, *tamanio);
+			memcpy(buffer + desplazamiento, bloquesArchivos->archivoTemporal.cadena, bloquesArchivos->archivoTemporal.longitud);
+			desplazamiento += bloquesArchivos->archivoTemporal.longitud;
+
+		}
+	}
+
+	return buffer;
+}
+
+respuestaSolicitudTransformacion* deserializarRespuestaTransformacion(int socket,int tamanio){
+	int desplazamiento = 0;
+	respuestaSolicitudTransformacion* respuesta= malloc(sizeof(respuestaSolicitudTransformacion));
+
+	void* buffer = malloc(tamanio);
+	recv(socket,buffer,tamanio,0);
+
+	respuesta->workers= list_create();
+	int longitud = 0;
+	memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	int i,j;
+	for (i = 0; i < longitud; ++i) {
+		workerEnSolicitudTransformacion* infoWorker = malloc(sizeof(workerEnSolicitudTransformacion));
+
+		memcpy(&infoWorker->numeroWorker, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		memcpy(&infoWorker->puerto, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		memcpy(&infoWorker->ip.longitud, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		infoWorker->ip.cadena = calloc(1,infoWorker->ip.longitud+1);
+		memcpy(infoWorker->ip.cadena, buffer + desplazamiento, infoWorker->ip.longitud);
+		desplazamiento += infoWorker->ip.longitud;
+
+		infoWorker->bloquesConSusArchivos = list_create();
+		int longitud = 0;
+		memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		for (j = 0; j < longitud; ++j) {
+			bloquesConSusArchivos* bloqueArchivos = malloc(sizeof(bloquesConSusArchivos));
+
+			memcpy(&bloqueArchivos->numBloque, buffer + desplazamiento, sizeof(int) );
+			desplazamiento += sizeof(int);
+
+			memcpy(&bloqueArchivos->numBloqueEnNodo, buffer + desplazamiento, sizeof(int) );
+			desplazamiento += sizeof(int);
+
+			memcpy(&bloqueArchivos->archivoTemporal.longitud, buffer + desplazamiento, sizeof(int) );
+			desplazamiento += sizeof(int);
+
+			bloqueArchivos->archivoTemporal.cadena = calloc(1,bloqueArchivos->archivoTemporal.longitud+1);
+			memcpy(bloqueArchivos->archivoTemporal.cadena, buffer + desplazamiento, bloqueArchivos->archivoTemporal.longitud);
+			desplazamiento += bloqueArchivos->archivoTemporal.longitud;
+
+			list_add(infoWorker->bloquesConSusArchivos, bloqueArchivos);
+		}
+
+		list_add(respuesta->workers, infoWorker);
+	}
+
+	return respuesta;
 }

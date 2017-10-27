@@ -71,4 +71,7 @@ informacionNodo* deserializarInformacionNodos(int socket,int tamanio);
 void* serializarRespuestaInfoNodos(void* paquete,int* tamanio);
 informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio);
 
+void* serializarRespuestaTransformacion(void* paquete,int* tamanio);
+respuestaSolicitudTransformacion* deserializarRespuestaTransformacion(int socket,int tamanio);
+
 #endif /* SERIALIZACION_H_ */

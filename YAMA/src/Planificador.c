@@ -38,7 +38,9 @@ void planificar(job* job){
 
 	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques);
 
-	moverClock(worker, listaNodos, matrix, infoArchivo);
+	respuestaSolicitudTransformacion* respuestaMaster = moverClock(worker, listaNodos, matrix, infoArchivo,job->id);
+
+	//empaquetar(job->socketFd,mensajeRespuestaTransformacion,0,respuestaMaster);
 
 	pthread_mutex_lock(&cantTareasHistoricas_mutex);
 	worker->cantTareasHistoricas++;
@@ -47,16 +49,12 @@ void planificar(job* job){
 }
 
 
-void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBloque, informacionArchivoFsYama* infoArchivo){
+respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBloque, informacionArchivoFsYama* infoArchivo,int job){
 	int i;
 	int cantidadBloques = list_size(infoArchivo->informacionBloques);
-	infoNodo* workerAux = malloc(sizeof(infoNodo));
 	infoBloque* bloque = malloc(sizeof(infoBloque));
 	respuestaSolicitudTransformacion* respuestaAMaster = malloc(sizeof(respuestaSolicitudTransformacion));
-
-	respuestaAMaster->ip = workerDesignado->ip;
-	respuestaAMaster->puerto = workerDesignado->puerto;
-	respuestaAMaster->bloques = list_create();
+	respuestaAMaster->workers = list_create();
 
 	for(i=0;i<cantidadBloques;i++){
 		bloque = (infoBloque*)list_get(infoArchivo->informacionBloques, i);
@@ -64,20 +62,20 @@ void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBl
 		if(workerDesignado->disponibilidad > 0){
 			if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
 				modificarCargayDisponibilidad(workerDesignado);
-				list_add(respuestaAMaster->bloques, bloque);
-
+				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
 				log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
 
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
 			}
 			else {
-				printf("worker %d no tiene el bloque %d, DISP ANTERIOR: %d\n",workerDesignado->numero,bloque->numeroBloque,workerDesignado->disponibilidad);
+				infoNodo* proximoWorker = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero);
+				//printf("worker %d no tiene el bloque %d, DISP ANTERIOR: %d\n",proximoWorker->numero,bloque->numeroBloque,proximoWorker->disponibilidad);
+				agregarBloqueANodoParaEnviar(bloque,proximoWorker,respuestaAMaster,job);
+
 				//FIXME ACA HAY QUE BUSCAR EL SIGUIENTE NODO SIN MOVER EL CLOCK QUE TENGA EL BLOQUE!!!!!!!
 
-
-				//list_add(respuestaAMaster->bloques,bloque);
-				//modificarCargayDisponibilidad(workerDesignado);
-				//log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerAux->numero, workerAux->disponibilidad);
+				modificarCargayDisponibilidad(proximoWorker);
+				log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, proximoWorker->numero, proximoWorker->disponibilidad);
 			}
 		}
 		else{
@@ -91,6 +89,7 @@ void moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBl
 			 **/
 
 	}
+	return respuestaAMaster;
 
 }
 void restaurarDisponibilidad(infoNodo* worker){
@@ -102,7 +101,7 @@ infoNodo* encontrarWorkerDisponible(t_list* listaNodos, bool** nodoXbloque,int b
 		return bloqueEstaEn(worker, nodoXbloque, bloque);
 	}
 
-	return list_find(listaNodos, disponiblidadMayorA0);
+	return list_find(listaNodos, (void*)disponiblidadMayorA0);
 }
 
 infoNodo* avanzarClock(infoNodo* worker, t_list* listaNodos){
@@ -111,7 +110,7 @@ infoNodo* avanzarClock(infoNodo* worker, t_list* listaNodos){
 	}
 
 	infoNodo* siguienteWorker = malloc(sizeof(infoNodo));
-	list_remove_by_condition(listaNodos, nodoConNumero);
+	list_remove_by_condition(listaNodos, (void*)nodoConNumero);
 	list_add_in_index(listaNodos, list_size(listaNodos), worker);
 
 	siguienteWorker = list_get(listaNodos, 0);
@@ -220,3 +219,52 @@ void modificarCargayDisponibilidad(infoNodo* worker){
 	worker->carga++;
 }
 
+infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWorkerActual){
+	bool nodoBloqueConNumero(infoBloque* bloquee){
+		return bloquee->numeroBloque == bloque;
+	}
+
+	bool nodoConNumero(infoNodo* nodo){
+		return nodo->numero != numWorkerActual && list_find(nodo->bloques, (void*) nodoBloqueConNumero) ;
+	}
+
+	return list_find(listaNodos, (void*) nodoConNumero);
+}
+
+void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSolicitudTransformacion* respuestaMaster,int job){
+	workerEnSolicitudTransformacion* worker;
+	bloquesConSusArchivos* bloquesArchivos = malloc(sizeof(bloquesConSusArchivos));
+
+	bool nodoConNumero(workerEnSolicitudTransformacion* worker){
+		return worker->numeroWorker == nodo->numero;
+	}
+
+	if( list_find(respuestaMaster->workers, (void*) nodoConNumero)){
+		worker = list_find(respuestaMaster->workers, (void*) nodoConNumero);
+	}
+	else{
+		worker = malloc(sizeof(workerEnSolicitudTransformacion));
+		worker->numeroWorker = nodo->numero;
+		worker->puerto = nodo->puerto;
+		worker->ip.longitud = nodo->ip.longitud;
+		worker->ip.cadena = strdup(nodo->ip.cadena);
+		worker->bloquesConSusArchivos = list_create();
+		list_add(respuestaMaster->workers,worker);
+	}
+
+	char* rutaTemporal = dameUnNombreArchivoTemporal(job,bloque->numeroBloque);
+
+	bloquesArchivos->numBloque = bloque->numeroBloque;
+	bloquesArchivos->archivoTemporal.cadena = strdup(rutaTemporal);
+	bloquesArchivos->archivoTemporal.longitud = string_length(rutaTemporal);
+
+	if(bloque->ubicacionCopia0.numeroNodo == nodo->numero){
+		bloquesArchivos->numBloqueEnNodo = bloque->ubicacionCopia0.numeroBloqueEnNodo;
+	}
+	else{
+		bloquesArchivos->numBloqueEnNodo = bloque->ubicacionCopia1.numeroBloqueEnNodo;
+	}
+
+	list_add(worker->bloquesConSusArchivos,bloquesArchivos);
+
+}

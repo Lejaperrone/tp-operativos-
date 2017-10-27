@@ -71,4 +71,6 @@ void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
 
 void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque);
 
+char* dameUnNombreArchivoTemporal(int jobId,int numBloque);
+
 #endif /* FUNCIONESYAMA_H_ */

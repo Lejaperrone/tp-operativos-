@@ -135,9 +135,9 @@ void recibirArchivo(int nuevoMaster){
 	printf("%s\n", hola);
 }
 
-char* dameUnNombreArchivoTemporal(){
+char* dameUnNombreArchivoTemporal(int jobId,int numBloque){
 	char* nombre= string_new();
-	//string_from_format("Master-%i-temp%i",infoJob->id, inforBloque->bloque);
+	string_from_format("Master-%i-temp%i",jobId, numBloque);
 	return nombre;
 }
 void inicializarEstructuras(){

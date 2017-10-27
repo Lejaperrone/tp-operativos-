@@ -34,14 +34,31 @@ typedef enum {TRANSFORMACION, RED_LOCAL, RED_GLOBAL, ALM_FINAL}Etapa;
 
 typedef enum {EN_EJECUCION, ERROR, FINALIZADO_OK}Estado;
 
-typedef struct {
+/*typedef struct {
 	int nodo;
 	string ip;
 	int puerto;
 	t_list* bloques;
 	int bytesOcupado;//FIXME
 	string rutaArchivoTemp;
+}respuestaSolicitudTransformacion;*/
+
+typedef struct {
+	t_list* workers;
 }respuestaSolicitudTransformacion;
+
+typedef struct {
+	int numeroWorker;
+	string ip;
+	int puerto;
+	t_list* bloquesConSusArchivos;
+}workerEnSolicitudTransformacion;
+
+typedef struct{
+	int numBloque;
+	int numBloqueEnNodo;
+	string archivoTemporal;
+}bloquesConSusArchivos;
 
 typedef struct {
 	int nodo;
