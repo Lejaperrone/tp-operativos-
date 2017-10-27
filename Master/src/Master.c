@@ -1,3 +1,10 @@
+/*
+ * Master.c
+ *
+ *  Created on: 26/10/2017
+ *      Author: utnso
+ */
+
 #include "FuncionesMaster.h"
 
 struct configuracionMaster config;
@@ -20,7 +27,6 @@ int main(int argc, char *argv[]) {
 	esperarInstruccionesDeYama();
 	crearHilosConexion();
 
+	calcularYMostrarEstadisticas();
 	return EXIT_SUCCESS;
 }
-
-

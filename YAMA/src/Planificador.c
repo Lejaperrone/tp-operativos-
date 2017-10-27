@@ -142,10 +142,10 @@ bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
 	int maxDisponibilidad = obtenerDisponibilidadWorker(workerMasDisp);
 	int disponibilidad =  obtenerDisponibilidadWorker(worker);
 
-	//if(maxDisponibilidad == disponibilidad){
-		//return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
+	if(maxDisponibilidad == disponibilidad){
+		return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
 		//FIXME FALLA VALGRIND ACA PORQUE NUNCA SE INICIALIZA
-//	}
+	}
 
 	return maxDisponibilidad > disponibilidad;
 

@@ -134,6 +134,16 @@ typedef struct parametrosLecturaBloque{
     int sem;
 }parametrosLecturaBloque;
 
+typedef struct {
+	int cantImpresiones;
+	int cantTareas;
+	int cantFallos;
+	time_t tiempoInicio;
+	time_t tiempoInicioTrans;
+	time_t tiempoInicioRedGlobal;
+	time_t tiempoInicioRedLocal;
+}estadisticaProceso;
+
 int redondearHaciaArriba(double num);
 
 bool validarArchivo(char* path);
