@@ -97,7 +97,7 @@ respuesta desempaquetar(int socket){
 	int bytesRecibidos;
 
 	if ((bytesRecibidos = recv(socket, cabecera, sizeof(header), 0)) == 0) {
-		miRespuesta.idMensaje = -1;
+		miRespuesta.idMensaje = mensajeDesconexion;
 	}
 	else {
 		miRespuesta.size = cabecera->tamanio;

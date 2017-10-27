@@ -70,6 +70,9 @@ void esperarInstruccionesDeYama() {
 			//ACA RECIBE LO QUE YAMA PLANIFICA Y SE CONECTA A LOS WORKERS SELECCIONADOS
 			crearHilosConexion();
 			break;
+		case mensajeDesconexion:
+			log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
+			exit(1);
 		}
 	}
 //recibir de yama todos los parametros conexion IP PUERTO

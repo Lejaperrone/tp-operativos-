@@ -17,6 +17,7 @@
 #include "Globales.h"
 #include <commons/collections/list.h>
 
+#define mensajeDesconexion -1
 #define mensajeHandshake 1
 #define mensajeArchivo 2
 #define mensajeOk 3
