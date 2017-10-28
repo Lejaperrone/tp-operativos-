@@ -8,5 +8,9 @@ int main(int argc, char *argv[]) {
 	cargarConfiguracionNodo(&config,argv[1]);
 	levantarServidorWorker(config.IP_NODO, config.PUERTO_WORKER);
 
+	//Para probar apareo
+	//t_list* list = list_create();
+	//apareoArchivosLocales(list,"/home/utnso/pruebaApareo/resultado");
+
 	return EXIT_SUCCESS;
 }
