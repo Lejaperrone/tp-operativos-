@@ -58,7 +58,6 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 
 	for(i=0;i<cantidadBloques;i++){
 		bloque = (infoBloque*)list_get(infoArchivo->informacionBloques, i);
-
 		if(workerDesignado->disponibilidad > 0){
 			if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
 				modificarCargayDisponibilidad(workerDesignado);
@@ -66,21 +65,20 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 				log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
 
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
+				verificarValorDisponibilidad(workerDesignado);
 			}
 			else {
 				infoNodo* proximoWorker = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero);
-				//printf("worker %d no tiene el bloque %d, DISP ANTERIOR: %d\n",proximoWorker->numero,bloque->numeroBloque,proximoWorker->disponibilidad);
+				printf("worker %d no tiene el bloque %d, disponibilidad anterior : %d clock en %d\n",workerDesignado->numero,bloque->numeroBloque,proximoWorker->disponibilidad, workerDesignado->numero);
+
 				agregarBloqueANodoParaEnviar(bloque,proximoWorker,respuestaAMaster,job);
-
-				//FIXME ACA HAY QUE BUSCAR EL SIGUIENTE NODO SIN MOVER EL CLOCK QUE TENGA EL BLOQUE!!!!!!!
-
 				modificarCargayDisponibilidad(proximoWorker);
 				log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, proximoWorker->numero, proximoWorker->disponibilidad);
 			}
 		}
 		else{
-			printf("paso por aca el worker: %d\n",workerDesignado->numero);
-			restaurarDisponibilidad(workerDesignado);//POSIBLE SOLUCION PORQUE NO ENTRA A LOS OTROS 2 IF
+			printf("Worker %d tiene %d de disponiblidad, se le restaura\n",workerDesignado->numero,workerDesignado->disponibilidad);
+			restaurarDisponibilidad(workerDesignado);
 		}
 			/*SI EL CLOCK VUELVE A CAER EN EL WORKER DE MAYOR DISPONIBILIDAD QUE ELEGIS AL PRINCIPIO
 			 *OSEA QUE DA TODA UNA VUELTA HAY QUE SUMARLE A TODOS LOS WORKERS EL VALOR DE LA DISPONIBILIDAD
@@ -91,6 +89,11 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 	}
 	return respuestaAMaster;
 
+}
+void verificarValorDisponibilidad(infoNodo* nodo){
+	if(nodo->disponibilidad == 0){
+		restaurarDisponibilidad(nodo);
+	}
 }
 void restaurarDisponibilidad(infoNodo* worker){
 	worker->disponibilidad += getDisponibilidadBase();
@@ -225,10 +228,11 @@ infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWor
 	}
 
 	bool nodoConNumero(infoNodo* nodo){
-		return nodo->numero != numWorkerActual && list_find(nodo->bloques, (void*) nodoBloqueConNumero) ;
+		return nodo->numero != numWorkerActual && list_any_satisfy(nodo->bloques, (void*) nodoBloqueConNumero);
 	}
+	infoNodo* nodoEncontrado = list_find(listaNodos, (void*) nodoConNumero);
+	return nodoEncontrado;
 
-	return list_find(listaNodos, (void*) nodoConNumero);
 }
 
 void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSolicitudTransformacion* respuestaMaster,int job){

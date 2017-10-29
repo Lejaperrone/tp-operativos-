@@ -62,5 +62,6 @@ void modificarCargayDisponibilidad(infoNodo* worker);
 void restaurarDisponibilidad(infoNodo* worker);
 infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWorkerActual);
 void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSolicitudTransformacion* respuestaMaster,int job);
+void verificarValorDisponibilidad(infoNodo* nodo);
 
 #endif /* PLANIFICADOR_H_ */

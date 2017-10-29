@@ -804,7 +804,7 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	strcat(rutaArchivo,"/");
 	strcat(rutaArchivo,rutaDatos.cadena);
 
-	char* rutaPrueba = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/1/as";
+	char* rutaPrueba = "/home/utnso/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/0/hola3.txt";
 
 	t_config* archivo = config_create(rutaPrueba);
 
