@@ -161,7 +161,7 @@ typedef struct {
 	time_t tiempoInicioRedLocal;
 }estadisticaProceso;
 
-int redondearHaciaArriba(double num);
+int redondearHaciaArriba(int num,int num2);
 
 bool validarArchivo(char* path);
 

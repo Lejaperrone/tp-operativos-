@@ -13,14 +13,15 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <math.h>
 
-int redondearHaciaArriba(double num){
-	 int inum = (int)num;
-
-	 if (num == (float)inum) {
-		 return inum;
-	 }
-	 return inum + 1;
+int redondearHaciaArriba(int num,int num2){
+	if(num%num2 ==0){
+		return (int)num/num2;
+	}
+	else{
+		return (int)(num/num2)+1;
+	}
 }
 
 bool validarArchivo(char* path) {
