@@ -59,21 +59,23 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 	for(i=0;i<cantidadBloques;i++){
 		bloque = (infoBloque*)list_get(infoArchivo->informacionBloques, i);
 		if(workerDesignado->disponibilidad > 0){
+
 			if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
 				modificarCargayDisponibilidad(workerDesignado);
 				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
-				log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
+				//log_trace(logger,"CLOCK---> w:%i | disp: %i",workerDesignado->numero,workerDesignado->disponibilidad);
+				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
 
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
-				verificarValorDisponibilidad(workerDesignado);
 			}
 			else {
 				infoNodo* proximoWorker = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero);
-				printf("worker %d no tiene el bloque %d, disponibilidad anterior : %d clock en %d\n",workerDesignado->numero,bloque->numeroBloque,proximoWorker->disponibilidad, workerDesignado->numero);
+				modificarCargayDisponibilidad(proximoWorker);
+				printf("No tiene el bloque\n");
 
 				agregarBloqueANodoParaEnviar(bloque,proximoWorker,respuestaAMaster,job);
-				modificarCargayDisponibilidad(proximoWorker);
-				log_trace(logger, "Bloque %i asignado al worker %i | Disponibilidad %i",bloque->numeroBloque, proximoWorker->numero, proximoWorker->disponibilidad);
+				//log_trace(logger,"CLOCK---> w:%i | disp: %i",workerDesignado->numero,workerDesignado->disponibilidad);
+				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, proximoWorker->numero, proximoWorker->disponibilidad);
 			}
 		}
 		else{
@@ -99,14 +101,6 @@ void restaurarDisponibilidad(infoNodo* worker){
 	worker->disponibilidad += getDisponibilidadBase();
 }
 
-infoNodo* encontrarWorkerDisponible(t_list* listaNodos, bool** nodoXbloque,int bloque){
-	bool disponiblidadMayorA0(infoNodo* worker){
-		return bloqueEstaEn(worker, nodoXbloque, bloque);
-	}
-
-	return list_find(listaNodos, (void*)disponiblidadMayorA0);
-}
-
 infoNodo* avanzarClock(infoNodo* worker, t_list* listaNodos){
 	bool nodoConNumero(infoNodo* nodo){
 		return nodo->numero == worker->numero;
@@ -128,13 +122,15 @@ bool bloqueEstaEn(infoNodo* nodo,bool** nodoXbloque, int bloque){
 
 informacionArchivoFsYama* recibirInfoArchivo(job* job) {
 	solicitudInfoNodos* solTransf = malloc(sizeof(solicitudInfoNodos));
+	informacionArchivoFsYama* infoArchivo = malloc(sizeof(informacionArchivoFsYama));
 
 	solTransf->rutaDatos.cadena = strdup(job->rutaDatos.cadena);
 	solTransf->rutaDatos.longitud = job->rutaDatos.longitud;
 	solTransf->rutaResultado.cadena = strdup(job->rutaResultado.cadena);
 	solTransf->rutaResultado.longitud = job->rutaResultado.longitud;
 
-	return solicitarInformacionAFS(solTransf);
+	infoArchivo = solicitarInformacionAFS(solTransf);
+	return infoArchivo;
 }
 
 infoNodo* posicionarClock(t_list* listaWorkers){
@@ -167,7 +163,6 @@ infoNodo* buscarNodo(t_list* nodos, int numNodo){
 
 	return list_find(nodos, (void*) nodoConNumero);
 }
-
 
 bool estaActivo(infoNodo* worker){
 	return worker->activo == 1;
@@ -226,11 +221,17 @@ infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWor
 	bool nodoBloqueConNumero(infoBloque* bloquee){
 		return bloquee->numeroBloque == bloque;
 	}
-
 	bool nodoConNumero(infoNodo* nodo){
-		return nodo->numero != numWorkerActual && list_any_satisfy(nodo->bloques, (void*) nodoBloqueConNumero);
+		return nodo->numero != numWorkerActual && list_any_satisfy(nodo->bloques, (void*) nodoBloqueConNumero) && (nodo->disponibilidad>0);
 	}
+
+
 	infoNodo* nodoEncontrado = list_find(listaNodos, (void*) nodoConNumero);
+	if(nodoEncontrado == NULL){
+		//t_list* listaSinElApuntado = list_filter(listaNodos, distintoDelClock);//para que no le restaure 2 veces al apuntar por el clock
+		list_iterate(listaNodos,(void*) restaurarDisponibilidad);
+		return list_find(listaNodos, (void*) nodoConNumero);
+	}
 	return nodoEncontrado;
 
 }

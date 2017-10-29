@@ -89,7 +89,7 @@ void recibirContenidoMaster(int nuevoMaster) {
 	pthread_mutex_unlock(&cantJobs_mutex);
 	jobAPlanificar->id = cantJobs;
 	jobAPlanificar->socketFd = nuevoMaster;
-	log_trace(logger, "Job recibido pre-planificacion %i",jobAPlanificar->id);
+	log_trace(logger, "Job recibido para pre-planificacion %i",jobAPlanificar->id);
 
 	planificar(jobAPlanificar);
 
