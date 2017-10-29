@@ -17,6 +17,7 @@
 #include <semaphore.h>
 #include <pthread.h>
 #include "Comandos.h"
+#include <math.h>
 
 #define idDataNodes 3
 #define cantDataNodes 10

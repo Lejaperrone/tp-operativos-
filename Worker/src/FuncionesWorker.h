@@ -30,5 +30,7 @@ void crearScript(char * bufferScript);
 void apareoArchivosLocales();
 t_list* crearListaParaReducir();
 void ejecutarComando(char* command, int socketMaster);
+void traverse_nodes(t_list* list, void funcion(void*));
+char *get_line(FILE *fp);
 
 #endif /* FUNCIONESWORKER_H_ */

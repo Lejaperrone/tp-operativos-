@@ -810,7 +810,7 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 
 	info.tamanioTotal = config_get_int_value(archivo,"TAMANIO");
 
-	int cantBloques = redondearHaciaArriba(info.tamanioTotal / sizeBloque);
+	int cantBloques = redondearHaciaArriba(info.tamanioTotal , sizeBloque);
 
 	int i;
 	for(i=0;i<cantBloques;i++){
