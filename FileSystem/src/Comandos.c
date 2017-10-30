@@ -7,26 +7,6 @@
 
 #include "Comandos.h"
 #include "FuncionesFS.h"
-#include <stdbool.h>
-#include <limits.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <Configuracion.h>
-#include <commons/bitarray.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include "FuncionesFS.h"
-#include "Comandos.h"
-#include "Serializacion.h"
-#include <dirent.h>
-#include <errno.h>
-#include "Serial.h"
-#include <Globales.h>
-#include <math.h>
 
 #define mb 1048576
 
