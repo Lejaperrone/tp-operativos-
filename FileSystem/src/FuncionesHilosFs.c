@@ -110,14 +110,16 @@ void* consolaFS(){
 		//log_trace(loggerFS, "El usuario ingreso: %s", comando);
 
 		if (string_starts_with(comando, "format")) {
-			log_trace(loggerFS, "File system formateado");
-			leerArchivo("hola/chau/hola3.txt");
+			int a = formatearFS(comando);
+			//log_trace(loggerFS, "File system formateado");
 		}
 		else if (string_starts_with(comando, "rm -d")) {
 			if (eliminarDirectorio(comando) == 0)
 				log_trace(loggerFS, "Directorio eliminado");
+			if (eliminarDirectorio(comando) == 2)
+				log_error(loggerFS, "El directorio no existe");
 			else
-				log_error(loggerFS, "No se pudo eliminar el directorio");
+				log_error(loggerFS, "No se pudo eliminar el directorio, no esta vacio");
 		}
 		else if (string_starts_with(comando, "rm -b")) {
 			log_trace(loggerFS, "Bloque eliminado");

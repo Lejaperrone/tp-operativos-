@@ -7,6 +7,26 @@
 
 #include "Comandos.h"
 #include "FuncionesFS.h"
+#include <stdbool.h>
+#include <limits.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <Configuracion.h>
+#include <commons/bitarray.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include "FuncionesFS.h"
+#include "Comandos.h"
+#include "Serializacion.h"
+#include <dirent.h>
+#include <errno.h>
+#include "Serial.h"
+#include <Globales.h>
+#include <math.h>
 
 #define mb 1048576
 
@@ -136,39 +156,91 @@ bool validarDirectorio(char* path){
 	}
 }
 
-int eliminarArchivo(char* comando){
-	/*int success = 1;
-	char* path = devolverRuta(comando, 1);
-	if (!validarArchivo(path))
-		return success;
-	success = system(comando);
-	return success;*/
-	char* rutaDirectorioYamfs = devolverRuta(comando,2);
-	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamfs);
-	printf("%s\n",rutaDirectorioMetadata);
-	int numeroTablaDirectorio = atoi(ultimaParteDeRuta(rutaDirectorioMetadata));
-	printf("%d\n",numeroTablaDirectorio);
+bool isDirectoryEmpty(char *dirname) {
+  int n = 0;
+  struct dirent *d;
+  DIR *dir = opendir(dirname);
+  if (dir == NULL)
+    return false;
+  while ((d = readdir(dir)) != NULL) {
+    if(++n > 2)
+      break;
+  }
+  closedir(dir);
 
-	return 0;
+  return n <= 2;
+}
+
+int eliminarArchivo(char* comando){
+	int sizeArchivo, sizeAux, cantBloquesArchivo = 0, i, j, numeroNodo, bloqueNodo, success;
+	char** arrayInfoBloque;
+	char* rutaArchivoYamafs = devolverRuta(comando,1);
+	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
+	char* rutaDirectorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
+
+	char* rutaMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
+	char* rutaArchivoEnMetadata = malloc(strlen(rutaMetadata) + strlen(nombreArchivo) + 2);
+	memset(rutaArchivoEnMetadata,0,strlen(rutaMetadata) + strlen(nombreArchivo) + 2);
+	memcpy(rutaArchivoEnMetadata, rutaMetadata, strlen(rutaMetadata));
+	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata), "/", 1);
+	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata) + 1, nombreArchivo, strlen(nombreArchivo));
+
+	if (!validarArchivo(rutaArchivoEnMetadata))
+		return 1;
+
+	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
+
+	if (config_has_property(infoArchivo, "TAMANIO"))
+		sizeArchivo = config_get_int_value(infoArchivo,"TAMANIO");
+
+	sizeAux = sizeArchivo;
+
+	while(sizeAux > 0){
+		sizeAux -= mb;
+		++cantBloquesArchivo;
+	}
+
+	for (i = 0; i < cantBloquesArchivo; ++i){
+		for (j = 0; j < numeroCopiasBloque; ++j){
+			if (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,j))){
+				arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,j));
+				numeroNodo = atoi(string_substring_from(arrayInfoBloque[0], 4));
+				bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
+				setearBloqueLibreEnBitmap(numeroNodo, bloqueNodo);
+			}
+		}
+	}
+
+	actualizarBitmapNodos();
+
+	char* command = malloc(strlen(rutaArchivoEnMetadata) + 4);
+	memset(command, 0, strlen(rutaArchivoEnMetadata) + 4);
+	memcpy(command, "rm ", 3);
+	memcpy(command + 3, rutaArchivoEnMetadata, strlen(rutaArchivoEnMetadata));
+
+	success = system(command);
+
+	return success;
 }
 
 int eliminarDirectorio(char* comando){
-	int success = 1;
-
 	char* rutaDirectorioYamfs = devolverRuta(comando,2);
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamfs);
 	int numeroTablaDirectorio = atoi(ultimaParteDeRuta(rutaDirectorioMetadata));
 
 	if (numeroTablaDirectorio == -1)
-		return success;
+		return 2;
 
-	tablaDeDirectorios[numeroTablaDirectorio].index = -1;
-	tablaDeDirectorios[numeroTablaDirectorio].padre = -1;
-	memcpy(tablaDeDirectorios[numeroTablaDirectorio].nombre," ",1);
+	if (isDirectoryEmpty(rutaDirectorioMetadata)){
+		tablaDeDirectorios[numeroTablaDirectorio].index = -1;
+		tablaDeDirectorios[numeroTablaDirectorio].padre = -1;
+		memcpy(tablaDeDirectorios[numeroTablaDirectorio].nombre," ",1);
 
-	success = 0;
-
-	return success;
+		return 0;
+	}else{
+		printf("El directorio no esta vacio");
+		return 1;
+	}
 }
 
 int listarArchivos(char* comando){
@@ -348,4 +420,16 @@ int informacion(char* comando){
 		    printf("Number of blocks: \t%d\n", (int) fileStat.st_blocks);
 
 		    return success;
+}
+
+int formatearFS(char* comando){
+	char* rutaArchivoEnMetadata = "/home/utnso/project/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/11/utnso.txt";
+	char* command = malloc(strlen(rutaArchivoEnMetadata) + 4);
+	memset(command, 0, strlen(rutaArchivoEnMetadata) + 4);
+	memcpy(command, "rm ", 3);
+	memcpy(command + 3, rutaArchivoEnMetadata, strlen(rutaArchivoEnMetadata));
+
+	printf("%s\n", command);
+
+	return 0;
 }

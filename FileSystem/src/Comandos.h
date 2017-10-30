@@ -29,9 +29,9 @@
 
 char* devolverRuta(char* comando, int cantidadDeComandos);
 
-bool validarArchivo(char* path);
-
 bool validarDirectorio(char* path);
+
+bool isDirectoryEmpty(char *dirname);
 
 int eliminarArchivo(char* comando);//rm
 
@@ -54,5 +54,7 @@ int copiarArchivo(char* comando);//cpfrom
 int copiarArchivoAFs(char* comando);//cpto
 
 int generarArchivoMD5(char* comando);//md5
+
+int formatearFS(char* comando);//format
 
 #endif /* FILESYSTEM_COMANDOS_H_ */

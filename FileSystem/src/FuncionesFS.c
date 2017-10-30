@@ -596,6 +596,14 @@ void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
 	printf("lala %d %d\n", infoAux->bloquesOcupados, infoAux->numeroNodo);
 }
 
+void setearBloqueLibreEnBitmap(int numeroNodo, int bloqueOcupado){
+	informacionNodo* infoAux;
+	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
+	bitarray_clean_bit(bitarrayNodo,bloqueOcupado);
+	infoAux = list_get(nodosConectados,numeroNodo);
+	--infoAux->bloquesOcupados;
+}
+
 void actualizarBitmapNodos(){
 	char* sufijo = ".bin";
 	int cantidadNodos = list_size(nodosConectados);
