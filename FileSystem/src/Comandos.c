@@ -87,6 +87,7 @@ int copiarArchivo(char* comando){
 
 	free(tipo);
 	free(nombre);
+	free(mapeoArchivo);
 
 	return 1;
 }

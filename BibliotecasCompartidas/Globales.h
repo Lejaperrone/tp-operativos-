@@ -142,6 +142,7 @@ typedef struct parametrosEnvioBloque{
     int offset;
     int bloque;
     int restanteAnterior;
+    int sem;
 }parametrosEnvioBloque;
 
 typedef struct parametrosLecturaBloque{
