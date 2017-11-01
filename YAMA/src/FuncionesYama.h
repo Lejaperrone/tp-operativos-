@@ -30,6 +30,11 @@
 #define idMaster 2
 #define idDataNodes 3
 
+#define transformacion 1
+#define redLocal 2
+#define redGlobal 3
+
+
 t_list* nodosConectados;
 pthread_mutex_t mutex_NodosConectados;
 pthread_mutex_t mutexLog;
@@ -78,5 +83,11 @@ void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
 void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque);
 
 char* dameUnNombreArchivoTemporal(int jobId,int numBloque);
+
+void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,int etapa);
+
+bool faltanMasTareas(int jobid,int etapa);
+
+void finalizarJob(int jobid);
 
 #endif /* FUNCIONESYAMA_H_ */

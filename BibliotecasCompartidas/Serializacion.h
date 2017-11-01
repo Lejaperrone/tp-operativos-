@@ -42,6 +42,13 @@
 #define mensajeRespuestaTransformacion 23
 #define mensajeError 24
 #define mensajeSizeLecturaBloqueANodo 25
+#define mensajeTransformacionComlpleta 26
+#define mensajeFalloTransformacion 27
+#define mensajeRedLocalComlpleta 28
+#define mensajeFalloRedLocal 29
+#define mensajeRedGlobalComlpleta 30
+#define mensajeFalloRedGlobal 31
+
 
 typedef struct{
 	int idMensaje;

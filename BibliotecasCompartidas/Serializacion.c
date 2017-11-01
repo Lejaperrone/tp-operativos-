@@ -13,6 +13,13 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 	void* bloque;
 
 	switch(idMensaje){
+
+		case mensajeRedLocalComlpleta:
+		case mensajeFalloRedLocal:
+		case mensajeRedGlobalComlpleta:
+		case mensajeFalloRedGlobal:
+		case mensajeTransformacionComlpleta:
+		case mensajeFalloTransformacion:
 		case mensajeHandshake:
 			tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
@@ -108,6 +115,12 @@ respuesta desempaquetar(int socket){
 		miRespuesta.idMensaje = cabecera->idMensaje;
 		switch (miRespuesta.idMensaje) {
 
+			case mensajeRedLocalComlpleta:
+			case mensajeFalloRedLocal:
+			case mensajeRedGlobalComlpleta:
+			case mensajeFalloRedGlobal:
+			case mensajeTransformacionComlpleta:
+			case mensajeFalloTransformacion:
 			case mensajeHandshake:
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);

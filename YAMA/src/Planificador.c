@@ -42,9 +42,55 @@ void planificar(job* job){
 
 	//empaquetar(job->socketFd,mensajeRespuestaTransformacion,0,respuestaMaster);
 
-	pthread_mutex_lock(&cantTareasHistoricas_mutex);
-	worker->cantTareasHistoricas++;
-	pthread_mutex_unlock(&cantTareasHistoricas_mutex);
+	/*agregarInfoTransformacionATablaDeEstadoos(infoArchivo,job->id);
+
+	bool transformacionIncompleta = true;
+	int bloque;
+	while(transformacionIncompleta){
+		respuesta respuestaMaster=  desempaquetar(job->socketFd);
+
+		if(respuestaMaster.idMensaje == mensajeTransformacionComlpleta){
+			bloque = (int)respuestaMaster.envio;
+			agregarBloqueTerminadoATablaEstados(bloque,job->id,transformacion);
+			transformacionIncompleta = faltanMasTareas(job->id,transformacion);
+		}
+		else if(respuestaMaster.idMensaje == mensajeFalloTransformacion){
+			bloque = (int)respuestaMaster.envio;
+			replanificar(bloque,job,infoArchivo);
+		}
+	}
+
+	enviarReduccionLocalAMaster(job->id);
+
+	bool reduccionLocalIncompleta = true;
+	while(reduccionLocalIncompleta){
+		respuesta respuestaMaster=  desempaquetar(job->socketFd);
+
+		if(respuestaMaster.idMensaje == mensajeRedLocalComlpleta){
+			bloque = (int)respuestaMaster.envio;
+			agregarBloqueTerminadoATablaEstados(bloque,job->id,redLocal);
+			reduccionLocalIncompleta = faltanMasTareas(job->id,redLocal);
+		}
+		else if(respuestaMaster.idMensaje == mensajeFalloRedLocal){
+			finalizarJob(job->id);
+		}
+	}
+
+	enviarReduccionGlobalAMaster(job->id);
+
+	bool ReduccionGlobalIncompleta = true;
+	while(ReduccionGlobalIncompleta){
+		respuesta respuestaMaster=  desempaquetar(job->socketFd);
+
+		if(respuestaMaster.idMensaje == mensajeRedGlobalComlpleta){
+			bloque = (int)respuestaMaster.envio;
+			agregarBloqueTerminadoATablaEstados(bloque,job->id,redGlobal);
+			reduccionLocalIncompleta = faltanMasTareas(job->id,redGlobal);
+		}
+		else if(respuestaMaster.idMensaje == mensajeFalloRedGlobal){
+			finalizarJob(job->id);
+		}
+	}*/
 
 }
 
@@ -150,7 +196,7 @@ informacionArchivoFsYama* recibirInfoArchivo(job* job) {
 
 infoNodo* posicionarClock(t_list* listaWorkers){
 	infoNodo* workerDesignado = malloc(sizeof(infoNodo));
-	list_sort(listaWorkers, mayorDisponibilidad);
+	list_sort(listaWorkers, (void*)mayorDisponibilidad);
 
 	workerDesignado = list_get(listaWorkers, 0);//Ya desempata por cantidad de tareas historicas (PROBAR)
 	return workerDesignado;
@@ -286,5 +332,21 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 	}
 
 	list_add(worker->bloquesConSusArchivos,bloquesArchivos);
+
+}
+
+void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArchivo,int jobid){
+
+}
+
+void replanificar(int bloque,job* jobi,informacionArchivoFsYama* infoArchivo){
+
+}
+
+void enviarReduccionLocalAMaster(int jobid){
+
+}
+
+void enviarReduccionGlobalAMaster(int jobid){
 
 }
