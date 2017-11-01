@@ -9,58 +9,59 @@ void handlerMaster() {
 	char* destino;
 	char* contenidoScript;
 	char* command;
-	char* archivoAReducir;
+	char* rutaArchivoApareado;
 	t_list* listaArchivosTemporales;
 	t_list* archivosAReducir;
 	switch (instruccionMaster.idMensaje) {
 	case mensajeProcesarTransformacion:
 		log_trace(logger, "Iniciando Transformacion");
-		//Recibir de master script, origen de datos (bloque y bytesRestantes) y destino (archivo temporal)
 		contenidoScript = "contenidoScript transformador";
 		int bloqueId = 1;
 		int bytesRestantes = 50;
 		destino = "/tmp/resultado";
 		int offset = bloqueId * mb + bytesRestantes;
 		crearScript(contenidoScript);
+		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i", bytesRestantes, bloqueId);
 		command =
 				string_from_format(
 						"head -c %d < %s | tail -c %d | ./home/utnso/scripts/script.sh | sort > %s",
 						offset, config.RUTA_DATABIN, bytesRestantes, destino);
 		ejecutarComando(command, socketMaster);
+		log_trace(logger, "Transformacion realizada correctamente");
 		empaquetar(socketMaster, mensajeOk, 0, 0);
 		exit(1);
 		break;
 	case mensajeProcesarRedLocal:
 		log_trace(logger, "Iniciando Reduccion Local");
-		//Recibir script, origen de datos (archivos temporales del fs local) y destino (archivo temporal del fs local)
 		contenidoScript = "contenidoScript reductorLocal";
-		listaArchivosTemporales = list_create();
+		listaArchivosTemporales = list_create(); //Recibir por socket la lista
 		destino = "/tmp/resultado";
-		archivoAReducir = "preReduccion";
+		rutaArchivoApareado = "/resultadoApareoLocal";
 		crearScript(contenidoScript);
-		apareoArchivosLocales(listaArchivosTemporales, archivoAReducir);
+		apareoArchivosLocales(listaArchivosTemporales, rutaArchivoApareado);
 		FILE* archivoTemporalDeReduccionLocal = fopen(destino, "w+");
 		command = string_from_format(" %s | ./%s/reductor.sh > %s ",
-				archivoAReducir, config.RUTA_DATABIN,
+				rutaArchivoApareado, config.RUTA_DATABIN,
 				archivoTemporalDeReduccionLocal);
 		ejecutarComando(command, socketMaster);
+		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(socketMaster, mensajeOk, 0, 0);
 		exit(1);
 		break;
 	case mensajeProcesarRedGlobal:
 		log_trace(logger, "Iniciando Reduccion Global");
-		//Recibir script, origen de datos (archivo temporal del fs local) y destino (archivo temporal del fs local)
 		contenidoScript = "contenidoScript reductorGlobal";
-		archivoAReducir = "preReduccion";
+		rutaArchivoApareado = "/resultadoApareoGlobal";
 		destino = "/tmp/resultado";
 		crearScript(contenidoScript);
 		archivosAReducir = crearListaParaReducir();
-		apareoArchivosLocales(archivosAReducir, archivoAReducir);
+		apareoArchivosLocales(archivosAReducir, rutaArchivoApareado);
 		FILE* archivoTemporalDeReduccionGlobal = fopen(destino, "w+");
 		command = string_from_format("%s | ./%s/reductorGlobal.sh > %s",
-				archivoAReducir, config.RUTA_DATABIN,
+				rutaArchivoApareado, config.RUTA_DATABIN,
 				archivoTemporalDeReduccionGlobal);
 		ejecutarComando(command, socketMaster);
+		log_trace(logger, "Reduccion global realizada correctamente");
 		empaquetar(socketMaster, mensajeOk, 0, 0);
 		exit(1);
 		break;
@@ -171,18 +172,18 @@ void apareoArchivosLocales(t_list *sources, const char *target) {
 }
 
 void crearScript(char * bufferScript) {
+	log_trace(logger, "Iniciando creacion de script");
 	int aux, auxChmod;
 	char mode[] = "0777";
 	FILE* script;
 	aux = string_length(bufferScript);
-	printf("Size Archivo:%d\n", aux);
-	printf("Se crea el script\n");
 	script = fopen("/home/utnso/scripts/script.sh", "w+");
 	fwrite(bufferScript, sizeof(char), aux, script);
 	auxChmod = strtol(mode, 0, 8);
 	if (chmod("/home/utnso/scripts/script.sh", auxChmod) < 0) {
 		log_error(logger, "NO SE PUDO DAR PERMISOS DE EJECUCION AL ARCHIVO");
 	}
+	log_trace(logger, "Script creado con permisos de ejecucion");
 	fclose(script);
 }
 

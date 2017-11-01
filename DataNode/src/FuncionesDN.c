@@ -28,9 +28,11 @@ int setBloque(int numeroBloque, char* datos) {
 	int fd = open(config.RUTA_DATABIN, O_RDWR);
 	char* mapaDataBin = mmap(0, strlen(datos), PROT_READ | PROT_WRITE, MAP_SHARED, fd, mb*numeroBloque);
 	memcpy(mapaDataBin, datos, strlen(datos));
+	int success = 1;
 	if (msync(mapaDataBin, strlen(datos), MS_SYNC) == -1)
 	{
 		perror("Could not sync the file to disk");
+		success = 0;
 	}
 	if (munmap(mapaDataBin, strlen(datos)) == -1)
 	{
@@ -39,16 +41,17 @@ int setBloque(int numeroBloque, char* datos) {
 		exit(EXIT_FAILURE);
 	}
 	close(fd);
-	return 1;
+	return success;
 }
 
-char* getBloque(int numeroBloque) {
+char* getBloque(int numeroBloque, int sizeBloque) {
 	int fd = open(config.RUTA_DATABIN, O_RDWR);
-	char* mapaDataBin = mmap(0, mb, PROT_READ, MAP_SHARED, fd, mb*numeroBloque);
+	char* mapaDataBin = mmap(0, sizeBloque, PROT_READ, MAP_SHARED, fd, mb*numeroBloque);
+	printf("%d %d\n", numeroBloque, sizeBloque);
 	char* datos = malloc(mb+1);
-	memset(datos,0,mb+1);
-	memcpy(datos, mapaDataBin, mb);
-	if (munmap(mapaDataBin,mb) == -1)
+	memset(datos,0,sizeBloque+1);
+	memcpy(datos, mapaDataBin, sizeBloque);
+	if (munmap(mapaDataBin,sizeBloque) == -1)
 	{
 		close(fd);
 		perror("Error un-mmapping the file");
@@ -90,7 +93,9 @@ void recibirMensajesFileSystem(int socketFs) {
 	respuesta bloqueArchivo;
 	//char* buffer = malloc(mb + 4);
 	int bloqueId;
+	int sizeBloque = 0;
 	char* data;
+	int success;
 
 	switch (numeroBloque.idMensaje) {
 	case mensajeNumeroCopiaBloqueANodo:
@@ -99,15 +104,18 @@ void recibirMensajesFileSystem(int socketFs) {
 		data = malloc(bloqueArchivo.size + 1);
 		memset(data, 0, bloqueArchivo.size + 1);
 		memcpy(data, bloqueArchivo.envio, bloqueArchivo.size);
-		setBloque(bloqueId, data);
+		success = setBloque(bloqueId, data);
+		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int),&success);
 		free(data);
 		free(bloqueArchivo.envio);
 		free(numeroBloque.envio);
 		break;
 
 	case mensajeNumeroLecturaBloqueANodo:
+		bloqueArchivo = desempaquetar(socketFs);
+		memcpy(&sizeBloque, bloqueArchivo.envio, sizeof(int));
 		memcpy(&bloqueId, numeroBloque.envio, sizeof(int));
-		data = getBloque(bloqueId);
+		data = getBloque(bloqueId, sizeBloque);
 		printf("envioooo %d\n", strlen(data));
 		empaquetar(socketFs, mensajeRespuestaGetBloque, strlen(data),data);
 		free(numeroBloque.envio);

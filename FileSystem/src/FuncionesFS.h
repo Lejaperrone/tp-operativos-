@@ -40,7 +40,7 @@ void inicializarTablaDirectorios();
 
 char* rutaSinPrefijoYama(char* ruta);
 
-int bytesACortar(char* mapa);
+int bytesACortar(char* mapa, int offset);
 
 void* leerDeDataNode(void* parametros);
 
@@ -67,6 +67,8 @@ char* generarArrayBloque(int numeroNodo, int numeroBloque);
 void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo);
 
 void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
+
+void setearBloqueLibreEnBitmap(int numeroNodo, int bloqueOcupado);
 
 void actualizarBitmapNodos();
 

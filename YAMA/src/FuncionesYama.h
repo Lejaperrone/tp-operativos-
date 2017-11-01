@@ -49,7 +49,13 @@ int conectarseConFs();
 
 void *manejarConexionMaster(void *cliente);
 
+void manejarConfig();
+
 void levantarServidorYama(char* ip, int port);
+
+void verCambiosConfig();
+
+void validarCambiosConfig();
 
 void recibirContenidoMaster();
 

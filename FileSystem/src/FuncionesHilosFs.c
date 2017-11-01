@@ -10,7 +10,8 @@
 int clienteYama;
 int servidorFS;
 struct sockaddr_in direccionCliente;
-extern sem_t pedidoLecturaFS[];
+extern sem_t pedidosFS[];
+extern t_log* loggerFS;
 
 void* levantarServidorFS(){
 
@@ -19,7 +20,7 @@ void* levantarServidorFS(){
 	int cantidadNodos;
 	informacionNodo info;
 
-	int i = 0;
+	int i = 0, l = 0;
 	int addrlen;
 
 	fd_set datanodes;
@@ -71,7 +72,7 @@ void* levantarServidorFS(){
 								list_add(nodosConectados,paqueteInfoNodo.envio);
 								cantidadNodos = list_size(nodosConectados);
 								actualizarArchivoNodos();
-								sem_init(&pedidoLecturaFS[list_size(nodosConectados)-1],0,1);
+								sem_init(&pedidosFS[list_size(nodosConectados)-1],0,1);
 							}
 							else{
 								log_trace(loggerFS, "DataNode repetido\n");
@@ -110,14 +111,16 @@ void* consolaFS(){
 		//log_trace(loggerFS, "El usuario ingreso: %s", comando);
 
 		if (string_starts_with(comando, "format")) {
-			log_trace(loggerFS, "File system formateado");
-			leerArchivo("hola/chau/hola3.txt");
+			int a = formatearFS(comando);
+			//log_trace(loggerFS, "File system formateado");
 		}
 		else if (string_starts_with(comando, "rm -d")) {
 			if (eliminarDirectorio(comando) == 0)
 				log_trace(loggerFS, "Directorio eliminado");
+			if (eliminarDirectorio(comando) == 2)
+				log_error(loggerFS, "El directorio no existe");
 			else
-				log_error(loggerFS, "No se pudo eliminar el directorio");
+				log_error(loggerFS, "No se pudo eliminar el directorio, no esta vacio");
 		}
 		else if (string_starts_with(comando, "rm -b")) {
 			log_trace(loggerFS, "Bloque eliminado");

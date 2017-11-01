@@ -10,6 +10,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/inotify.h>
+
+#define EVENT_SIZE  ( sizeof (struct inotify_event) + 24 )
+#define BUF_LEN     ( 1024 * EVENT_SIZE )
 
 int disponibilidadBase;
 
@@ -28,6 +32,12 @@ void *manejarConexionMaster(void *cliente) {
 
 	recibirContenidoMaster(nuevoMaster);
 	return 0;
+}
+
+void manejarConfig(){
+	while (1) {
+		verCambiosConfig();
+	}
 }
 
 void levantarServidorYama(char* ip, int port){
@@ -74,6 +84,145 @@ void levantarServidorYama(char* ip, int port){
 			}
 		}
 	}
+}
+
+void verCambiosConfig(){
+	char *pathCarpetaConfig = string_new();
+	char  cwdCarpeta[1024];
+
+	string_append(&pathCarpetaConfig, getcwd(cwdCarpeta, sizeof(cwdCarpeta)));
+
+	char buffer[BUF_LEN];
+
+	int file_descriptor = inotify_init();
+
+	if (file_descriptor < 0) {
+		log_error(logger, "<inotify> No se pudo iniciar.");
+	}
+
+	int watch_descriptor = inotify_add_watch(file_descriptor, pathCarpetaConfig, IN_MODIFY | IN_DELETE);
+
+	int length = read(file_descriptor, buffer, BUF_LEN);
+
+	if (length < 0) {
+		log_error(logger, "<inotify> No se pudo leer archivo de configuracion.");
+	}
+
+	int offset = 0;
+
+	while (offset < length) {
+		struct inotify_event *event = (struct inotify_event *)&buffer[offset];
+
+		if (event->len) {
+			if (strcmp(event->name, "YAMA.cfg") == 0) {
+				if (event->mask & IN_DELETE) {
+					if (event->mask & IN_ISDIR) {
+						log_error(logger, "<inotify> El directorio %s ha sido eliminado.", event->name);
+					}
+					else {
+						log_error(logger, "<inotify> El archivo %s ha sido eliminado.", event->name);
+					}
+				}
+				else if (event->mask & IN_MODIFY) {
+					if (event->mask & IN_ISDIR) {
+						log_info(logger, "<inotify> El directorio %s ha sido modificado.", event->name);
+					}
+					else {
+						log_info(logger, "<inotify> El archivo %s ha sido modificado.", event->name);
+						validarCambiosConfig();
+					}
+	            }
+	         }
+	      }
+	      offset += sizeof(struct inotify_event) + event->len;
+	   }
+
+	   inotify_rm_watch(file_descriptor, watch_descriptor);
+	   close(file_descriptor);
+
+}
+
+void validarCambiosConfig(){
+	int nuevoRetardo,nuevaDisponibilidad;
+	char* nuevoAlgoritmo;
+
+	char *pathArchConfig = string_new(); // String que va a tener el path absoluto para pasarle al config_create
+
+	char cwd[1024];                      // Variable donde voy a guardar el path absoluto hasta el /Debug
+
+	string_append(&pathArchConfig, getcwd(cwd, sizeof(cwd)));
+
+	string_append(&pathArchConfig, "/YAMA.cfg");     // Le concateno el archivo de configuración
+
+	t_config *archivoConfig = config_create(pathArchConfig);
+
+	if (archivoConfig == NULL) {
+		log_info(logger, "<inotify> config_create retorno NULL.");
+		return;
+	}
+
+	if (config_has_property(archivoConfig, "RETARDO_PLANIFICACION")) {
+		nuevoRetardo= config_get_int_value(archivoConfig, "RETARDO_PLANIFICACION");
+	}
+	else{
+		log_info(logger, "<inotify> RETARDO PLANIFICACION retorno NULL.");
+		return;
+	}
+
+	if (config_has_property(archivoConfig, "DISPONIBILIDAD_BASE")) {
+		nuevaDisponibilidad= config_get_int_value(archivoConfig, "DISPONIBILIDAD_BASE");
+	}
+	else{
+		log_info(logger, "<inotify> DISPONIBILIDAD_BASE retorno NULL.");
+		return;
+	}
+
+	if (config_has_property(archivoConfig, "ALGORITMO_BALANCEO")) {
+		nuevoAlgoritmo= config_get_string_value(archivoConfig, "ALGORITMO_BALANCEO");
+	}
+	else{
+		log_info(logger, "<inotify> ALGORITMO_BALANCEO retorno NULL.");
+		return;
+	}
+
+	config_destroy(archivoConfig);
+
+	if (config.RETARDO_PLANIFICACION != nuevoRetardo) {
+		log_info(logger, "<inotify> RETARDO_PLANIFICACION modificado. Anterior: %d || Actual: %d", config.RETARDO_PLANIFICACION , nuevoRetardo);
+
+		if (nuevoRetardo<= 0) {
+			log_error(logger, "El RETARDO_PLANIFICACION no puede ser < = 0. Se deja el anterior: %d.", config.RETARDO_PLANIFICACION);
+		}
+		else{
+			log_trace(logger,"[Inotify] RETARDO_PLANIFICACION modificado. Anterior: %d || Actual: %d\n", config.RETARDO_PLANIFICACION, nuevoRetardo);
+			config.RETARDO_PLANIFICACION = nuevoRetardo;
+		}
+	}
+
+	if (config.DISPONIBILIDAD_BASE != nuevaDisponibilidad) {
+		log_info(logger, "<inotify> DISPONIBILIDAD_BASE modificada. Anterior: %d || Actual: %d", config.DISPONIBILIDAD_BASE , nuevaDisponibilidad);
+
+		if (nuevoRetardo<= 0) {
+			log_error(logger, "La DISPONIBILIDAD_BASE no puede ser < = 0. Se deja la anterior: %d.", config.DISPONIBILIDAD_BASE);
+		}
+		else{
+			log_trace(logger,"[Inotify] DISPONIBILIDAD_BASE modificada. Anterior: %d || Actual: %d\n", config.DISPONIBILIDAD_BASE, nuevaDisponibilidad);
+			config.DISPONIBILIDAD_BASE = nuevoRetardo;
+		}
+	}
+
+	if (strcmp(config.ALGORITMO_BALANCEO ,nuevoAlgoritmo)) {
+		log_info(logger, "<inotify> ALGORITMO_BALANCEO modificada. Anterior: %s || Actual: %s", config.ALGORITMO_BALANCEO , nuevoAlgoritmo);
+
+		if (!strcmp(nuevoAlgoritmo,"WCLOCK") || !strcmp(nuevoAlgoritmo,"CLOCK")) {
+			log_error(logger, "El ALGORITMO_BALANCEO no puede ser diferente a CLOCK o WCLOCK. Se deja el anterior: %s.", config.ALGORITMO_BALANCEO);
+		}
+		else{
+			log_trace(logger,"[Inotify] ALGORITMO_BALANCEO modificada. Anterior: %s || Actual: %s\n", config.ALGORITMO_BALANCEO, nuevoAlgoritmo);
+			config.ALGORITMO_BALANCEO = strdup(nuevoAlgoritmo);
+		}
+	}
+
 }
 
 void recibirContenidoMaster(int nuevoMaster) {
