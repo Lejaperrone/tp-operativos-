@@ -55,39 +55,55 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 	infoBloque* bloque = malloc(sizeof(infoBloque));
 	respuestaSolicitudTransformacion* respuestaAMaster = malloc(sizeof(respuestaSolicitudTransformacion));
 	respuestaAMaster->workers = list_create();
-
 	for(i=0;i<cantidadBloques;i++){
 		bloque = (infoBloque*)list_get(infoArchivo->informacionBloques, i);
-		if(workerDesignado->disponibilidad > 0){
-			if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
+
+		if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
+			if(workerDesignado->disponibilidad > 0){
 				modificarCargayDisponibilidad(workerDesignado);
 				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
 				//log_trace(logger,"CLOCK---> w:%i | disp: %i",workerDesignado->numero,workerDesignado->disponibilidad);
 				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
 
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
-			}
-			else {
-				infoNodo* proximoWorker = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero);
-				modificarCargayDisponibilidad(proximoWorker);
-				printf("No tiene el bloque w=%d\n",workerDesignado->numero);
+				if(workerDesignado->disponibilidad <= 0){
+					workerDesignado->disponibilidad += getDisponibilidadBase();
+					workerDesignado = avanzarClock(workerDesignado, listaNodos);
+				}
 
-				agregarBloqueANodoParaEnviar(bloque,proximoWorker,respuestaAMaster,job);
+			}
+			else{
+				restaurarDisponibilidad(workerDesignado);
+				workerDesignado = avanzarClock(workerDesignado, listaNodos);
+				if(workerDesignado->disponibilidad <= 0){
+					workerDesignado->disponibilidad += getDisponibilidadBase();
+					workerDesignado = avanzarClock(workerDesignado, listaNodos);
+				}
+				modificarCargayDisponibilidad(workerDesignado);
+
+				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
 				//log_trace(logger,"CLOCK---> w:%i | disp: %i",workerDesignado->numero,workerDesignado->disponibilidad);
-				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, proximoWorker->numero, proximoWorker->disponibilidad);
+				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
+				workerDesignado = avanzarClock(workerDesignado, listaNodos);
+
+				if(workerDesignado->disponibilidad <= 0){
+					workerDesignado->disponibilidad += getDisponibilidadBase();
+					workerDesignado = avanzarClock(workerDesignado, listaNodos);
+				}
 			}
 		}
-		else{
-			printf("Worker %d tiene %d de disponiblidad, se le restaura\n",workerDesignado->numero,workerDesignado->disponibilidad);
-			restaurarDisponibilidad(workerDesignado);
+		else {
+			printf("El worker %d no tiene el bloque %d \n",workerDesignado->numero,bloque->numeroBloque);
+			infoNodo* proximoWorker = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero);
+			modificarCargayDisponibilidad(proximoWorker);
+
+			agregarBloqueANodoParaEnviar(bloque,proximoWorker,respuestaAMaster,job);
+			//log_trace(logger,"CLOCK---> w:%i | disp: %i",workerDesignado->numero,workerDesignado->disponibilidad);
+			log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, proximoWorker->numero, proximoWorker->disponibilidad);
 		}
-			/*SI EL CLOCK VUELVE A CAER EN EL WORKER DE MAYOR DISPONIBILIDAD QUE ELEGIS AL PRINCIPIO
-			 *OSEA QUE DA TODA UNA VUELTA HAY QUE SUMARLE A TODOS LOS WORKERS EL VALOR DE LA DISPONIBILIDAD
-			 *BASE TODO
-			 *tambien si cualquier worker se queda sin disponibilidad hay que restaurarle
-			 **/
 
 	}
+
 	return respuestaAMaster;
 
 }
@@ -229,7 +245,6 @@ infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWor
 	infoNodo* nodoEncontrado = list_find(listaNodos, (void*) nodoConNumero);
 	if(nodoEncontrado == NULL){
 		list_iterate(listaNodos,(void*) restaurarDisp);
-		//list_sort(listaNodos, mayorDisponibilidad);
 		return list_find(listaNodos, (void*) nodoConNumero);
 	}
 	return nodoEncontrado;
