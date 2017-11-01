@@ -42,7 +42,7 @@ void planificar(job* job){
 
 	//empaquetar(job->socketFd,mensajeRespuestaTransformacion,0,respuestaMaster);
 
-	/*agregarInfoTransformacionATablaDeEstadoos(infoArchivo,job->id);
+	agregarInfoTransformacionATablaDeEstadoos(infoArchivo,job->id);
 
 	bool transformacionIncompleta = true;
 	int bloque;
@@ -51,8 +51,8 @@ void planificar(job* job){
 
 		if(respuestaMaster.idMensaje == mensajeTransformacionComlpleta){
 			bloque = (int)respuestaMaster.envio;
-			agregarBloqueTerminadoATablaEstados(bloque,job->id,transformacion);
-			transformacionIncompleta = faltanMasTareas(job->id,transformacion);
+			agregarBloqueTerminadoATablaEstados(bloque,job->id,TRANSFORMACION);
+			transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);
 		}
 		else if(respuestaMaster.idMensaje == mensajeFalloTransformacion){
 			bloque = (int)respuestaMaster.envio;
@@ -61,36 +61,10 @@ void planificar(job* job){
 	}
 
 	enviarReduccionLocalAMaster(job->id);
-
-	bool reduccionLocalIncompleta = true;
-	while(reduccionLocalIncompleta){
-		respuesta respuestaMaster=  desempaquetar(job->socketFd);
-
-		if(respuestaMaster.idMensaje == mensajeRedLocalComlpleta){
-			bloque = (int)respuestaMaster.envio;
-			agregarBloqueTerminadoATablaEstados(bloque,job->id,redLocal);
-			reduccionLocalIncompleta = faltanMasTareas(job->id,redLocal);
-		}
-		else if(respuestaMaster.idMensaje == mensajeFalloRedLocal){
-			finalizarJob(job->id);
-		}
-	}
+	esperarRespuestaReduccionDeMaster(job,RED_LOCAL);
 
 	enviarReduccionGlobalAMaster(job->id);
-
-	bool ReduccionGlobalIncompleta = true;
-	while(ReduccionGlobalIncompleta){
-		respuesta respuestaMaster=  desempaquetar(job->socketFd);
-
-		if(respuestaMaster.idMensaje == mensajeRedGlobalComlpleta){
-			bloque = (int)respuestaMaster.envio;
-			agregarBloqueTerminadoATablaEstados(bloque,job->id,redGlobal);
-			reduccionLocalIncompleta = faltanMasTareas(job->id,redGlobal);
-		}
-		else if(respuestaMaster.idMensaje == mensajeFalloRedGlobal){
-			finalizarJob(job->id);
-		}
-	}*/
+	esperarRespuestaReduccionDeMaster(job,RED_GLOBAL);
 
 }
 
@@ -318,7 +292,7 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 		list_add(respuestaMaster->workers,worker);
 	}
 
-	char* rutaTemporal = dameUnNombreArchivoTemporal(job,bloque->numeroBloque);
+	char* rutaTemporal = dameUnNombreArchivoTemporal(job,bloque->numeroBloque,TRANSFORMACION,worker->numeroWorker);
 
 	bloquesArchivos->numBloque = bloque->numeroBloque;
 	bloquesArchivos->archivoTemporal.cadena = strdup(rutaTemporal);
@@ -343,10 +317,55 @@ void replanificar(int bloque,job* jobi,informacionArchivoFsYama* infoArchivo){
 
 }
 
-void enviarReduccionLocalAMaster(int jobid){
+void enviarReduccionLocalAMaster(job* job){
+	respuestaReduccionLocalCompleta* respuestaTodos = malloc(sizeof(respuestaReduccionLocalCompleta));
+	respuestaTodos->workers = list_create();
 
+	bool encontrarEnTablaEstados(void *registro) {
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+		return reg->job == job->id && reg->etapa== TRANSFORMACION;
+	}
+
+	t_list* registrosRedLocal =list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
+
+	void meterEnRespuestaRedLocal(void *registro){
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+		respuestaReduccionLocal* respuestaIndividual = malloc(sizeof(respuestaReduccionLocal));
+		infoNodo* infoNod = obtenerNodo(reg->nodo);
+
+		respuestaIndividual->puerto = infoNod->puerto;
+
+		respuestaIndividual->nodo = reg->nodo;
+
+		respuestaIndividual->ip.longitud = infoNod->ip.longitud;
+		respuestaIndividual->ip.cadena = strdup(infoNod->ip.cadena);
+
+		respuestaIndividual->archivoTransformacion.longitud = string_length(reg->rutaArchivoTemp);
+		respuestaIndividual->archivoTransformacion.cadena = strdup(reg->rutaArchivoTemp);
+
+		char* archivoReduccion = dameUnNombreArchivoTemporal(job->id,reg->bloque,RED_LOCAL,reg->nodo);
+
+		respuestaIndividual->archivoReduccion.longitud = string_length(archivoReduccion);
+		respuestaIndividual->archivoReduccion.cadena = strdup(archivoReduccion);
+
+		list_add(respuestaTodos->workers,respuestaIndividual);
+	}
+
+	list_iterate(registrosRedLocal,(void*)meterEnRespuestaRedLocal);
+	empaquetar(job->socketFd,mensajeRespuestaRedLocal,0,respuestaTodos);
 }
 
-void enviarReduccionGlobalAMaster(int jobid){
+void enviarReduccionGlobalAMaster(job* job){
+	respuestaReduccionGlobalCompleta* respuestaTodos = malloc(sizeof(respuestaReduccionGlobalCompleta));
+	respuestaTodos->workers = list_create();
+
+	bool encontrarEnTablaEstados(void *registro) {
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+		return reg->job == job->id && reg->etapa== RED_LOCAL;
+	}
+
+
+
+	t_list* registrosRedGlobal = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
 
 }

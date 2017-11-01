@@ -283,9 +283,8 @@ void recibirArchivo(int nuevoMaster){
 	printf("%s\n", hola);
 }
 
-char* dameUnNombreArchivoTemporal(int jobId,int numBloque){
-	char* nombre= string_new();
-	string_from_format("Master-%i-temp%i",jobId, numBloque);
+char* dameUnNombreArchivoTemporal(int jobId,int numBloque,int etapa,int nodo){
+	char* nombre= string_from_format("j%dn%db%de%d",jobId, nodo,numBloque,etapa);
 	return nombre;
 }
 void inicializarEstructuras(){
@@ -379,13 +378,82 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 }
 
 void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,int etapa){
+	bool encontrarEnTablaEstados(void *registro) {
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+		return reg->job == jobId && reg->etapa == etapa && reg->etapa == etapa && reg->estado == EN_EJECUCION;
+	}
 
+	pthread_mutex_lock(&mutexTablaEstados);
+	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)faltanMasTareas);
+	pthread_mutex_lock(&mutexTablaEstados);
+
+	reg->estado=FINALIZADO_OK;
 }
 
 bool faltanMasTareas(int jobid,int etapa){
-	return true;
+	bool encontrarEnTablaEstados(void *registro) {
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+		return reg->job == jobid && reg->etapa== etapa;
+	}
+
+	pthread_mutex_lock(&mutexTablaEstados);
+	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)faltanMasTareas);
+	pthread_mutex_lock(&mutexTablaEstados);
+
+	return reg;
 }
 
-void finalizarJob(int jobid){
+void finalizarJob(job* job){
+	borrarEntradasDeJob(job->id);
+	empaquetar(job->socketFd,mensajeFinJob,0,0);
+}
 
+void borrarEntradasDeJob(int jobid){
+	bool encontrarEnTablaEstados(void *registro) {
+		return(((registroTablaEstados*)registro)->job== jobid);
+	}
+
+	pthread_mutex_lock(&mutexTablaEstados);
+	while(list_find(tablaDeEstados,(void*)encontrarEnTablaEstados)){
+		list_remove_by_condition(tablaDeEstados,(void*)borrarEntradasDeJob);
+	}
+	pthread_mutex_unlock(&mutexTablaEstados);
+
+}
+
+void esperarRespuestaReduccionDeMaster(job* job,int etapa){
+	int mensajeOkRedu,mensajeFalloRedu;
+
+	if(etapa ==  RED_LOCAL){
+		mensajeOkRedu=mensajeRedLocalComlpleta;
+		mensajeFalloRedu=mensajeFalloRedLocal;
+	}
+	else{
+		mensajeOkRedu=mensajeRedGlobalComlpleta;
+		mensajeFalloRedu=mensajeFalloRedGlobal;
+	}
+
+
+	int bloque;
+	bool reduccionIncompleta = true;
+	while(reduccionIncompleta){
+		respuesta respuestaMaster=  desempaquetar(job->socketFd);
+
+		if(respuestaMaster.idMensaje == mensajeOkRedu){
+			bloque = (int)respuestaMaster.envio;
+			agregarBloqueTerminadoATablaEstados(bloque,job->id,etapa);
+			reduccionIncompleta = faltanMasTareas(job->id,etapa);
+		}
+		else if(respuestaMaster.idMensaje == mensajeFalloRedu){
+			finalizarJob(job);
+		}
+	}
+}
+
+infoNodo* obtenerNodo(int numero){
+	bool encontrarNodo(void *nodo){
+		return ((infoNodo*)nodo)->numero == numero;
+	}
+
+	return list_find(nodosConectados,(void*)encontrarNodo);
 }

@@ -16,16 +16,6 @@
 
 t_list* jobsAPlanificar;
 
-typedef struct {
-	int numero;
-	string ip;
-	int puerto;
-	uint32_t carga;
-	t_list* bloques;
-	bool activo;
-	int cantTareasHistoricas;
-	int disponibilidad;
-}infoNodo;
 
 pthread_mutex_t cantTareasHistoricas_mutex;
 uint32_t wlMax;
@@ -64,7 +54,7 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 void verificarValorDisponibilidad(infoNodo* nodo);
 void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArchivo,int jobid);
 void replanificar(int bloque,job* jobi,informacionArchivoFsYama* infoArchivo);
-void enviarReduccionLocalAMaster(int jobid);
-void enviarReduccionGlobalAMaster(int jobid);
+void enviarReduccionLocalAMaster(job* job);
+void enviarReduccionGlobalAMaster(job* job);
 
 #endif /* PLANIFICADOR_H_ */

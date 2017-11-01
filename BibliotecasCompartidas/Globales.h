@@ -12,6 +12,7 @@
 #include <semaphore.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
+#include <stdint.h>
 
 sem_t pedidoFS;
 sem_t actualizarNodos;
@@ -69,22 +70,31 @@ typedef struct {
 	char* rutaArchivoTemp;
 }respuestaInfoNodos;
 
-typedef struct respuestaReduccionLocal{
+typedef struct {
 	int nodo;
-	char* ip;
+	string ip;
 	int puerto;
-	char* archivoTransformacion;
-	char* archivoReduccion;
+	string archivoTransformacion;
+	string archivoReduccion;
 }respuestaReduccionLocal;
+
+typedef struct {
+	t_list* workers;
+}respuestaReduccionLocalCompleta;
 
 typedef struct respuestaReduccionGlobal{
 	int nodo;
 	char* ip;
 	int puerto;
-	char* archivoReduccionLocal;
-	char* archivoReduccionGlobal;
+	string archivoReduccionLocal;
+	string archivoReduccionGlobal;
 	bool encargado;
 }respuestaReduccionGlobal;
+
+typedef struct {
+	t_list* workers;
+	int nodoEncargado;
+}respuestaReduccionGlobalCompleta;
 
 typedef struct registroTablaEstados{
 	int job;
@@ -162,6 +172,17 @@ typedef struct {
 	time_t tiempoInicioRedGlobal;
 	time_t tiempoInicioRedLocal;
 }estadisticaProceso;
+
+typedef struct {
+	int numero;
+	string ip;
+	int puerto;
+	uint32_t carga;
+	t_list* bloques;
+	bool activo;
+	int cantTareasHistoricas;
+	int disponibilidad;
+}infoNodo;
 
 int redondearHaciaArriba(int num,int num2);
 

@@ -6,7 +6,10 @@ int main(int argc, char *argv[]) {
 	pthread_t hiloConfig;
 
 	nodosConectados = list_create();
-	pthread_mutex_init(&mutex_NodosConectados, NULL);
+	tablaDeEstados = list_create();
+	pthread_mutex_init(&mutexTablaEstados, NULL);
+	pthread_mutex_init(&mutexLog, NULL);
+	pthread_mutex_init(&mutexConfiguracion, NULL);
 	pthread_mutex_init(&mutexLog, NULL);
 
 	cargarConfiguracionYama(&config,argv[1]);

@@ -48,6 +48,9 @@
 #define mensajeFalloRedLocal 29
 #define mensajeRedGlobalComlpleta 30
 #define mensajeFalloRedGlobal 31
+#define mensajeFinJob 32
+#define mensajeRespuestaRedLocal 33
+#define mensajeRespuestaRedGlobal 34
 
 
 typedef struct{
@@ -81,5 +84,11 @@ informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio)
 
 void* serializarRespuestaTransformacion(void* paquete,int* tamanio);
 respuestaSolicitudTransformacion* deserializarRespuestaTransformacion(int socket,int tamanio);
+
+void* serializarRespuestaRedLocal(void* paquete,int* tamanio);
+respuestaReduccionLocalCompleta* deserializarRespuestaRedLocal(int socket,int tamanio);
+
+void* serializarRespuestaRedGlobal(void* paquete,int* tamanio);
+respuestaReduccionGlobalCompleta* deserializarRespuestaRedGlobal(int socket,int tamanio);
 
 #endif /* SERIALIZACION_H_ */
