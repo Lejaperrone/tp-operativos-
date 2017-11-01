@@ -33,6 +33,7 @@ extern int sizeTotalNodos, nodosLibres;
 extern t_list* bitmapsNodos;;
 extern t_list* nodosConectados;
 extern char* rutaBitmaps;
+pthread_mutex_t logger_mutex;
 
 int validarArchivoYamaFS(char* ruta);
 

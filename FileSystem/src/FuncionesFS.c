@@ -27,8 +27,7 @@ char* pathArchivoDirectorios = "../metadata/Directorios.dat";
 struct sockaddr_in direccionCliente;
 unsigned int tamanioDireccion = sizeof(direccionCliente);
 int servidorFS;
-extern sem_t pedidosFS[];
-extern sem_t pedidoEscrituraFS[];
+extern t_list* pedidosFS;
 int sizeBloque;
 int successArchivoCopiado;
 
@@ -403,7 +402,8 @@ char* leerArchivo(char* rutaArchivo){
 void* leerDeDataNode(void* parametros){
 	 struct parametrosLecturaBloque* params;
 	 params = (struct parametrosLecturaBloque*) parametros;
-	 sem_wait(&pedidosFS[params->sem]);
+	 sem_t semaforo = *(sem_t*)list_get(pedidosFS,params->sem);
+	 sem_wait(&semaforo);
 	 respuesta respuesta;
 	 empaquetar(params->socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&params->bloque);
 	 empaquetar(params->socket, mensajeSizeLecturaBloqueANodo, sizeof(int),&params->sizeBloque);
@@ -411,7 +411,7 @@ void* leerDeDataNode(void* parametros){
 	 params->contenidoBloque = malloc(respuesta.size + 1);
 	 memset(params->contenidoBloque, 0, respuesta.size + 1);
 	 memcpy(params->contenidoBloque, respuesta.envio, respuesta.size);
-	 sem_post(&pedidosFS[params->sem]);
+	 sem_post(&semaforo);
 	 pthread_exit(params->contenidoBloque);//(void*)params->contenidoBloque;
 }
 
@@ -548,7 +548,7 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			params[i+cantBloquesArchivo*j].sem = indexNodoEnListaConectados[nodoAUtilizar];
 			printf("nodo %d semaforo %d \n\n", indexNodoEnListaConectados[nodoAUtilizar],params[i+cantBloquesArchivo*j].sem);
 			printf("hilo %d\n",i+cantBloquesArchivo*j);
-			 printf("params %d\n", params[i+cantBloquesArchivo*j].sizeBloque);
+			printf("params %d\n", params[i+cantBloquesArchivo*j].sizeBloque);
 			pthread_create(&nuevoHilo[i+cantBloquesArchivo*j], NULL, &enviarADataNode,(void*) &params[i+cantBloquesArchivo*j]);
 
 			if (successArchivoCopiado == 1){
@@ -582,7 +582,8 @@ void* enviarADataNode(void* parametros){
 	 struct parametrosEnvioBloque* params;
 	 params = (struct parametrosEnvioBloque*) parametros;
 	 int success = 1;
-	 sem_wait(&pedidosFS[params->sem]);
+	 sem_t semaforo = *(sem_t*)list_get(pedidosFS,params->sem);
+	 sem_wait(&semaforo);
 	 char* buff = malloc(params->sizeBloque + 1);
 	 memset(buff,0, params->sizeBloque + 1);
 	 memcpy(buff, params->mapa+params->offset-params->restanteAnterior, params->sizeBloque);
@@ -596,7 +597,7 @@ void* enviarADataNode(void* parametros){
 		 successArchivoCopiado = 0;
 	 free(buff);
 	 printf("semaforo %d\n", params->sem);
-	 sem_post(&pedidosFS[params->sem]);
+	 sem_post(&semaforo);
 	 pthread_exit(&success);
 }
 

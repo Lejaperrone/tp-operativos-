@@ -43,11 +43,12 @@ t_log* loggerFS;
 int sizeTotalNodos = 0, nodosLibres = 0;
 t_list* nodosConectados;
 t_list* bitmapsNodos;
-extern sem_t pedidoFS;
-sem_t pedidosFS[];
+sem_t pedidoFS;
+t_list* pedidosFS;
 extern sem_t actualizarNodos;
 int clienteYama;
 int servidorFS;
+pthread_mutex_t logger_mutex;
 
 int main(void) {
 	limpiarPantalla();
@@ -55,7 +56,9 @@ int main(void) {
 	sem_init(&actualizarNodos,1,0);
 	nodosConectados = list_create();
 	bitmapsNodos = list_create();
+	pedidosFS = list_create();
 
+	pthread_mutex_init(&logger_mutex, NULL);
 	pthread_t hiloServidorFS, hiloConsolaFS, hiloConexionYama;
 	parametrosServidorHilo parametrosServidorFS;
 	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
