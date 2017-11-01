@@ -59,7 +59,6 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 	for(i=0;i<cantidadBloques;i++){
 		bloque = (infoBloque*)list_get(infoArchivo->informacionBloques, i);
 		if(workerDesignado->disponibilidad > 0){
-
 			if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
 				modificarCargayDisponibilidad(workerDesignado);
 				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
@@ -71,7 +70,7 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 			else {
 				infoNodo* proximoWorker = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero);
 				modificarCargayDisponibilidad(proximoWorker);
-				printf("No tiene el bloque\n");
+				printf("No tiene el bloque w=%d\n",workerDesignado->numero);
 
 				agregarBloqueANodoParaEnviar(bloque,proximoWorker,respuestaAMaster,job);
 				//log_trace(logger,"CLOCK---> w:%i | disp: %i",workerDesignado->numero,workerDesignado->disponibilidad);
@@ -135,18 +134,16 @@ informacionArchivoFsYama* recibirInfoArchivo(job* job) {
 
 infoNodo* posicionarClock(t_list* listaWorkers){
 	infoNodo* workerDesignado = malloc(sizeof(infoNodo));
-	list_sort(listaWorkers, (void*) mayorDisponibilidad);
+	list_sort(listaWorkers, mayorDisponibilidad);
 
 	workerDesignado = list_get(listaWorkers, 0);//Ya desempata por cantidad de tareas historicas (PROBAR)
-
 	return workerDesignado;
 }
 
-bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp){
+bool mayorDisponibilidad(infoNodo* workerMasDisp, infoNodo* worker){
 
 	int maxDisponibilidad = obtenerDisponibilidadWorker(workerMasDisp);
 	int disponibilidad =  obtenerDisponibilidadWorker(worker);
-
 	//if(maxDisponibilidad == disponibilidad){
 	//	return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
 		//FIXME FALLA VALGRIND ACA PORQUE NUNCA SE INICIALIZA
@@ -224,12 +221,15 @@ infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWor
 	bool nodoConNumero(infoNodo* nodo){
 		return nodo->numero != numWorkerActual && list_any_satisfy(nodo->bloques, (void*) nodoBloqueConNumero) && (nodo->disponibilidad>0);
 	}
-
-
+	void restaurarDisp(infoNodo* nodo){
+		if(nodo->numero != numWorkerActual){
+			nodo->disponibilidad += getDisponibilidadBase();
+		}
+	}
 	infoNodo* nodoEncontrado = list_find(listaNodos, (void*) nodoConNumero);
 	if(nodoEncontrado == NULL){
-		//t_list* listaSinElApuntado = list_filter(listaNodos, distintoDelClock);//para que no le restaure 2 veces al apuntar por el clock
-		list_iterate(listaNodos,(void*) restaurarDisponibilidad);
+		list_iterate(listaNodos,(void*) restaurarDisp);
+		//list_sort(listaNodos, mayorDisponibilidad);
 		return list_find(listaNodos, (void*) nodoConNumero);
 	}
 	return nodoEncontrado;
