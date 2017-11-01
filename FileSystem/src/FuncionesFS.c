@@ -294,6 +294,8 @@ char* leerArchivo(char* rutaArchivo){
 	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata), "/", 1);
 	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata) + 1, nombre, strlen(nombre));
 
+	printf("%s------------------\n", rutaArchivoEnMetadata);
+
 	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
 	FILE* informacionArchivo = fopen(rutaArchivoEnMetadata,"r");
 
@@ -362,6 +364,11 @@ char* leerArchivo(char* rutaArchivo){
 		++peticiones[posicionNodoAPedir];
 		numeroBloqueDataBin = atoi(arrayInfoBloque[1]);
 
+		if (config_has_property(infoArchivo, "TAMANIO")){
+			params[i].sizeBloque = config_get_int_value(infoArchivo,string_from_format("BLOQUE%dBYTES",i));
+			printf("size %d \n",sizeArchivo);
+		}
+
 
 		params[i].bloque = numeroBloqueDataBin;
 		params[i].socket = info.socket;
@@ -399,6 +406,7 @@ void* leerDeDataNode(void* parametros){
 	 sem_wait(&pedidosFS[params->sem]);
 	 respuesta respuesta;
 	 empaquetar(params->socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&params->bloque);
+	 empaquetar(params->socket, mensajeSizeLecturaBloqueANodo, sizeof(int),&params->sizeBloque);
 	 respuesta = desempaquetar(params->socket);
 	 params->contenidoBloque = malloc(respuesta.size + 1);
 	 memset(params->contenidoBloque, 0, respuesta.size + 1);

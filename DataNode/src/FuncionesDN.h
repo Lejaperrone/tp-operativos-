@@ -10,7 +10,7 @@ void escucharAlFS(int socketFs);
 
 int setBloque(int numeroBloque, char* datos);
 
-char* getBloque(int numeroBloque);
+char* getBloque(int numeroBloque, int sizeBloque);
 
 void inicializarDataBin();
 

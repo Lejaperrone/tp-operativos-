@@ -45,7 +45,6 @@ t_list* nodosConectados;
 t_list* bitmapsNodos;
 extern sem_t pedidoFS;
 sem_t pedidosFS[];
-sem_t pedidoEscrituraFS[];
 extern sem_t actualizarNodos;
 int clienteYama;
 int servidorFS;
@@ -59,6 +58,7 @@ int main(void) {
 
 	pthread_t hiloServidorFS, hiloConsolaFS, hiloConexionYama;
 	parametrosServidorHilo parametrosServidorFS;
+	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
 	parametrosServidorFS.cliente = clienteYama;
 
@@ -78,7 +78,6 @@ int main(void) {
 	memcpy(tablaDeDirectorios[2].nombre,"bla",4);
 	memcpy(tablaDeDirectorios[3].nombre,"bla",4);*/
 
-	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
 	inicializarTablaDirectorios();
 

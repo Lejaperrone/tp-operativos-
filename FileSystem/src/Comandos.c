@@ -225,8 +225,9 @@ int eliminarDirectorio(char* comando){
 }
 
 int listarArchivos(char* comando){
+	printf("%s",leerArchivo("/hola/enters.txt"));
 	int success = 1;
-	char* rutaYamafs = devolverRuta(comando, 1);
+	/*char* rutaYamafs = devolverRuta(comando, 1);
 	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
 	if (rutaFsLocal == string_itoa(-1))
 		return success;
@@ -236,7 +237,7 @@ int listarArchivos(char* comando){
 	memcpy(command, "ls ", 3);
 	memcpy(command + 3, rutaFsLocal, strlen(rutaFsLocal));
 
-	success = system(command);
+	success = system(command);*/
 
 	return success;
 }

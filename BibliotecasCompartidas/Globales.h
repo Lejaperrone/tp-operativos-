@@ -150,6 +150,7 @@ typedef struct parametrosLecturaBloque{
     int bloque;
     char* contenidoBloque;
     int sem;
+    int sizeBloque;
 }parametrosLecturaBloque;
 
 typedef struct {

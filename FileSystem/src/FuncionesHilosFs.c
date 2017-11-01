@@ -11,6 +11,7 @@ int clienteYama;
 int servidorFS;
 struct sockaddr_in direccionCliente;
 extern sem_t pedidosFS[];
+extern t_log* loggerFS;
 
 void* levantarServidorFS(){
 
