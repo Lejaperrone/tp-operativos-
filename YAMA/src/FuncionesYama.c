@@ -242,8 +242,7 @@ void recibirContenidoMaster(int nuevoMaster) {
 
 	planificar(jobAPlanificar);
 
-	empaquetar(nuevoMaster, mensajeOk, 0, 0);// logica con respuesta a Master
-	empaquetar(nuevoMaster, mensajeDesignarWorker, 0, 0);
+
 
 }
 
@@ -372,12 +371,21 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 		memcpy(nodoAPlanificar,nuevoNodo,sizeof(infoNodo));
 		nodoAPlanificar->bloques = list_create();
 		list_add(nodoAPlanificar->bloques,&bloque);
-		if(nodoAPlanificar->numero != 1){
-			nodoAPlanificar->carga =1;
-		}
 		list_add(listaNodos,nodoAPlanificar);
 
 	}
 	pthread_mutex_unlock(&mutex_NodosConectados);
+
+}
+
+void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,int etapa){
+
+}
+
+bool faltanMasTareas(int jobid,int etapa){
+	return true;
+}
+
+void finalizarJob(int jobid){
 
 }

@@ -62,5 +62,9 @@ void restaurarDisponibilidad(infoNodo* worker);
 infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWorkerActual);
 void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSolicitudTransformacion* respuestaMaster,int job);
 void verificarValorDisponibilidad(infoNodo* nodo);
+void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArchivo,int jobid);
+void replanificar(int bloque,job* jobi,informacionArchivoFsYama* infoArchivo);
+void enviarReduccionLocalAMaster(int jobid);
+void enviarReduccionGlobalAMaster(int jobid);
 
 #endif /* PLANIFICADOR_H_ */
