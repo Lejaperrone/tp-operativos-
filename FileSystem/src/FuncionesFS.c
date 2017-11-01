@@ -727,7 +727,7 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 
 	bitmapFile = fopen(pathParticular, "r");
 
-	bitmap = bitarray_create_with_mode(espacioBitarray, cantBloques, LSB_FIRST);
+	bitmap = bitarray_create_with_mode(espacioBitarray, sizeNodo, LSB_FIRST);
 
 	fread(currentChar, 1, 1, bitmapFile);
 	while (!feof(bitmapFile)) {
