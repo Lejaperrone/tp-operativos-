@@ -13,6 +13,8 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 	void* bloque;
 
 	switch(idMensaje){
+		case mensajeNumeroLecturaBloqueANodo:
+		case mensajeSizeLecturaBloqueANodo:
 		case mensajeHandshake:
 			tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
@@ -59,9 +61,6 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 		case mensajeRespuestaEnvioBloqueANodo:
 		case mensajeNumeroCopiaBloqueANodo:
-
-		case mensajeNumeroLecturaBloqueANodo:
-		case mensajeSizeLecturaBloqueANodo:
 			tamanio = sizeof(int);
 			bloque = malloc(tamanio);
 			memcpy(bloque,paquete,tamanio);
@@ -109,6 +108,8 @@ respuesta desempaquetar(int socket){
 		switch (miRespuesta.idMensaje) {
 
 			case mensajeHandshake:
+			case mensajeNumeroLecturaBloqueANodo:
+			case mensajeSizeLecturaBloqueANodo:
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);
 				miRespuesta.envio = malloc(sizeof(int));
@@ -145,8 +146,6 @@ respuesta desempaquetar(int socket){
 
 			case mensajeRespuestaEnvioBloqueANodo:
 			case mensajeNumeroCopiaBloqueANodo:
-			case mensajeNumeroLecturaBloqueANodo:
-			case mensajeSizeLecturaBloqueANodo:
 				bufferOk = malloc(sizeof(int));
 				recv(socket,bufferOk,sizeof(int),MSG_WAITALL);
 				miRespuesta.envio = malloc(sizeof(int));

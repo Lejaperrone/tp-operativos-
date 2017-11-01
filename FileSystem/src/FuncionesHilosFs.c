@@ -75,7 +75,7 @@ void* levantarServidorFS(){
 								cantidadNodos = list_size(nodosConectados);
 								actualizarArchivoNodos();
 								sem_t semaforo;
-								sem_init(&semaforo,0,1);
+								sem_init(&semaforo,1,1);
 								list_add(pedidosFS, &semaforo);
 							}
 							else{

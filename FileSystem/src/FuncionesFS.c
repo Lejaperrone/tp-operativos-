@@ -30,6 +30,7 @@ int servidorFS;
 extern t_list* pedidosFS;
 int sizeBloque;
 int successArchivoCopiado;
+sem_t sem;
 
 void establecerServidor(){
 	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
@@ -268,6 +269,8 @@ char* leerArchivo(char* rutaArchivo){
 	int posicionNodoAPedir = -1;
 	int numeroBloqueDataBin = -1;
 
+	//sem_init(&sem,1,0);
+
 	memset(nombreInvertido,0,strlen(rutaArchivo)+1);
 	memset(rutaFinal,0,strlen(rutaArchivo)+1);
 	memset(currentChar,0,2);
@@ -287,8 +290,8 @@ char* leerArchivo(char* rutaArchivo){
 	memcpy(rutaFinal, rutaArchivo, strlen(rutaArchivo)-index);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaFinal);
-	char* rutaArchivoEnMetadata = malloc(strlen(rutaArchivos) + strlen(nombre) + 2);
-	memset(rutaArchivoEnMetadata,0,strlen(rutaArchivos) + strlen(nombre) + 2);
+	char* rutaArchivoEnMetadata = malloc(strlen(rutaMetadata) + strlen(nombre) + 2);
+	memset(rutaArchivoEnMetadata,0,strlen(rutaMetadata) + strlen(nombre) + 2);
 	memcpy(rutaArchivoEnMetadata, rutaMetadata, strlen(rutaMetadata));
 	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata), "/", 1);
 	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata) + 1, nombre, strlen(nombre));
@@ -363,9 +366,9 @@ char* leerArchivo(char* rutaArchivo){
 		++peticiones[posicionNodoAPedir];
 		numeroBloqueDataBin = atoi(arrayInfoBloque[1]);
 
-		if (config_has_property(infoArchivo, "TAMANIO")){
+		if (config_has_property(infoArchivo, string_from_format("BLOQUE%dBYTES",i))){
 			params[i].sizeBloque = config_get_int_value(infoArchivo,string_from_format("BLOQUE%dBYTES",i));
-			printf("size %d \n",sizeArchivo);
+			printf("size %d \n",params[i].sizeBloque);
 		}
 
 
@@ -402,16 +405,19 @@ char* leerArchivo(char* rutaArchivo){
 void* leerDeDataNode(void* parametros){
 	 struct parametrosLecturaBloque* params;
 	 params = (struct parametrosLecturaBloque*) parametros;
-	 sem_t semaforo = *(sem_t*)list_get(pedidosFS,params->sem);
-	 sem_wait(&semaforo);
+	 sem_t* semaforo = list_get(pedidosFS,params->sem);
+	 printf("semaforo1 %d-------\n", params->sem );
+	 sem_wait(semaforo);
 	 respuesta respuesta;
 	 empaquetar(params->socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&params->bloque);
 	 empaquetar(params->socket, mensajeSizeLecturaBloqueANodo, sizeof(int),&params->sizeBloque);
+	 printf("semaforo2 %d -------\n", params->sizeBloque );
 	 respuesta = desempaquetar(params->socket);
-	 params->contenidoBloque = malloc(respuesta.size + 1);
-	 memset(params->contenidoBloque, 0, respuesta.size + 1);
-	 memcpy(params->contenidoBloque, respuesta.envio, respuesta.size);
-	 sem_post(&semaforo);
+	 params->contenidoBloque = malloc(params->sizeBloque + 1);
+	 memset(params->contenidoBloque, 0, params->sizeBloque + 1);
+	 memcpy(params->contenidoBloque, respuesta.envio, params->sizeBloque);
+	 sem_post(semaforo);
+	 printf("semaforo3 -------\n" );
 	 pthread_exit(params->contenidoBloque);//(void*)params->contenidoBloque;
 }
 

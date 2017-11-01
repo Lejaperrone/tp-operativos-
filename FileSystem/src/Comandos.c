@@ -225,7 +225,7 @@ int eliminarDirectorio(char* comando){
 }
 
 int listarArchivos(char* comando){
-	printf("%s",leerArchivo("/hola/enters.txt"));
+	printf("%s",leerArchivo("/hola/hola3.txt"));
 	int success = 1;
 	/*char* rutaYamafs = devolverRuta(comando, 1);
 	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
