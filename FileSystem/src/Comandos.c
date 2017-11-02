@@ -358,37 +358,32 @@ int mover(char* comando){
 	return success;
 }
 
-int generarArchivoMD5(char* comando){
+int generarArchivoMD5(char* path){
 	int success = 1;
-	char* rutaArchivoYamafs = devolverRuta(comando,1);
+	char* rutaArchivoYamafs = devolverRuta(path,1);
 	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
 	if (string_starts_with(string_reverse(buscarRutaArchivo(directorioYamafs)), "-1"))
 		return success;
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 
-	FILE* archivo = fopen(nombreArchivo, "w");
-	fwrite(contenido, strlen(contenido), 1, archivo);
+	char* ubicacionArchivoTemporal = string_from_format("/tmp/%s", nombreArchivo);
+	FILE* file = fopen(ubicacionArchivoTemporal, "w+");
+	fwrite(contenido, sizeof(char), string_length(contenido), file);
 
-	char* MD5 = malloc(8 + strlen(nombreArchivo));
-	memcpy(MD5, "md5sum ", 7);
-	memcpy(MD5 + 7, nombreArchivo, strlen(nombreArchivo)+1);
+	char* MD5 = string_from_format("md5sum /tmp/%s", nombreArchivo);
+	char* RM = string_from_format("rm /tmp/%s", nombreArchivo);
+	fclose(file);
 
-	char* RM = malloc(4 + strlen(nombreArchivo));
-	memcpy(RM, "rm ", 3);
-	memcpy(RM + 3, nombreArchivo, strlen(nombreArchivo)+1);
-
-	printf("%s\n", MD5);
-	printf("%d-a-a-", strlen(contenido));
 	success = system(MD5);
 	printf("\n");
-	fclose(archivo);
 	success = system(RM);
 	free(MD5);
 	free(RM);
 
 	return success;
 }
+
 
 
 int informacion(char* comando){

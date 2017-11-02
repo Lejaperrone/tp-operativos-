@@ -282,8 +282,7 @@ char* leerArchivo(char* rutaArchivo){
 		currentChar = string_substring(rutaInvertida, index, 1);
 	}
 
-	int copia[2];
-	int copiaUsada;
+
 	char* nombre = malloc(index + 1);
 	memset(nombre,0,index + 1);
 	memcpy(nombre, string_reverse(nombreInvertido), index);
@@ -344,33 +343,31 @@ char* leerArchivo(char* rutaArchivo){
 	for (i = 0; i < cantBloquesArchivo; ++i){
 		for (l = 0; l < numeroCopiasBloque; ++l){
 			arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,l));
-			copia[l] = atoi(arrayInfoBloque[1]);
 			numeroNodoDelBloque[l] = atoi(string_substring_from(arrayInfoBloque[0], 4));
 			for (k = 0; k < cantidadNodos; ++k)
-				if (indexNodos[k] == numeroNodoDelBloque[l]){
+				if (indexNodos[k] == numeroNodoDelBloque[l])
 					posicionCopiaEnIndexNodo[l] = k;
-				}
 		}
 		posicionNodoAPedir = posicionCopiaEnIndexNodo[0];
-		copiaUsada = copia[0];
 		for (l = 0; l < numeroCopiasBloque; ++l){
+
 			if (peticiones[posicionCopiaEnIndexNodo[l]] < peticiones[posicionNodoAPedir]){
 				posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
-				copiaUsada = copia[l];
 			}
 			else if (peticiones[posicionCopiaEnIndexNodo[l]] == peticiones[posicionNodoAPedir])
 				if(cargaNodos[posicionCopiaEnIndexNodo[l]] < cargaNodos[posicionNodoAPedir]){
 					posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
-					copiaUsada = copia[l];
+
 				}
 
 		}
 
 		info = *(informacionNodo*)list_get(nodosConectados,posicionNodoAPedir);
 		++peticiones[posicionNodoAPedir];
-		numeroBloqueDataBin = copiaUsada;
+		numeroBloqueDataBin = atoi(arrayInfoBloque[1]);
 
 		if (config_has_property(infoArchivo, string_from_format("BLOQUE%dBYTES",i))){
+			params[i].sizeBloque = config_get_int_value(infoArchivo,string_from_format("BLOQUE%dBYTES",i));
 			printf("size %d \n",params[i].sizeBloque);
 		}
 
