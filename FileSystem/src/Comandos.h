@@ -37,6 +37,8 @@ int eliminarArchivo(char* comando);//rm
 
 int eliminarDirectorio(char* comando);//rm -d
 
+int eliminarBloque(char* comando);//rm -b
+
 int listarArchivos(char* comando);//ls
 
 int crearDirectorio(char* comando);//mkdir

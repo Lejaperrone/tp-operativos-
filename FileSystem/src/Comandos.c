@@ -93,11 +93,11 @@ int copiarArchivo(char* comando){
 }
 
 int copiarArchivoAFs(char* comando){
-	int success = 1;
+	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
 	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
 	if (string_starts_with(string_reverse(buscarRutaArchivo(directorioYamafs)), "-1"))
-		return success;
+		return respuesta;
 
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	printf("%s\n", contenido);
@@ -114,9 +114,9 @@ int copiarArchivoAFs(char* comando){
 
 	fclose(archivo);
 	free(rutaFinal);
-	success = 0;
+	respuesta = 0;
 
-	return success;
+	return respuesta;
 }
 
 bool validarDirectorio(char* path){
@@ -153,7 +153,7 @@ bool isDirectoryEmpty(char *dirname) {
 }
 
 int eliminarArchivo(char* comando){
-	int sizeArchivo, sizeAux, cantBloquesArchivo = 0, i, j, numeroNodo, bloqueNodo, success;
+	int sizeArchivo, sizeAux, cantBloquesArchivo = 0, i, j, numeroNodo, bloqueNodo, respuesta;
 	char** arrayInfoBloque;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
@@ -199,9 +199,12 @@ int eliminarArchivo(char* comando){
 	memcpy(command, "rm ", 3);
 	memcpy(command + 3, rutaArchivoEnMetadata, strlen(rutaArchivoEnMetadata));
 
-	success = system(command);
+	respuesta = system(command);
 
-	return success;
+	free(rutaArchivoEnMetadata);
+	free(command);
+
+	return respuesta;
 }
 
 int eliminarDirectorio(char* comando){
@@ -220,37 +223,75 @@ int eliminarDirectorio(char* comando){
 		return 0;
 	}else{
 		printf("El directorio no esta vacio");
+
 		return 1;
 	}
 }
 
+int eliminarBloque(char* comando){
+	int respuesta = 1, otraCopia, numeroNodo, bloqueNodo;
+	char** arrayInfoBloque;
+	char* rutaArchivoYamafs = devolverRuta(comando,2);
+	int numeroBloque = atoi(devolverRuta(comando,3));
+	int numeroCopia = atoi(devolverRuta(comando,4));
+
+	char* rutaDirectorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
+	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
+	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
+
+	if (atoi(ultimaParteDeRuta(rutaDirectorioMetadata)) == -1)
+		return respuesta;
+
+	char* rutaArchivoEnMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
+
+	if (!validarArchivo(rutaArchivoEnMetadata))
+		return respuesta;
+
+	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
+
+	if (numeroCopia == 0)
+		otraCopia = 1;
+	else
+		otraCopia = 0;
+
+	if (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,numeroCopia))
+			&& config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,otraCopia))){
+		arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,numeroCopia));
+		numeroNodo = atoi(string_substring_from(arrayInfoBloque[0], 4));
+		bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
+		setearBloqueLibreEnBitmap(numeroNodo, bloqueNodo);
+		actualizarBitmapNodos();
+		respuesta = 0;
+	}else{
+		printf("El bloque no tiene ninguna copia en el FileSystem");
+	}
+
+	free(rutaArchivoEnMetadata);
+
+	return respuesta;
+}
+
 int listarArchivos(char* comando){
-	//printf("%s",leerArchivo("/hola/hola3.txt"));
-	FILE* asd = fopen("/home/utnso/test.txt", "r+");
-	char * a = "a";
-	fwrite(a,1,mb,asd);
-	fwrite("b",1,mb,asd);
-	fwrite("c",1,mb,asd);
-	fwrite("d",1,2,asd);
-	fclose(asd);
-	int success = 1;
-	/*char* rutaYamafs = devolverRuta(comando, 1);
+	int respuesta = 1;
+	char* rutaYamafs = devolverRuta(comando, 1);
 	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
 	if (rutaFsLocal == string_itoa(-1))
-		return success;
+		return respuesta;
 
 	char* command = malloc(strlen(rutaFsLocal) + 4);
 	memset(command, 0,strlen(rutaFsLocal) + 4);
 	memcpy(command, "ls ", 3);
 	memcpy(command + 3, rutaFsLocal, strlen(rutaFsLocal));
 
-	success = system(command);*/
+	respuesta = system(command);
 
-	return success;
+	free(command);
+
+	return respuesta;
 }
 
 int crearDirectorio(char* comando){
-	int success = 1, i = 0;
+	int respuesta = 1, i = 0;
 	char* pathComando = devolverRuta(comando, 1);
 	char* path;
 	char* rutaPadre;
@@ -268,14 +309,14 @@ int crearDirectorio(char* comando){
 		return 0;
 	}
 
-	success = getIndexDirectorio(path);
-	printf("success %d\n", success);
+	respuesta = getIndexDirectorio(path);
+	//printf("success %d\n", respuesta);
 
-	if (success == -1){
+	if (respuesta == -1){
 		rutaPadre = rutaSinArchivo(path);
 		indexPadre = getIndexDirectorio(rutaPadre);
 		if (indexPadre == -1)
-			printf("no existe ruta padre %d\n", success);
+			printf("no existe ruta padre %d\n", respuesta);
 		else{
 			while(tablaDeDirectorios[i].index != -1){
 				++i;
@@ -291,22 +332,20 @@ int crearDirectorio(char* comando){
 	else
 		printf("ya existe el directorio\n");
 
-
-	//success = system(comando);
-
 	return 0;
 }
 
 int mostrarArchivo(char* comando){
 
-	int success = 1;
+	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
 	if (buscarRutaArchivo(rutaArchivoYamafs) == string_itoa(-1))
-		return success;
+		return respuesta;
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	printf("%s\n", contenido);
+	respuesta = 0;
 
-	return success;
+	return respuesta;
 }
 
 int cambiarNombre(char* comando){
@@ -337,9 +376,13 @@ int cambiarNombre(char* comando){
 	memcpy(rutaNuevaDefinitiva + strlen(rutaNombreViejoReverse) + strlen(slash), nombreNuevo, strlen(nombreNuevo) + 1);
 
 	if (rename(rutaNombreViejo,rutaNuevaDefinitiva) == 0){
+		free(rutaNombreViejoReverse);
+		free(caracterActual);
 		free(rutaNuevaDefinitiva);
 		return 0;
 	}else{
+		free(rutaNombreViejoReverse);
+		free(caracterActual);
 		free(rutaNuevaDefinitiva);
 		return 1;
 	}
@@ -358,9 +401,9 @@ int mover(char* comando){
 	return success;
 }
 
-int generarArchivoMD5(char* path){
+int generarArchivoMD5(char* comando){
 	int success = 1;
-	char* rutaArchivoYamafs = devolverRuta(path,1);
+	char* rutaArchivoYamafs = devolverRuta(comando,1);
 	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
 	if (string_starts_with(string_reverse(buscarRutaArchivo(directorioYamafs)), "-1"))
 		return success;
@@ -380,6 +423,7 @@ int generarArchivoMD5(char* path){
 	success = system(RM);
 	free(MD5);
 	free(RM);
+	free(ubicacionArchivoTemporal);
 
 	return success;
 }
@@ -387,23 +431,28 @@ int generarArchivoMD5(char* path){
 
 
 int informacion(char* comando){
-	int success = 1;
-	char* path = devolverRuta(comando, 1);
+	int respuesta = 1;
+	char* rutaArchivoYamafs = devolverRuta(comando, 1);
+	char* rutaDirectorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
+	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
+	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
 
-	struct stat fileStat;
-		    if(stat(path,&fileStat) < 0)
-		        return success;
-		    else
-		    	success = 0;
+	if (atoi(ultimaParteDeRuta(rutaDirectorioMetadata)) == -1)
+		return respuesta;
 
-		    printf("Information for %s\n",path);
-		    printf("---------------------------\n");
-		    printf("File Size: \t\t%d bytes\n",(int) fileStat.st_size);
-		    printf("Number of Links: \t%d\n",fileStat.st_nlink);
-		    printf("File inode: \t\t%d\n",(int) fileStat.st_ino);
-		    printf("Number of blocks: \t%d\n", (int) fileStat.st_blocks);
+	char* rutaArchivoMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
 
-		    return success;
+	if (!validarArchivo(rutaArchivoMetadata))
+		return respuesta;
+
+	char* command = string_from_format("cat %s", rutaArchivoMetadata);
+
+	respuesta = system(command);
+
+	free(command);
+	free(rutaArchivoMetadata);
+
+	return respuesta;
 }
 
 int formatearFS(char* comando){
