@@ -91,4 +91,7 @@ respuestaReduccionLocalCompleta* deserializarRespuestaRedLocal(int socket,int ta
 void* serializarRespuestaRedGlobal(void* paquete,int* tamanio);
 respuestaReduccionGlobalCompleta* deserializarRespuestaRedGlobal(int socket,int tamanio);
 
+void* serializarProcesarTransformacion(void* paquete, int* tamanio);
+parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tamanio);
+
 #endif /* SERIALIZACION_H_ */

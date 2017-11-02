@@ -35,12 +35,6 @@ int socketYama;
 estadisticaProceso* estadisticas;
 /*--------------------------*/
 
-typedef struct{
-	char* ip;
-	int port;
-	int numero;
-	t_list* bloquesConSusArchivos;
-} parametrosConexionMaster;
 
 void conectarseConYama(char* ip, int port);
 

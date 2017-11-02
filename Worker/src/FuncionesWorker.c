@@ -2,8 +2,10 @@
 
 void handlerMaster() {
 	respuesta instruccionMaster;
+	parametrosTransformacion* procesarTransformacion = malloc(sizeof(parametrosTransformacion));
+	bloquesConSusArchivos* bloque = malloc(sizeof(bloquesConSusArchivos));
 	log_trace(logger, "Esperando instruccion de Master");
-
+	int i;
 	instruccionMaster = desempaquetar(socketMaster);
 
 	char* destino;
@@ -12,8 +14,11 @@ void handlerMaster() {
 	char* rutaArchivoApareado;
 	t_list* listaArchivosTemporales;
 	t_list* archivosAReducir;
+
 	switch (instruccionMaster.idMensaje) {
 	case mensajeProcesarTransformacion:
+		procesarTransformacion = (parametrosTransformacion*)instruccionMaster.envio;
+
 		log_trace(logger, "Iniciando Transformacion");
 		contenidoScript = "contenidoScript transformador";
 		int bloqueId = 1;

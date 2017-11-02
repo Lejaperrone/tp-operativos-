@@ -58,6 +58,7 @@ typedef struct {
 typedef struct{
 	int numBloque;
 	int numBloqueEnNodo;
+	int bytesOcupados;
 	string archivoTemporal;
 }bloquesConSusArchivos;
 
@@ -183,6 +184,13 @@ typedef struct {
 	int cantTareasHistoricas;
 	int disponibilidad;
 }infoNodo;
+
+typedef struct{
+	int numero;
+	int puerto;
+	string ip;
+	t_list* bloquesConSusArchivos;
+} parametrosTransformacion;
 
 int redondearHaciaArriba(int num,int num2);
 

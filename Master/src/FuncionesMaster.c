@@ -25,33 +25,38 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 	int i,j;
 	workerEnSolicitudTransformacion* worker = malloc(sizeof(workerEnSolicitudTransformacion));
 	bloquesConSusArchivos* bloque = malloc(sizeof(bloquesConSusArchivos));
-	parametrosConexionMaster* parametrosConexion = malloc(sizeof(parametrosConexionMaster));
-
+	parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
+	parametrosConexion->bloquesConSusArchivos = list_create();
+	worker =list_get(rtaYama->workers, 0);
 	//para probar conexion por hilos
-	for(i=0 ; i<list_size(rtaYama->workers);i++){
-		worker = list_get(rtaYama->workers, i);
+	//for(i=0 ; i<list_size(rtaYama->workers);i++){
+		//worker = list_get(rtaYama->workers, i);
 
-		parametrosConexion->ip = worker->ip.cadena;
+		parametrosConexion->ip.cadena = worker->ip.cadena;
+		parametrosConexion->ip.longitud = worker->ip.longitud;
 		parametrosConexion->numero = worker->numeroWorker;
-		parametrosConexion->port = worker->puerto;
+		parametrosConexion->puerto = worker->puerto;
 		parametrosConexion->bloquesConSusArchivos = worker->bloquesConSusArchivos;
 
 		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers,parametrosConexion) != 0) {
 			log_error(loggerMaster, "No se pudo crear el thread de conexion");
 			exit(-1);
 		}
-	}
+	//}
 }
 void* conectarseConWorkers(void* params) {
-	parametrosConexionMaster* parametrosConexion;
-	parametrosConexion = (parametrosConexionMaster*)params;
+	parametrosTransformacion* infoTransformacion = malloc(sizeof(parametrosTransformacion));
+	infoTransformacion = (parametrosTransformacion*)params;
 	int socketWorker = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion(parametrosConexion->ip,parametrosConexion->port);
+	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto);
 	conectarCon(direccion, socketWorker, 2); //2 id master
 
 	log_trace(loggerMaster, "Conexion con Worker \n");
-	empaquetar(socketWorker, mensajeProcesarTransformacion, 0, parametrosConexion->bloquesConSusArchivos);
-	//FIXME ESPARAR CONFIRMACION WORKER
+
+	empaquetar(socketWorker, mensajeProcesarTransformacion, 0, infoTransformacion);
+
+	//FIXME ESPARAR CONFIRMACION WORKER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 	//empaquetar(socketWorker,mensajeProcesarTransformacion, 0,0);
 
 	return 0;

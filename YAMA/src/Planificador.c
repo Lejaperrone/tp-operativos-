@@ -295,6 +295,7 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 	char* rutaTemporal = dameUnNombreArchivoTemporal(job,bloque->numeroBloque,TRANSFORMACION,worker->numeroWorker);
 
 	bloquesArchivos->numBloque = bloque->numeroBloque;
+	bloquesArchivos->bytesOcupados = bloque->bytesOcupados;
 	bloquesArchivos->archivoTemporal.cadena = strdup(rutaTemporal);
 	bloquesArchivos->archivoTemporal.longitud = string_length(rutaTemporal);
 
