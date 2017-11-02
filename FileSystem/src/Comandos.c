@@ -114,11 +114,6 @@ int copiarArchivoAFs(char* comando){
 
 	fclose(archivo);
 	free(rutaFinal);
-	free(rutaArchivoYamafs);
-	free(directorioYamafs);
-	free(contenido);
-	free(nombre);
-	free(rutaDirFs);
 	respuesta = 0;
 
 	return respuesta;
@@ -206,11 +201,6 @@ int eliminarArchivo(char* comando){
 
 	respuesta = system(command);
 
-	free(arrayInfoBloque);
-	free(rutaArchivoYamafs);
-	free(nombreArchivo);
-	free(rutaDirectorioYamafs);
-	free(rutaMetadata);
 	free(rutaArchivoEnMetadata);
 	free(command);
 
@@ -230,14 +220,10 @@ int eliminarDirectorio(char* comando){
 		tablaDeDirectorios[numeroTablaDirectorio].padre = -1;
 		memcpy(tablaDeDirectorios[numeroTablaDirectorio].nombre," ",1);
 
-		free(rutaDirectorioYamfs);
-		free(rutaDirectorioMetadata);
-
 		return 0;
 	}else{
 		printf("El directorio no esta vacio");
-		free(rutaDirectorioYamfs);
-		free(rutaDirectorioMetadata);
+
 		return 1;
 	}
 }
@@ -279,11 +265,7 @@ int eliminarBloque(char* comando){
 	}else{
 		printf("El bloque no tiene ninguna copia en el FileSystem");
 	}
-	free(arrayInfoBloque);
-	free(rutaArchivoYamafs);
-	free(rutaDirectorioYamafs);
-	free(nombreArchivo);
-	free(rutaDirectorioMetadata);
+
 	free(rutaArchivoEnMetadata);
 
 	return respuesta;
@@ -303,8 +285,6 @@ int listarArchivos(char* comando){
 
 	respuesta = system(command);
 
-	free(rutaYamafs);
-	free(rutaFsLocal);
 	free(command);
 
 	return respuesta;
@@ -352,13 +332,6 @@ int crearDirectorio(char* comando){
 	else
 		printf("ya existe el directorio\n");
 
-	free(pathComando);
-	free(path);
-	free(rutaPadre);
-	free(nombre);
-
-	//success = system(comando);
-
 	return 0;
 }
 
@@ -371,8 +344,6 @@ int mostrarArchivo(char* comando){
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	printf("%s\n", contenido);
 	respuesta = 0;
-	free(rutaArchivoYamafs);
-	free(contenido);
 
 	return respuesta;
 }
@@ -405,15 +376,11 @@ int cambiarNombre(char* comando){
 	memcpy(rutaNuevaDefinitiva + strlen(rutaNombreViejoReverse) + strlen(slash), nombreNuevo, strlen(nombreNuevo) + 1);
 
 	if (rename(rutaNombreViejo,rutaNuevaDefinitiva) == 0){
-		free(rutaNombreViejo);
-		free(nombreNuevo);
 		free(rutaNombreViejoReverse);
 		free(caracterActual);
 		free(rutaNuevaDefinitiva);
 		return 0;
 	}else{
-		free(rutaNombreViejo);
-		free(nombreNuevo);
 		free(rutaNombreViejoReverse);
 		free(caracterActual);
 		free(rutaNuevaDefinitiva);
@@ -457,10 +424,6 @@ int generarArchivoMD5(char* comando){
 	free(MD5);
 	free(RM);
 	free(ubicacionArchivoTemporal);
-	free(rutaArchivoYamafs);
-	free(directorioYamafs);
-	free(contenido);
-	free(nombreArchivo);
 
 	return success;
 }
@@ -488,9 +451,6 @@ int informacion(char* comando){
 
 	free(command);
 	free(rutaArchivoMetadata);
-	free(rutaDirectorioMetadata);
-	free(nombreArchivo);
-	free(rutaDirectorioYamafs);
 
 	return respuesta;
 }
