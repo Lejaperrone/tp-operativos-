@@ -225,7 +225,14 @@ int eliminarDirectorio(char* comando){
 }
 
 int listarArchivos(char* comando){
-	printf("%s",leerArchivo("/hola/hola3.txt"));
+	//printf("%s",leerArchivo("/hola/hola3.txt"));
+	FILE* asd = fopen("/home/utnso/test.txt", "r+");
+	char * a = "a";
+	fwrite(a,1,mb,asd);
+	fwrite("b",1,mb,asd);
+	fwrite("c",1,mb,asd);
+	fwrite("d",1,2,asd);
+	fclose(asd);
 	int success = 1;
 	/*char* rutaYamafs = devolverRuta(comando, 1);
 	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
@@ -372,6 +379,7 @@ int generarArchivoMD5(char* comando){
 	memcpy(RM + 3, nombreArchivo, strlen(nombreArchivo)+1);
 
 	printf("%s\n", MD5);
+	printf("%d-a-a-", strlen(contenido));
 	success = system(MD5);
 	printf("\n");
 	fclose(archivo);
