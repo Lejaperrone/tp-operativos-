@@ -358,11 +358,10 @@ int generarArchivoMD5(char* comando){
 	if (string_starts_with(string_reverse(buscarRutaArchivo(directorioYamafs)), "-1"))
 		return success;
 	char* contenido = leerArchivo(rutaArchivoYamafs);
-	printf("%s\n", contenido);
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 
-	FILE* archivo = fopen(nombreArchivo, "a");
-	fwrite(contenido, sizeof(contenido), strlen(contenido), archivo);
+	FILE* archivo = fopen(nombreArchivo, "w");
+	fwrite(contenido, strlen(contenido), 1, archivo);
 
 	char* MD5 = malloc(8 + strlen(nombreArchivo));
 	memcpy(MD5, "md5sum ", 7);
