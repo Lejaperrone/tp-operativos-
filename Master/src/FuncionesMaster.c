@@ -20,27 +20,40 @@ void conectarseConYama(char* ip, int port) {
 	}
 	log_trace(loggerMaster, "Conexion con Yama establecida");
 }
-void crearHilosConexion() {
+void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 	pthread_t hiloConexion;
+	int i,j;
+	workerEnSolicitudTransformacion* worker = malloc(sizeof(workerEnSolicitudTransformacion));
+	bloquesConSusArchivos* bloque = malloc(sizeof(bloquesConSusArchivos));
 	parametrosConexionMaster* parametrosConexion = malloc(sizeof(parametrosConexionMaster));
+
 	//para probar conexion por hilos
-	parametrosConexion->ip = "127.0.0.1";
-	parametrosConexion->id = 2;
-	parametrosConexion->port = 5000;
-	if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers,parametrosConexion) != 0) {
-		log_error(loggerMaster, "No se pudo crear el thread de conexion");
-		exit(-1);
+	for(i=0 ; i<list_size(rtaYama->workers);i++){
+		worker = list_get(rtaYama->workers, i);
+
+		parametrosConexion->ip = worker->ip.cadena;
+		parametrosConexion->numero = worker->numeroWorker;
+		parametrosConexion->port = worker->puerto;
+		parametrosConexion->bloquesConSusArchivos = worker->bloquesConSusArchivos;
+
+		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers,parametrosConexion) != 0) {
+			log_error(loggerMaster, "No se pudo crear el thread de conexion");
+			exit(-1);
+		}
 	}
 }
-void* conectarseConWorkers(parametrosConexionMaster* parametrosConexion) {
-	procesarTransformacion solicitud;
+void* conectarseConWorkers(void* params) {
+	parametrosConexionMaster* parametrosConexion;
+	parametrosConexion = (parametrosConexionMaster*)params;
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(parametrosConexion->ip,parametrosConexion->port);
-	conectarCon(direccion, socketWorker, parametrosConexion->id); //2 id master
-	log_trace(loggerMaster, "Conexion con Worker \n");
+	conectarCon(direccion, socketWorker, 2); //2 id master
 
+	log_trace(loggerMaster, "Conexion con Worker \n");
+	empaquetar(socketWorker, mensajeProcesarTransformacion, 0, parametrosConexion->bloquesConSusArchivos);
+	//FIXME ESPARAR CONFIRMACION WORKER
 	//empaquetar(socketWorker,mensajeProcesarTransformacion, 0,0);
-	//empaquetar la solicitud de procesamiento
+
 	return 0;
 }
 
@@ -61,22 +74,22 @@ void enviarJobAYama(job* miJob) {
 
 void esperarInstruccionesDeYama() {
 	respuesta instruccionesYama;//= malloc(sizeof(respuesta));
+	respuestaSolicitudTransformacion* infoTransformacion = malloc(sizeof(respuestaSolicitudTransformacion));
+
 	while (1) {
 		instruccionesYama = desempaquetar(socketYama);
 
 		switch (instruccionesYama.idMensaje) {
 
-		case mensajeRespuestaTransformacion:
-			//ACA RECIBE LO QUE YAMA PLANIFICA Y SE CONECTA A LOS WORKERS SELECCIONADOS
-			crearHilosConexion();
-			break;
-		case mensajeDesconexion:
-			log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
-			exit(1);
+			case mensajeRespuestaTransformacion:
+				infoTransformacion = (respuestaSolicitudTransformacion*)instruccionesYama.envio;
+				crearHilosConexion(infoTransformacion);
+				break;
+			case mensajeDesconexion:
+				log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
+				exit(1);
 		}
 	}
-//recibir de yama todos los parametros conexion IP PUERTO
-//ver que tipo de etapa es, los hilos de cada etapa son DISTINTOS!!!
 }
 
 char* recibirRuta(char* mensaje) {

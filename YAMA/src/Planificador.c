@@ -40,7 +40,7 @@ void planificar(job* job){
 
 	respuestaSolicitudTransformacion* respuestaMaster = moverClock(worker, listaNodos, matrix, infoArchivo,job->id);
 
-	//empaquetar(job->socketFd,mensajeRespuestaTransformacion,0,respuestaMaster);
+	empaquetar(job->socketFd,mensajeRespuestaTransformacion,0,respuestaMaster);
 
 	agregarInfoTransformacionATablaDeEstadoos(infoArchivo,job->id);
 

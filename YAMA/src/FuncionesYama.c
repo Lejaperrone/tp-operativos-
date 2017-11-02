@@ -185,7 +185,7 @@ void validarCambiosConfig(){
 		return;
 	}
 
-	config_destroy(archivoConfig);
+	//config_destroy(archivoConfig);
 
 	if (config.RETARDO_PLANIFICACION != nuevoRetardo) {
 		log_info(logger, "<inotify> RETARDO_PLANIFICACION modificado. Anterior: %d || Actual: %d", config.RETARDO_PLANIFICACION , nuevoRetardo);
@@ -222,7 +222,7 @@ void validarCambiosConfig(){
 			config.ALGORITMO_BALANCEO = strdup(nuevoAlgoritmo);
 		}
 	}
-
+	config_destroy(archivoConfig);
 }
 
 void recibirContenidoMaster(int nuevoMaster) {
@@ -240,8 +240,9 @@ void recibirContenidoMaster(int nuevoMaster) {
 	jobAPlanificar->socketFd = nuevoMaster;
 	log_trace(logger, "Job recibido para pre-planificacion %i",jobAPlanificar->id);
 
-	planificar(jobAPlanificar);
+	empaquetar(nuevoMaster, mensajeOk, 0,0);
 
+	planificar(jobAPlanificar);
 
 
 }

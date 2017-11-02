@@ -38,12 +38,13 @@ estadisticaProceso* estadisticas;
 typedef struct{
 	char* ip;
 	int port;
-	int id;
+	int numero;
+	t_list* bloquesConSusArchivos;
 } parametrosConexionMaster;
 
 void conectarseConYama(char* ip, int port);
 
-void* conectarseConWorkers(parametrosConexionMaster* parametros);
+void* conectarseConWorkers(void* parametros);
 
 void enviarJobAYama(job* job);
 

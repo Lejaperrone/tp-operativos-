@@ -28,10 +28,10 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeInfoArchivo:
-		case mensajeProcesarTransformacion:
 		case mensajeDesignarWorker:
 		case mensajeFinJob:
 		case mensajeOk:
+		case mensajeProcesarTransformacion:
 			tamanio =1;
 			bloque = malloc(1);
 			char a = 'a';
@@ -142,10 +142,10 @@ respuesta desempaquetar(int socket){
 				break;
 
 			case mensajeInfoArchivo://todo
-			case mensajeProcesarTransformacion://todo
 			case mensajeDesignarWorker://todo
 			case mensajeFinJob:
 			case mensajeOk:
+			case mensajeProcesarTransformacion:
 				bufferOk = malloc(sizeof(char));
 				recv(socket,bufferOk,sizeof(char),0);
 				free(bufferOk);
