@@ -45,18 +45,24 @@ void planificar(job* job){
 	agregarInfoTransformacionATablaDeEstadoos(infoArchivo,job->id);
 
 	bool transformacionIncompleta = true;
-	int bloque;
+	int i;
+	t_list* listaBloques;
+	bloquesConSusArchivos* bloque = malloc(sizeof(bloquesConSusArchivos));
 	while(transformacionIncompleta){
 		respuesta respuestaMaster=  desempaquetar(job->socketFd);
+		if(respuestaMaster.idMensaje == mensajeTransformacionCompleta){
+			listaBloques = (t_list*)respuestaMaster.envio;
 
-		if(respuestaMaster.idMensaje == mensajeTransformacionComlpleta){
-			bloque = (int)respuestaMaster.envio;
-			agregarBloqueTerminadoATablaEstados(bloque,job->id,TRANSFORMACION);
-			transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);
+			for(i=0;i<list_size(listaBloques);i++){
+				bloque = list_get(listaBloques, i);
+				agregarBloqueTerminadoATablaEstados(bloque->numBloque,job->id,TRANSFORMACION);
+			}
+				transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);
 		}
 		else if(respuestaMaster.idMensaje == mensajeFalloTransformacion){
-			bloque = (int)respuestaMaster.envio;
-			replanificar(bloque,job,infoArchivo);
+
+			listaBloques = (t_list*)respuestaMaster.envio;
+			replanificar(listaBloques,job,infoArchivo);
 		}
 	}
 
@@ -314,8 +320,8 @@ void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArc
 
 }
 
-void replanificar(int bloque,job* jobi,informacionArchivoFsYama* infoArchivo){
-
+void replanificar(t_list* bloques,job* jobi,informacionArchivoFsYama* infoArchivo){
+	printf("Hola estoy replanificando se cayo el worker\n");
 }
 
 void enviarReduccionLocalAMaster(job* job){

@@ -42,11 +42,11 @@
 #define mensajeRespuestaTransformacion 23
 #define mensajeError 24
 #define mensajeSizeLecturaBloqueANodo 25
-#define mensajeTransformacionComlpleta 26
+#define mensajeTransformacionCompleta 26
 #define mensajeFalloTransformacion 27
-#define mensajeRedLocalComlpleta 28
+#define mensajeRedLocalCompleta 28
 #define mensajeFalloRedLocal 29
-#define mensajeRedGlobalComlpleta 30
+#define mensajeRedGlobalCompleta 30
 #define mensajeFalloRedGlobal 31
 #define mensajeFinJob 32
 #define mensajeRespuestaRedLocal 33
@@ -93,5 +93,8 @@ respuestaReduccionGlobalCompleta* deserializarRespuestaRedGlobal(int socket,int 
 
 void* serializarProcesarTransformacion(void* paquete, int* tamanio);
 parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tamanio);
+
+void* serializarFalloTransformacion(void* paquete, int* tamanio);
+t_list* deserializarFalloTransformacion(int socket, int tamanio);
 
 #endif /* SERIALIZACION_H_ */

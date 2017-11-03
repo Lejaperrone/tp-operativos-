@@ -426,11 +426,11 @@ void esperarRespuestaReduccionDeMaster(job* job,int etapa){
 	int mensajeOkRedu,mensajeFalloRedu;
 
 	if(etapa ==  RED_LOCAL){
-		mensajeOkRedu=mensajeRedLocalComlpleta;
+		mensajeOkRedu=mensajeRedLocalCompleta;
 		mensajeFalloRedu=mensajeFalloRedLocal;
 	}
 	else{
-		mensajeOkRedu=mensajeRedGlobalComlpleta;
+		mensajeOkRedu=mensajeRedGlobalCompleta;
 		mensajeFalloRedu=mensajeFalloRedGlobal;
 	}
 

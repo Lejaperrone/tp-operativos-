@@ -15,18 +15,16 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 	switch(idMensaje){
 		case mensajeNumeroLecturaBloqueANodo:
 		case mensajeSizeLecturaBloqueANodo:
-		case mensajeRedLocalComlpleta:
+		case mensajeRedLocalCompleta:
 		case mensajeFalloRedLocal:
-		case mensajeRedGlobalComlpleta:
 		case mensajeFalloRedGlobal:
-		case mensajeTransformacionComlpleta:
-		case mensajeFalloTransformacion:
 		case mensajeHandshake:
 			tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
 			memcpy(bloque,paquete,sizeof(int));
 			break;
 
+		case mensajeTransformacionCompleta:
 		case mensajeInfoArchivo:
 		case mensajeDesignarWorker:
 		case mensajeFinJob:
@@ -47,9 +45,15 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeArchivo:
 			bloque = serializarString(paquete,&tamanio);
 			break;
+
+		case mensajeFalloTransformacion:
+			bloque = serializarFalloTransformacion(paquete, &tamanio);
+			break;
+
 		case mensajeProcesarTransformacion:
 			bloque = serializarProcesarTransformacion(paquete, &tamanio);
 			break;
+
 		case mensajeSolicitudTransformacion:
 			bloque = serializarJob(paquete, &tamanio);
 			break;
@@ -122,12 +126,10 @@ respuesta desempaquetar(int socket){
 		miRespuesta.idMensaje = cabecera->idMensaje;
 		switch (miRespuesta.idMensaje) {
 
-			case mensajeRedLocalComlpleta:
+			case mensajeRedLocalCompleta:
 			case mensajeFalloRedLocal:
-			case mensajeRedGlobalComlpleta:
+			case mensajeRedGlobalCompleta:
 			case mensajeFalloRedGlobal:
-			case mensajeTransformacionComlpleta:
-			case mensajeFalloTransformacion:
 			case mensajeHandshake:
 			case mensajeNumeroLecturaBloqueANodo:
 			case mensajeSizeLecturaBloqueANodo:
@@ -142,8 +144,8 @@ respuesta desempaquetar(int socket){
 				miRespuesta.envio = deserializarString(socket,cabecera->tamanio);
 				break;
 
+			case mensajeTransformacionCompleta:
 			case mensajeInfoArchivo://todo
-			case mensajeDesignarWorker://todo
 			case mensajeFinJob:
 			case mensajeOk:
 
@@ -156,6 +158,10 @@ respuesta desempaquetar(int socket){
 				bufferOk = malloc(sizeof(char));
 				recv(socket,bufferOk,sizeof(char),0);
 				free(bufferOk);
+				break;
+
+			case mensajeFalloTransformacion:
+				miRespuesta.envio = deserializarFalloTransformacion(socket, cabecera->tamanio);
 				break;
 
 			case mensajeProcesarTransformacion:
@@ -937,6 +943,86 @@ parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tam
 	}
 
 	return infoWorker;
+}
+void* serializarFalloTransformacion(void* paquete, int* tamanio){
+	t_list* listaBloques = (t_list*)paquete;
+	int desplazamiento = 0;
+	int i;
+
+	*tamanio = sizeof(int);
+	void* buffer =malloc(*tamanio);
+
+	buffer = realloc(buffer, *tamanio);
+	int longitud = list_size(listaBloques);
+	memcpy(buffer + desplazamiento, &longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	for (i = 0; i < list_size(listaBloques); ++i) {
+		bloquesConSusArchivos* bloquesArchivos = (bloquesConSusArchivos*)list_get(listaBloques, i);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &bloquesArchivos->numBloque, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &bloquesArchivos->numBloqueEnNodo, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &bloquesArchivos->bytesOcupados, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &bloquesArchivos->archivoTemporal.longitud, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += bloquesArchivos->archivoTemporal.longitud;
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, bloquesArchivos->archivoTemporal.cadena, bloquesArchivos->archivoTemporal.longitud);
+		desplazamiento += bloquesArchivos->archivoTemporal.longitud;
+
+	}
+
+	return buffer;
+}
+
+t_list* deserializarFalloTransformacion(int socket, int tamanio){
+	int desplazamiento = 0;
+	int j;
+	void* buffer = malloc(tamanio);
+	recv(socket,buffer,tamanio,0);
+	t_list* listaBloques = list_create();
+
+	int longitud = 0;
+	memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	for (j = 0; j < longitud; ++j) {
+		bloquesConSusArchivos* bloqueArchivos = malloc(sizeof(bloquesConSusArchivos));
+
+		memcpy(&bloqueArchivos->numBloque, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		memcpy(&bloqueArchivos->numBloqueEnNodo, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		memcpy(&bloqueArchivos->bytesOcupados, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		memcpy(&bloqueArchivos->archivoTemporal.longitud, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		bloqueArchivos->archivoTemporal.cadena = calloc(1,bloqueArchivos->archivoTemporal.longitud+1);
+		memcpy(bloqueArchivos->archivoTemporal.cadena, buffer + desplazamiento, bloqueArchivos->archivoTemporal.longitud);
+		desplazamiento += bloqueArchivos->archivoTemporal.longitud;
+
+		list_add(listaBloques, bloqueArchivos);
+	}
+	return listaBloques;
 }
 void* serializarRespuestaRedGlobal(void* paquete,int* tamanio){
 

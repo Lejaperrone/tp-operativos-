@@ -53,8 +53,8 @@ infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWor
 void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSolicitudTransformacion* respuestaMaster,int job);
 void verificarValorDisponibilidad(infoNodo* nodo);
 void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArchivo,int jobid);
-void replanificar(int bloque,job* jobi,informacionArchivoFsYama* infoArchivo);
 void enviarReduccionLocalAMaster(job* job);
 void enviarReduccionGlobalAMaster(job* job);
+void replanificar(t_list* bloques,job* jobi,informacionArchivoFsYama* infoArchivo);
 
 #endif /* PLANIFICADOR_H_ */
