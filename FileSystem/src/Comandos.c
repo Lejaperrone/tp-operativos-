@@ -278,13 +278,9 @@ int listarArchivos(char* comando){
 	if (rutaFsLocal == string_itoa(-1))
 		return respuesta;
 
-	char* command = malloc(strlen(rutaFsLocal) + 4);
-	memset(command, 0,strlen(rutaFsLocal) + 4);
-	memcpy(command, "ls ", 3);
-	memcpy(command + 3, rutaFsLocal, strlen(rutaFsLocal));
+	char* command = string_from_format("ls %s", rutaFsLocal);
 
 	respuesta = system(command);
-
 	free(command);
 
 	return respuesta;
