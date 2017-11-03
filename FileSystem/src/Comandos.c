@@ -106,7 +106,7 @@ int copiarArchivoAFs(char* comando){
 	char* rutaFinal = string_from_format("%s/%s", rutaDirFs, nombre);
 
 	FILE* archivo = fopen(rutaFinal, nombre);
-	fwrite(contenido, sizeof(contenido), strlen(contenido), archivo);
+	fwrite(contenido, strlen(contenido), 1, archivo);
 
 	fclose(archivo);
 	free(rutaFinal);
