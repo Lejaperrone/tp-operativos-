@@ -100,16 +100,12 @@ int copiarArchivoAFs(char* comando){
 		return respuesta;
 
 	char* contenido = leerArchivo(rutaArchivoYamafs);
-	printf("%s\n", contenido);
 	char* nombre = ultimaParteDeRuta(rutaArchivoYamafs);
 	char* rutaDirFs = devolverRuta(comando,2);
-	char* rutaFinal = malloc(strlen(rutaDirFs) + strlen(nombre) + 2);
-	memset(rutaFinal, 0, strlen(rutaDirFs) + strlen(nombre) + 2);
-	memcpy(rutaFinal, rutaDirFs, strlen(rutaDirFs));
-	memcpy(rutaFinal + strlen(rutaDirFs), "/", 1);
-	memcpy(rutaFinal + strlen(rutaDirFs) + 1, nombre, strlen(nombre));
 
-	FILE* archivo = fopen(rutaFinal,"a");
+	char* rutaFinal = string_from_format("%s/%s", rutaDirFs, nombre);
+
+	FILE* archivo = fopen(rutaFinal, nombre);
 	fwrite(contenido, sizeof(contenido), strlen(contenido), archivo);
 
 	fclose(archivo);
