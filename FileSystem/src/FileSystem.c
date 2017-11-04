@@ -49,6 +49,7 @@ extern sem_t actualizarNodos;
 int clienteYama;
 int servidorFS;
 pthread_mutex_t logger_mutex;
+int EstadoFS = 0;
 
 int main(void) {
 	limpiarPantalla();

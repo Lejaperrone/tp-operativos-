@@ -52,10 +52,53 @@ int recibirConexionYama(){
 			if(id == 1){//yama
 				log_trace(loggerFS, "Nueva Conexion de Yama");
 				empaquetar(cliente,mensajeOk,0,0);
+				EstadoFS = verificarEstado();
 				return cliente;
 			}
 		}
 	}
+}
+
+int verificarEstado(){
+    DIR* directorio;
+	struct dirent* in_file;
+	FILE* archivo;
+	char* path;
+	char* pathDirTemplate = "../metadata/Archivos/";
+	char* pathDir;
+	int i = 0;
+	for (i = 0; i < 100; ++i){
+
+		if(tablaDeDirectorios[i].index == -1)
+			continue;
+
+		pathDir = string_from_format("%s%d",pathDirTemplate,i);
+		printf("%s dir \n", pathDir);
+		if (NULL == (directorio = opendir (pathDir)))
+			{
+				continue;
+			}
+			while ((in_file = readdir(directorio)))
+			{
+				if (!strcmp (in_file->d_name, "."))
+					continue;
+				if (!strcmp (in_file->d_name, ".."))
+					continue;
+
+				path = string_from_format("%s/%s",pathDir,in_file->d_name);
+				printf("%s \n", path);
+				archivo = fopen(path, "r");
+				if (archivo == NULL)
+				{
+					fprintf(stderr, "Error : no se pudo abrir el archivo\n");
+					fclose(archivo);
+					return 1;
+				}
+				free(path);
+			}
+			free(pathDir);
+		}
+	return 1;
 }
 
 void inicializarTablaDirectorios(){
@@ -412,18 +455,15 @@ void* leerDeDataNode(void* parametros){
 	 struct parametrosLecturaBloque* params;
 	 params = (struct parametrosLecturaBloque*) parametros;
 	 sem_t* semaforo = list_get(pedidosFS,params->sem);
-	 printf("semaforo1 %d-------\n", params->sem );
 	 sem_wait(semaforo);
 	 respuesta respuesta;
 	 empaquetar(params->socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&params->bloque);
 	 empaquetar(params->socket, mensajeSizeLecturaBloqueANodo, sizeof(int),&params->sizeBloque);
-	 printf("semaforo2 %d -------\n", params->sizeBloque );
 	 respuesta = desempaquetar(params->socket);
 	 params->contenidoBloque = malloc(params->sizeBloque + 1);
 	 memset(params->contenidoBloque, 0, params->sizeBloque + 1);
 	 memcpy(params->contenidoBloque, respuesta.envio, params->sizeBloque);
 	 sem_post(semaforo);
-	 printf("semaforo3 -------\n" );
 	 pthread_exit(params->contenidoBloque);//(void*)params->contenidoBloque;
 }
 
