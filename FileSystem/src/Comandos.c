@@ -115,6 +115,44 @@ int copiarArchivoAFs(char* comando){
 	return respuesta;
 }
 
+int copiarBloqueANodo(char* comando){
+	int respuesta = 1, bloqueNuevo, numeroCopiaBloqueNuevo;
+
+	char* rutaArchivoYamafs = devolverRuta(comando,1);
+	int bloqueACopiar = atoi(devolverRuta(comando,2));
+	int nodoACopiar = atoi(devolverRuta(comando,3));
+
+	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
+	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaSinArchivo(rutaArchivoYamafs));
+	if (atoi(ultimaParteDeRuta(rutaDirectorioMetadata)) == -1)
+		return respuesta;
+
+	char* rutaArchivoMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
+	if (!validarArchivo(rutaArchivoMetadata))
+		return respuesta;
+
+	t_config* infoArchivo = config_create(rutaArchivoMetadata);
+
+	bloqueNuevo = guardarBloqueEnNodo(bloqueACopiar, nodoACopiar, infoArchivo);
+
+	if (bloqueNuevo == 1){
+		printf("No existe el bloque");
+		return respuesta;
+	}
+
+	numeroCopiaBloqueNuevo = obtenerNumeroCopia(infoArchivo, bloqueACopiar);
+
+	config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d", bloqueACopiar, numeroCopiaBloqueNuevo),
+			string_from_format(generarArrayBloque(nodoACopiar,bloqueNuevo)));
+
+	config_save(infoArchivo);
+
+	actualizarBitmapNodos();
+	respuesta = 0;
+
+	return respuesta;
+}
+
 bool validarDirectorio(char* path){
 	DIR* dir = opendir(path);
 	if (dir)

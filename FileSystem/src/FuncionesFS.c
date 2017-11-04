@@ -902,3 +902,53 @@ void obtenerInfoNodo(ubicacionBloque* ubicacion){
 		}
 	}
 }
+
+int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
+	int respuesta = 1;
+	informacionNodo info;
+	parametrosLecturaBloque paramLectura;
+	parametrosEnvioBloque paramEnvio;
+
+	if (config_has_property(infoArchivo, string_from_format("BLOQUE%dBYTES",bloque))){
+		paramLectura.sizeBloque = config_get_int_value(infoArchivo,string_from_format("BLOQUE%dBYTES",bloque));
+	}else{
+		printf("No existe el bloque");
+		return respuesta;
+	}
+	info = *(informacionNodo*)list_get(nodosConectados,nodo - 1);
+	paramLectura.socket = info.socket;
+	paramLectura.bloque = 28;
+	paramLectura.sem = nodo;
+
+	leerDeDataNode(&paramLectura);
+	printf("sali de leer");
+
+	paramEnvio.bloque = buscarPrimerBloqueLibre(nodo - 1, info.sizeNodo);
+	paramEnvio.offset = 0;
+	paramEnvio.restanteAnterior = 0;
+	paramEnvio.sem = nodo;
+	paramEnvio.sizeBloque = paramLectura.sizeBloque;
+	paramEnvio.socket = info.socket;
+	paramEnvio.mapa = paramLectura.contenidoBloque;
+
+	enviarADataNode(&paramEnvio);
+
+	setearBloqueOcupadoEnBitmap(nodo - 1, paramEnvio.bloque);
+
+	return paramEnvio.bloque;
+}
+
+int obtenerNumeroCopia(t_config* infoArchivo,int bloqueACopiar){
+	int numeroCopiaBloqueNuevo = 0;
+
+	if (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",bloqueACopiar, 0)))
+		numeroCopiaBloqueNuevo = 0;
+	else
+		return numeroCopiaBloqueNuevo;
+
+	while (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",bloqueACopiar, numeroCopiaBloqueNuevo))){
+		++numeroCopiaBloqueNuevo;
+	}
+
+	return numeroCopiaBloqueNuevo;
+}

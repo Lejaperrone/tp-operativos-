@@ -237,9 +237,16 @@ void* consolaFS(){
 			}
 		}
 		else if (string_starts_with(comando, "cpblock")) {
-			pthread_mutex_lock(&logger_mutex);
-			log_trace(loggerFS, "Bloque copiado en el nodo");
-			pthread_mutex_unlock(&logger_mutex);
+			if (copiarBloqueANodo(comando) == 0){
+				pthread_mutex_lock(&logger_mutex);
+				log_trace(loggerFS, "Bloque copiado en el nodo");
+				pthread_mutex_unlock(&logger_mutex);
+			}
+			else{
+				pthread_mutex_lock(&logger_mutex);
+				log_error(loggerFS, "No se pudo copiar el bloque copiado en el nodo");
+				pthread_mutex_unlock(&logger_mutex);
+			}
 		}
 		else if (string_starts_with(comando, "md5")) {
 			if (generarArchivoMD5(comando) == 0){

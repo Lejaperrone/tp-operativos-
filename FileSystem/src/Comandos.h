@@ -55,6 +55,8 @@ int copiarArchivo(char* comando);//cpfrom
 
 int copiarArchivoAFs(char* comando);//cpto
 
+int copiarBloqueANodo(char* comando);//cpblock
+
 int generarArchivoMD5(char* comando);//md5
 
 int formatearFS(char* comando);//format

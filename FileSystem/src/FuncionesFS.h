@@ -90,3 +90,7 @@ char* leerArchivo(char* rutaArchivo);
 char* rutaSinArchivo(char* rutaArchivo);
 
 char* ultimaParteDeRuta(char* rutaArchivo);
+
+int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo);
+
+int obtenerNumeroCopia(t_config* infoArchivo,int bloqueACopiar);
