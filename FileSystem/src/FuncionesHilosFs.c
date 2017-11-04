@@ -296,7 +296,6 @@ void* manejarConexionYama(){
 
 	while(1){
 		respuestaYama = desempaquetar(clienteYama);
-		printf("asdasd\n");
 		switch(respuestaYama.idMensaje){
 
 		case mensajeSolicitudInfoNodos:

@@ -46,13 +46,13 @@ int recibirConexionYama(){
 		int cliente =0;
 
 		if((cliente = accept(servidorFS, (struct sockaddr *)&direccionCliente, &tamanioDireccion)) != -1){
-			printf("asdasd\n");
 			respuestaId = desempaquetar(cliente);
 			int id = *(int*)respuestaId.envio;
 			if(id == 1){//yama
 				log_trace(loggerFS, "Nueva Conexion de Yama");
 				empaquetar(cliente,mensajeOk,0,0);
 				EstadoFS = verificarEstado();
+				printf("\n estado %d\n", EstadoFS);
 				return cliente;
 			}
 		}
@@ -62,11 +62,26 @@ int recibirConexionYama(){
 int verificarEstado(){
     DIR* directorio;
 	struct dirent* in_file;
-	FILE* archivo;
 	char* path;
 	char* pathDirTemplate = "../metadata/Archivos/";
 	char* pathDir;
-	int i = 0;
+	int i = 0, j = 0, l = 0, k = 0;
+	int cantidadNodosConectados = list_size(nodosConectados);
+	int nodos[cantidadNodosConectados];
+	int sizeArchivo, cantBloques;
+	informacionNodo info;
+	t_config* infoArchivo;
+	char** arrayInfoBloque;
+	int numeroNodo;
+	char* charNumeroNodo;
+	char* bloque;
+	int valido = 0;
+
+	for (i = 0; i < cantidadNodosConectados; ++i){
+		info = *(informacionNodo*)list_get(nodosConectados,i);
+		nodos[i] = info.numeroNodo;
+	}
+
 	for (i = 0; i < 100; ++i){
 
 		if(tablaDeDirectorios[i].index == -1)
@@ -87,12 +102,38 @@ int verificarEstado(){
 
 				path = string_from_format("%s/%s",pathDir,in_file->d_name);
 				printf("%s \n", path);
-				archivo = fopen(path, "r");
-				if (archivo == NULL)
-				{
-					fprintf(stderr, "Error : no se pudo abrir el archivo\n");
-					fclose(archivo);
-					return 1;
+				infoArchivo = config_create(path);
+
+				if (config_has_property(infoArchivo, "TAMANIO")){
+					sizeArchivo = config_get_int_value(infoArchivo,"TAMANIO");
+				}
+
+				cantBloques = redondearHaciaArriba(sizeArchivo, mb);
+
+				for (j = 0; j < cantBloques; ++j){
+					for (l = 0; l < numeroCopiasBloque; ++l){
+						bloque = string_from_format("BLOQUE%dCOPIA%d",i,l);
+						arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
+						charNumeroNodo = string_substring_from(arrayInfoBloque[i], 4);
+						numeroNodo = atoi(charNumeroNodo);
+
+						for (k = 0; k < cantidadNodosConectados; ++k)
+							if (nodos[k] == numeroNodo)
+								++valido;
+
+						if (valido < numeroCopiasBloque){
+							free(bloque);
+							free(charNumeroNodo);
+							free(path);
+							free(pathDir);
+							return 0;
+						}
+
+						valido = 0;
+
+						free(bloque);
+						free(charNumeroNodo);
+					}
 				}
 				free(path);
 			}

@@ -5,7 +5,7 @@ DIR := ${CURDIR}
 
 H_SRCS=$(shell find . -iname "*.h" | tr '\n' ' ')
 
-HEADERS := -I"$(DIR)/commons_lib/commons" -I"/usr/include" -I"$(DIR)/BibliotecasCompartidas/Debug" -I"$(DIR)/commons_lib/commons/collections" -I"$(DIR)/YAMA" -I"$(DIR)/DataNode" -I"$(DIR)/Worker" -I"$(DIR)/Master" -I"$(DIR)/FileSystem"          # Cualquier cosa aca hay un ejemplo http://www.network-theory.co.uk/docs/gccintro/gccintro_22.html
+HEADERS := -I"$(DIR)/commons_lib/commons" -I"/usr/include" -I"$(DIR)/BibliotecasCompartidas" -I"$(DIR)/commons_lib/commons/collections" -I"$(DIR)/YAMA" -I"$(DIR)/DataNode" -I"$(DIR)/Worker" -I"$(DIR)/Master" -I"$(DIR)/FileSystem"          # Cualquier cosa aca hay un ejemplo http://www.network-theory.co.uk/docs/gccintro/gccintro_22.html
 LIBPATH := -L"$(DIR)/BibliotecasCompartidas/Debug"
 LIBS := -lcommons -lpthread -lreadline -lm -lBibliotecasCompartidas
 
@@ -68,8 +68,10 @@ master.o:
 
 
 worker: worker.o
-	$(CC) $(LIBPATH) worker.o -o worker $(LIBS)
+	$(CC) $(LIBPATH) worker.o funcionesWorker.o -o worker $(LIBS)
 
+funcionesWorker.o:
+	$(CC) $(CFLAGS) -c $(DIR)/Master/src/funcionesWorker.c -o funcionesWorker.o
 
 worker.o:
 	$(CC) -c $(CFLAGS) $(DIR)/Worker/src/Worker.c -o worker.o
@@ -82,11 +84,14 @@ worker.o:
 funcionesFS.o:
 	$(CC) $(CFLAGS) -c $(DIR)/FileSystem/src/FuncionesFS.c -o funcionesFS.o
 
+funcionesHilosFS.o:
+	$(CC) $(CFLAGS) -c $(DIR)/FileSystem/src/FuncionesHilosFS.c -o funcionesHilosFS.o
+
 comandos.o:
 	$(CC) $(CFLAGS) -c $(DIR)/FileSystem/src/Comandos.c -o comandos.o
 
 fileSystem: fileSystem.o comandos.o funcionesFS.o
-	$(CC) $(LIBPATH) fileSystem.o comandos.o funcionesFS.o -o fileSystem $(LIBS)
+	$(CC) $(LIBPATH) fileSystem.o comandos.o funcionesFS.o funcionesHilosFS.o -o fileSystem $(LIBS)
 
 
 fileSystem.o:
@@ -98,8 +103,14 @@ fileSystem.o:
 
 # yama
 
+funcionesYama.o:
+	$(CC) $(CFLAGS) -c $(DIR)/YAMA/src/FuncionesYama.c -o funcionesYama.o
+
+planificador.o:
+	$(CC) $(CFLAGS) -c $(DIR)/YAMA/src/Planificador.c -o planificador.o
+
 yama: yama.o
-	$(CC) $(LIBPATH) yama.o -o yama $(LIBS)
+	$(CC) $(LIBPATH) yama.o funcionesYama.o planificador.o -o yama $(LIBS)
 
 
 yama.o:

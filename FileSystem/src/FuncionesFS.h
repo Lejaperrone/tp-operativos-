@@ -42,6 +42,8 @@ void inicializarTablaDirectorios();
 
 char* rutaSinPrefijoYama(char* ruta);
 
+int verificarEstado();
+
 int bytesACortar(char* mapa, int offset);
 
 void* leerDeDataNode(void* parametros);
