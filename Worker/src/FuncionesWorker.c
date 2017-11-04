@@ -1,12 +1,14 @@
 #include "FuncionesWorker.h"
 
 void handlerMaster() {
+
 	respuesta instruccionMaster;
-	parametrosTransformacion* procesarTransformacion = malloc(sizeof(parametrosTransformacion));
+	parametrosTransformacion* procesarTransformacion = malloc(
+			sizeof(parametrosTransformacion));
 	bloquesConSusArchivos* bloque = malloc(sizeof(bloquesConSusArchivos));
 	log_trace(logger, "Esperando instruccion de Master");
 	int i;
-	instruccionMaster = desempaquetar(socketMaster);
+	instruccionMaster = desempaquetar(clientSocket);
 
 	char* destino;
 	char* contenidoScript;
@@ -17,7 +19,8 @@ void handlerMaster() {
 
 	switch (instruccionMaster.idMensaje) {
 	case mensajeProcesarTransformacion:
-		procesarTransformacion = (parametrosTransformacion*)instruccionMaster.envio;
+		procesarTransformacion =
+				(parametrosTransformacion*) instruccionMaster.envio;
 
 		log_trace(logger, "Iniciando Transformacion");
 		contenidoScript = "contenidoScript transformador";
@@ -26,14 +29,15 @@ void handlerMaster() {
 		destino = "/tmp/resultado";
 		int offset = bloqueId * mb + bytesRestantes;
 		crearScript(contenidoScript);
-		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i", bytesRestantes, bloqueId);
+		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i",
+				bytesRestantes, bloqueId);
 		command =
 				string_from_format(
 						"head -c %d < %s | tail -c %d | ./home/utnso/scripts/script.sh | sort > %s",
 						offset, config.RUTA_DATABIN, bytesRestantes, destino);
-		ejecutarComando(command, socketMaster);
+		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
-		empaquetar(socketMaster, mensajeOk, 0, 0);
+		empaquetar(clientSocket, mensajeOk, 0, 0);
 		exit(1);
 		break;
 	case mensajeProcesarRedLocal:
@@ -48,9 +52,9 @@ void handlerMaster() {
 		command = string_from_format(" %s | ./%s/reductor.sh > %s ",
 				rutaArchivoApareado, config.RUTA_DATABIN,
 				archivoTemporalDeReduccionLocal);
-		ejecutarComando(command, socketMaster);
+		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
-		empaquetar(socketMaster, mensajeOk, 0, 0);
+		empaquetar(clientSocket, mensajeOk, 0, 0);
 		exit(1);
 		break;
 	case mensajeProcesarRedGlobal:
@@ -65,10 +69,12 @@ void handlerMaster() {
 		command = string_from_format("%s | ./%s/reductorGlobal.sh > %s",
 				rutaArchivoApareado, config.RUTA_DATABIN,
 				archivoTemporalDeReduccionGlobal);
-		ejecutarComando(command, socketMaster);
+		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion global realizada correctamente");
-		empaquetar(socketMaster, mensajeOk, 0, 0);
+		empaquetar(clientSocket, mensajeOk, 0, 0);
 		exit(1);
+		break;
+	default:
 		break;
 	}
 }
@@ -203,39 +209,40 @@ void levantarServidorWorker(char* ip, int port) {
 	while (1) {
 		struct sockaddr_in their_addr;
 		socklen_t size = sizeof(struct sockaddr_in);
-		socketMaster = accept(sock, (struct sockaddr*) &their_addr, &size);
+		clientSocket = accept(sock, (struct sockaddr*) &their_addr, &size);
 		int pid;
 
-		if (socketMaster == -1) {
+		if (clientSocket == -1) {
 			perror("accept");
 		}
 
 		printf("Got a connection from %s on port %d\n",
 				inet_ntoa(their_addr.sin_addr), htons(their_addr.sin_port));
 
-		pid = fork();
-		if (pid == 0) {
-			/* Proceso hijo */
-			close(sock);
+		respuesta conexionNueva;
+		conexionNueva = desempaquetar(clientSocket);
 
-			respuesta conexionNueva;
-			conexionNueva = desempaquetar(socketMaster);
-
-			if (conexionNueva.idMensaje == 1) {
-				if (*(int*) conexionNueva.envio == 2) {
-					log_trace(logger, "Conexion con Master establecida");
+		if (conexionNueva.idMensaje == 1) {
+			if (*(int*) conexionNueva.envio == 2) {
+				log_trace(logger, "Conexion con Master establecida");
+				if ((pid = fork()) == 0) {
+					log_trace(logger, "Proceso hijo:%d", pid);
 					handlerMaster();
-				} else if (*(int*) conexionNueva.envio == 100) { //Averiguar cual es el id del worker
-					log_trace(logger, "Conexion con Worker establecida");
-					handlerWorker();
+				} else if (pid > 0) {
+					log_trace(logger, "Proceso Padre:%d", pid);
+				} else if (pid < 0) {
+					log_error(logger, "NO SE PUDO HACER EL FORK");
 				}
-			}
-		} else {
-			/* Proceso padre */
-			if (pid == -1) {
-				perror("fork");
-			} else {
-				close(socketMaster);
+			} else if (*(int*) conexionNueva.envio == 100) { //Averiguar cual es el id del worker
+				log_trace(logger, "Conexion con Worker establecida");
+				if ((pid = fork()) == 0) {
+					log_trace(logger, "Proceso hijo de worker:%d", pid);
+					handlerWorker();
+				} else if (pid > 0) {
+					log_trace(logger, "Proceso Worker Padre:%d", pid);
+				} else if (pid < 0) {
+					log_error(logger, "NO SE PUDO HACER EL FORK");
+				}
 			}
 		}
 	}

@@ -17,7 +17,7 @@
 
 /*------VARIABLES-------------*/
 struct configuracionNodo config;
-int socketMaster;
+int clientSocket;
 t_log* logger;
 
 

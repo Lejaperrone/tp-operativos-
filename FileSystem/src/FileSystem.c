@@ -49,6 +49,7 @@ extern sem_t actualizarNodos;
 int clienteYama;
 int servidorFS;
 pthread_mutex_t logger_mutex;
+int EstadoFS = 0;
 
 int main(void) {
 	limpiarPantalla();
@@ -64,23 +65,6 @@ int main(void) {
 	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
 	parametrosServidorFS.cliente = clienteYama;
-
-
-	//inicializarBitmaps();
-
-	/*tablaDeDirectorios[0].index = 0;
-	tablaDeDirectorios[1].index = 1;
-	tablaDeDirectorios[2].index = 2;		//para probar cosas
-	tablaDeDirectorios[3].index = 3;
-	tablaDeDirectorios[0].padre = -1;
-	tablaDeDirectorios[1].padre = 0;
-	tablaDeDirectorios[2].padre = 1;
-	tablaDeDirectorios[3].padre = 0;
-	memcpy(tablaDeDirectorios[0].nombre,"hola",5);
-	memcpy(tablaDeDirectorios[1].nombre,"chau",5);
-	memcpy(tablaDeDirectorios[2].nombre,"bla",4);
-	memcpy(tablaDeDirectorios[3].nombre,"bla",4);*/
-
 
 	inicializarTablaDirectorios();
 

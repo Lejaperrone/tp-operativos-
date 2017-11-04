@@ -27,10 +27,10 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 	bloquesConSusArchivos* bloque = malloc(sizeof(bloquesConSusArchivos));
 	parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
 	parametrosConexion->bloquesConSusArchivos = list_create();
-	worker =list_get(rtaYama->workers, 0);
+	//worker =list_get(rtaYama->workers, 0);
 	//para probar conexion por hilos
-	//for(i=0 ; i<list_size(rtaYama->workers);i++){
-		//worker = list_get(rtaYama->workers, i);
+	for(i=0 ; i<list_size(rtaYama->workers);i++){
+		worker = list_get(rtaYama->workers, i);
 
 		parametrosConexion->ip.cadena = worker->ip.cadena;
 		parametrosConexion->ip.longitud = worker->ip.longitud;
@@ -42,22 +42,36 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 			log_error(loggerMaster, "No se pudo crear el thread de conexion");
 			exit(-1);
 		}
-	//}
+	}
 }
 void* conectarseConWorkers(void* params) {
 	parametrosTransformacion* infoTransformacion = malloc(sizeof(parametrosTransformacion));
+	respuesta confirmacionWorker;
+	t_list* bloquesAReplanificar = list_create();
+
 	infoTransformacion = (parametrosTransformacion*)params;
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto);
 	conectarCon(direccion, socketWorker, 2); //2 id master
 
-	log_trace(loggerMaster, "Conexion con Worker \n");
+	log_trace(loggerMaster, "Conexion con Worker ");
 
 	empaquetar(socketWorker, mensajeProcesarTransformacion, 0, infoTransformacion);
 
-	//FIXME ESPARAR CONFIRMACION WORKER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	confirmacionWorker = desempaquetar(socketWorker);
 
-	//empaquetar(socketWorker,mensajeProcesarTransformacion, 0,0);
+		switch(confirmacionWorker.idMensaje){
+
+		case mensajeOk:
+			empaquetar(socketYama, mensajeTransformacionCompleta, 0 , 0);
+			break;
+		//case mensajeFalloTransformacion:
+		case mensajeDesconexion:
+			bloquesAReplanificar = infoTransformacion->bloquesConSusArchivos;
+			empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloquesAReplanificar);
+			break;
+
+		}
 
 	return 0;
 }

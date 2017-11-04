@@ -42,6 +42,11 @@ int copiarArchivo(char* comando){
 		memcpy(tipo + indice, caracterActual, 1);
 		++indice;
 		caracterActual = string_substring(rutaInvertida, indice, 1);
+		if (strcmp(caracterActual,slash) == 0){
+			printf("ruta invalida, no es un archivo");
+			return 0;
+		}
+
 	}
 
 	memcpy(tipo + indice, caracterActual, 1);
@@ -106,7 +111,7 @@ int copiarArchivoAFs(char* comando){
 	char* rutaFinal = string_from_format("%s/%s", rutaDirFs, nombre);
 
 	FILE* archivo = fopen(rutaFinal, nombre);
-	fwrite(contenido, sizeof(contenido), strlen(contenido), archivo);
+	fwrite(contenido, strlen(contenido), 1, archivo);
 
 	fclose(archivo);
 	free(rutaFinal);

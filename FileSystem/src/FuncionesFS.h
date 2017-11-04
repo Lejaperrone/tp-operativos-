@@ -34,12 +34,15 @@ extern t_list* bitmapsNodos;;
 extern t_list* nodosConectados;
 extern char* rutaBitmaps;
 pthread_mutex_t logger_mutex;
+extern int EstadoFS;
 
 int validarArchivoYamaFS(char* ruta);
 
 void inicializarTablaDirectorios();
 
 char* rutaSinPrefijoYama(char* ruta);
+
+int verificarEstado();
 
 int bytesACortar(char* mapa, int offset);
 
