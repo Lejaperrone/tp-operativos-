@@ -53,14 +53,14 @@ typedef struct {
 	string ip;
 	int puerto;
 	t_list* bloquesConSusArchivos;
-}workerEnSolicitudTransformacion;
+}workerDesdeYama;
 
 typedef struct{
 	int numBloque;
 	int numBloqueEnNodo;
 	int bytesOcupados;
 	string archivoTemporal;
-}bloquesConSusArchivos;
+}bloquesConSusArchivosTransformacion;
 
 typedef struct {
 	int nodo;
@@ -72,12 +72,12 @@ typedef struct {
 }respuestaInfoNodos;
 
 typedef struct {
-	int nodo;
-	string ip;
-	int puerto;
+	int numBloque;
+	int numBloqueEnNodo;
+	int bytesOcupados;
 	string archivoTransformacion;
 	string archivoReduccion;
-}respuestaReduccionLocal;
+}bloquesConSusArchivosRedLocal;
 
 typedef struct {
 	t_list* workers;

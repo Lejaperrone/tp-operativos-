@@ -434,15 +434,20 @@ void esperarRespuestaReduccionDeMaster(job* job,int etapa){
 		mensajeFalloRedu=mensajeFalloRedGlobal;
 	}
 
-
-	int bloque;
+	int i;
+	t_list* listaBloques;
 	bool reduccionIncompleta = true;
 	while(reduccionIncompleta){
 		respuesta respuestaMaster=  desempaquetar(job->socketFd);
 
 		if(respuestaMaster.idMensaje == mensajeOkRedu){
-			bloque = (int)respuestaMaster.envio;
-			agregarBloqueTerminadoATablaEstados(bloque,job->id,etapa);
+			listaBloques = (t_list*)respuestaMaster.envio;
+
+			for(i=0;i<list_size(listaBloques);i++){
+				bloquesConSusArchivos* bloque = list_get(listaBloques, i);
+				agregarBloqueTerminadoATablaEstados(bloque->numBloque,job->id,TRANSFORMACION);
+				}
+
 			reduccionIncompleta = faltanMasTareas(job->id,etapa);
 		}
 		else if(respuestaMaster.idMensaje == mensajeFalloRedu){

@@ -42,12 +42,10 @@ void planificar(job* job){
 
 	empaquetar(job->socketFd,mensajeRespuestaTransformacion,0,respuestaMaster);
 
-	agregarInfoTransformacionATablaDeEstadoos(infoArchivo,job->id);
-
 	bool transformacionIncompleta = true;
 	int i;
 	t_list* listaBloques;
-	bloquesConSusArchivos* bloque = malloc(sizeof(bloquesConSusArchivos));
+	bloquesConSusArchivosTransformacion* bloque;
 	while(transformacionIncompleta){
 		respuesta respuestaMaster=  desempaquetar(job->socketFd);
 		if(respuestaMaster.idMensaje == mensajeTransformacionCompleta){
@@ -66,10 +64,10 @@ void planificar(job* job){
 		}
 	}
 
-	enviarReduccionLocalAMaster(job->id);
+	enviarReduccionLocalAMaster(job);
 	esperarRespuestaReduccionDeMaster(job,RED_LOCAL);
 
-	enviarReduccionGlobalAMaster(job->id);
+	enviarReduccionGlobalAMaster(job);
 	esperarRespuestaReduccionDeMaster(job,RED_GLOBAL);
 
 }
@@ -278,10 +276,10 @@ infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWor
 }
 
 void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSolicitudTransformacion* respuestaMaster,int job){
-	workerEnSolicitudTransformacion* worker;
-	bloquesConSusArchivos* bloquesArchivos = malloc(sizeof(bloquesConSusArchivos));
+	workerDesdeYama* worker;
+	bloquesConSusArchivosTransformacion* bloquesArchivos = malloc(sizeof(bloquesConSusArchivosTransformacion));
 
-	bool nodoConNumero(workerEnSolicitudTransformacion* worker){
+	bool nodoConNumero(workerDesdeYama* worker){
 		return worker->numeroWorker == nodo->numero;
 	}
 
@@ -289,7 +287,7 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 		worker = list_find(respuestaMaster->workers, (void*) nodoConNumero);
 	}
 	else{
-		worker = malloc(sizeof(workerEnSolicitudTransformacion));
+		worker = malloc(sizeof(workerDesdeYama));
 		worker->numeroWorker = nodo->numero;
 		worker->puerto = nodo->puerto;
 		worker->ip.longitud = nodo->ip.longitud;
@@ -314,6 +312,18 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 
 	list_add(worker->bloquesConSusArchivos,bloquesArchivos);
 
+	registroTablaEstados* registro = malloc(sizeof(registroTablaEstados));
+	registro->bloque= bloquesArchivos->numBloque;
+	registro->estado=EN_EJECUCION;
+	registro->etapa= TRANSFORMACION;
+	registro->job = job;
+	registro->nodo= nodo->numero;
+	registro->rutaArchivoTemp = strdup(bloquesArchivos->archivoTemporal.cadena);
+
+	pthread_mutex_lock(&mutexTablaEstados);
+	list_add(tablaDeEstados,registro);
+	pthread_mutex_unlock(&mutexTablaEstados);
+
 }
 
 void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArchivo,int jobid){
@@ -337,25 +347,37 @@ void enviarReduccionLocalAMaster(job* job){
 
 	void meterEnRespuestaRedLocal(void *registro){
 		registroTablaEstados* reg =(registroTablaEstados*)registro;
-		respuestaReduccionLocal* respuestaIndividual = malloc(sizeof(respuestaReduccionLocal));
+		bloquesConSusArchivosRedLocal* bloquesArchivos = malloc(sizeof(bloquesConSusArchivosRedLocal));
 		infoNodo* infoNod = obtenerNodo(reg->nodo);
+		workerDesdeYama* worker;
 
-		respuestaIndividual->puerto = infoNod->puerto;
+		bool nodoConNumero(workerDesdeYama* worker){
+			return worker->numeroWorker == infoNod->numero;
+		}
 
-		respuestaIndividual->nodo = reg->nodo;
+		if( list_find(respuestaTodos->workers, (void*) nodoConNumero)){
+			worker = list_find(respuestaTodos->workers, (void*) nodoConNumero);
+		}
+		else{
+			worker = malloc(sizeof(workerDesdeYama));
+			worker->numeroWorker = reg->nodo;
+			worker->puerto = infoNod->puerto;;
+			worker->ip.longitud = infoNod->ip.longitud;
+			worker->ip.cadena = strdup(infoNod->ip.cadena);
+			worker->bloquesConSusArchivos = list_create();
+			list_add(respuestaTodos->workers,worker);
+		}
 
-		respuestaIndividual->ip.longitud = infoNod->ip.longitud;
-		respuestaIndividual->ip.cadena = strdup(infoNod->ip.cadena);
+		char* archivoReduccion = dameUnNombreArchivoTemporal(job->id,reg->bloque,TRANSFORMACION,worker->numeroWorker);
 
-		respuestaIndividual->archivoTransformacion.longitud = string_length(reg->rutaArchivoTemp);
-		respuestaIndividual->archivoTransformacion.cadena = strdup(reg->rutaArchivoTemp);
+		bloquesArchivos->numBloque = reg->bloque;
+		bloquesArchivos->archivoTransformacion.longitud = string_length(reg->rutaArchivoTemp);
+		bloquesArchivos->archivoTransformacion.cadena = strdup(reg->rutaArchivoTemp);
 
-		char* archivoReduccion = dameUnNombreArchivoTemporal(job->id,reg->bloque,RED_LOCAL,reg->nodo);
+		bloquesArchivos->archivoReduccion.longitud = string_length(archivoReduccion);
+		bloquesArchivos->archivoReduccion.cadena = strdup(archivoReduccion);
 
-		respuestaIndividual->archivoReduccion.longitud = string_length(archivoReduccion);
-		respuestaIndividual->archivoReduccion.cadena = strdup(archivoReduccion);
-
-		list_add(respuestaTodos->workers,respuestaIndividual);
+		list_add(respuestaTodos->workers,bloquesArchivos);
 	}
 
 	list_iterate(registrosRedLocal,(void*)meterEnRespuestaRedLocal);

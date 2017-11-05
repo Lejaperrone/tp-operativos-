@@ -5,7 +5,7 @@ void handlerMaster() {
 	respuesta instruccionMaster;
 	parametrosTransformacion* procesarTransformacion = malloc(
 			sizeof(parametrosTransformacion));
-	bloquesConSusArchivos* bloque = malloc(sizeof(bloquesConSusArchivos));
+
 	log_trace(logger, "Esperando instruccion de Master");
 	int i;
 	instruccionMaster = desempaquetar(clientSocket);
