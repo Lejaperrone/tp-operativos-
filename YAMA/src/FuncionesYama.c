@@ -444,7 +444,7 @@ void esperarRespuestaReduccionDeMaster(job* job,int etapa){
 			listaBloques = (t_list*)respuestaMaster.envio;
 
 			for(i=0;i<list_size(listaBloques);i++){
-				bloquesConSusArchivos* bloque = list_get(listaBloques, i);
+				bloquesConSusArchivosRedLocal* bloque = list_get(listaBloques, i);
 				agregarBloqueTerminadoATablaEstados(bloque->numBloque,job->id,TRANSFORMACION);
 				}
 

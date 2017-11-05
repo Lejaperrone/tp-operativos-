@@ -52,6 +52,9 @@ pthread_mutex_t logger_mutex;
 int EstadoFS = 0;
 
 int main(void) {
+
+	printf("Ronan deja de robar aditions\n\n\n\n\n");
+
 	limpiarPantalla();
 	sem_init(&pedidoFS,0,0);
 	sem_init(&actualizarNodos,1,0);

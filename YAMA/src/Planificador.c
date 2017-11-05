@@ -326,16 +326,12 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 
 }
 
-void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArchivo,int jobid){
-
-}
-
 void replanificar(t_list* bloques,job* jobi,informacionArchivoFsYama* infoArchivo){
 	printf("Hola estoy replanificando se cayo el worker\n");
 }
 
 void enviarReduccionLocalAMaster(job* job){
-	respuestaReduccionLocalCompleta* respuestaTodos = malloc(sizeof(respuestaReduccionLocalCompleta));
+	respuestaReduccionLocal* respuestaTodos = malloc(sizeof(respuestaReduccionLocal));
 	respuestaTodos->workers = list_create();
 
 	bool encontrarEnTablaEstados(void *registro) {
@@ -343,7 +339,9 @@ void enviarReduccionLocalAMaster(job* job){
 		return reg->job == job->id && reg->etapa== TRANSFORMACION;
 	}
 
+	pthread_mutex_lock(&mutexTablaEstados);
 	t_list* registrosRedLocal =list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
 
 	void meterEnRespuestaRedLocal(void *registro){
 		registroTablaEstados* reg =(registroTablaEstados*)registro;
@@ -368,7 +366,7 @@ void enviarReduccionLocalAMaster(job* job){
 			list_add(respuestaTodos->workers,worker);
 		}
 
-		char* archivoReduccion = dameUnNombreArchivoTemporal(job->id,reg->bloque,TRANSFORMACION,worker->numeroWorker);
+		char* archivoReduccion = dameUnNombreArchivoTemporal(job->id,reg->bloque,RED_LOCAL,worker->numeroWorker);
 
 		bloquesArchivos->numBloque = reg->bloque;
 		bloquesArchivos->archivoTransformacion.longitud = string_length(reg->rutaArchivoTemp);
@@ -385,7 +383,7 @@ void enviarReduccionLocalAMaster(job* job){
 }
 
 void enviarReduccionGlobalAMaster(job* job){
-	respuestaReduccionGlobalCompleta* respuestaTodos = malloc(sizeof(respuestaReduccionGlobalCompleta));
+	respuestaReduccionGlobal* respuestaTodos = malloc(sizeof(respuestaReduccionGlobal));
 	respuestaTodos->workers = list_create();
 
 	bool encontrarEnTablaEstados(void *registro) {
@@ -393,8 +391,76 @@ void enviarReduccionGlobalAMaster(job* job){
 		return reg->job == job->id && reg->etapa== RED_LOCAL;
 	}
 
-
-
+	pthread_mutex_lock(&mutexTablaEstados);
 	t_list* registrosRedGlobal = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
+
+	respuestaTodos->nodoEncargado = calcularNodoEncargado(registrosRedGlobal);
+	infoNodo* nodoEncargado = obtenerNodo(respuestaTodos->nodoEncargado);
+
+	char* archivoReduccionGlobal = dameUnNombreArchivoTemporal(job->id,0,RED_GLOBAL,0);
+
+	respuestaTodos->archivoReduccionGlobal.longitud = string_length(archivoReduccionGlobal);
+	respuestaTodos->archivoReduccionGlobal.cadena = strdup(archivoReduccionGlobal);
+
+	void meterEnRespuestaRedGlobal(void *registro){
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+		bloquesConSusArchivosRedGlobal* bloquesArchivos = malloc(sizeof(bloquesConSusArchivosRedGlobal));
+		infoNodo* infoNod = obtenerNodo(reg->nodo);
+		workerDesdeYama* worker;
+
+		bool nodoConNumero(workerDesdeYama* worker){
+			return worker->numeroWorker == infoNod->numero;
+		}
+
+		if( list_find(respuestaTodos->workers, (void*) nodoConNumero)){
+			worker = list_find(respuestaTodos->workers, (void*) nodoConNumero);
+		}
+		else{
+			worker = malloc(sizeof(workerDesdeYama));
+			worker->numeroWorker = reg->nodo;
+			worker->puerto = infoNod->puerto;;
+			worker->ip.longitud = infoNod->ip.longitud;
+			worker->ip.cadena = strdup(infoNod->ip.cadena);
+			worker->bloquesConSusArchivos = list_create();
+			list_add(respuestaTodos->workers,worker);
+		}
+
+		bloquesArchivos->archivoReduccionLocal.longitud = string_length(reg->rutaArchivoTemp);
+		bloquesArchivos->archivoReduccionLocal.cadena = strdup(reg->rutaArchivoTemp);
+
+		bloquesArchivos->puerto = nodoEncargado->puerto;
+		bloquesArchivos->ip.longitud = nodoEncargado->ip.longitud;
+		bloquesArchivos->ip.cadena = strdup(nodoEncargado->ip.cadena);
+
+		list_add(respuestaTodos->workers,bloquesArchivos);
+	}
+
+	list_iterate(registrosRedGlobal,(void*)meterEnRespuestaRedGlobal);
+	empaquetar(job->socketFd,mensajeRespuestaRedGlobal,0,respuestaTodos);
+
+}
+
+int calcularNodoEncargado(t_list* registrosRedGlobal){
+	int menorCarga,numeroNodo;
+
+	registroTablaEstados* reg = list_get(registrosRedGlobal,0);
+	infoNodo* nodo = obtenerNodo(reg->nodo);
+	numeroNodo = reg->nodo;
+	menorCarga=nodo->carga;
+
+
+	int i;
+	for(i=1;i<list_size(registrosRedGlobal);i++){
+		reg = list_get(registrosRedGlobal,i);
+		nodo = obtenerNodo(reg->nodo);
+
+		if(nodo->carga < menorCarga ){
+			numeroNodo = reg->nodo;
+			menorCarga=nodo->carga;
+		}
+	}
+
+	return numeroNodo;
 
 }

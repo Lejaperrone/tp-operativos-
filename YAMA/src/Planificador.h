@@ -56,5 +56,6 @@ void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArc
 void enviarReduccionLocalAMaster(job* job);
 void enviarReduccionGlobalAMaster(job* job);
 void replanificar(t_list* bloques,job* jobi,informacionArchivoFsYama* infoArchivo);
+int calcularNodoEncargado(t_list* registrosRedGlobal);
 
 #endif /* PLANIFICADOR_H_ */

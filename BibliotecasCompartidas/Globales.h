@@ -74,28 +74,26 @@ typedef struct {
 typedef struct {
 	int numBloque;
 	int numBloqueEnNodo;
-	int bytesOcupados;
 	string archivoTransformacion;
 	string archivoReduccion;
 }bloquesConSusArchivosRedLocal;
 
 typedef struct {
 	t_list* workers;
-}respuestaReduccionLocalCompleta;
+}respuestaReduccionLocal;
 
 typedef struct respuestaReduccionGlobal{
-	int nodo;
-	char* ip;
 	int puerto;
+	string ip;
 	string archivoReduccionLocal;
-	string archivoReduccionGlobal;
 	bool encargado;
-}respuestaReduccionGlobal;
+}bloquesConSusArchivosRedGlobal;
 
 typedef struct {
 	t_list* workers;
 	int nodoEncargado;
-}respuestaReduccionGlobalCompleta;
+	string archivoReduccionGlobal;
+}respuestaReduccionGlobal;
 
 typedef struct registroTablaEstados{
 	int job;

@@ -86,10 +86,10 @@ void* serializarRespuestaTransformacion(void* paquete,int* tamanio);
 respuestaSolicitudTransformacion* deserializarRespuestaTransformacion(int socket,int tamanio);
 
 void* serializarRespuestaRedLocal(void* paquete,int* tamanio);
-respuestaReduccionLocalCompleta* deserializarRespuestaRedLocal(int socket,int tamanio);
+respuestaReduccionLocal* deserializarRespuestaRedLocal(int socket,int tamanio);
 
 void* serializarRespuestaRedGlobal(void* paquete,int* tamanio);
-respuestaReduccionGlobalCompleta* deserializarRespuestaRedGlobal(int socket,int tamanio);
+respuestaReduccionGlobal* deserializarRespuestaRedGlobal(int socket,int tamanio);
 
 void* serializarProcesarTransformacion(void* paquete, int* tamanio);
 parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tamanio);
