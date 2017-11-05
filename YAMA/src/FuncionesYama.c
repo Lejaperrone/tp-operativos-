@@ -404,9 +404,33 @@ bool faltanMasTareas(int jobid,int etapa){
 	return reg;
 }
 
-void finalizarJob(job* job){
+void finalizarJob(job* job,int etapa){
+	actualizarCargasNodos(job->id,etapa);
 	borrarEntradasDeJob(job->id);
 	empaquetar(job->socketFd,mensajeFinJob,0,0);
+	pthread_exit(0);
+}
+
+void actualizarCargasNodos(int jobid,int etapa){
+	bool encontrarEnTablaEstados(void *registro) {
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+		return reg->job == jobid && reg->etapa== etapa;
+	}
+
+	pthread_mutex_lock(&mutexTablaEstados);
+	t_list* registros = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
+
+	void actualizarCarga(void *registro){
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+
+		pthread_mutex_lock(&mutex_NodosConectados);
+		infoNodo* nodo = obtenerNodo(reg->nodo);
+		nodo->carga=nodo->carga-1;
+		pthread_mutex_unlock(&mutex_NodosConectados);
+	}
+
+	list_iterate(registros,(void*)actualizarCarga);
 }
 
 void borrarEntradasDeJob(int jobid){
@@ -451,7 +475,7 @@ void esperarRespuestaReduccionDeMaster(job* job,int etapa){
 			reduccionIncompleta = faltanMasTareas(job->id,etapa);
 		}
 		else if(respuestaMaster.idMensaje == mensajeFalloRedu){
-			finalizarJob(job);
+			finalizarJob(job,etapa);
 		}
 	}
 }
