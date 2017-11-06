@@ -763,6 +763,8 @@ void actualizarBitmapNodos(){
 			else
 				fwrite("1",1,1,archivoBitmap);
 		}
+
+		actualizarArchivoNodos();
 		fclose(archivoBitmap);
 		free(pathParticular);
 	}
@@ -988,10 +990,12 @@ void obtenerInfoNodo(ubicacionBloque* ubicacion){
 }
 
 int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
-	int respuesta = 1;
+	int respuesta = 1, respuestaEnvio = -1;
+	char* respuestaLectura;
 	informacionNodo info;
 	parametrosLecturaBloque paramLectura;
 	parametrosEnvioBloque paramEnvio;
+	pthread_t nuevoHilo;
 
 	if (config_has_property(infoArchivo, string_from_format("BLOQUE%dBYTES",bloque))){
 		paramLectura.sizeBloque = config_get_int_value(infoArchivo,string_from_format("BLOQUE%dBYTES",bloque));
@@ -1004,8 +1008,10 @@ int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
 	paramLectura.bloque = 28;
 	paramLectura.sem = nodo;
 
-	leerDeDataNode(&paramLectura);
-	printf("sali de leer");
+	pthread_create(&nuevoHilo, NULL, &leerDeDataNode,(void*) &paramLectura);
+	pthread_join(nuevoHilo, (void**) &respuestaLectura);
+
+	//printf("sali de leer\n");
 
 	paramEnvio.bloque = buscarPrimerBloqueLibre(nodo - 1, info.sizeNodo);
 	paramEnvio.offset = 0;
@@ -1015,7 +1021,10 @@ int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
 	paramEnvio.socket = info.socket;
 	paramEnvio.mapa = paramLectura.contenidoBloque;
 
-	enviarADataNode(&paramEnvio);
+	pthread_create(&nuevoHilo, NULL, &enviarADataNode,(void*) &paramEnvio);
+	pthread_join(nuevoHilo, (void**) &respuestaEnvio);
+
+	//printf("sali de enviar\n");
 
 	setearBloqueOcupadoEnBitmap(nodo - 1, paramEnvio.bloque);
 

@@ -38,6 +38,13 @@ int copiarArchivo(char* comando){
 	char* dot = ".";
 	char* caracterActual = string_substring(rutaInvertida, indice, 1);
 
+	char* rutaFSMetadata = buscarRutaArchivo(rutaFS);
+	int numeroDirectorio = atoi(ultimaParteDeRuta(rutaFSMetadata));
+	if (numeroDirectorio == -1){
+		printf("No existe el directorio\n");
+		return 0;
+	}
+
 	while(strcmp(caracterActual,dot)){
 		memcpy(tipo + indice, caracterActual, 1);
 		++indice;
@@ -492,13 +499,8 @@ int informacion(char* comando){
 }
 
 int formatearFS(char* comando){
-	char* rutaArchivoEnMetadata = "/home/utnso/project/tp-2017-2c-PEQL/FileSystem/metadata/Archivos/11/utnso.txt";
-	char* command = malloc(strlen(rutaArchivoEnMetadata) + 4);
-	memset(command, 0, strlen(rutaArchivoEnMetadata) + 4);
-	memcpy(command, "rm ", 3);
-	memcpy(command + 3, rutaArchivoEnMetadata, strlen(rutaArchivoEnMetadata));
 
-	printf("%s\n", command);
+	printf("%s\n", tablaDeDirectorios[11].nombre);
 
 	return 0;
 }
