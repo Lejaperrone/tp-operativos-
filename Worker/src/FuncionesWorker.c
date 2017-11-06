@@ -206,6 +206,8 @@ void levantarServidorWorker(char* ip, int port) {
 	int sock;
 	sock = crearServidorAsociado(ip, port);
 
+	printf("Llega");
+
 	while (1) {
 		struct sockaddr_in their_addr;
 		socklen_t size = sizeof(struct sockaddr_in);

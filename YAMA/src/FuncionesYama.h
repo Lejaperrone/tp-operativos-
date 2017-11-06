@@ -86,7 +86,9 @@ void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,int etapa);
 
 bool faltanMasTareas(int jobid,int etapa);
 
-void finalizarJob(job* job);
+void actualizarCargasNodos(int jobid,int etapa);
+
+void finalizarJob(job* job, int etapa);
 
 void borrarEntradasDeJob(int jobid);
 

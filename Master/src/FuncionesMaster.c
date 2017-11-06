@@ -23,8 +23,8 @@ void conectarseConYama(char* ip, int port) {
 void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 	pthread_t hiloConexion;
 	int i,j;
-	workerEnSolicitudTransformacion* worker = malloc(sizeof(workerEnSolicitudTransformacion));
-	bloquesConSusArchivos* bloque = malloc(sizeof(bloquesConSusArchivos));
+	workerDesdeYama* worker = malloc(sizeof(workerDesdeYama));
+	bloquesConSusArchivosTransformacion* bloque = malloc(sizeof(bloquesConSusArchivosTransformacion));
 	parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
 	parametrosConexion->bloquesConSusArchivos = list_create();
 	//worker =list_get(rtaYama->workers, 0);
