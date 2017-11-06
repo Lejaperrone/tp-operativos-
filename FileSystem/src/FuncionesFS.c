@@ -51,8 +51,6 @@ int recibirConexionYama(){
 			if(id == 1){//yama
 				log_trace(loggerFS, "Nueva Conexion de Yama");
 				empaquetar(cliente,mensajeOk,0,0);
-				EstadoFS = verificarEstado();
-				printf("\n estado %d\n", EstadoFS);
 				return cliente;
 			}
 		}
@@ -68,7 +66,7 @@ int verificarEstado(){
 	int i = 0, j = 0, l = 0, k = 0;
 	int cantidadNodosConectados = list_size(nodosConectados);
 	int nodos[cantidadNodosConectados];
-	int sizeArchivo, cantBloques;
+	int sizeArchivo, cantBloques = 1;
 	informacionNodo info;
 	t_config* infoArchivo;
 	char** arrayInfoBloque;
@@ -108,34 +106,39 @@ int verificarEstado(){
 					sizeArchivo = config_get_int_value(infoArchivo,"TAMANIO");
 				}
 
-				cantBloques = redondearHaciaArriba(sizeArchivo, mb);
+				if (sizeArchivo > mb)
+					cantBloques = redondearHaciaArriba(sizeArchivo, mb);
+				else
+					cantBloques = 1;
 
 				for (j = 0; j < cantBloques; ++j){
 					for (l = 0; l < numeroCopiasBloque; ++l){
-						bloque = string_from_format("BLOQUE%dCOPIA%d",i,l);
+						bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
 						arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
 						charNumeroNodo = string_substring_from(arrayInfoBloque[i], 4);
 						numeroNodo = atoi(charNumeroNodo);
 
 						for (k = 0; k < cantidadNodosConectados; ++k)
-							if (nodos[k] == numeroNodo)
+							if (nodos[k] == numeroNodo){
 								++valido;
+							}
 
-						if (valido < numeroCopiasBloque){
-							free(bloque);
-							free(charNumeroNodo);
-							free(path);
-							free(pathDir);
-							return 0;
-						}
-
-						valido = 0;
-
+					}
+					if (valido < numeroCopiasBloque){
 						free(bloque);
 						free(charNumeroNodo);
+						free(path);
+						free(pathDir);
+						return 0;
 					}
+
+					valido = 0;
+
+					free(bloque);
+					free(charNumeroNodo);
 				}
 				free(path);
+				config_destroy(infoArchivo);
 			}
 			free(pathDir);
 		}

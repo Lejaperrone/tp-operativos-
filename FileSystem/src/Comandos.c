@@ -322,6 +322,7 @@ int listarArchivos(char* comando){
 	respuesta = system(command);
 	free(command);
 
+
 	return respuesta;
 }
 
