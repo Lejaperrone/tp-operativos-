@@ -46,9 +46,7 @@ void esperarInstruccionesDeYama();
 
 char* recibirRuta(char* mensaje);
 
-void enviarArchivo(int socketPrograma, char* rutaArchivo);
-
-void enviarArchivoo(int socketPrograma, char* pathArchivo);
+string* contenidoArchivo(char* rutaArchivo);
 
 job* crearJob(char* argv[]);
 

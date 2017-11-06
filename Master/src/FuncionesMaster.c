@@ -56,7 +56,7 @@ void* conectarseConWorkers(void* params) {
 
 	infoTransformacion = (parametrosTransformacion*)params;
 	int socketWorker = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto); //FIXME Esta agarrando el puerto solo del primer worker
+	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto);
 	conectarCon(direccion, socketWorker, 2); //2 id master
 
 	log_trace(loggerMaster, "Conexion con Worker en %s:%i", infoTransformacion->ip.cadena, infoTransformacion->puerto);
@@ -127,32 +127,35 @@ char* recibirRuta(char* mensaje) {
 
 
 job* crearJob(char* argv[]){
-	job* nuevo = (job*)malloc(sizeof(job));
+	job* nuevoJob = (job*)malloc(sizeof(job));
 
-	nuevo->id = 0;
-	nuevo->socketFd = 0;
+	nuevoJob->id = 0;
+	nuevoJob->socketFd = 0;
 
-	nuevo->rutaTransformador.cadena = string_duplicate(argv[2]);
-	nuevo->rutaTransformador.longitud = string_length(nuevo->rutaTransformador.cadena);
+	string* transformador = contenidoArchivo(argv[2]);
+	string* reductor = contenidoArchivo(argv[3]);
 
-	nuevo->rutaReductor.cadena = string_duplicate(argv[3]);
-	nuevo->rutaReductor.longitud = string_length(nuevo->rutaReductor.cadena);
+	nuevoJob->rutaTransformador.cadena = string_duplicate(transformador->cadena);
+	nuevoJob->rutaTransformador.longitud = transformador->longitud;
 
-	nuevo->rutaDatos.cadena= string_duplicate(argv[4]);
-	nuevo->rutaDatos.longitud = string_length(nuevo->rutaDatos.cadena);
+	nuevoJob->rutaReductor.cadena = string_duplicate(reductor->cadena);
+	nuevoJob->rutaReductor.longitud = reductor->longitud;
 
-	nuevo->rutaResultado.cadena = string_duplicate(argv[5]);
-	nuevo->rutaResultado.longitud = string_length(nuevo->rutaResultado.cadena);
+	nuevoJob->rutaDatos.cadena= string_duplicate(argv[4]);
+	nuevoJob->rutaDatos.longitud = string_length(nuevoJob->rutaDatos.cadena);
+
+	nuevoJob->rutaResultado.cadena = string_duplicate(argv[5]);
+	nuevoJob->rutaResultado.longitud = string_length(nuevoJob->rutaResultado.cadena);
 
 	estadisticas = crearEstadisticasProceso();
-	return nuevo;
+	return nuevoJob;
 }
 
 /*int dameUnID(){
 	return ultimoIdMaster++;//FIXME
 }*/
 
-void enviarArchivo(int socketPrograma, char* pathArchivo){
+string* contenidoArchivo(char* pathArchivo){
 	struct stat fileStat;
 	if(stat(pathArchivo,&fileStat) < 0)
 		exit(1);
@@ -160,14 +163,9 @@ void enviarArchivo(int socketPrograma, char* pathArchivo){
 	string* paquete = malloc(sizeof(string));
 	paquete->cadena = mmap(0,fileStat.st_size,PROT_EXEC|PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
 	paquete->longitud = fileStat.st_size;
-	empaquetar(socketPrograma, mensajeArchivo, fileStat.st_size, paquete);
 
-	if (munmap(paquete->cadena,paquete->longitud) == 0)
-				printf("%s\n", "todo joya");
-			else
-				printf("%s\n", "todo no joya");
 	close(fd);
-	free(paquete);
+	return paquete;
 }
 
 estadisticaProceso* crearEstadisticasProceso(){
