@@ -23,13 +23,15 @@ void conectarseConYama(char* ip, int port) {
 void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 	pthread_t hiloConexion;
 	int i,j;
-	workerDesdeYama* worker = malloc(sizeof(workerDesdeYama));
-	bloquesConSusArchivosTransformacion* bloque = malloc(sizeof(bloquesConSusArchivosTransformacion));
-	parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
-	parametrosConexion->bloquesConSusArchivos = list_create();
 	//worker =list_get(rtaYama->workers, 0);
 	//para probar conexion por hilos
 	for(i=0 ; i<list_size(rtaYama->workers);i++){
+
+		workerDesdeYama* worker = malloc(sizeof(workerDesdeYama));
+		bloquesConSusArchivosTransformacion* bloque = malloc(sizeof(bloquesConSusArchivosTransformacion));
+		parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
+		parametrosConexion->bloquesConSusArchivos = list_create();
+
 		worker = list_get(rtaYama->workers, i);
 
 		parametrosConexion->ip.cadena = worker->ip.cadena;
@@ -38,12 +40,15 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 		parametrosConexion->puerto = worker->puerto;
 		parametrosConexion->bloquesConSusArchivos = worker->bloquesConSusArchivos;
 
-		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers,parametrosConexion) != 0) {
+		log_trace(loggerMaster, "Me tengo que conectar a %s:%i", parametrosConexion->ip.cadena, parametrosConexion->puerto);
+
+		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
 			log_error(loggerMaster, "No se pudo crear el thread de conexion");
 			exit(-1);
 		}
 	}
 }
+
 void* conectarseConWorkers(void* params) {
 	parametrosTransformacion* infoTransformacion = malloc(sizeof(parametrosTransformacion));
 	respuesta confirmacionWorker;
