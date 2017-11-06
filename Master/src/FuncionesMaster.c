@@ -51,10 +51,10 @@ void* conectarseConWorkers(void* params) {
 
 	infoTransformacion = (parametrosTransformacion*)params;
 	int socketWorker = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto);
+	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto); //FIXME Esta agarrando el puerto solo del primer worker
 	conectarCon(direccion, socketWorker, 2); //2 id master
 
-	log_trace(loggerMaster, "Conexion con Worker ");
+	log_trace(loggerMaster, "Conexion con Worker en %s:%i", infoTransformacion->ip.cadena, infoTransformacion->puerto);
 
 	empaquetar(socketWorker, mensajeProcesarTransformacion, 0, infoTransformacion);
 

@@ -7,7 +7,6 @@ void handlerMaster() {
 			sizeof(parametrosTransformacion));
 
 	log_trace(logger, "Esperando instruccion de Master");
-	int i;
 	instruccionMaster = desempaquetar(clientSocket);
 
 	char* destino;
@@ -206,8 +205,6 @@ void levantarServidorWorker(char* ip, int port) {
 	int sock;
 	sock = crearServidorAsociado(ip, port);
 
-	printf("Llega");
-
 	while (1) {
 		struct sockaddr_in their_addr;
 		socklen_t size = sizeof(struct sockaddr_in);
@@ -215,10 +212,11 @@ void levantarServidorWorker(char* ip, int port) {
 		int pid;
 
 		if (clientSocket == -1) {
+			close(clientSocket);
 			perror("accept");
 		}
 
-		printf("Got a connection from %s on port %d\n",
+		printf("Nueva conexion de %s en puerto %d\n",
 				inet_ntoa(their_addr.sin_addr), htons(their_addr.sin_port));
 
 		respuesta conexionNueva;
@@ -232,6 +230,8 @@ void levantarServidorWorker(char* ip, int port) {
 					handlerMaster();
 				} else if (pid > 0) {
 					log_trace(logger, "Proceso Padre:%d", pid);
+					close(clientSocket);
+					continue;
 				} else if (pid < 0) {
 					log_error(logger, "NO SE PUDO HACER EL FORK");
 				}
@@ -248,5 +248,4 @@ void levantarServidorWorker(char* ip, int port) {
 			}
 		}
 	}
-	close(sock);
 }
