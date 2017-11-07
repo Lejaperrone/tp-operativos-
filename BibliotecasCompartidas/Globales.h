@@ -56,6 +56,7 @@ typedef struct {
 }workerDesdeYama;
 
 typedef struct{
+	//infoBloque bloque;
 	int numBloque;
 	int numBloqueEnNodo;
 	int bytesOcupados;
@@ -194,6 +195,7 @@ typedef struct{
 	t_list* bloques;
 	int workerId;
 }bloquesAReplanificar;
+
 int redondearHaciaArriba(int num,int num2);
 
 bool validarArchivo(char* path);

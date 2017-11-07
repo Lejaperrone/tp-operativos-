@@ -492,8 +492,16 @@ void eliminarWorker(int id, t_list* listaNodos){
 	bool nodoConNumero(infoNodo* worker){
 		return worker->numero == id;
 	}
+	infoNodo* workerEnGlobal = malloc(sizeof(infoNodo));
 	infoNodo* worker = malloc(sizeof(infoNodo));
-	worker = list_find(nodosConectados, nodoConNumero);
 
+	/*workerEnGlobal = list_find(nodosConectados, nodoConNumero);
+	workerEnGlobal->conectado = false;*/
+	pthread_mutex_lock(&mutex_NodosConectados);
+	list_remove_by_condition(nodosConectados, nodoConNumero);
+	pthread_mutex_unlock(&mutex_NodosConectados);
+
+	worker = list_find(listaNodos, nodoConNumero);
 	worker->conectado = false;
+
 }
