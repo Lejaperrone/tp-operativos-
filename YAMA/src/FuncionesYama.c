@@ -361,7 +361,7 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 		infoNodo* nuevoNodo = malloc(sizeof(infoNodo));
 		nuevoNodo->carga=0;
 		nuevoNodo->cantTareasHistoricas=0;
-		nuevoNodo->activo = true;
+		nuevoNodo->conectado = true;
 		nuevoNodo->ip.cadena = strdup(ubicacion.ip.cadena);
 		nuevoNodo->ip.longitud = ubicacion.ip.longitud;
 		nuevoNodo->numero = ubicacion.numeroNodo;
@@ -486,4 +486,14 @@ infoNodo* obtenerNodo(int numero){
 	}
 
 	return list_find(nodosConectados,(void*)encontrarNodo);
+}
+
+void eliminarWorker(int id, t_list* listaNodos){
+	bool nodoConNumero(infoNodo* worker){
+		return worker->numero == id;
+	}
+	infoNodo* worker = malloc(sizeof(infoNodo));
+	worker = list_find(nodosConectados, nodoConNumero);
+
+	worker->conectado = false;
 }

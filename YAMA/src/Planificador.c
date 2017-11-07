@@ -46,23 +46,24 @@ void planificar(job* job){
 
 	bool transformacionIncompleta = true;
 	int i;
-	t_list* listaBloques;
+	bloquesAReplanificar* paraReplanificar = malloc(sizeof(bloquesAReplanificar));
 	bloquesConSusArchivosTransformacion* bloque;
 	while(transformacionIncompleta){
 		respuesta respuestaMaster=  desempaquetar(job->socketFd);
 		if(respuestaMaster.idMensaje == mensajeTransformacionCompleta){
-			listaBloques = (t_list*)respuestaMaster.envio;
+			paraReplanificar = (bloquesAReplanificar*) respuestaMaster.envio;
 
-			for(i=0;i<list_size(listaBloques);i++){
-				bloque = list_get(listaBloques, i);
+			for(i=0;i<list_size(paraReplanificar->bloques);i++){
+				bloque = list_get(paraReplanificar->bloques, i);
 				agregarBloqueTerminadoATablaEstados(bloque->numBloque,job->id,TRANSFORMACION);
 			}
 				transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);
 		}
 		else if(respuestaMaster.idMensaje == mensajeFalloTransformacion){
-			listaBloques = (t_list*)respuestaMaster.envio;
-			printf("Entro a replanificar se desconecto un worker\n");
-		//	replanificar(listaBloques,job,infoArchivo, listaNodos);
+			paraReplanificar = (bloquesAReplanificar*) respuestaMaster.envio;
+			log_trace(logger,"Entro a replanificar se desconecto un worker %d\n", paraReplanificar->workerId);
+
+			//replanificar(paraReplanificar,job,infoArchivo, listaNodos);
 		}
 	}
 
@@ -209,7 +210,7 @@ infoNodo* buscarNodo(t_list* nodos, int numNodo){
 }
 
 bool estaActivo(infoNodo* worker){
-	return worker->activo == 1;
+	return worker->conectado == true;
 }
 
 void calcularDisponibilidadWorkers(t_list* nodos){
@@ -333,11 +334,14 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 
 }
 
-void replanificar(t_list* bloques,job* jobi,informacionArchivoFsYama* infoArchivo, t_list* listaNodos, bool** nodosPorBloque){
+void replanificar(bloquesAReplanificar* paraReplanificar,job* jobi,informacionArchivoFsYama* infoArchivo, t_list* listaNodos, bool** nodosPorBloque){
 	respuestaSolicitudTransformacion* respuestaAMaster = malloc(sizeof(respuestaSolicitudTransformacion));
-	buscarCopiasBloques(bloques, listaNodos, infoArchivo);
-
 	infoNodo* worker = malloc(sizeof(infoNodo));
+
+	eliminarWorker(paraReplanificar->workerId, listaNodos);
+
+	buscarCopiasBloques(paraReplanificar->bloques, listaNodos, infoArchivo);
+
 	worker = posicionarClock(listaNodos);
 
 	respuestaAMaster = moverClock(worker, listaNodos, nodosPorBloque, infoArchivo, jobi->id);

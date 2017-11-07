@@ -30,12 +30,12 @@
 #define idMaster 2
 #define idDataNodes 3
 
-t_list* nodosConectados;
-t_list* tablaDeEstados;
 pthread_mutex_t mutex_NodosConectados;
 pthread_mutex_t mutexLog;
 pthread_mutex_t mutexConfiguracion;
 pthread_mutex_t mutexTablaEstados;
+t_list* tablaDeEstados;
+t_list* nodosConectados;
 
 pthread_mutex_t cantJobs_mutex;
 
@@ -95,5 +95,7 @@ void borrarEntradasDeJob(int jobid);
 void esperarRespuestaReduccionDeMaster(job* job,int etapa);
 
 infoNodo* obtenerNodo(int numero);
+
+void eliminarWorker(int id, t_list* listaNodos);
 
 #endif /* FUNCIONESYAMA_H_ */

@@ -52,7 +52,8 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 void* conectarseConWorkers(void* params) {
 	parametrosTransformacion* infoTransformacion = malloc(sizeof(parametrosTransformacion));
 	respuesta confirmacionWorker;
-	t_list* bloquesAReplanificar = list_create();
+	bloquesAReplanificar* bloquesAReplanificar = malloc(sizeof(bloquesAReplanificar));
+	bloquesAReplanificar->bloques = list_create();
 
 	infoTransformacion = (parametrosTransformacion*)params;
 	int socketWorker = crearSocket();
@@ -72,7 +73,8 @@ void* conectarseConWorkers(void* params) {
 			break;
 		//case mensajeFalloTransformacion:
 		case mensajeDesconexion:
-			bloquesAReplanificar = infoTransformacion->bloquesConSusArchivos;
+			list_add_all(bloquesAReplanificar->bloques,infoTransformacion->bloquesConSusArchivos);
+			bloquesAReplanificar->workerId = infoTransformacion->numero;
 			empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloquesAReplanificar);
 			break;
 

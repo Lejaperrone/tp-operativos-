@@ -178,7 +178,7 @@ typedef struct {
 	int puerto;
 	uint32_t carga;
 	t_list* bloques;
-	bool activo;
+	bool conectado;
 	int cantTareasHistoricas;
 	int disponibilidad;
 }infoNodo;
@@ -190,6 +190,10 @@ typedef struct{
 	t_list* bloquesConSusArchivos;
 } parametrosTransformacion;
 
+typedef struct{
+	t_list* bloques;
+	int workerId;
+}bloquesAReplanificar;
 int redondearHaciaArriba(int num,int num2);
 
 bool validarArchivo(char* path);

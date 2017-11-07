@@ -95,6 +95,6 @@ void* serializarProcesarTransformacion(void* paquete, int* tamanio);
 parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tamanio);
 
 void* serializarFalloTransformacion(void* paquete, int* tamanio);
-t_list* deserializarFalloTransformacion(int socket, int tamanio);
+bloquesAReplanificar* deserializarFalloTransformacion(int socket, int tamanio);
 
 #endif /* SERIALIZACION_H_ */

@@ -982,20 +982,26 @@ parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tam
 	return infoWorker;
 }
 void* serializarFalloTransformacion(void* paquete, int* tamanio){
-	t_list* listaBloques = (t_list*)paquete;
+	bloquesAReplanificar* replanif = (bloquesAReplanificar*)paquete;
+
 	int desplazamiento = 0;
 	int i;
 
 	*tamanio = sizeof(int);
 	void* buffer =malloc(*tamanio);
 
+	*tamanio += sizeof(int);
 	buffer = realloc(buffer, *tamanio);
-	int longitud = list_size(listaBloques);
+	memcpy(buffer + desplazamiento, &replanif->workerId, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	buffer = realloc(buffer, *tamanio);
+	int longitud = list_size(replanif->bloques);
 	memcpy(buffer + desplazamiento, &longitud, sizeof(int));
 	desplazamiento += sizeof(int);
 
-	for (i = 0; i < list_size(listaBloques); ++i) {
-		bloquesConSusArchivosTransformacion* bloquesArchivos = (bloquesConSusArchivosTransformacion*)list_get(listaBloques, i);
+	for (i = 0; i < list_size(replanif->bloques); ++i) {
+		bloquesConSusArchivosTransformacion* bloquesArchivos = (bloquesConSusArchivosTransformacion*)list_get(replanif->bloques, i);
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
@@ -1027,13 +1033,17 @@ void* serializarFalloTransformacion(void* paquete, int* tamanio){
 	return buffer;
 }
 
-t_list* deserializarFalloTransformacion(int socket, int tamanio){
+bloquesAReplanificar* deserializarFalloTransformacion(int socket, int tamanio){
 	int desplazamiento = 0;
 	int j;
 	void* buffer = malloc(tamanio);
 	recv(socket,buffer,tamanio,0);
-	t_list* listaBloques = list_create();
+	bloquesAReplanificar* replanif = malloc(sizeof(bloquesAReplanificar));
 
+	memcpy(&replanif->workerId, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	replanif->bloques = list_create();
 	int longitud = 0;
 	memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
@@ -1057,9 +1067,9 @@ t_list* deserializarFalloTransformacion(int socket, int tamanio){
 		memcpy(bloqueArchivos->archivoTemporal.cadena, buffer + desplazamiento, bloqueArchivos->archivoTemporal.longitud);
 		desplazamiento += bloqueArchivos->archivoTemporal.longitud;
 
-		list_add(listaBloques, bloqueArchivos);
+		list_add(replanif->bloques, bloqueArchivos);
 	}
-	return listaBloques;
+	return replanif;
 }
 
 void* serializarRespuestaRedGlobal(void* paquete,int* tamanio){
