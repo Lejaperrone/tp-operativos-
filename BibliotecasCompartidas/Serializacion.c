@@ -115,7 +115,8 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 respuesta desempaquetar(int socket){
 	void* bufferOk;
 	respuesta miRespuesta;
-	header* cabecera = malloc(sizeof(header));
+	header* cabecera = malloc(sizeof(header) + 1);
+	memset(cabecera, 0, sizeof(header) + 1);
 	int bytesRecibidos;
 
 	if ((bytesRecibidos = recv(socket, cabecera, sizeof(header), 0)) == 0) {
@@ -181,6 +182,7 @@ respuesta desempaquetar(int socket){
 				bufferOk = malloc(sizeof(int));
 				recv(socket,bufferOk,sizeof(int),MSG_WAITALL);
 				miRespuesta.envio = malloc(sizeof(int));
+				memset(miRespuesta.envio, 0 , sizeof(int));
 				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
 				free(bufferOk);
 				break;
@@ -380,7 +382,8 @@ void* serializarInformacionNodos(void* paquete,int* tamanio){
 	int desplazamiento = 0;
 
 	*tamanio = sizeof(informacionNodo)-sizeof(int) +info->ip.longitud;
-	void * buffer = malloc(*tamanio);
+	void * buffer = malloc(*tamanio + 1);
+	memset(buffer, 0, *tamanio + 1);
 
 	memcpy(buffer + desplazamiento, &(info->bloquesOcupados), sizeof(int));
 	desplazamiento += sizeof(int);
@@ -402,6 +405,7 @@ void* serializarInformacionNodos(void* paquete,int* tamanio){
 
 	memcpy(buffer + desplazamiento, info->ip.cadena, info->ip.longitud+1);
 	desplazamiento += info->ip.longitud;
+
 
 	return buffer;
 }

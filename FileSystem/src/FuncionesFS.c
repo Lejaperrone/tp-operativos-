@@ -581,18 +581,22 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		indexNodoEnListaConectados[i] = i;
 		printf("bloques libres %d\n", bloquesLibreNodo[i]);
 	}
+	int contador = 0;
+
+	printf("cant nod %d\n", cantidadNodos);
 
 	for (i = 0; i < cantBloquesArchivo; ++i){
 		for (j = 0; j < cantidadNodos; ++j){
-			if(pruebaEspacioDisponible[j] > 0){
-				++contadorPrueba;
-				--pruebaEspacioDisponible[j];
-				if (contadorPrueba == 2){
-					continue;
+			if(pruebaEspacioDisponible[contador] > 0){
+				if (contadorPrueba < 2){
+					++contador;
+					if (contador > cantidadNodos -1)
+						contador = 0;
+					++contadorPrueba;
+					--pruebaEspacioDisponible[contador];
 				}
 			}
 		}
-		printf("asdas\n");
 		if (contadorPrueba < 2)
 			return 2;
 		else
@@ -666,9 +670,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 				sizeTotal += params[i+cantBloquesArchivo*j].sizeBloque;
 
 			params[i+cantBloquesArchivo*j].sem = indexNodoEnListaConectados[nodoAUtilizar];
-			printf("nodo %d semaforo %d \n\n", indexNodoEnListaConectados[nodoAUtilizar],params[i+cantBloquesArchivo*j].sem);
-			printf("hilo %d\n",i+cantBloquesArchivo*j);
-			printf("params %d\n", params[i+cantBloquesArchivo*j].sizeBloque);
 			pthread_create(&nuevoHilo[i+cantBloquesArchivo*j], NULL, &enviarADataNode,(void*) &params[i+cantBloquesArchivo*j]);
 
 			if (successArchivoCopiado == 1){
@@ -685,8 +686,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	for (i = 0; i < cantBloquesArchivo*2; ++i){
 		pthread_join(nuevoHilo[i], (void**)&respuestas[i]);
-		if (respuestas[i] == 0)
-			successArchivoCopiado = 0;
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
@@ -709,16 +708,14 @@ void* enviarADataNode(void* parametros){
 	 char* buff = malloc(params->sizeBloque + 1);
 	 memset(buff,0, params->sizeBloque + 1);
 	 memcpy(buff, params->mapa+params->offset-params->restanteAnterior, params->sizeBloque);
-	 printf("sizeeeeeeeee %d %d %d %d %d\n", params->sizeBloque, params->socket, strlen(buff), params->offset, params->restanteAnterior);
 	 empaquetar(params->socket, mensajeNumeroCopiaBloqueANodo, sizeof(int),&params->bloque);
 	 empaquetar(params->socket, mensajeEnvioBloqueANodo, params->sizeBloque,buff);
 	 respuesta res = desempaquetar(params->socket);
 	 memcpy(&success, res.envio, sizeof(int));
-	 printf("success %d\n", success);
-	 if (success == 0)
+	 if (success == 0){
 		 successArchivoCopiado = 0;
+	 }
 	 free(buff);
-	 printf("semaforo %d\n", params->sem);
 	 sem_post(&semaforo);
 	 pthread_exit(&success);
 }
