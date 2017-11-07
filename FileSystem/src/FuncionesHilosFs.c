@@ -12,6 +12,7 @@ int servidorFS;
 struct sockaddr_in direccionCliente;
 extern t_list* pedidosFS;
 extern t_log* loggerFS;
+extern int bloquesLibresTotales;
 
 void* levantarServidorFS(){
 
@@ -69,6 +70,7 @@ void* levantarServidorFS(){
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
 								pthread_mutex_unlock(&logger_mutex);
 								info.bloquesOcupados = levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
+								bloquesLibresTotales += info.sizeNodo - info.bloquesOcupados;
 								info.socket = nuevoDataNode;
 								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
 								list_add(nodosConectados,paqueteInfoNodo.envio);
@@ -111,6 +113,11 @@ void* consolaFS(){
 		char* comando = malloc(sizeof(char) * sizeComando + 1);
 		memset(comando, 0,sizeComando + 1);
 		comando = readline(">");
+
+		char** arguments = string_split(comando, " ");
+
+		//printf("----------------------%s\n",)
+
 		if (comando)
 			add_history(comando);
 
@@ -118,48 +125,55 @@ void* consolaFS(){
 		log_trace(loggerFS, "El usuario ingreso: %s", comando);
 		pthread_mutex_unlock(&logger_mutex);
 
-		if (string_starts_with(comando, "format")) {
+		if (strcmp(arguments[0], "format") == 0) {
 			int a = formatearFS(comando);
 			pthread_mutex_lock(&logger_mutex);
 			log_trace(loggerFS, "File system formateado");
 			pthread_mutex_unlock(&logger_mutex);
 		}
-		else if (string_starts_with(comando, "rm -d")) {
-			if (eliminarDirectorio(comando) == 0){
-				pthread_mutex_lock(&logger_mutex);
-				log_trace(loggerFS, "Directorio eliminado");
-				pthread_mutex_unlock(&logger_mutex);
-			}
-			if (eliminarDirectorio(comando) == 2){
-				pthread_mutex_lock(&logger_mutex);
-				log_error(loggerFS, "El directorio no existe");
-				pthread_mutex_unlock(&logger_mutex);
-			}
-			else{
-				pthread_mutex_lock(&logger_mutex);
-				log_error(loggerFS, "No se pudo eliminar el directorio, no esta vacio");
-				pthread_mutex_unlock(&logger_mutex);
+		else if (strcmp(arguments[0],"rm") == 0) {
+
+			if (strcmp(arguments[1],"-d") == 0){
+
+				if (eliminarDirectorio(comando) == 0){
+					pthread_mutex_lock(&logger_mutex);
+					log_trace(loggerFS, "Directorio eliminado");
+					pthread_mutex_unlock(&logger_mutex);
+				}
+				if (eliminarDirectorio(comando) == 2){
+					pthread_mutex_lock(&logger_mutex);
+					log_error(loggerFS, "El directorio no existe");
+					pthread_mutex_unlock(&logger_mutex);
+				}
+				else{
+					pthread_mutex_lock(&logger_mutex);
+					log_error(loggerFS, "No se pudo eliminar el directorio, no esta vacio");
+					pthread_mutex_unlock(&logger_mutex);
+
+				}
 
 			}
-		}
-		else if (string_starts_with(comando, "rm -b")) {
-			pthread_mutex_lock(&logger_mutex);
-			log_trace(loggerFS, "Bloque eliminado");
-			pthread_mutex_unlock(&logger_mutex);
-		}
-		else if (string_starts_with(comando, "rm")) {
-			if (eliminarArchivo(comando) == 0){
+
+			else if (strcmp(arguments[1], "-b") == 0) {
 				pthread_mutex_lock(&logger_mutex);
-				log_trace(loggerFS, "archivo eliminado");
+				log_trace(loggerFS, "Bloque eliminado");
 				pthread_mutex_unlock(&logger_mutex);
 			}
-			else{
-				pthread_mutex_lock(&logger_mutex);
-				log_error(loggerFS, "No se pudo eliminar el archivo");
-				pthread_mutex_unlock(&logger_mutex);
+
+			else if (arguments[1] != NULL) {
+				if (eliminarArchivo(comando) == 0){
+					pthread_mutex_lock(&logger_mutex);
+					log_trace(loggerFS, "archivo eliminado");
+					pthread_mutex_unlock(&logger_mutex);
+				}
+				else{
+					pthread_mutex_lock(&logger_mutex);
+					log_error(loggerFS, "No se pudo eliminar el archivo");
+					pthread_mutex_unlock(&logger_mutex);
+				}
 			}
 		}
-		else if (string_starts_with(comando, "rename")) {
+		else if (strcmp(arguments[0], "rename") == 0) {
 			if (cambiarNombre(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Renombrado");
@@ -172,7 +186,7 @@ void* consolaFS(){
 			}
 
 		}
-		else if (string_starts_with(comando, "mv")) {
+		else if (strcmp(arguments[0], "mv") == 0) {
 			if (mover(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Archivo movido");
@@ -184,7 +198,7 @@ void* consolaFS(){
 				pthread_mutex_unlock(&logger_mutex);
 			}
 		}
-		else if (string_starts_with(comando, "cat")) {
+		else if (strcmp(arguments[0], "cat") == 0) {
 			if (mostrarArchivo(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Archivo mostrado");
@@ -195,7 +209,7 @@ void* consolaFS(){
 				pthread_mutex_unlock(&logger_mutex);
 			}
 		}
-		else if (string_starts_with(comando, "mkdir")) {
+		else if (strcmp(arguments[0], "mkdir") == 0) {
 			if (crearDirectorio(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Directorio creado");// avisar si ya existe
@@ -212,19 +226,25 @@ void* consolaFS(){
 				}
 			}
 		}
-		else if (string_starts_with(comando, "cpfrom")) {
-			if (copiarArchivo(comando) == 1){
+		else if (strcmp(arguments[0], "cpfrom") == 0) {
+			int resultado = copiarArchivo(comando);
+			if (resultado == 1){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Archivo copiado a yamafs");
 				pthread_mutex_unlock(&logger_mutex);
 			}
-			else{
+			else if(resultado == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_error(loggerFS, "No se pudo copiar el archivo");
 				pthread_mutex_unlock(&logger_mutex);
 			}
+			else{
+				pthread_mutex_lock(&logger_mutex);
+				log_error(loggerFS, "No se pudo copiar el archivo, espacio insuficiente");
+				pthread_mutex_unlock(&logger_mutex);
+			}
 		}
-		else if (string_starts_with(comando, "cpto")) {
+		else if (strcmp(arguments[0], "cpto") == 0) {
 			if (copiarArchivoAFs(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Archivo copiado desde yamafs");
@@ -236,7 +256,7 @@ void* consolaFS(){
 				pthread_mutex_unlock(&logger_mutex);
 			}
 		}
-		else if (string_starts_with(comando, "cpblock")) {
+		else if (strcmp(arguments[0], "cpblock") == 0) {
 			if (copiarBloqueANodo(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Bloque copiado en el nodo");
@@ -248,7 +268,7 @@ void* consolaFS(){
 				pthread_mutex_unlock(&logger_mutex);
 			}
 		}
-		else if (string_starts_with(comando, "md5")) {
+		else if (strcmp(arguments[0], "md5") == 0) {
 			if (generarArchivoMD5(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "MD5 del archivo");
@@ -261,7 +281,7 @@ void* consolaFS(){
 			}
 
 		}
-		else if (string_starts_with(comando, "ls")) {
+		else if (strcmp(arguments[0], "ls") == 0) {
 			if (listarArchivos(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Archivos listados");
@@ -274,7 +294,7 @@ void* consolaFS(){
 			}
 
 		}
-		else if (string_starts_with(comando, "info")) {
+		else if (strcmp(arguments[0], "info") == 0) {
 			if (informacion(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Mostrando informacion del archivo");
@@ -292,6 +312,7 @@ void* consolaFS(){
 			log_error(loggerFS, "Comando invalido");
 			pthread_mutex_unlock(&logger_mutex);
 		}
+		free(arguments);
 		free(comando);
 	}
 	return 0;

@@ -30,6 +30,7 @@ int servidorFS;
 extern t_list* pedidosFS;
 int sizeBloque;
 int successArchivoCopiado;
+extern int bloquesLibresTotales;
 sem_t sem;
 
 void establecerServidor(){
@@ -245,6 +246,8 @@ int getIndexDirectorio(char* ruta){
 char* buscarRutaArchivo(char* ruta){
 	ruta = rutaSinPrefijoYama(ruta);
 	int indexDirectorio = getIndexDirectorio(ruta);
+	if (indexDirectorio == -1)
+		return "-1";
 	char* numeroIndexString = string_itoa(indexDirectorio);
 	char* rutaGenerada = calloc(1,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memset(rutaGenerada,0,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
@@ -511,7 +514,8 @@ void* leerDeDataNode(void* parametros){
 	 pthread_exit(params->contenidoBloque);//(void*)params->contenidoBloque;
 }
 
-void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
+int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
+
 	respuesta respuestaPedidoAlmacenar;
 	int totalRestante = 0;
 
@@ -564,15 +568,35 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int indexNodoEnListaConectados[numeroCopiasBloque];
 	parametrosEnvioBloque params[cantBloquesArchivo*2];
 	int sizeTotal = 0, ultimoUtilizado = 0;
+	int pruebaEspacioDisponible[cantidadNodos];
+	int contadorPrueba = 0;
 
 	params[0].restanteAnterior = 0;
 	params[cantBloquesArchivo].restanteAnterior = 0;
 	for (i = 0; i < cantidadNodos; ++i){
 		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
 		bloquesLibreNodo[i] = infoAux.sizeNodo-infoAux.bloquesOcupados;
+		pruebaEspacioDisponible[i] = bloquesLibreNodo[i];
 		indexNodos[i] = infoAux.numeroNodo;
 		indexNodoEnListaConectados[i] = i;
 		printf("bloques libres %d\n", bloquesLibreNodo[i]);
+	}
+
+	for (i = 0; i < cantBloquesArchivo; ++i){
+		for (j = 0; j < cantidadNodos; ++j){
+			if(pruebaEspacioDisponible[j] > 0){
+				++contadorPrueba;
+				--pruebaEspacioDisponible[j];
+				if (contadorPrueba == 2){
+					continue;
+				}
+			}
+		}
+		printf("asdas\n");
+		if (contadorPrueba < 2)
+			return 2;
+		else
+			contadorPrueba = 0;
 	}
 
 	pthread_t nuevoHilo[cantBloquesArchivo*2];
@@ -672,6 +696,8 @@ void guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
 	free(rutaFinal);
 
+	return successArchivoCopiado;
+
 }
 
 void* enviarADataNode(void* parametros){
@@ -720,6 +746,7 @@ void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
 	bitarray_set_bit(bitarrayNodo,bloqueLibre);
 	infoAux = list_get(nodosConectados,numeroNodo);
 	++infoAux->bloquesOcupados;
+	--bloquesLibresTotales;
 }
 
 void setearBloqueLibreEnBitmap(int numeroNodo, int bloqueOcupado){
@@ -728,6 +755,7 @@ void setearBloqueLibreEnBitmap(int numeroNodo, int bloqueOcupado){
 	bitarray_clean_bit(bitarrayNodo,bloqueOcupado);
 	infoAux = list_get(nodosConectados,numeroNodo);
 	--infoAux->bloquesOcupados;
+	++bloquesLibresTotales;
 }
 
 void actualizarBitmapNodos(){
