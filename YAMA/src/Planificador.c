@@ -38,7 +38,7 @@ void planificar(job* job){
 
 	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques);
 
-	respuestaSolicitudTransformacion* respuestaMaster = moverClock(worker, listaNodos, matrix, infoArchivo,job->id);
+	respuestaSolicitudTransformacion* respuestaMaster = moverClock(worker, listaNodos, matrix, infoArchivo->informacionBloques,job->id);
 
 	empaquetar(job->socketFd,mensajeRespuestaTransformacion,0,respuestaMaster);
 
@@ -61,9 +61,9 @@ void planificar(job* job){
 		}
 		else if(respuestaMaster.idMensaje == mensajeFalloTransformacion){
 			paraReplanificar = (bloquesAReplanificar*) respuestaMaster.envio;
-			log_trace(logger,"Entro a replanificar se desconecto un worker %d\n", paraReplanificar->workerId);
+			log_trace(logger,"Entro a replanificar se desconecto un worker %d", paraReplanificar->workerId);
 
-			//replanificar(paraReplanificar,job,infoArchivo, listaNodos);
+			replanificar(paraReplanificar,job,infoArchivo,listaNodos, matrix);
 		}
 	}
 
@@ -80,15 +80,15 @@ void planificar(job* job){
 }
 
 
-respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBloque, informacionArchivoFsYama* infoArchivo,int job){
+respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBloque, t_list* infoBloques,int job){
 	int i;
-	int cantidadBloques = list_size(infoArchivo->informacionBloques);
+	int cantidadBloques = list_size(infoBloques);
 	infoBloque* bloque = malloc(sizeof(infoBloque));
 	respuestaSolicitudTransformacion* respuestaAMaster = malloc(sizeof(respuestaSolicitudTransformacion));
 	respuestaAMaster->workers = list_create();
 
 	for(i=0;i<cantidadBloques;i++){
-		bloque = (infoBloque*)list_get(infoArchivo->informacionBloques, i);
+		bloque = (infoBloque*)list_get(infoBloques, i);
 
 		if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
 			if(workerDesignado->disponibilidad > 0){
@@ -340,15 +340,15 @@ void replanificar(bloquesAReplanificar* paraReplanificar,job* jobi,informacionAr
 
 	eliminarWorker(paraReplanificar->workerId, listaNodos);
 
-	buscarCopiasBloques(paraReplanificar->bloques, listaNodos, infoArchivo);
+	listaNodos = buscarCopiasBloques(paraReplanificar->bloques, listaNodos, infoArchivo);
 
 	worker = posicionarClock(listaNodos);
 
-	respuestaAMaster = moverClock(worker, listaNodos, nodosPorBloque, infoArchivo, jobi->id);
+	respuestaAMaster = moverClock(worker, listaNodos, nodosPorBloque, paraReplanificar->bloques, jobi->id);
 
-	empaquetar(jobi->socketFd,mensajeRespuestaTransformacion,0,respuestaAMaster);
+	//empaquetar(jobi->socketFd,mensajeRespuestaTransformacion,0,respuestaAMaster);
 
-	actualizarCargasNodos(jobi->id,TRANSFORMACION);
+	//actualizarCargasNodos(jobi->id,TRANSFORMACION);
 
 }
 
@@ -519,7 +519,15 @@ int calcularNodoEncargado(t_list* registrosRedGlobal){
 	return numeroNodo;
 
 }
-void buscarCopiasBloques(t_list* listaBloques,t_list* listaNodos,informacionArchivoFsYama* infoArchivo){
+t_list* buscarCopiasBloques(t_list* listaBloques,t_list* listaNodos,informacionArchivoFsYama* infoArchivo){
+	t_list* listaNodosActivos = list_create();
 
+	bool nodosConectadosConBloques(infoNodo* worker){
+		return worker->conectado == true;
+	}
+
+	listaNodosActivos = list_filter(listaNodos, nodosConectadosConBloques);
+
+	return listaNodosActivos;
 }
 

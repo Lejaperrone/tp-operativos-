@@ -105,6 +105,8 @@ void recibirMensajesFileSystem(int socketFs) {
 		memset(data, 0, bloqueArchivo.size + 1);
 		memcpy(data, bloqueArchivo.envio, bloqueArchivo.size);
 		success = setBloque(bloqueId, data);
+		if(success == 0)
+		printf("success %d\n", success);
 		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int),&success);
 		free(data);
 		free(bloqueArchivo.envio);

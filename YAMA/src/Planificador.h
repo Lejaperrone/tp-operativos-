@@ -45,7 +45,7 @@ informacionArchivoFsYama* recibirInfoArchivo(job* job) ;
 bool estaActivo(infoNodo* worker);
 infoNodo* posicionarClock(t_list* listaWorkersConBloques);
 bool bloqueEstaEn(infoNodo* nodo,bool** nodoXbloque, int bloque);
-respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBloque, informacionArchivoFsYama* infoArchivo,int job);
+respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* listaNodos, bool** nodosPorBloque, t_list* infoArchivo,int job);
 infoNodo* avanzarClock(infoNodo* worker, t_list* listaNodos);
 void modificarCargayDisponibilidad(infoNodo* worker);
 void restaurarDisponibilidad(infoNodo* worker);
@@ -57,6 +57,6 @@ void enviarReduccionLocalAMaster(job* job);
 void enviarReduccionGlobalAMaster(job* job);
 void replanificar(bloquesAReplanificar* bloques,job* jobi,informacionArchivoFsYama* infoArchivo, t_list* listaNodos, bool** nodosPorBloque);
 int calcularNodoEncargado(t_list* registrosRedGlobal);
-void buscarCopiasBloques(t_list* listaBloques,t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
+t_list* buscarCopiasBloques(t_list* listaBloques,t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
 
 #endif /* PLANIFICADOR_H_ */
