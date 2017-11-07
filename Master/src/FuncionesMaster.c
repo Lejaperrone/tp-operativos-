@@ -127,28 +127,25 @@ char* recibirRuta(char* mensaje) {
 
 
 job* crearJob(char* argv[]){
-	job* nuevoJob = (job*)malloc(sizeof(job));
+	job* nuevo = (job*)malloc(sizeof(job));
 
-	nuevoJob->id = 0;
-	nuevoJob->socketFd = 0;
+	nuevo->id = 0;
+	nuevo->socketFd = 0;
 
-	string* transformador = contenidoArchivo(argv[2]);
-	string* reductor = contenidoArchivo(argv[3]);
+	nuevo->rutaTransformador.cadena = string_duplicate(argv[2]);
+	nuevo->rutaTransformador.longitud = string_length(nuevo->rutaTransformador.cadena);
 
-	nuevoJob->rutaTransformador.cadena = string_duplicate(transformador->cadena);
-	nuevoJob->rutaTransformador.longitud = transformador->longitud;
+	nuevo->rutaReductor.cadena = string_duplicate(argv[3]);
+	nuevo->rutaReductor.longitud = string_length(nuevo->rutaReductor.cadena);
 
-	nuevoJob->rutaReductor.cadena = string_duplicate(reductor->cadena);
-	nuevoJob->rutaReductor.longitud = reductor->longitud;
+	nuevo->rutaDatos.cadena= string_duplicate(argv[4]);
+	nuevo->rutaDatos.longitud = string_length(nuevo->rutaDatos.cadena);
 
-	nuevoJob->rutaDatos.cadena= string_duplicate(argv[4]);
-	nuevoJob->rutaDatos.longitud = string_length(nuevoJob->rutaDatos.cadena);
-
-	nuevoJob->rutaResultado.cadena = string_duplicate(argv[5]);
-	nuevoJob->rutaResultado.longitud = string_length(nuevoJob->rutaResultado.cadena);
+	nuevo->rutaResultado.cadena = string_duplicate(argv[5]);
+	nuevo->rutaResultado.longitud = string_length(nuevo->rutaResultado.cadena);
 
 	estadisticas = crearEstadisticasProceso();
-	return nuevoJob;
+	return nuevo;
 }
 
 /*int dameUnID(){

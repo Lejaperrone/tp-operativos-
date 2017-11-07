@@ -230,7 +230,7 @@ void levantarServidorWorker(char* ip, int port) {
 					handlerMaster();
 				} else if (pid > 0) {
 					log_trace(logger, "Proceso Padre:%d", pid);
-					close(clientSocket);
+					//close(clientSocket);
 					continue;
 				} else if (pid < 0) {
 					log_error(logger, "NO SE PUDO HACER EL FORK");
