@@ -39,7 +39,7 @@ int copiarArchivo(char* comando){
 	char* caracterActual = string_substring(rutaInvertida, indice, 1);
 
 	char* rutaFSMetadata = buscarRutaArchivo(rutaFS);
-	int numeroDirectorio = atoi(ultimaParteDeRuta(rutaFSMetadata));
+	int numeroDirectorio = atoi(rutaFSMetadata);
 	if (numeroDirectorio == -1){
 		printf("No existe el directorio\n");
 		return 0;
@@ -71,10 +71,14 @@ int copiarArchivo(char* comando){
 
 	nombre = string_reverse(nombre);
 
+
+	printf("ruta normal %s\n", rutaNormal);
 	struct stat fileStat;
 	if(stat(rutaNormal,&fileStat) < 0){
 		printf("no se pudo abrir\n");
-		exit(1);
+		free(tipo);
+		free(nombre);
+		return 0;
 	}
 
 	int fd = open(rutaNormal,O_RDWR);
@@ -86,7 +90,7 @@ int copiarArchivo(char* comando){
 	mapeoArchivo->cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
 	mapeoArchivo->longitud = size;
 
-	guardarEnNodos(rutaFS, nombre, tipo, mapeoArchivo);
+	int resultado = guardarEnNodos(rutaFS, nombre, tipo, mapeoArchivo);
 
 	if (munmap(mapeoArchivo->cadena, mapeoArchivo->longitud) == -1)
 	{
@@ -101,7 +105,7 @@ int copiarArchivo(char* comando){
 	free(nombre);
 	free(mapeoArchivo);
 
-	return 1;
+	return resultado;
 }
 
 int copiarArchivoAFs(char* comando){

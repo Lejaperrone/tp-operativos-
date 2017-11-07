@@ -50,10 +50,16 @@ int clienteYama;
 int servidorFS;
 pthread_mutex_t logger_mutex;
 int EstadoFS = 0;
+int bloquesLibresTotales = 0;
 
 int main(void) {
 
 	printf("Ronan deja de robar aditions\n\n\n\n\n");
+
+	printf("Santi, arregla esa gilada que hiciste, de que yama se conecte antes de los datanodes, y hablamos.");
+	printf("Atte.");
+	printf("Ronan");
+
 
 	limpiarPantalla();
 	sem_init(&pedidoFS,0,0);
