@@ -30,21 +30,23 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 		workerDesdeYama* worker = list_get(rtaYama->workers, i);
 		parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
 
+		parametrosConexion->ip.cadena = worker->ip.cadena;
+		parametrosConexion->ip.longitud = worker->ip.longitud;
+		parametrosConexion->numero = worker->numeroWorker;
+		parametrosConexion->puerto = worker->puerto;
+
 		for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
 			bloquesConSusArchivosTransformacion* bloque = list_get(worker->bloquesConSusArchivos, j);
-			parametrosConexion->ip.cadena = worker->ip.cadena;
-			parametrosConexion->ip.longitud = worker->ip.longitud;
-			parametrosConexion->numero = worker->numeroWorker;
-			parametrosConexion->puerto = worker->puerto;
 			parametrosConexion->bloquesConSusArchivos = *bloque;
 
-
-		}
-		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
-			log_error(loggerMaster, "No se pudo crear el thread de conexion");
-			exit(-1);
+			if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
+				log_error(loggerMaster, "No se pudo crear el thread de conexion");
+				exit(-1);
+			}
+			pthread_join(hiloConexion, NULL);
 		}
 	}
+
 }
 
 void* conectarseConWorkers(void* params) {
@@ -85,12 +87,14 @@ void* conectarseConWorkers(void* params) {
 
 	switch(confirmacionWorker.idMensaje){
 	case mensajeOk:
-		empaquetar(socketYama, mensajeTransformacionCompleta, 0 , 0);
+
+		//empaquetar(socketYama, mensajeTransformacionCompleta, 0 , 0);
 		break;
 	//case mensajeFalloTransformacion:
 	case mensajeDesconexion:
 		//list_add_all(bloquesAReplanificar->bloques,infoTransformacion->bloquesConSusArchivos);
 		bloquesAReplanificar->workerId = infoTransformacion->numero;
+
 		empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloquesAReplanificar);
 		break;
 
