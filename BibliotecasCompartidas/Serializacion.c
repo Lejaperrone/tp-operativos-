@@ -141,14 +141,6 @@ respuesta desempaquetar(int socket){
 
 			case mensajeNumeroLecturaBloqueANodo:
 			case mensajeSizeLecturaBloqueANodo:
-			case mensajeTransformacionCompleta:
-				bufferOk = malloc(sizeof(int));
-				recv(socket, bufferOk, sizeof(int), 0);
-				miRespuesta.envio = malloc(sizeof(int));
-				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
-				free(bufferOk);
-				break;
-
 			case mensajeArchivo:
 				miRespuesta.envio = deserializarString(socket,cabecera->tamanio);
 				break;

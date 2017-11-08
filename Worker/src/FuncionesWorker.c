@@ -36,10 +36,6 @@ void traverse_nodes(t_list* list, void funcion(void*)) {
 
 void apareoArchivosLocales(t_list *sources, const char *target) {
 
-	list_add(sources, "/home/utnso/pruebaApareo/temp1");
-	list_add(sources, "/home/utnso/pruebaApareo/temp2");
-	list_add(sources, "/home/utnso/pruebaApareo/temp3");
-
 	typedef struct {
 		FILE *file;
 		char *line;
@@ -109,10 +105,10 @@ void crearScript(char * bufferScript) {
 	char mode[] = "0777";
 	FILE* script;
 	aux = string_length(bufferScript);
-	script = fopen("/home/utnso/scripts/script.sh", "w+");
+	script = fopen("../scripts/script.sh", "w+");
 	fwrite(bufferScript, sizeof(char), aux, script);
 	auxChmod = strtol(mode, 0, 8);
-	if (chmod("/home/utnso/scripts/script.sh", auxChmod) < 0) {
+	if (chmod("../scripts/script.sh", auxChmod) < 0) {
 		log_error(logger, "NO SE PUDO DAR PERMISOS DE EJECUCION AL ARCHIVO");
 	}
 	log_trace(logger, "Script creado con permisos de ejecucion");
@@ -136,17 +132,16 @@ void handlerMaster(int clientSocket) {
 		transformacion = (parametrosTransformacion*)paquete.envio;
 		log_trace(logger, "Iniciando Transformacion");
 		contenidoScript = transformacion->contenidoScript.cadena;
-		log_trace(logger, "Contenido script:%s", contenidoScript);
-		int bloqueId = 1;
-		int bytesRestantes = 50;
-		destino = "/tmp/resultado";
+		int bloqueId = transformacion->bloquesConSusArchivos.numBloqueEnNodo;
+		int bytesRestantes = transformacion->bloquesConSusArchivos.bytesOcupados;
+		destino = transformacion->bloquesConSusArchivos.archivoTemporal.cadena;
 		int offset = bloqueId * mb + bytesRestantes;
 		crearScript(contenidoScript);
 		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i",
 				bytesRestantes, bloqueId);
 		command =
 				string_from_format(
-						"head -c %d < %s | tail -c %d | ./home/utnso/scripts/script.sh | sort > %s",
+						"head -c %d < %s | tail -c %d | ./home/utnso/tp-2017-2c-PEQL/Worker/scripts/script.sh | sort > %s",
 						offset, config.RUTA_DATABIN, bytesRestantes, destino);
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
