@@ -52,12 +52,11 @@ void planificar(job* job){
 		respuesta respuestaMaster=  desempaquetar(job->socketFd);
 		if(respuestaMaster.idMensaje == mensajeTransformacionCompleta){
 			numeroBloqueTerminado = *(int*)respuestaMaster.envio;
+			printf("Num bloque terminado %d\n",numeroBloqueTerminado);
 
-			/*for(i=0;i<list_size(paraReplanificar->bloques);i++){
-				bloque = list_get(paraReplanificar->bloques, i);
-			}*/
-				agregarBloqueTerminadoATablaEstados(numeroBloqueTerminado,job->id,TRANSFORMACION);
-				transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);
+			//agregarBloqueTerminadoATablaEstados(numeroBloqueTerminado,job->id,TRANSFORMACION);
+			//transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);
+
 		}
 		else if(respuestaMaster.idMensaje == mensajeFalloTransformacion){
 			//paraReplanificar = (bloquesAReplanificar*) respuestaMaster.envio;

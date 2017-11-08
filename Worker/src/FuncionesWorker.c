@@ -126,26 +126,27 @@ void handlerMaster(int clientSocket) {
 	t_list* archivosAReducir;
 
 	paquete = desempaquetar(clientSocket);
-
 	switch (paquete.idMensaje) {
 	case mensajeProcesarTransformacion:
+
 		transformacion = (parametrosTransformacion*)paquete.envio;
 		log_trace(logger, "Iniciando Transformacion");
 		contenidoScript = transformacion->contenidoScript.cadena;
+		int numeroBloqueTransformado = transformacion->bloquesConSusArchivos.numBloque;
 		int bloqueId = transformacion->bloquesConSusArchivos.numBloqueEnNodo;
 		int bytesRestantes = transformacion->bloquesConSusArchivos.bytesOcupados;
 		destino = transformacion->bloquesConSusArchivos.archivoTemporal.cadena;
 		int offset = bloqueId * mb + bytesRestantes;
 		crearScript(contenidoScript);
 		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i",
-				bytesRestantes, bloqueId);
+				bytesRestantes, numeroBloqueTransformado);
 		command =
 				string_from_format(
 						"head -c %d < %s | tail -c %d | ./home/utnso/tp-2017-2c-PEQL/Worker/scripts/script.sh | sort > %s",
 						offset, config.RUTA_DATABIN, bytesRestantes, destino);
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
-		empaquetar(clientSocket, mensajeOk, 0, 0);
+		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);
 		free(transformacion);
 		exit(1);
 		break;
