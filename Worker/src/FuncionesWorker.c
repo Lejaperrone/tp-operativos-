@@ -138,14 +138,13 @@ void handlerMaster(int clientSocket) {
 	t_list* archivosAReducir;
 
 	paquete = desempaquetar(clientSocket);
-
 	switch (paquete.idMensaje) {
 	case mensajeProcesarTransformacion:
-		transformacion = (parametrosTransformacion*) paquete.envio;
+		transformacion = (parametrosTransformacion*)paquete.envio;
 		log_trace(logger, "Iniciando Transformacion");
 		contenidoScript = transformacion->contenidoScript.cadena;
 		int numeroBloqueTransformado = transformacion->bloquesConSusArchivos.numBloque;
-		int bloqueId = transformacion->bloquesConSusArchivos.numBloque;
+		int bloqueId = transformacion->bloquesConSusArchivos.numBloqueEnNodo;
 		int bytesRestantes = transformacion->bloquesConSusArchivos.bytesOcupados;
 		destino = transformacion->bloquesConSusArchivos.archivoTemporal.cadena;
 		int offset = bloqueId * mb + bytesRestantes;

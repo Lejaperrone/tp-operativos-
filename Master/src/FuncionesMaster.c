@@ -23,8 +23,7 @@ void conectarseConYama(char* ip, int port) {
 void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 	pthread_t hiloConexion;
 	int i,j;
-	//worker =list_get(rtaYama->workers, 0);
-	//para probar conexion por hilos
+
 	for(i=0 ; i<list_size(rtaYama->workers);i++){
 
 		workerDesdeYama* worker = list_get(rtaYama->workers, i);
@@ -52,6 +51,7 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 void* conectarseConWorkers(void* params) {
 	parametrosTransformacion* infoTransformacion = malloc(sizeof(parametrosTransformacion));
 	respuesta confirmacionWorker;
+	int numeroBloque;
 	bloquesAReplanificar* bloquesAReplanificar = malloc(sizeof(bloquesAReplanificar));
 	bloquesAReplanificar->bloques = list_create();
 
@@ -85,11 +85,13 @@ void* conectarseConWorkers(void* params) {
 	}
 	close(fd);
 
+
 	switch(confirmacionWorker.idMensaje){
 
-	case mensajeOk:
-
-		//empaquetar(socketYama, mensajeTransformacionCompleta, 0 , 0);
+	case mensajeTransformacionCompleta:
+		numeroBloque = *(int*)confirmacionWorker.envio;
+		printf("enviado a yama%d\n",numeroBloque);
+		empaquetar(socketYama, mensajeTransformacionCompleta, 0 , &numeroBloque);
 		break;
 	//case mensajeFalloTransformacion:
 	case mensajeDesconexion:
