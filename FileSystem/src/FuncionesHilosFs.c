@@ -107,6 +107,7 @@ void* levantarServidorFS(){
 void* consolaFS(){
 
 	int sizeComando = 256;
+	int resultado = 0;
 
 	while (1) {
 		printf("Introduzca comando: ");
@@ -139,14 +140,21 @@ void* consolaFS(){
 		}
 		else if (strcmp(arguments[0],"rm") == 0) {
 
-			if (strcmp(arguments[1],"-d") == 0){
+			if(validarParametros(arguments, 2)){
+				continue;
+			}
 
-				if (eliminarDirectorio(comando) == 0){
+			if (strcmp(arguments[1],"-d") == 0){
+				if(validarParametros(arguments, 3)){
+					continue;
+				}
+				resultado = eliminarDirectorio(comando);
+				if (resultado == 0){
 					pthread_mutex_lock(&logger_mutex);
 					log_trace(loggerFS, "Directorio eliminado");
 					pthread_mutex_unlock(&logger_mutex);
 				}
-				if (eliminarDirectorio(comando) == 2){
+				else if (resultado == 2){
 					pthread_mutex_lock(&logger_mutex);
 					log_error(loggerFS, "El directorio no existe");
 					pthread_mutex_unlock(&logger_mutex);
@@ -161,6 +169,9 @@ void* consolaFS(){
 			}
 
 			else if (strcmp(arguments[1], "-b") == 0) {
+				if(validarParametros(arguments, 3)){
+					continue;
+				}
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Bloque eliminado");
 				pthread_mutex_unlock(&logger_mutex);
@@ -177,9 +188,13 @@ void* consolaFS(){
 					log_error(loggerFS, "No se pudo eliminar el archivo");
 					pthread_mutex_unlock(&logger_mutex);
 				}
+
 			}
 		}
 		else if (strcmp(arguments[0], "rename") == 0) {
+			if(validarParametros(arguments, 3)){
+				continue;
+			}
 			if (cambiarNombre(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Renombrado");
@@ -193,6 +208,9 @@ void* consolaFS(){
 
 		}
 		else if (strcmp(arguments[0], "mv") == 0) {
+			if(validarParametros(arguments, 3)){
+				continue;
+			}
 			if (mover(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Archivo movido");
@@ -205,6 +223,9 @@ void* consolaFS(){
 			}
 		}
 		else if (strcmp(arguments[0], "cat") == 0) {
+			if(validarParametros(arguments, 2)){
+				continue;
+			}
 			if (mostrarArchivo(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Archivo mostrado");
@@ -216,12 +237,16 @@ void* consolaFS(){
 			}
 		}
 		else if (strcmp(arguments[0], "mkdir") == 0) {
-			if (crearDirectorio(comando) == 0){
+			if(validarParametros(arguments,2)){
+				continue;
+			}
+			resultado = crearDirectorio(comando);
+			if (resultado == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Directorio creado");// avisar si ya existe
 				pthread_mutex_unlock(&logger_mutex);
 			}else{
-				if (crearDirectorio(comando) == 1){
+				if (resultado == 1){
 					pthread_mutex_lock(&logger_mutex);
 					log_error(loggerFS, "El directorio ya existe");
 					pthread_mutex_unlock(&logger_mutex);
@@ -233,6 +258,9 @@ void* consolaFS(){
 			}
 		}
 		else if (strcmp(arguments[0], "cpfrom") == 0) {
+			if(validarParametros(arguments, 3)){
+				continue;
+			}
 			int resultado = copiarArchivo(comando);
 			if (resultado == 1){
 				pthread_mutex_lock(&logger_mutex);
@@ -251,6 +279,9 @@ void* consolaFS(){
 			}
 		}
 		else if (strcmp(arguments[0], "cpto") == 0) {
+			if(validarParametros(arguments, 3)){
+				continue;
+			}
 			if (copiarArchivoAFs(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Archivo copiado desde yamafs");
@@ -263,6 +294,9 @@ void* consolaFS(){
 			}
 		}
 		else if (strcmp(arguments[0], "cpblock") == 0) {
+			if(validarParametros(arguments, 4)){
+				continue;
+			}
 			if (copiarBloqueANodo(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Bloque copiado en el nodo");
@@ -275,6 +309,9 @@ void* consolaFS(){
 			}
 		}
 		else if (strcmp(arguments[0], "md5") == 0) {
+			if(validarParametros(arguments, 2)){
+				continue;
+			}
 			if (generarArchivoMD5(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "MD5 del archivo");
@@ -288,6 +325,9 @@ void* consolaFS(){
 
 		}
 		else if (strcmp(arguments[0], "ls") == 0) {
+			if(validarParametros(arguments, 2)){
+				continue;
+			}
 			if (listarArchivos(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Archivos listados");
@@ -301,6 +341,9 @@ void* consolaFS(){
 
 		}
 		else if (strcmp(arguments[0], "info") == 0) {
+			if(validarParametros(arguments, 2)){
+				continue;
+			}
 			if (informacion(comando) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Mostrando informacion del archivo");
@@ -320,6 +363,17 @@ void* consolaFS(){
 		}
 		free(arguments);
 		free(comando);
+	}
+	return 0;
+}
+
+int validarParametros(char** arguments, int cantidadParametros){
+	int i = 0;
+	for (i = 0; i < cantidadParametros; ++i){
+		if(arguments[i] == NULL){
+			log_error(loggerFS, "comando invalido, faltan parametros");
+			return 1;
+		}
 	}
 	return 0;
 }
