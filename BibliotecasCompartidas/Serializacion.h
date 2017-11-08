@@ -101,4 +101,6 @@ bloqueAReplanificar* deserializarFalloTransformacion(int socket, int tamanio);
 void* serializarReplanificacion(void* paquete, int* tamanio);
 workerDesdeYama* deserializarReplanificacion(int socket, int tamanio);
 
+void* serializarTransformacionOk(void* paquete, int* tamanio);
+
 #endif /* SERIALIZACION_H_ */

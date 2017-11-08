@@ -25,7 +25,6 @@ int main(int argc, char *argv[]) {
 	miJob = crearJob(argv);
 	enviarJobAYama(miJob);
 	esperarInstruccionesDeYama();
-	esperarReplanificaciones();
 
 	calcularYMostrarEstadisticas();
 	return EXIT_SUCCESS;

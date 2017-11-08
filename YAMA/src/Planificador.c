@@ -45,19 +45,16 @@ void planificar(job* job){
 	actualizarCargasNodos(job->id,TRANSFORMACION);
 
 	bool transformacionIncompleta = true;
-	int i;
-	bloqueAReplanificar* paraReplanificar = malloc(sizeof(bloqueAReplanificar));
-	bloquesConSusArchivosTransformacion* bloque;
+
+	int numeroBloqueTerminado;
+	bloqueAReplanificar* paraReplanificar;
+
 	while(transformacionIncompleta){
 		respuesta respuestaPlanificacionMaster=  desempaquetar(job->socketFd);
 		if(respuestaPlanificacionMaster.idMensaje == mensajeTransformacionCompleta){
-			paraReplanificar = (bloqueAReplanificar*) respuestaPlanificacionMaster.envio;
+			numeroBloqueTerminado = *(int*)respuestaPlanificacionMaster.envio;
+			printf("Num bloque terminado %d\n",numeroBloqueTerminado);
 
-			/*for(i=0;i<list_size(paraReplanificar->bloques);i++){
-				bloque = list_get(paraReplanificar->bloques, i);
-				agregarBloqueTerminadoATablaEstados(bloque->numBloque,job->id,TRANSFORMACION);
-			}
-				transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);*/
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloTransformacion){
 			paraReplanificar = (bloqueAReplanificar*) respuestaPlanificacionMaster.envio;

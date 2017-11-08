@@ -1,11 +1,13 @@
 #include "FuncionesWorker.h"
 
-void ejecutarComando(char * command, int socketMaster) {
+void ejecutarComando(char * command, int socketAceptado) {
 	int status;
+	log_trace(logger, "COMANDO:%s\n", command);
+	system(command);
 	if ((status = system(command)) < 0) {
-		log_error(logger,
-				"NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA REDUCCION LOCAL");
-		empaquetar(socketMaster, mensajeError, 0, 0);
+		log_error(logger, "NO SE PUDO EJECTUAR EL COMANDO EN SYSTEM, FALLA REDUCCION LOCAL");
+		free(command);
+		empaquetar(socketAceptado, mensajeError, 0, 0);
 		exit(1);
 	}
 }
@@ -35,10 +37,6 @@ void traverse_nodes(t_list* list, void funcion(void*)) {
 }
 
 void apareoArchivosLocales(t_list *sources, const char *target) {
-
-	list_add(sources, "/home/utnso/pruebaApareo/temp1");
-	list_add(sources, "/home/utnso/pruebaApareo/temp2");
-	list_add(sources, "/home/utnso/pruebaApareo/temp3");
 
 	typedef struct {
 		FILE *file;
@@ -103,16 +101,26 @@ void apareoArchivosLocales(t_list *sources, const char *target) {
 	fclose(resultado);
 }
 
-void crearScript(char * bufferScript) {
+void crearScript(char* bufferScript, int etapa) {
 	log_trace(logger, "Iniciando creacion de script");
-	int aux, auxChmod;
 	char mode[] = "0777";
 	FILE* script;
-	aux = string_length(bufferScript);
-	script = fopen("/home/utnso/scripts/script.sh", "w+");
+	int aux = string_length(bufferScript);
+	int auxChmod = strtol(mode, 0, 8);
+	char* nombreArchivo;
+
+	if (etapa == mensajeProcesarTransformacion)
+		nombreArchivo = "transformador.sh";
+	else if (etapa == mensajeProcesarRedLocal)
+		nombreArchivo = "reductorLocal.pl";
+	else if (etapa == mensajeProcesarRedGlobal)
+		nombreArchivo = "reductorGlobal.pl";
+
+	char* ruta = string_from_format("../scripts/%s", nombreArchivo);
+	script = fopen(ruta, "w+");
 	fwrite(bufferScript, sizeof(char), aux, script);
 	auxChmod = strtol(mode, 0, 8);
-	if (chmod("/home/utnso/scripts/script.sh", auxChmod) < 0) {
+	if (chmod(ruta, auxChmod) < 0) {
 		log_error(logger, "NO SE PUDO DAR PERMISOS DE EJECUCION AL ARCHIVO");
 	}
 	log_trace(logger, "Script creado con permisos de ejecucion");
@@ -121,7 +129,7 @@ void crearScript(char * bufferScript) {
 
 void handlerMaster(int clientSocket) {
 	respuesta paquete;
-	parametrosTransformacion* transformacion = malloc(sizeof(parametrosTransformacion));
+	parametrosTransformacion* transformacion;
 	char* destino;
 	char* contenidoScript;
 	char* command;
@@ -130,27 +138,27 @@ void handlerMaster(int clientSocket) {
 	t_list* archivosAReducir;
 
 	paquete = desempaquetar(clientSocket);
-
 	switch (paquete.idMensaje) {
 	case mensajeProcesarTransformacion:
 		transformacion = (parametrosTransformacion*)paquete.envio;
 		log_trace(logger, "Iniciando Transformacion");
 		contenidoScript = transformacion->contenidoScript.cadena;
-		log_trace(logger, "Contenido script:%s", contenidoScript);
-		int bloqueId = 1;
-		int bytesRestantes = 50;
-		destino = "/tmp/resultado";
+		int numeroBloqueTransformado = transformacion->bloquesConSusArchivos.numBloque;
+		int bloqueId = transformacion->bloquesConSusArchivos.numBloqueEnNodo;
+		int bytesRestantes = transformacion->bloquesConSusArchivos.bytesOcupados;
+		destino = transformacion->bloquesConSusArchivos.archivoTemporal.cadena;
 		int offset = bloqueId * mb + bytesRestantes;
-		crearScript(contenidoScript);
+		crearScript(contenidoScript, mensajeProcesarTransformacion);
 		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i",
-				bytesRestantes, bloqueId);
+				bytesRestantes, numeroBloqueTransformado);
 		command =
 				string_from_format(
-						"head -c %d < %s | tail -c %d | ./home/utnso/scripts/script.sh | sort > %s",
-						offset, config.RUTA_DATABIN, bytesRestantes, destino);
+						"head -c %d < %s | tail -c %d | sh %s | sort > %s",
+						offset, config.RUTA_DATABIN, bytesRestantes, "../scripts/transformador.sh", destino);
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
-		empaquetar(clientSocket, mensajeOk, 0, 0);
+		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);
+		free(transformacion);
 		exit(1);
 		break;
 	case mensajeProcesarRedLocal:
@@ -159,7 +167,7 @@ void handlerMaster(int clientSocket) {
 		listaArchivosTemporales = list_create(); //Recibir por socket la lista
 		destino = "/tmp/resultado";
 		rutaArchivoApareado = "/resultadoApareoLocal";
-		crearScript(contenidoScript);
+		crearScript(contenidoScript, mensajeProcesarRedLocal);
 		apareoArchivosLocales(listaArchivosTemporales, rutaArchivoApareado);
 		FILE* archivoTemporalDeReduccionLocal = fopen(destino, "w+");
 		command = string_from_format(" %s | ./%s/reductor.sh > %s ",
@@ -175,7 +183,7 @@ void handlerMaster(int clientSocket) {
 		contenidoScript = "contenidoScript reductorGlobal";
 		rutaArchivoApareado = "/resultadoApareoGlobal";
 		destino = "/tmp/resultado";
-		crearScript(contenidoScript);
+		crearScript(contenidoScript, mensajeProcesarRedGlobal);
 		archivosAReducir = crearListaParaReducir();
 		apareoArchivosLocales(archivosAReducir, rutaArchivoApareado);
 		FILE* archivoTemporalDeReduccionGlobal = fopen(destino, "w+");

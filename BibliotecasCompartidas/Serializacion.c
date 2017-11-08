@@ -19,12 +19,12 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeFalloRedLocal:
 		case mensajeFalloRedGlobal:
 		case mensajeHandshake:
+		case mensajeTransformacionCompleta:
 			tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
 			memcpy(bloque,paquete,sizeof(int));
 			break;
 
-		case mensajeTransformacionCompleta:
 		case mensajeInfoArchivo:
 		case mensajeDesignarWorker:
 		case mensajeFinJob:
@@ -66,7 +66,6 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeRespuestaGetBloque:
 			tamanio = tamanioS;
 			bloque = malloc(tamanio);
-			printf("size envio %d\n", tamanio);
 			memcpy(bloque,paquete,tamanio);
 			break;
 
@@ -136,8 +135,7 @@ respuesta desempaquetar(int socket){
 			case mensajeRedGlobalCompleta:
 			case mensajeFalloRedGlobal:
 			case mensajeHandshake:
-			case mensajeNumeroLecturaBloqueANodo:
-			case mensajeSizeLecturaBloqueANodo:
+			case mensajeTransformacionCompleta:
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);
 				miRespuesta.envio = malloc(sizeof(int));
@@ -145,11 +143,12 @@ respuesta desempaquetar(int socket){
 				free(bufferOk);
 				break;
 
+			case mensajeNumeroLecturaBloqueANodo:
+			case mensajeSizeLecturaBloqueANodo:
 			case mensajeArchivo:
 				miRespuesta.envio = deserializarString(socket,cabecera->tamanio);
 				break;
 
-			case mensajeTransformacionCompleta:
 			case mensajeInfoArchivo://todo
 			case mensajeFinJob:
 			case mensajeOk:
@@ -261,6 +260,7 @@ string* deserializarString(int socket,int tamanio){
 
  	return cadena;
  }
+
 
 void* serializarJob(void* paquete, int* tamanio){
 	job* unJob = (job*)paquete;
@@ -856,6 +856,7 @@ respuestaReduccionLocal* deserializarRespuestaRedLocal(int socket,int tamanio){
 
 	return respuesta;
 }
+
 void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 	parametrosTransformacion* infoWorker = (parametrosTransformacion*)paquete;
 	int desplazamiento = 0;
@@ -883,18 +884,6 @@ void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 	desplazamiento += infoWorker->ip.longitud;
 	*tamanio += sizeof(int);
 
-	*tamanio += sizeof(int);
-
-	buffer = realloc(buffer, *tamanio);
-	memcpy(buffer + desplazamiento, &infoWorker->contenidoScript.longitud, sizeof(int));
-	desplazamiento += sizeof(int);
-
-	*tamanio += infoWorker->contenidoScript.longitud;
-	buffer = realloc(buffer, *tamanio);
-	memcpy(buffer + desplazamiento, infoWorker->contenidoScript.cadena, infoWorker->contenidoScript.longitud);
-	desplazamiento += infoWorker->contenidoScript.longitud;
-	*tamanio += sizeof(int);
-
 	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, &infoWorker->bloquesConSusArchivos.numBloque, sizeof(int));
 	desplazamiento += sizeof(int);
@@ -918,6 +907,17 @@ void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, infoWorker->bloquesConSusArchivos.archivoTemporal.cadena,infoWorker->bloquesConSusArchivos.archivoTemporal.longitud);
 	desplazamiento += infoWorker->bloquesConSusArchivos.archivoTemporal.longitud;
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &infoWorker->contenidoScript.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += infoWorker->contenidoScript.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, infoWorker->contenidoScript.cadena, infoWorker->contenidoScript.longitud);
+	desplazamiento += infoWorker->contenidoScript.longitud;
+	*tamanio += sizeof(int);
 
 	return buffer;
 }
