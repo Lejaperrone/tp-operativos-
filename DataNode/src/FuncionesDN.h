@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <commons/bitarray.h>
+#include <sys/types.h>
 
 void conectarseConFs();
 

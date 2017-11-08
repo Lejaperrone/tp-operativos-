@@ -189,10 +189,12 @@ respuesta desempaquetar(int socket){
 
 			case mensajeEnvioBloqueANodo:
 			case mensajeRespuestaGetBloque:
-				bufferOk = malloc(cabecera->tamanio);
+				bufferOk = malloc(cabecera->tamanio + 1);
+				memset(bufferOk, 0, cabecera->tamanio + 1);
 				//printf("espero %d\n", cabecera->tamanio);
 				recv(socket,bufferOk,cabecera->tamanio,MSG_WAITALL);
-				miRespuesta.envio = malloc(cabecera->tamanio);
+				miRespuesta.envio = malloc(cabecera->tamanio + 1);
+				memset(miRespuesta.envio, 0, cabecera->tamanio + 1);
 				memcpy(miRespuesta.envio, bufferOk, cabecera->tamanio);
 				free(bufferOk);
 				break;
@@ -256,8 +258,8 @@ void* serializarJob(void* paquete, int* tamanio){
 	job* unJob = (job*)paquete;
 	int desplazamiento = 0;
 
-	*tamanio = sizeof(job) -(4*sizeof(int)) + unJob->rutaDatos.longitud + unJob->rutaResultado.longitud
-			+ unJob->rutaTransformador.longitud + unJob->rutaReductor.longitud + 4;
+	//Estaba -(4*sizeof(int))
+	*tamanio = sizeof(job) -(2*sizeof(int)) + unJob->rutaDatos.longitud + unJob->rutaResultado.longitud;
 	void* buffer = malloc(*tamanio);
 
 	memcpy(buffer + desplazamiento, &(unJob->id), sizeof(int));
@@ -275,16 +277,6 @@ void* serializarJob(void* paquete, int* tamanio){
 	desplazamiento += sizeof(int);
 	memcpy(buffer + desplazamiento, unJob->rutaResultado.cadena, unJob->rutaResultado.longitud+1);
 	desplazamiento += unJob->rutaResultado.longitud;
-
-	memcpy(buffer + desplazamiento, &(unJob->rutaTransformador.longitud), sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, unJob->rutaTransformador.cadena, unJob->rutaTransformador.longitud+1);
-	desplazamiento += unJob->rutaTransformador.longitud;
-
-	memcpy(buffer + desplazamiento, &(unJob->rutaReductor.longitud), sizeof(int));
-	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, unJob->rutaReductor.cadena, unJob->rutaReductor.longitud+1);
-
 
 	return buffer;
 }
@@ -315,19 +307,6 @@ job* deserializarJob(int socket, int tamanio){
 	unJob->rutaResultado.cadena = calloc(1,unJob->rutaResultado.longitud+1);
 	memcpy(unJob->rutaResultado.cadena, buffer + desplazamiento, unJob->rutaResultado.longitud);
 	desplazamiento += unJob->rutaResultado.longitud;
-
-	memcpy(&unJob->rutaTransformador.longitud, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-
-	unJob->rutaTransformador.cadena = calloc(1,unJob->rutaTransformador.longitud+1);
-	memcpy(unJob->rutaTransformador.cadena, buffer + desplazamiento, unJob->rutaTransformador.longitud);
-	desplazamiento += unJob->rutaTransformador.longitud;
-
-	memcpy(&unJob->rutaReductor.longitud, buffer + desplazamiento, sizeof(int) );
-	desplazamiento += sizeof(int);
-
-	unJob->rutaReductor.cadena = calloc(1,unJob->rutaReductor.longitud+1);
-	memcpy(unJob->rutaReductor.cadena, buffer + desplazamiento, unJob->rutaReductor.longitud);
 
 	return unJob;
 }
@@ -897,6 +876,17 @@ void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 	*tamanio += sizeof(int);
 
 	*tamanio += sizeof(int);
+
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &infoWorker->contenidoScript.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += infoWorker->contenidoScript.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, infoWorker->contenidoScript.cadena, infoWorker->contenidoScript.longitud);
+	desplazamiento += infoWorker->contenidoScript.longitud;
+	*tamanio += sizeof(int);
+
 	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, &infoWorker->bloquesConSusArchivos.numBloque, sizeof(int));
 	desplazamiento += sizeof(int);
@@ -959,6 +949,13 @@ parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tam
 	infoWorker->bloquesConSusArchivos.archivoTemporal.cadena = calloc(1,infoWorker->bloquesConSusArchivos.archivoTemporal.longitud+1);
 	memcpy(infoWorker->bloquesConSusArchivos.archivoTemporal.cadena, buffer + desplazamiento, infoWorker->bloquesConSusArchivos.archivoTemporal.longitud);
 	desplazamiento += infoWorker->bloquesConSusArchivos.archivoTemporal.longitud;
+
+	memcpy(&infoWorker->contenidoScript.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	infoWorker->contenidoScript.cadena = calloc(1,infoWorker->contenidoScript.longitud+1);
+	memcpy(infoWorker->contenidoScript.cadena, buffer + desplazamiento, infoWorker->contenidoScript.longitud);
+	desplazamiento += infoWorker->contenidoScript.longitud;
 
 	return infoWorker;
 }

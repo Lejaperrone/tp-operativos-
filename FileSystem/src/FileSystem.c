@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include "FuncionesFS.h"
 #include <pthread.h>
+#include <sys/types.h>
 
 #include "FuncionesHilosFs.h"
 

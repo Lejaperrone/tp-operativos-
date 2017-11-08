@@ -126,10 +126,16 @@ void* consolaFS(){
 		pthread_mutex_unlock(&logger_mutex);
 
 		if (strcmp(arguments[0], "format") == 0) {
-			int a = formatearFS(comando);
-			pthread_mutex_lock(&logger_mutex);
-			log_trace(loggerFS, "File system formateado");
-			pthread_mutex_unlock(&logger_mutex);
+			if (formatearFS() == 0){
+				pthread_mutex_lock(&logger_mutex);
+				log_trace(loggerFS, "File system formateado");
+				pthread_mutex_unlock(&logger_mutex);
+			}
+			else{
+				pthread_mutex_lock(&logger_mutex);
+				log_error(loggerFS, "No se pudo formatear el File system");
+				pthread_mutex_unlock(&logger_mutex);
+			}
 		}
 		else if (strcmp(arguments[0],"rm") == 0) {
 

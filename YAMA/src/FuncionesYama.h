@@ -26,6 +26,7 @@
 #include "Globales.h"
 #include <commons/collections/list.h>
 #include "Planificador.h"
+#include <pthread.h>
 
 #define idMaster 2
 #define idDataNodes 3

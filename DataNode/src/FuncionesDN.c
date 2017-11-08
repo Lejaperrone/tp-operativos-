@@ -26,6 +26,7 @@ void enviarBloqueAFS(int numeroBloque) {
 
 int setBloque(int numeroBloque, char* datos) {
 	int fd = open(config.RUTA_DATABIN, O_RDWR);
+	printf("-----------%d %d\n", strlen(datos), numeroBloque);
 	char* mapaDataBin = mmap(0, strlen(datos), PROT_READ | PROT_WRITE, MAP_SHARED, fd, mb*numeroBloque);
 	memcpy(mapaDataBin, datos, strlen(datos));
 	int success = 1;
@@ -59,6 +60,11 @@ char* getBloque(int numeroBloque, int sizeBloque) {
 	}
 	close(fd);
 	return datos;
+}
+
+int borrarDataBin(){
+
+	return 0;
 }
 
 void inicializarDataBin(){
@@ -122,6 +128,7 @@ void recibirMensajesFileSystem(int socketFs) {
 		empaquetar(socketFs, mensajeRespuestaGetBloque, strlen(data),data);
 		free(numeroBloque.envio);
 		break;
+
 
 	default:
 		//printf("mal %d\n",numeroBloque.idMensaje);

@@ -33,6 +33,7 @@ typedef struct{
 t_log* loggerMaster;
 int socketYama;
 estadisticaProceso* estadisticas;
+job* miJob;
 /*--------------------------*/
 
 

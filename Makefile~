@@ -5,14 +5,14 @@ DIR := ${CURDIR}
 
 H_SRCS=$(shell find . -iname "*.h" | tr '\n' ' ')
 
-HEADERS := -I"$(DIR)/commons_lib/commons" -I"/usr/include" -I"$(DIR)/BibliotecasCompartidas" -I"$(DIR)/commons_lib/commons/collections" -I"$(DIR)/YAMA" -I"$(DIR)/DataNode" -I"$(DIR)/Worker" -I"$(DIR)/Master" -I"$(DIR)/FileSystem"          # Cualquier cosa aca hay un ejemplo http://www.network-theory.co.uk/docs/gccintro/gccintro_22.html
+HEADERS := -I"/usr/include" -I"$(DIR)/BibliotecasCompartidas" -I"$(DIR)/YAMA" -I"$(DIR)/DataNode" -I"$(DIR)/Worker" -I"$(DIR)/Master" -I"$(DIR)/FileSystem"          
 LIBPATH := -L"$(DIR)/BibliotecasCompartidas/Debug"
 LIBS := -lcommons -lpthread -lreadline -lm -lBibliotecasCompartidas
 
 CC := gcc -w -g
 CFLAGS := -std=c11 $(HEADERS)
 
-
+# Cualquier cosa aca hay un ejemplo http://www.network-theory.co.uk/docs/gccintro/gccintro_22.html
 
 #$(BIN): $(OBJ)
 #$(CC) $(OBJ) -o $(BIN) $(CFLAGS) $(LDFLAGS) $(LDLIBS)
@@ -67,11 +67,11 @@ master.o:
 # Worker
 
 
-worker: worker.o
+worker: worker.o funcionesWorker.o
 	$(CC) $(LIBPATH) worker.o funcionesWorker.o -o worker $(LIBS)
 
 funcionesWorker.o:
-	$(CC) $(CFLAGS) -c $(DIR)/Master/src/funcionesWorker.c -o funcionesWorker.o
+	$(CC) $(CFLAGS) -c $(DIR)/Worker/src/FuncionesWorker.c -o funcionesWorker.o
 
 worker.o:
 	$(CC) -c $(CFLAGS) $(DIR)/Worker/src/Worker.c -o worker.o
@@ -90,7 +90,7 @@ funcionesHilosFS.o:
 comandos.o:
 	$(CC) $(CFLAGS) -c $(DIR)/FileSystem/src/Comandos.c -o comandos.o
 
-fileSystem: fileSystem.o comandos.o funcionesFS.o
+fileSystem: fileSystem.o comandos.o funcionesFS.o funcionesHilosFS.o
 	$(CC) $(LIBPATH) fileSystem.o comandos.o funcionesFS.o funcionesHilosFS.o -o fileSystem $(LIBS)
 
 
@@ -109,7 +109,7 @@ funcionesYama.o:
 planificador.o:
 	$(CC) $(CFLAGS) -c $(DIR)/YAMA/src/Planificador.c -o planificador.o
 
-yama: yama.o
+yama: yama.o planificador.o funcionesYama.o
 	$(CC) $(LIBPATH) yama.o funcionesYama.o planificador.o -o yama $(LIBS)
 
 
