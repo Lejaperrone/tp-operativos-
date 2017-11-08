@@ -86,6 +86,7 @@ void* conectarseConWorkers(void* params) {
 	close(fd);
 
 	switch(confirmacionWorker.idMensaje){
+
 	case mensajeOk:
 
 		//empaquetar(socketYama, mensajeTransformacionCompleta, 0 , 0);

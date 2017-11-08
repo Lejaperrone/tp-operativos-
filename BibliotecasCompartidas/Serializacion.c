@@ -66,7 +66,6 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeRespuestaGetBloque:
 			tamanio = tamanioS;
 			bloque = malloc(tamanio);
-			printf("size envio %d\n", tamanio);
 			memcpy(bloque,paquete,tamanio);
 			break;
 
@@ -132,6 +131,14 @@ respuesta desempaquetar(int socket){
 			case mensajeRedGlobalCompleta:
 			case mensajeFalloRedGlobal:
 			case mensajeHandshake:
+			case mensajeTransformacionCompleta:
+				bufferOk = malloc(sizeof(int));
+				recv(socket, bufferOk, sizeof(int), 0);
+				miRespuesta.envio = malloc(sizeof(int));
+				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
+				free(bufferOk);
+				break;
+
 			case mensajeNumeroLecturaBloqueANodo:
 			case mensajeSizeLecturaBloqueANodo:
 			case mensajeTransformacionCompleta:
@@ -253,6 +260,7 @@ string* deserializarString(int socket,int tamanio){
 
  	return cadena;
  }
+
 
 void* serializarJob(void* paquete, int* tamanio){
 	job* unJob = (job*)paquete;
@@ -848,6 +856,7 @@ respuestaReduccionLocal* deserializarRespuestaRedLocal(int socket,int tamanio){
 
 	return respuesta;
 }
+
 void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 	parametrosTransformacion* infoWorker = (parametrosTransformacion*)paquete;
 	int desplazamiento = 0;

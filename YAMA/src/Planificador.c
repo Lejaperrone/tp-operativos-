@@ -45,25 +45,25 @@ void planificar(job* job){
 	actualizarCargasNodos(job->id,TRANSFORMACION);
 
 	bool transformacionIncompleta = true;
-	int i;
-	bloquesAReplanificar* paraReplanificar = malloc(sizeof(bloquesAReplanificar));
+	int i, numeroBloqueTerminado;
+	//bloquesAReplanificar* paraReplanificar = malloc(sizeof(bloquesAReplanificar));
 	bloquesConSusArchivosTransformacion* bloque;
 	while(transformacionIncompleta){
 		respuesta respuestaMaster=  desempaquetar(job->socketFd);
 		if(respuestaMaster.idMensaje == mensajeTransformacionCompleta){
-			paraReplanificar = (bloquesAReplanificar*) respuestaMaster.envio;
+			numeroBloqueTerminado = *(int*)respuestaMaster.envio;
 
-			for(i=0;i<list_size(paraReplanificar->bloques);i++){
+			/*for(i=0;i<list_size(paraReplanificar->bloques);i++){
 				bloque = list_get(paraReplanificar->bloques, i);
-				agregarBloqueTerminadoATablaEstados(bloque->numBloque,job->id,TRANSFORMACION);
-			}
+			}*/
+				agregarBloqueTerminadoATablaEstados(numeroBloqueTerminado,job->id,TRANSFORMACION);
 				transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);
 		}
 		else if(respuestaMaster.idMensaje == mensajeFalloTransformacion){
-			paraReplanificar = (bloquesAReplanificar*) respuestaMaster.envio;
-			log_trace(logger,"Entro a replanificar se desconecto un worker %d", paraReplanificar->workerId);
+			//paraReplanificar = (bloquesAReplanificar*) respuestaMaster.envio;
+			//log_trace(logger,"Entro a replanificar se desconecto un worker %d", paraReplanificar->workerId);
 
-			replanificar(paraReplanificar,job,infoArchivo,listaNodos, matrix);
+			//replanificar(paraReplanificar,job,infoArchivo,listaNodos, matrix);
 		}
 	}
 
