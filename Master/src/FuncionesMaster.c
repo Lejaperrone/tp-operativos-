@@ -39,6 +39,8 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 		parametrosConexion->numero = worker->numeroWorker;
 		parametrosConexion->puerto = worker->puerto;
 		parametrosConexion->bloquesConSusArchivos = worker->bloquesConSusArchivos;
+		parametrosConexion->contenidoScript.cadena = miJob->rutaTransformador.cadena; //TODO Enviar contenido de esta ruta
+		parametrosConexion->contenidoScript.longitud = miJob->rutaTransformador.longitud;
 
 		log_trace(loggerMaster, "Me tengo que conectar a %s:%i", parametrosConexion->ip.cadena, parametrosConexion->puerto);
 

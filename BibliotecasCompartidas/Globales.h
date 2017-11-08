@@ -189,6 +189,7 @@ typedef struct{
 	int puerto;
 	string ip;
 	t_list* bloquesConSusArchivos;
+	string contenidoScript;
 } parametrosTransformacion;
 
 typedef struct{

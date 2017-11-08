@@ -1,83 +1,5 @@
 #include "FuncionesWorker.h"
 
-void handlerMaster() {
-
-	respuesta instruccionMaster;
-	parametrosTransformacion* procesarTransformacion = malloc(
-			sizeof(parametrosTransformacion));
-
-	log_trace(logger, "Esperando instruccion de Master");
-	instruccionMaster = desempaquetar(clientSocket);
-
-	char* destino;
-	char* contenidoScript;
-	char* command;
-	char* rutaArchivoApareado;
-	t_list* listaArchivosTemporales;
-	t_list* archivosAReducir;
-
-	switch (instruccionMaster.idMensaje) {
-	case mensajeProcesarTransformacion:
-		procesarTransformacion =
-				(parametrosTransformacion*) instruccionMaster.envio;
-
-		log_trace(logger, "Iniciando Transformacion");
-		contenidoScript = "contenidoScript transformador";
-		int bloqueId = 1;
-		int bytesRestantes = 50;
-		destino = "/tmp/resultado";
-		int offset = bloqueId * mb + bytesRestantes;
-		crearScript(contenidoScript);
-		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i",
-				bytesRestantes, bloqueId);
-		command =
-				string_from_format(
-						"head -c %d < %s | tail -c %d | ./home/utnso/scripts/script.sh | sort > %s",
-						offset, config.RUTA_DATABIN, bytesRestantes, destino);
-		ejecutarComando(command, clientSocket);
-		log_trace(logger, "Transformacion realizada correctamente");
-		empaquetar(clientSocket, mensajeOk, 0, 0);
-		exit(1);
-		break;
-	case mensajeProcesarRedLocal:
-		log_trace(logger, "Iniciando Reduccion Local");
-		contenidoScript = "contenidoScript reductorLocal";
-		listaArchivosTemporales = list_create(); //Recibir por socket la lista
-		destino = "/tmp/resultado";
-		rutaArchivoApareado = "/resultadoApareoLocal";
-		crearScript(contenidoScript);
-		apareoArchivosLocales(listaArchivosTemporales, rutaArchivoApareado);
-		FILE* archivoTemporalDeReduccionLocal = fopen(destino, "w+");
-		command = string_from_format(" %s | ./%s/reductor.sh > %s ",
-				rutaArchivoApareado, config.RUTA_DATABIN,
-				archivoTemporalDeReduccionLocal);
-		ejecutarComando(command, clientSocket);
-		log_trace(logger, "Reduccion local realizada correctamente");
-		empaquetar(clientSocket, mensajeOk, 0, 0);
-		exit(1);
-		break;
-	case mensajeProcesarRedGlobal:
-		log_trace(logger, "Iniciando Reduccion Global");
-		contenidoScript = "contenidoScript reductorGlobal";
-		rutaArchivoApareado = "/resultadoApareoGlobal";
-		destino = "/tmp/resultado";
-		crearScript(contenidoScript);
-		archivosAReducir = crearListaParaReducir();
-		apareoArchivosLocales(archivosAReducir, rutaArchivoApareado);
-		FILE* archivoTemporalDeReduccionGlobal = fopen(destino, "w+");
-		command = string_from_format("%s | ./%s/reductorGlobal.sh > %s",
-				rutaArchivoApareado, config.RUTA_DATABIN,
-				archivoTemporalDeReduccionGlobal);
-		ejecutarComando(command, clientSocket);
-		log_trace(logger, "Reduccion global realizada correctamente");
-		empaquetar(clientSocket, mensajeOk, 0, 0);
-		exit(1);
-		break;
-	default:
-		break;
-	}
-}
-
 void ejecutarComando(char * command, int socketMaster) {
 	int status;
 	if ((status = system(command)) < 0) {
@@ -197,6 +119,79 @@ void crearScript(char * bufferScript) {
 	fclose(script);
 }
 
+void handlerMaster(int clientSocket) {
+	respuesta paquete;
+	parametrosTransformacion* transformacion = malloc(sizeof(parametrosTransformacion));
+	char* destino;
+	char* contenidoScript;
+	char* command;
+	char* rutaArchivoApareado;
+	t_list* listaArchivosTemporales;
+	t_list* archivosAReducir;
+
+	paquete = desempaquetar(clientSocket);
+
+	switch (paquete.idMensaje) {
+	case mensajeProcesarTransformacion:
+		transformacion = (parametrosTransformacion*)paquete.envio;
+		log_trace(logger, "Iniciando Transformacion");
+		contenidoScript = transformacion->contenidoScript.cadena;
+		log_trace(logger, "Contenido script:%s", contenidoScript);
+		int bloqueId = 1;
+		int bytesRestantes = 50;
+		destino = "/tmp/resultado";
+		int offset = bloqueId * mb + bytesRestantes;
+		crearScript(contenidoScript);
+		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i",
+				bytesRestantes, bloqueId);
+		command =
+				string_from_format(
+						"head -c %d < %s | tail -c %d | ./home/utnso/scripts/script.sh | sort > %s",
+						offset, config.RUTA_DATABIN, bytesRestantes, destino);
+		ejecutarComando(command, clientSocket);
+		log_trace(logger, "Transformacion realizada correctamente");
+		empaquetar(clientSocket, mensajeOk, 0, 0);
+		exit(1);
+		break;
+	case mensajeProcesarRedLocal:
+		log_trace(logger, "Iniciando Reduccion Local");
+		contenidoScript = "contenidoScript reductorLocal";
+		listaArchivosTemporales = list_create(); //Recibir por socket la lista
+		destino = "/tmp/resultado";
+		rutaArchivoApareado = "/resultadoApareoLocal";
+		crearScript(contenidoScript);
+		apareoArchivosLocales(listaArchivosTemporales, rutaArchivoApareado);
+		FILE* archivoTemporalDeReduccionLocal = fopen(destino, "w+");
+		command = string_from_format(" %s | ./%s/reductor.sh > %s ",
+				rutaArchivoApareado, config.RUTA_DATABIN,
+				archivoTemporalDeReduccionLocal);
+		ejecutarComando(command, clientSocket);
+		log_trace(logger, "Reduccion local realizada correctamente");
+		empaquetar(clientSocket, mensajeOk, 0, 0);
+		exit(1);
+		break;
+	case mensajeProcesarRedGlobal:
+		log_trace(logger, "Iniciando Reduccion Global");
+		contenidoScript = "contenidoScript reductorGlobal";
+		rutaArchivoApareado = "/resultadoApareoGlobal";
+		destino = "/tmp/resultado";
+		crearScript(contenidoScript);
+		archivosAReducir = crearListaParaReducir();
+		apareoArchivosLocales(archivosAReducir, rutaArchivoApareado);
+		FILE* archivoTemporalDeReduccionGlobal = fopen(destino, "w+");
+		command = string_from_format("%s | ./%s/reductorGlobal.sh > %s",
+				rutaArchivoApareado, config.RUTA_DATABIN,
+				archivoTemporalDeReduccionGlobal);
+		ejecutarComando(command, clientSocket);
+		log_trace(logger, "Reduccion global realizada correctamente");
+		empaquetar(clientSocket, mensajeOk, 0, 0);
+		exit(1);
+		break;
+	default:
+		break;
+	}
+}
+
 void handlerWorker() {
 
 }
@@ -216,9 +211,6 @@ void levantarServidorWorker(char* ip, int port) {
 			perror("accept");
 		}
 
-		printf("Nueva conexion de %s en puerto %d\n",
-				inet_ntoa(their_addr.sin_addr), htons(their_addr.sin_port));
-
 		respuesta conexionNueva;
 		conexionNueva = desempaquetar(clientSocket);
 
@@ -227,7 +219,8 @@ void levantarServidorWorker(char* ip, int port) {
 				log_trace(logger, "Conexion con Master establecida");
 				if ((pid = fork()) == 0) {
 					log_trace(logger, "Proceso hijo:%d", pid);
-					handlerMaster();
+					log_trace(logger, "Esperando instruccion de Master");
+					handlerMaster(clientSocket);
 				} else if (pid > 0) {
 					log_trace(logger, "Proceso Padre:%d", pid);
 					//close(clientSocket);

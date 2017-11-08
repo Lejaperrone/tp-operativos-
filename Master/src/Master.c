@@ -17,7 +17,6 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	job* miJob;
 	loggerMaster = log_create("logMaster", "Master.c", 1, LOG_LEVEL_TRACE);
 
 	cargarConfiguracionMaster(&config,argv[1]);
