@@ -27,25 +27,25 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 	//para probar conexion por hilos
 	for(i=0 ; i<list_size(rtaYama->workers);i++){
 
-		workerDesdeYama* worker = malloc(sizeof(workerDesdeYama));
-		bloquesConSusArchivosTransformacion* bloque = malloc(sizeof(bloquesConSusArchivosTransformacion));
+		workerDesdeYama* worker = list_get(rtaYama->workers, i);
 		parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
-		parametrosConexion->bloquesConSusArchivos = list_create();
 
-		worker = list_get(rtaYama->workers, i);
+		for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
+			bloquesConSusArchivosTransformacion* bloque = list_get(worker->bloquesConSusArchivos, j);
+			parametrosConexion->ip.cadena = worker->ip.cadena;
+			parametrosConexion->ip.longitud = worker->ip.longitud;
+			parametrosConexion->numero = worker->numeroWorker;
+			parametrosConexion->puerto = worker->puerto;
+			parametrosConexion->bloquesConSusArchivos = *bloque;
 
-		parametrosConexion->ip.cadena = worker->ip.cadena;
-		parametrosConexion->ip.longitud = worker->ip.longitud;
-		parametrosConexion->numero = worker->numeroWorker;
-		parametrosConexion->puerto = worker->puerto;
-		parametrosConexion->bloquesConSusArchivos = worker->bloquesConSusArchivos;
+			log_trace(loggerMaster, "Me tengo que conectar a %s:%i", parametrosConexion->ip.cadena, parametrosConexion->puerto);
 
-		log_trace(loggerMaster, "Me tengo que conectar a %s:%i", parametrosConexion->ip.cadena, parametrosConexion->puerto);
-
-		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
-			log_error(loggerMaster, "No se pudo crear el thread de conexion");
-			exit(-1);
+			if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
+				log_error(loggerMaster, "No se pudo crear el thread de conexion");
+				exit(-1);
+			}
 		}
+
 	}
 }
 
@@ -73,7 +73,7 @@ void* conectarseConWorkers(void* params) {
 			break;
 		//case mensajeFalloTransformacion:
 		case mensajeDesconexion:
-			list_add_all(bloquesAReplanificar->bloques,infoTransformacion->bloquesConSusArchivos);
+			//list_add_all(bloquesAReplanificar->bloques,infoTransformacion->bloquesConSusArchivos);
 			bloquesAReplanificar->workerId = infoTransformacion->numero;
 			empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloquesAReplanificar);
 			break;

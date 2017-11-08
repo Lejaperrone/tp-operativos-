@@ -528,6 +528,8 @@ t_list* buscarCopiasBloques(t_list* listaBloques,t_list* listaNodos,informacionA
 
 	listaNodosActivos = list_filter(listaNodos, nodosConectadosConBloques);
 
+
+
 	return listaNodosActivos;
 }
 

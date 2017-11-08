@@ -309,7 +309,15 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 		matriz[info->ubicacionCopia0.numeroNodo][info->numeroBloque] = true;
 		matriz[info->ubicacionCopia1.numeroNodo][info->numeroBloque] = true;
 	}
+
 	return matriz;
+}
+
+int nodoConOtraCopia(int bloques,bool** matriz,int nodoAnterior,int bloque){
+	int i=0;
+	for(i=0;i<bloques;i++){
+		if(matriz[i][bloque] && (nodoAnterior!= i ) ){}
+	}
 }
 
 void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques){
