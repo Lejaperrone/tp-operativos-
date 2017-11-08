@@ -313,11 +313,14 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 	return matriz;
 }
 
-int nodoConOtraCopia(int bloques,bool** matriz,int nodoAnterior,int bloque){
+int nodoConOtraCopia(bloqueAReplanificar* replanificar,bool** matriz,int bloques){
 	int i=0;
 	for(i=0;i<bloques;i++){
-		if(matriz[i][bloque] && (nodoAnterior!= i ) ){}
+		if(matriz[i][replanificar->bloque] && (replanificar->workerId!= i ) ){
+			return i;
+		}
 	}
+	return i;
 }
 
 void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques){
@@ -441,6 +444,23 @@ void actualizarCargasNodos(int jobid,int etapa){
 	list_iterate(registros,(void*)actualizarCarga);
 }
 
+void actualizarCargasNodosReplanificacion(int jobid,int etapa,int bloque){
+	bool encontrarEnTablaEstados(void *registro) {
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+		return reg->job == jobid && reg->etapa== etapa && reg->bloque==bloque;
+	}
+
+	pthread_mutex_lock(&mutexTablaEstados);
+	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
+
+	pthread_mutex_lock(&mutex_NodosConectados);
+	infoNodo* nodo = obtenerNodo(reg->nodo);
+	nodo->carga=nodo->carga-1;
+	pthread_mutex_unlock(&mutex_NodosConectados);
+
+}
+
 void borrarEntradasDeJob(int jobid){
 	bool encontrarEnTablaEstados(void *registro) {
 		return(((registroTablaEstados*)registro)->job== jobid);
@@ -503,13 +523,13 @@ void eliminarWorker(int id, t_list* listaNodos){
 	infoNodo* workerEnGlobal = malloc(sizeof(infoNodo));
 	infoNodo* worker = malloc(sizeof(infoNodo));
 
-	/*workerEnGlobal = list_find(nodosConectados, nodoConNumero);
-	workerEnGlobal->conectado = false;*/
+
 	pthread_mutex_lock(&mutex_NodosConectados);
-	list_remove_by_condition(nodosConectados, nodoConNumero);
+	workerEnGlobal = list_find(nodosConectados, nodoConNumero);
+	workerEnGlobal->conectado = false;
 	pthread_mutex_unlock(&mutex_NodosConectados);
 
-	worker = list_find(listaNodos, nodoConNumero);
+	worker = list_find(listaNodos, (void*)nodoConNumero);
 	worker->conectado = false;
 
 }

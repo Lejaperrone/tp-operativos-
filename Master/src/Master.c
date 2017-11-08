@@ -18,13 +18,14 @@ int main(int argc, char *argv[]) {
 	}
 
 	loggerMaster = log_create("logMaster", "Master.c", 1, LOG_LEVEL_TRACE);
+	pthread_mutex_init(&mutexReplanificar,NULL);
 
 	cargarConfiguracionMaster(&config,argv[1]);
 	conectarseConYama(config.YAMA_IP,config.YAMA_PUERTO);
 	miJob = crearJob(argv);
 	enviarJobAYama(miJob);
 	esperarInstruccionesDeYama();
-	crearHilosConexion();
+	esperarReplanificaciones();
 
 	calcularYMostrarEstadisticas();
 	return EXIT_SUCCESS;

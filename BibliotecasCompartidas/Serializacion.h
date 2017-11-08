@@ -51,6 +51,7 @@
 #define mensajeFinJob 32
 #define mensajeRespuestaRedLocal 33
 #define mensajeRespuestaRedGlobal 34
+#define mensajeReplanificacion 35
 
 
 typedef struct{
@@ -95,6 +96,9 @@ void* serializarProcesarTransformacion(void* paquete, int* tamanio);
 parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tamanio);
 
 void* serializarFalloTransformacion(void* paquete, int* tamanio);
-bloquesAReplanificar* deserializarFalloTransformacion(int socket, int tamanio);
+bloqueAReplanificar* deserializarFalloTransformacion(int socket, int tamanio);
+
+void* serializarReplanificacion(void* paquete, int* tamanio);
+workerDesdeYama* deserializarReplanificacion(int socket, int tamanio);
 
 #endif /* SERIALIZACION_H_ */

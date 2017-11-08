@@ -20,44 +20,51 @@ void conectarseConYama(char* ip, int port) {
 	}
 	log_trace(loggerMaster, "Conexion con Yama establecida");
 }
+
 void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
-	pthread_t hiloConexion;
-	int i,j;
-	//worker =list_get(rtaYama->workers, 0);
-	//para probar conexion por hilos
+	int i;
+
 	for(i=0 ; i<list_size(rtaYama->workers);i++){
-
 		workerDesdeYama* worker = list_get(rtaYama->workers, i);
-		parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
+		crearHilosPorBloque(worker);
+	}
+}
 
-		for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
-			bloquesConSusArchivosTransformacion* bloque = list_get(worker->bloquesConSusArchivos, j);
-			parametrosConexion->ip.cadena = worker->ip.cadena;
-			parametrosConexion->ip.longitud = worker->ip.longitud;
-			parametrosConexion->numero = worker->numeroWorker;
-			parametrosConexion->puerto = worker->puerto;
-			parametrosConexion->bloquesConSusArchivos = *bloque;
+void crearHilosPorBloque(workerDesdeYama* worker){
 
-			parametrosConexion->contenidoScript.cadena = miJob->rutaTransformador.cadena; //TODO Enviar contenido de esta ruta
-			parametrosConexion->contenidoScript.longitud = miJob->rutaTransformador.longitud;
+	parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
+
+	int j;
+	for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
+		bloquesConSusArchivosTransformacion* bloque = list_get(worker->bloquesConSusArchivos, j);
+		parametrosConexion->ip.cadena = worker->ip.cadena;
+		parametrosConexion->ip.longitud = worker->ip.longitud;
+		parametrosConexion->numero = worker->numeroWorker;
+		parametrosConexion->puerto = worker->puerto;
+		parametrosConexion->bloquesConSusArchivos = *bloque;
+
+		parametrosConexion->contenidoScript.cadena = miJob->rutaTransformador.cadena; //TODO Enviar contenido de esta ruta
+		parametrosConexion->contenidoScript.longitud = miJob->rutaTransformador.longitud;
+
+		pthread_t nuevoHilo;
+		pthread_attr_t attr;
+
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
 
-			if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
-				log_error(loggerMaster, "No se pudo crear el thread de conexion");
-				exit(-1);
-			}
+		if (pthread_create(&nuevoHilo, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
+			log_error(loggerMaster, "No se pudo crear el thread de conexion");
+			exit(-1);
 		}
-
 	}
 }
 
 void* conectarseConWorkers(void* params) {
-	parametrosTransformacion* infoTransformacion = malloc(sizeof(parametrosTransformacion));
+	parametrosTransformacion* infoTransformacion= (parametrosTransformacion*)params;
 	respuesta confirmacionWorker;
-	bloquesAReplanificar* bloquesAReplanificar = malloc(sizeof(bloquesAReplanificar));
-	bloquesAReplanificar->bloques = list_create();
+	bloqueAReplanificar* bloqueReplanificar=malloc(sizeof(bloqueAReplanificar));
 
-	infoTransformacion = (parametrosTransformacion*)params;
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto);
 	conectarCon(direccion, socketWorker, 2); //2 id master
@@ -68,16 +75,19 @@ void* conectarseConWorkers(void* params) {
 
 	confirmacionWorker = desempaquetar(socketWorker);
 
-		switch(confirmacionWorker.idMensaje){
+	switch(confirmacionWorker.idMensaje){
 
 		case mensajeOk:
 			empaquetar(socketYama, mensajeTransformacionCompleta, 0 , 0);
 			break;
 		//case mensajeFalloTransformacion:
 		case mensajeDesconexion:
-			//list_add_all(bloquesAReplanificar->bloques,infoTransformacion->bloquesConSusArchivos);
-			bloquesAReplanificar->workerId = infoTransformacion->numero;
-			empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloquesAReplanificar);
+			bloqueReplanificar->workerId = infoTransformacion->numero;
+			bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
+			empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
+			printf("dauhdusahas\n");
+			pthread_mutex_unlock(&mutexReplanificar);
+			printf("dauhdusahas por 2121\n");
 			break;
 
 		}
@@ -104,19 +114,19 @@ void esperarInstruccionesDeYama() {
 	respuesta instruccionesYama;//= malloc(sizeof(respuesta));
 	respuestaSolicitudTransformacion* infoTransformacion = malloc(sizeof(respuestaSolicitudTransformacion));
 
-	while (1) {
-		instruccionesYama = desempaquetar(socketYama);
+	instruccionesYama = desempaquetar(socketYama);
 
-		switch (instruccionesYama.idMensaje) {
+	switch (instruccionesYama.idMensaje) {
 
-			case mensajeRespuestaTransformacion:
-				infoTransformacion = (respuestaSolicitudTransformacion*)instruccionesYama.envio;
-				crearHilosConexion(infoTransformacion);
-				break;
-			case mensajeDesconexion:
-				log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
-				exit(1);
-		}
+		case mensajeRespuestaTransformacion:
+			infoTransformacion = (respuestaSolicitudTransformacion*)instruccionesYama.envio;
+			crearHilosConexion(infoTransformacion);
+			break;
+
+		case mensajeDesconexion:
+			log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
+			exit(1);
+
 	}
 }
 
@@ -151,10 +161,6 @@ job* crearJob(char* argv[]){
 	estadisticas = crearEstadisticasProceso();
 	return nuevo;
 }
-
-/*int dameUnID(){
-	return ultimoIdMaster++;//FIXME
-}*/
 
 string* contenidoArchivo(char* pathArchivo){
 	struct stat fileStat;
@@ -194,4 +200,23 @@ void calcularYMostrarEstadisticas(){
 	time_t fin= time(NULL);
 
 
+}
+
+void esperarReplanificaciones(){
+	respuesta respuestaReplanificar;
+	workerDesdeYama* workerRepl;
+
+	pthread_mutex_lock(&mutexReplanificar);
+	hayReplanificacion=false;
+	esperoReplanificacion = true;
+	pthread_mutex_unlock(&mutexReplanificar);
+
+
+	while(esperoReplanificacion){
+		pthread_mutex_lock(&mutexReplanificar);
+		respuestaReplanificar=desempaquetar(socketYama);
+		workerRepl = respuestaReplanificar.envio;
+		crearHilosPorBloque(workerRepl);
+		printf("soy un capo y replanifique\n");
+	}
 }
