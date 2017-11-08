@@ -38,8 +38,7 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 			parametrosConexion->puerto = worker->puerto;
 			parametrosConexion->bloquesConSusArchivos = *bloque;
 
-			parametrosConexion->contenidoScript.cadena = miJob->rutaTransformador.cadena; //TODO Enviar contenido de esta ruta
-			parametrosConexion->contenidoScript.longitud = miJob->rutaTransformador.longitud;
+
 		}
 		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
 			log_error(loggerMaster, "No se pudo crear el thread de conexion");
@@ -61,24 +60,41 @@ void* conectarseConWorkers(void* params) {
 
 	log_trace(loggerMaster, "Conexion con Worker en %s:%i", infoTransformacion->ip.cadena, infoTransformacion->puerto);
 
+	struct stat fileStat;
+	if(stat(miJob->rutaTransformador.cadena,&fileStat) < 0){
+		printf("No se pudo abrir el archivo\n");
+		return 0;
+	}
+
+	int fd = open(miJob->rutaTransformador.cadena,O_RDWR);
+	int size = fileStat.st_size;
+
+	infoTransformacion->contenidoScript.cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
+	infoTransformacion->contenidoScript.longitud = size;
+
 	empaquetar(socketWorker, mensajeProcesarTransformacion, 0, infoTransformacion);
 
 	confirmacionWorker = desempaquetar(socketWorker);
 
-		switch(confirmacionWorker.idMensaje){
+	if (munmap(infoTransformacion->contenidoScript.cadena, infoTransformacion->contenidoScript.longitud) == -1)
+	{
+		perror("Error un-mmapping the file");
+		exit(EXIT_FAILURE);
+	}
+	close(fd);
 
-		case mensajeOk:
-			empaquetar(socketYama, mensajeTransformacionCompleta, 0 , 0);
-			break;
-		//case mensajeFalloTransformacion:
-		case mensajeDesconexion:
-			//list_add_all(bloquesAReplanificar->bloques,infoTransformacion->bloquesConSusArchivos);
-			bloquesAReplanificar->workerId = infoTransformacion->numero;
-			empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloquesAReplanificar);
-			break;
+	switch(confirmacionWorker.idMensaje){
+	case mensajeOk:
+		empaquetar(socketYama, mensajeTransformacionCompleta, 0 , 0);
+		break;
+	//case mensajeFalloTransformacion:
+	case mensajeDesconexion:
+		//list_add_all(bloquesAReplanificar->bloques,infoTransformacion->bloquesConSusArchivos);
+		bloquesAReplanificar->workerId = infoTransformacion->numero;
+		empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloquesAReplanificar);
+		break;
 
-		}
-
+	}
 	return 0;
 }
 
