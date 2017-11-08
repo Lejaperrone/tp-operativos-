@@ -40,14 +40,11 @@ void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama) {
 
 			parametrosConexion->contenidoScript.cadena = miJob->rutaTransformador.cadena; //TODO Enviar contenido de esta ruta
 			parametrosConexion->contenidoScript.longitud = miJob->rutaTransformador.longitud;
-
-
-			if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
-				log_error(loggerMaster, "No se pudo crear el thread de conexion");
-				exit(-1);
-			}
 		}
-
+		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
+			log_error(loggerMaster, "No se pudo crear el thread de conexion");
+			exit(-1);
+		}
 	}
 }
 
