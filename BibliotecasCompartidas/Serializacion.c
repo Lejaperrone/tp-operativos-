@@ -25,6 +25,9 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeTransformacionCompleta:
+			serializarTransformacionOk(paquete, &tamanio);
+			break;
+
 		case mensajeInfoArchivo:
 		case mensajeDesignarWorker:
 		case mensajeFinJob:
@@ -66,7 +69,6 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeRespuestaGetBloque:
 			tamanio = tamanioS;
 			bloque = malloc(tamanio);
-			printf("size envio %d\n", tamanio);
 			memcpy(bloque,paquete,tamanio);
 			break;
 
@@ -132,6 +134,14 @@ respuesta desempaquetar(int socket){
 			case mensajeRedGlobalCompleta:
 			case mensajeFalloRedGlobal:
 			case mensajeHandshake:
+			case mensajeTransformacionCompleta:
+				bufferOk = malloc(sizeof(int));
+				recv(socket, bufferOk, sizeof(int), 0);
+				miRespuesta.envio = malloc(sizeof(int));
+				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
+				free(bufferOk);
+				break;
+
 			case mensajeNumeroLecturaBloqueANodo:
 			case mensajeSizeLecturaBloqueANodo:
 				bufferOk = malloc(sizeof(int));
@@ -145,7 +155,6 @@ respuesta desempaquetar(int socket){
 				miRespuesta.envio = deserializarString(socket,cabecera->tamanio);
 				break;
 
-			case mensajeTransformacionCompleta:
 			case mensajeInfoArchivo://todo
 			case mensajeFinJob:
 			case mensajeOk:
@@ -253,6 +262,14 @@ string* deserializarString(int socket,int tamanio){
 
  	return cadena;
  }
+
+void* serializarTransformacionOk(void* paquete, int* tamanio){
+	*tamanio = sizeof(int);
+	int* numBloqueOk = (int*)paquete;
+	void* buffer = malloc(sizeof(int));
+	memcpy(buffer, &numBloqueOk, sizeof(int));
+	return buffer;
+}
 
 void* serializarJob(void* paquete, int* tamanio){
 	job* unJob = (job*)paquete;
@@ -848,6 +865,7 @@ respuestaReduccionLocal* deserializarRespuestaRedLocal(int socket,int tamanio){
 
 	return respuesta;
 }
+
 void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 	parametrosTransformacion* infoWorker = (parametrosTransformacion*)paquete;
 	int desplazamiento = 0;
