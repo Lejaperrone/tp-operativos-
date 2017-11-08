@@ -189,10 +189,12 @@ respuesta desempaquetar(int socket){
 
 			case mensajeEnvioBloqueANodo:
 			case mensajeRespuestaGetBloque:
-				bufferOk = malloc(cabecera->tamanio);
+				bufferOk = malloc(cabecera->tamanio + 1);
+				memset(bufferOk, 0, cabecera->tamanio + 1);
 				//printf("espero %d\n", cabecera->tamanio);
 				recv(socket,bufferOk,cabecera->tamanio,MSG_WAITALL);
-				miRespuesta.envio = malloc(cabecera->tamanio);
+				miRespuesta.envio = malloc(cabecera->tamanio + 1);
+				memset(miRespuesta.envio, 0, cabecera->tamanio + 1);
 				memcpy(miRespuesta.envio, bufferOk, cabecera->tamanio);
 				free(bufferOk);
 				break;

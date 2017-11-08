@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <Configuracion.h>
+#include <sys/types.h>
 #include <commons/bitarray.h>
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -389,14 +390,11 @@ char* leerArchivo(char* rutaArchivo){
 	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata), "/", 1);
 	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata) + 1, nombre, strlen(nombre));
 
-	printf("%s------------------\n", rutaArchivoEnMetadata);
-
 	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
 	FILE* informacionArchivo = fopen(rutaArchivoEnMetadata,"r");
 
 	if (config_has_property(infoArchivo, "TAMANIO")){
 		sizeArchivo = config_get_int_value(infoArchivo,"TAMANIO");
-		printf("size %d \n",sizeArchivo);
 	}
 
 	char* lectura = malloc(sizeArchivo + 1);
@@ -426,7 +424,6 @@ char* leerArchivo(char* rutaArchivo){
 	for (i = 0; i < cantBloquesArchivo; ++i){
 		for (l = 0; l < numeroCopiasBloque; ++l){
 			arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,l));
-			copia[l] = atoi(arrayInfoBloque[1]);
 			numeroNodoDelBloque[l] = atoi(string_substring_from(arrayInfoBloque[0], 4));
 			for (k = 0; k < cantidadNodos; ++k)
 				if (indexNodos[k] == numeroNodoDelBloque[l])
@@ -437,15 +434,16 @@ char* leerArchivo(char* rutaArchivo){
 	for (i = 0; i < cantBloquesArchivo; ++i){
 		for (l = 0; l < numeroCopiasBloque; ++l){
 			arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,l));
+			copia[l] = atoi(arrayInfoBloque[1]);
 			numeroNodoDelBloque[l] = atoi(string_substring_from(arrayInfoBloque[0], 4));
 			for (k = 0; k < cantidadNodos; ++k)
-				if (indexNodos[k] == numeroNodoDelBloque[l])
+				if (indexNodos[k] == numeroNodoDelBloque[l]){
 					posicionCopiaEnIndexNodo[l] = k;
+				}
 		}
 		posicionNodoAPedir = posicionCopiaEnIndexNodo[0];
 		copiaUsada = copia[0];
 		for (l = 0; l < numeroCopiasBloque; ++l){
-
 			if (peticiones[posicionCopiaEnIndexNodo[l]] < peticiones[posicionNodoAPedir]){
 				posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
 				copiaUsada = copia[l];
@@ -455,7 +453,6 @@ char* leerArchivo(char* rutaArchivo){
 					posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
 					copiaUsada = copia[l];
 				}
-
 		}
 
 		info = *(informacionNodo*)list_get(nodosConectados,posicionNodoAPedir);
@@ -531,7 +528,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	memcpy(rutaFinal + strlen(ruta) + 1, nombre, strlen(nombre));
 	memcpy(rutaFinal + strlen(ruta) + 1 + strlen(nombre), tipo, strlen(tipo));
 
-	int sizeAux = mapeoArchivo->longitud;
+	int sizeAux = strlen(mapeoArchivo->cadena);
 	int cantBloquesArchivo = 0;
 	int ultimoSize = 0, sizeEnvio = 0;
 
@@ -542,7 +539,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	//--cantBloquesArchivo;
 
 	int sizeUltimoNodo = sizeAux+mb;
-
 
 	FILE* archivos = fopen(rutaFinal, "wb+");
 	fclose(archivos); //para dejarlo vacio
@@ -588,9 +584,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	for (i = 0; i < cantBloquesArchivo; ++i){
 		for (j = 0; j < cantidadNodos; ++j){
 			if(pruebaEspacioDisponible[contador] > 0){
+				++contador;
 				if (contadorPrueba < 2){
-					++contador;
-					if (contador > cantidadNodos -1)
+					if (contador >= cantidadNodos -1)
 						contador = 0;
 					++contadorPrueba;
 					--pruebaEspacioDisponible[contador];

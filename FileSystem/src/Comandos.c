@@ -39,8 +39,7 @@ int copiarArchivo(char* comando){
 	char* caracterActual = string_substring(rutaInvertida, indice, 1);
 
 	char* rutaFSMetadata = buscarRutaArchivo(rutaFS);
-	int numeroDirectorio = atoi(rutaFSMetadata);
-	if (numeroDirectorio == -1){
+	if (strcmp(rutaFSMetadata, "-1") == 0){
 		printf("No existe el directorio\n");
 		return 0;
 	}
@@ -72,7 +71,6 @@ int copiarArchivo(char* comando){
 	nombre = string_reverse(nombre);
 
 
-	printf("ruta normal %s\n", rutaNormal);
 	struct stat fileStat;
 	if(stat(rutaNormal,&fileStat) < 0){
 		printf("no se pudo abrir\n");

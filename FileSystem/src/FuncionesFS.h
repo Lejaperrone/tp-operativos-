@@ -18,6 +18,7 @@
 #include <pthread.h>
 #include "Comandos.h"
 #include <math.h>
+#include <sys/types.h>
 
 #define idDataNodes 3
 #define cantDataNodes 10
