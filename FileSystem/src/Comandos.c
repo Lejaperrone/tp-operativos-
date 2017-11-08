@@ -112,7 +112,7 @@ int copiarArchivoAFs(char* comando){
 	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
 	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
-	if (string_starts_with(string_reverse(buscarRutaArchivo(directorioYamafs)), "-1"))
+	if (atoi(buscarRutaArchivo(directorioYamafs)) == -1)
 		return respuesta;
 
 	char* contenido = leerArchivo(rutaArchivoYamafs);
@@ -140,7 +140,7 @@ int copiarBloqueANodo(char* comando){
 
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaSinArchivo(rutaArchivoYamafs));
-	if (atoi(ultimaParteDeRuta(rutaDirectorioMetadata)) == -1)
+	if (atoi(rutaDirectorioMetadata) == -1)
 		return respuesta;
 
 	char* rutaArchivoMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
@@ -210,6 +210,8 @@ int eliminarArchivo(char* comando){
 	char* rutaDirectorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
+	if (atoi(rutaMetadata) == -1)
+		return 1;
 	char* rutaArchivoEnMetadata = malloc(strlen(rutaMetadata) + strlen(nombreArchivo) + 2);
 	memset(rutaArchivoEnMetadata,0,strlen(rutaMetadata) + strlen(nombreArchivo) + 2);
 	memcpy(rutaArchivoEnMetadata, rutaMetadata, strlen(rutaMetadata));
@@ -260,10 +262,9 @@ int eliminarArchivo(char* comando){
 int eliminarDirectorio(char* comando){
 	char* rutaDirectorioYamfs = devolverRuta(comando,2);
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamfs);
-	int numeroTablaDirectorio = atoi(ultimaParteDeRuta(rutaDirectorioMetadata));
-
-	if (numeroTablaDirectorio == -1)
+	if (atoi(rutaDirectorioMetadata) == -1)
 		return 2;
+	int numeroTablaDirectorio = atoi(ultimaParteDeRuta(rutaDirectorioMetadata));
 
 	if (isDirectoryEmpty(rutaDirectorioMetadata)){
 		tablaDeDirectorios[numeroTablaDirectorio].index = -1;
@@ -289,7 +290,7 @@ int eliminarBloque(char* comando){
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
 
-	if (atoi(ultimaParteDeRuta(rutaDirectorioMetadata)) == -1)
+	if (atoi(rutaDirectorioMetadata) == -1)
 		return respuesta;
 
 	char* rutaArchivoEnMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
@@ -386,8 +387,10 @@ int mostrarArchivo(char* comando){
 
 	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
-	if (buscarRutaArchivo(rutaArchivoYamafs) == string_itoa(-1))
+	if (buscarRutaArchivo(rutaSinArchivo(rutaArchivoYamafs)) == string_itoa(-1)){
+		printf("No existe el directorio");
 		return respuesta;
+	}
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	printf("%s\n", contenido);
 	respuesta = 0;
@@ -449,11 +452,11 @@ int mover(char* comando){
 }
 
 int generarArchivoMD5(char* comando){
-	int success = 1;
+	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
 	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
-	if (string_starts_with(string_reverse(buscarRutaArchivo(directorioYamafs)), "-1"))
-		return success;
+	if (atoi(buscarRutaArchivo(directorioYamafs)) == -1)
+		return respuesta;
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 
@@ -465,14 +468,14 @@ int generarArchivoMD5(char* comando){
 	char* RM = string_from_format("rm /tmp/%s", nombreArchivo);
 	fclose(file);
 
-	success = system(MD5);
+	respuesta = system(MD5);
 	printf("\n");
-	success = system(RM);
+	respuesta = system(RM);
 	free(MD5);
 	free(RM);
 	free(ubicacionArchivoTemporal);
 
-	return success;
+	return respuesta;
 }
 
 
@@ -484,7 +487,7 @@ int informacion(char* comando){
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
 
-	if (atoi(ultimaParteDeRuta(rutaDirectorioMetadata)) == -1)
+	if (atoi(rutaDirectorioMetadata) == -1)
 		return respuesta;
 
 	char* rutaArchivoMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
@@ -502,9 +505,8 @@ int informacion(char* comando){
 	return respuesta;
 }
 
-int formatearFS(char* comando){
+int formatearFS(){
 
-	printf("%s\n", tablaDeDirectorios[11].nombre);
 
 	return 0;
 }

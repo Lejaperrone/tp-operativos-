@@ -61,6 +61,11 @@ char* getBloque(int numeroBloque, int sizeBloque) {
 	return datos;
 }
 
+int borrarDataBin(){
+
+	return 0;
+}
+
 void inicializarDataBin(){
 	if (!validarArchivo(config.RUTA_DATABIN)){
 		printf("Se crea el archivo data.bin\n");
@@ -122,6 +127,7 @@ void recibirMensajesFileSystem(int socketFs) {
 		empaquetar(socketFs, mensajeRespuestaGetBloque, strlen(data),data);
 		free(numeroBloque.envio);
 		break;
+
 
 	default:
 		//printf("mal %d\n",numeroBloque.idMensaje);

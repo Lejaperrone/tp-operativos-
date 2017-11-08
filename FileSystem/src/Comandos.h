@@ -59,6 +59,6 @@ int copiarBloqueANodo(char* comando);//cpblock
 
 int generarArchivoMD5(char* comando);//md5
 
-int formatearFS(char* comando);//format
+int formatearFS();//format
 
 #endif /* FILESYSTEM_COMANDOS_H_ */
