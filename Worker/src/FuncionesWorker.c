@@ -121,7 +121,7 @@ void crearScript(char * bufferScript) {
 
 void handlerMaster(int clientSocket) {
 	respuesta paquete;
-	parametrosTransformacion* transformacion = malloc(sizeof(parametrosTransformacion));
+	parametrosTransformacion* transformacion;
 	char* destino;
 	char* contenidoScript;
 	char* command;
@@ -151,6 +151,7 @@ void handlerMaster(int clientSocket) {
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
 		empaquetar(clientSocket, mensajeOk, 0, 0);
+		free(transformacion);
 		exit(1);
 		break;
 	case mensajeProcesarRedLocal:

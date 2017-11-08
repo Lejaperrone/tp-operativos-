@@ -875,18 +875,6 @@ void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 	desplazamiento += infoWorker->ip.longitud;
 	*tamanio += sizeof(int);
 
-	*tamanio += sizeof(int);
-
-	buffer = realloc(buffer, *tamanio);
-	memcpy(buffer + desplazamiento, &infoWorker->contenidoScript.longitud, sizeof(int));
-	desplazamiento += sizeof(int);
-
-	*tamanio += infoWorker->contenidoScript.longitud;
-	buffer = realloc(buffer, *tamanio);
-	memcpy(buffer + desplazamiento, infoWorker->contenidoScript.cadena, infoWorker->contenidoScript.longitud);
-	desplazamiento += infoWorker->contenidoScript.longitud;
-	*tamanio += sizeof(int);
-
 	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, &infoWorker->bloquesConSusArchivos.numBloque, sizeof(int));
 	desplazamiento += sizeof(int);
@@ -910,6 +898,17 @@ void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, infoWorker->bloquesConSusArchivos.archivoTemporal.cadena,infoWorker->bloquesConSusArchivos.archivoTemporal.longitud);
 	desplazamiento += infoWorker->bloquesConSusArchivos.archivoTemporal.longitud;
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &infoWorker->contenidoScript.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += infoWorker->contenidoScript.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, infoWorker->contenidoScript.cadena, infoWorker->contenidoScript.longitud);
+	desplazamiento += infoWorker->contenidoScript.longitud;
+	*tamanio += sizeof(int);
 
 	return buffer;
 }
