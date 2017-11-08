@@ -202,8 +202,9 @@ typedef struct{
 
 typedef struct{
 	t_list* bloques;
+	int bloque;
 	int workerId;
-}bloquesAReplanificar;
+}bloqueAReplanificar;
 
 int redondearHaciaArriba(int num,int num2);
 

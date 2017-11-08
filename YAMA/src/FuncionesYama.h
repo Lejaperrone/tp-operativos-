@@ -75,6 +75,8 @@ void inicializarEstructuras();
 
 bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques);
 
+int nodoConOtraCopia(bloqueAReplanificar* replanificar,bool** matriz,int bloque);
+
 void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques);
 
 void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
@@ -88,6 +90,8 @@ void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,int etapa);
 bool faltanMasTareas(int jobid,int etapa);
 
 void actualizarCargasNodos(int jobid,int etapa);
+
+void actualizarCargasNodosReplanificacion(int jobid,int etapa,int bloque);
 
 void finalizarJob(job* job, int etapa);
 

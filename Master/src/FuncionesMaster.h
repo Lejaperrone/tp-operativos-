@@ -34,6 +34,9 @@ t_log* loggerMaster;
 int socketYama;
 estadisticaProceso* estadisticas;
 job* miJob;
+bool hayReplanificacion;
+bool esperoReplanificacion;
+pthread_mutex_t mutexReplanificar;
 /*--------------------------*/
 
 
@@ -60,6 +63,12 @@ void setearFechaReduccionGlobal();
 void setearFechaReduccionLoacl();
 
 void calcularYMostrarEstadisticas();
+
+void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama);
+
+void crearHilosPorBloque(workerDesdeYama* worker);
+
+void esperarReplanificaciones();
 
 //int dameUnID();
 

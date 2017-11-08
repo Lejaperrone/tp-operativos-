@@ -55,7 +55,7 @@ void verificarValorDisponibilidad(infoNodo* nodo);
 void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArchivo,int jobid);
 void enviarReduccionLocalAMaster(job* job);
 void enviarReduccionGlobalAMaster(job* job);
-void replanificar(bloquesAReplanificar* bloques,job* jobi,informacionArchivoFsYama* infoArchivo, t_list* listaNodos, bool** nodosPorBloque);
+void replanificar(bloqueAReplanificar* paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques);
 int calcularNodoEncargado(t_list* registrosRedGlobal);
 t_list* buscarCopiasBloques(t_list* listaBloques,t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
 
