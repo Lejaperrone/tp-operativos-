@@ -135,6 +135,7 @@ void enviarJobAYama(job* miJob) {
 void esperarInstruccionesDeYama() {
 	respuesta instruccionesYama;//= malloc(sizeof(respuesta));
 	respuestaSolicitudTransformacion* infoTransformacion = malloc(sizeof(respuestaSolicitudTransformacion));
+	respuestaReduccionLocal* infoRedLocal = malloc(sizeof(respuestaReduccionLocal));
 	workerDesdeYama* worker;
 
 	while (1) {
@@ -145,6 +146,10 @@ void esperarInstruccionesDeYama() {
 			case mensajeRespuestaTransformacion:
 				infoTransformacion = (respuestaSolicitudTransformacion*)instruccionesYama.envio;
 				crearHilosConexionTransformacion(infoTransformacion);
+				break;
+			case mensajeRespuestaRedLocal:
+				infoRedLocal = (respuestaReduccionLocal*)instruccionesYama.envio;
+				printf("HOLA SANTI ESTOY HACIENDO UNA REDUCCION LOCAL %d\n", list_size(infoRedLocal->workers));
 				break;
 			case mensajeDesconexion:
 				log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");

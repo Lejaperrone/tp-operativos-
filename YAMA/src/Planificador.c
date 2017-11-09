@@ -392,9 +392,8 @@ void enviarReduccionLocalAMaster(job* job){
 		bloquesConSusArchivosRedLocal* bloquesArchivos = malloc(sizeof(bloquesConSusArchivosRedLocal));
 		workerDesdeYama* worker;
 
-		pthread_mutex_lock(&mutex_NodosConectados);
+		//pthread_mutex_lock(&mutex_NodosConectados);
 		infoNodo* infoNod = obtenerNodo(reg->nodo);
-
 
 		bool nodoConNumero(workerDesdeYama* worker){
 			return worker->numeroWorker == infoNod->numero;
@@ -406,13 +405,13 @@ void enviarReduccionLocalAMaster(job* job){
 		else{
 			worker = malloc(sizeof(workerDesdeYama));
 			worker->numeroWorker = reg->nodo;
-			worker->puerto = infoNod->puerto;;
+			worker->puerto = infoNod->puerto;
 			worker->ip.longitud = infoNod->ip.longitud;
 			worker->ip.cadena = strdup(infoNod->ip.cadena);
 			worker->bloquesConSusArchivos = list_create();
 			list_add(respuestaTodos->workers,worker);
 		}
-		pthread_mutex_unlock(&mutex_NodosConectados);
+		//pthread_mutex_unlock(&mutex_NodosConectados);
 
 		char* archivoReduccion = dameUnNombreArchivoTemporal(job->id,reg->bloque,RED_LOCAL,worker->numeroWorker);
 
@@ -423,7 +422,7 @@ void enviarReduccionLocalAMaster(job* job){
 		bloquesArchivos->archivoReduccion.longitud = string_length(archivoReduccion);
 		bloquesArchivos->archivoReduccion.cadena = strdup(archivoReduccion);
 
-		list_add(respuestaTodos->workers,bloquesArchivos);
+		list_add(worker->bloquesConSusArchivos,bloquesArchivos);
 
 		registroTablaEstados* registro = malloc(sizeof(registroTablaEstados));
 		registro->bloque=reg->bloque;
@@ -433,12 +432,13 @@ void enviarReduccionLocalAMaster(job* job){
 		registro->nodo= reg->nodo;
 		registro->rutaArchivoTemp = strdup(archivoReduccion);
 
-		pthread_mutex_lock(&mutexTablaEstados);
+		//pthread_mutex_lock(&mutexTablaEstados);
 		list_add(tablaDeEstados,registro);
-		pthread_mutex_unlock(&mutexTablaEstados);
+		//pthread_mutex_unlock(&mutexTablaEstados);
 	}
-
+	pthread_mutex_lock(&mutexTablaEstados);
 	list_iterate(registrosRedLocal,(void*)meterEnRespuestaRedLocal);
+	pthread_mutex_unlock(&mutexTablaEstados);
 	empaquetar(job->socketFd,mensajeRespuestaRedLocal,0,respuestaTodos);
 }
 
