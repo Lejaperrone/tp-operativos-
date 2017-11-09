@@ -61,7 +61,14 @@ void* conectarseConWorkers(void* params) {
 
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto);
-	conectarCon(direccion, socketWorker, 2); //2 id master
+	if(!conectarCon(direccion, socketWorker, 2)){//2 id master
+		bloqueReplanificar->workerId = infoTransformacion->numero;
+		bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
+		empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
+		printf("desconccceecion\n\n");
+		return 0;
+
+	}
 
 	log_trace(loggerMaster, "Conexion con Worker en %s:%i", infoTransformacion->ip.cadena, infoTransformacion->puerto);
 

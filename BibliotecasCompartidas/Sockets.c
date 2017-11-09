@@ -17,14 +17,15 @@ int crearSocket() {
 	return sockete;
 }
 
-void conectarCon(struct sockaddr_in direccionServidor, int cliente,	int tipoCliente) { //Agregar un parametro para que cada cliente le envie su tipo
+bool conectarCon(struct sockaddr_in direccionServidor, int cliente,	int tipoCliente) { //Agregar un parametro para que cada cliente le envie su tipo
 
 	if (connect(cliente, (void*) &direccionServidor, sizeof(direccionServidor)) == -1) {
-		perror("No se pudo conectar");
-		exit(1);
+		printf("No se pudo conectar\n");
+		return false;
 	}
 
 	empaquetar(cliente, mensajeHandshake, 0, &tipoCliente);
+	return true;
 }
 
 void enviarMensajeA(int *socket, int longitud) {
