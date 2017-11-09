@@ -67,11 +67,13 @@ void* conectarseConWorkers(void* params) {
 		bloqueReplanificar->workerId = infoTransformacion->numero;
 		bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
 		empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
+		estadisticas.cantFallos++;
+		list_remove(estadisticas->tiempoInicioTrans,0);
 		return 0;
 
 	}
 
-	log_trace(loggerMaster, "Conexion con Worker en %s:%i", infoTransformacion->ip.cadena, infoTransformacion->puerto);
+	log_trace(loggerMaster, "Conexion con Worker %d para bloque %d", infoTransformacion->numero, infoTransformacion->bloquesConSusArchivos.numBloque);
 
 	struct stat fileStat;
 	if(stat(miJob->rutaTransformador.cadena,&fileStat) < 0){
@@ -99,7 +101,6 @@ void* conectarseConWorkers(void* params) {
 
 		case mensajeTransformacionCompleta:
 			numeroBloque = *(int*)confirmacionWorker.envio;
-			printf("enviado a yama%d\n",numeroBloque);
 			empaquetar(socketYama, mensajeTransformacionCompleta, 0 , &numeroBloque);
 			setearTiempo(estadisticas->tiempoFinTrans);
 			break;

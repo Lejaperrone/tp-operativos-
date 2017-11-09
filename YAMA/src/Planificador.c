@@ -53,7 +53,7 @@ void planificar(job* job){
 		respuesta respuestaPlanificacionMaster=  desempaquetar(job->socketFd);
 		if(respuestaPlanificacionMaster.idMensaje == mensajeTransformacionCompleta){
 			numeroBloqueTerminado = *(int*)respuestaPlanificacionMaster.envio;
-			printf("Num bloque terminado %d\n",numeroBloqueTerminado);
+			log_trace(logger,"Finalizada tarea transformacion en bloque %d", numeroBloqueTerminado);
 
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloTransformacion){

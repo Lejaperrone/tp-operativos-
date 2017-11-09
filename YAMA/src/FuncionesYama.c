@@ -214,7 +214,7 @@ void validarCambiosConfig(){
 	if (strcmp(config.ALGORITMO_BALANCEO ,nuevoAlgoritmo)) {
 		log_info(logger, "<inotify> ALGORITMO_BALANCEO modificada. Anterior: %s || Actual: %s", config.ALGORITMO_BALANCEO , nuevoAlgoritmo);
 
-		if (!strcmp(nuevoAlgoritmo,"WCLOCK") || !strcmp(nuevoAlgoritmo,"CLOCK")) {
+		if (!string_equals_ignore_case(nuevoAlgoritmo,"WCLOCK") && !string_equals_ignore_case(nuevoAlgoritmo,"CLOCK")) {
 			log_error(logger, "El ALGORITMO_BALANCEO no puede ser diferente a CLOCK o WCLOCK. Se deja el anterior: %s.", config.ALGORITMO_BALANCEO);
 		}
 		else{
