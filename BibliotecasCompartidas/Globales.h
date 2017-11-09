@@ -193,6 +193,15 @@ typedef struct{
 } parametrosTransformacion;
 
 typedef struct{
+	int numero;
+	int puerto;
+	string ip;
+	t_list* archivosTemporales;
+	string rutaDestino;
+} parametrosReduccionLocal;
+
+typedef struct{
+	t_list* bloques;
 	int bloque;
 	int workerId;
 }bloqueAReplanificar;

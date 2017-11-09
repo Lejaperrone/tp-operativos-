@@ -101,6 +101,7 @@ bloqueAReplanificar* deserializarFalloTransformacion(int socket, int tamanio);
 void* serializarReplanificacion(void* paquete, int* tamanio);
 workerDesdeYama* deserializarReplanificacion(int socket, int tamanio);
 
-void* serializarTransformacionOk(void* paquete, int* tamanio);
+void* serializarProcesarRedLocal(void* paquete, int* tamanio);
+parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio);
 
 #endif /* SERIALIZACION_H_ */

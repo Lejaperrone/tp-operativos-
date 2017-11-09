@@ -54,6 +54,10 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			bloque = serializarProcesarTransformacion(paquete, &tamanio);
 			break;
 
+		case mensajeProcesarRedLocal:
+			bloque = serializarProcesarRedLocal(paquete, &tamanio);
+			break;
+
 		case mensajeSolicitudTransformacion:
 			bloque = serializarJob(paquete, &tamanio);
 			break;
@@ -966,6 +970,114 @@ parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tam
 	desplazamiento += infoWorker->contenidoScript.longitud;
 
 	return infoWorker;
+}
+
+void* serializarProcesarRedLocal(void* paquete, int* tamanio){
+	parametrosReduccionLocal* reduccionLocal = (parametrosReduccionLocal*)paquete;
+	int desplazamiento = 0;
+
+	*tamanio = sizeof(int);
+	void* buffer =malloc(*tamanio);
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &reduccionLocal->numero, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &reduccionLocal->puerto, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &reduccionLocal->ip.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += reduccionLocal->ip.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, reduccionLocal->ip.cadena, reduccionLocal->ip.longitud);
+	desplazamiento += reduccionLocal->ip.longitud;
+	*tamanio += sizeof(int);
+
+	buffer = realloc(buffer, *tamanio);
+	int longitud = list_size(reduccionLocal->archivosTemporales);
+	memcpy(buffer + desplazamiento, &longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+	int i;
+
+	for (i = 0; i < list_size(reduccionLocal->archivosTemporales); ++i) {
+		string* archivoTemporal = (string*)list_get(reduccionLocal->archivosTemporales, i);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &archivoTemporal->longitud, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += archivoTemporal->longitud;
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, archivoTemporal->cadena, archivoTemporal->longitud);
+		desplazamiento += archivoTemporal->longitud;
+
+	}
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &reduccionLocal->rutaDestino.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += reduccionLocal->rutaDestino.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, reduccionLocal->rutaDestino.cadena, reduccionLocal->rutaDestino.longitud);
+	desplazamiento += reduccionLocal->rutaDestino.longitud;
+	*tamanio += sizeof(int);
+
+	return buffer;
+}
+
+parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio){
+	int desplazamiento = 0;
+	void* buffer = malloc(tamanio);
+	recv(socket,buffer,tamanio,0);
+
+	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
+
+	memcpy(&reduccionLocal->numero, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	memcpy(&reduccionLocal->puerto, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	memcpy(&reduccionLocal->ip.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	reduccionLocal->ip.cadena = calloc(1,reduccionLocal->ip.longitud+1);
+	memcpy(reduccionLocal->ip.cadena, buffer + desplazamiento, reduccionLocal->ip.longitud);
+	desplazamiento += reduccionLocal->ip.longitud;
+
+	reduccionLocal->archivosTemporales = list_create();
+	int longitud = 0;
+	memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+	int i;
+
+	for (i = 0; i < longitud; ++i) {
+		string* archivoTemporal = malloc(sizeof(string));
+
+		archivoTemporal->cadena = calloc(1,archivoTemporal->longitud+1);
+		memcpy(archivoTemporal->cadena, buffer + desplazamiento, archivoTemporal->longitud);
+		desplazamiento += archivoTemporal->longitud;
+
+		list_add(reduccionLocal->archivosTemporales, archivoTemporal);
+	}
+
+	memcpy(&reduccionLocal->rutaDestino.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	reduccionLocal->rutaDestino.cadena = calloc(1,reduccionLocal->rutaDestino.longitud+1);
+	memcpy(reduccionLocal->rutaDestino.cadena, buffer + desplazamiento, reduccionLocal->rutaDestino.longitud);
+	desplazamiento += reduccionLocal->rutaDestino.longitud;
+
+	return reduccionLocal;
 }
 
 void* serializarFalloTransformacion(void* paquete, int* tamanio){

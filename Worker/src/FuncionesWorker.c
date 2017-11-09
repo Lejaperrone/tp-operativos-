@@ -153,7 +153,7 @@ void handlerMaster(int clientSocket) {
 				bytesRestantes, numeroBloqueTransformado);
 		command =
 				string_from_format(
-						"head -c %d < %s | tail -c %d | sh %s | sort > %s",
+						"head -c %d < %s | tail -c %d | sh %s | sort > /home/utnso/tp-2017-2c-PEQL/Worker/tmp/%s",
 						offset, config.RUTA_DATABIN, bytesRestantes, "../scripts/transformador.sh", destino);
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
