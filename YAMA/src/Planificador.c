@@ -54,7 +54,7 @@ void planificar(job* job){
 
 		if(respuestaPlanificacionMaster.idMensaje == mensajeTransformacionCompleta){
 			numeroBloqueTerminado = *(int*)respuestaPlanificacionMaster.envio;
-			printf("Num bloque terminado %d\n",numeroBloqueTerminado);
+			log_trace(logger,"Finalizada tarea transformacion en bloque %d", numeroBloqueTerminado);
 
 			agregarBloqueTerminadoATablaEstados(numeroBloqueTerminado,job->id,TRANSFORMACION);
 			transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);

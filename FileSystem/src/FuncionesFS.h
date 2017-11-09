@@ -75,6 +75,10 @@ void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
 
 void setearBloqueLibreEnBitmap(int numeroNodo, int bloqueOcupado);
 
+bool esBloqueOcupado(int numeroNodo, int numeroBloque);
+
+int* arrayBloquesOcupados(informacionNodo nodo);
+
 void actualizarBitmapNodos();
 
 void* enviarADataNode(void* parametros);
@@ -98,3 +102,9 @@ char* ultimaParteDeRuta(char* rutaArchivo);
 int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo);
 
 int obtenerNumeroCopia(t_config* infoArchivo,int bloqueACopiar);
+
+int borrarDirectorios();
+
+int borrarArchivosEnMetadata();
+
+int liberarNodosConectados();

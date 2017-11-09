@@ -504,7 +504,16 @@ int informacion(char* comando){
 }
 
 int formatearFS(){
+	int resultado = 0;
 
+	resultado += borrarDirectorios();
 
-	return 0;
+	resultado += borrarArchivosEnMetadata();
+
+	resultado += liberarNodosConectados();
+
+	if (resultado == 3)
+		return 0;
+
+	return 1;
 }
