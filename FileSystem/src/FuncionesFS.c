@@ -734,6 +734,30 @@ void setearBloqueLibreEnBitmap(int numeroNodo, int bloqueOcupado){
 	++bloquesLibresTotales;
 }
 
+bool esBloqueOcupado(int numeroNodo, int numeroBloque){
+
+	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo - 1);
+
+	return bitarray_test_bit(bitarrayNodo,numeroBloque) == 1;
+}
+
+int* arrayBloquesOcupados(informacionNodo nodo){
+	int* arrayBloquesOcupados = malloc(sizeof(int)*nodo.bloquesOcupados);
+	int tamanioNodo = nodo.sizeNodo;
+	int numeroNodo = nodo.numeroNodo;
+	int i;
+	int offset = 0;
+
+	for (i = 0; i < tamanioNodo; ++i){
+		if (esBloqueOcupado(numeroNodo,i)){
+			arrayBloquesOcupados[offset] = i;
+			offset += 1;
+		}
+	}
+
+	return arrayBloquesOcupados;
+}
+
 void actualizarBitmapNodos(){
 	char* sufijo = ".bin";
 	int cantidadNodos = list_size(nodosConectados);
@@ -1048,4 +1072,65 @@ int obtenerNumeroCopia(t_config* infoArchivo,int bloqueACopiar){
 	}
 
 	return numeroCopiaBloqueNuevo;
+}
+
+int borrarDirectorios(){
+	int i;
+
+	tablaDeDirectorios[0].index = 0;
+	tablaDeDirectorios[0].padre = -1;
+	memcpy(tablaDeDirectorios[0].nombre,"/",1);
+
+	for (i = 1; i < 100; ++i){
+		tablaDeDirectorios[i].index = -1;
+		tablaDeDirectorios[i].padre = -1;
+		memcpy(tablaDeDirectorios[i].nombre," ",1);
+	}
+
+	return 1;
+}
+
+int borrarArchivosEnMetadata(){
+	int respuesta;
+
+	char* rutaMetadata = ".../tp-2017-2c-PEQL/FileSystem/metadata/Archivos";
+
+	char* rmComando = string_from_format("rm -r %s", rutaMetadata);
+
+	respuesta = system(rmComando);
+
+	char* mkdirComando = string_from_format("mkdir %s", rutaMetadata);
+
+	respuesta = system(mkdirComando);
+
+	if (respuesta == 0)
+		return 1;
+
+	return 0;
+}
+
+int liberarNodosConectados(){
+	int cantNodosConectados = list_size(nodosConectados);
+	int i, k;
+	int cantBloquesOcupados, numeroNodo;
+	informacionNodo nodo;
+	int* bloquesOcupados;
+
+
+
+	for (i = 0; i < cantNodosConectados; ++i){
+		nodo = *(informacionNodo*) list_get(nodosConectados, i);
+		cantBloquesOcupados = nodo.bloquesOcupados;
+		numeroNodo = nodo.numeroNodo;
+		bloquesOcupados = arrayBloquesOcupados(nodo);
+
+		for (k = 0; k < cantBloquesOcupados; ++k){
+			setearBloqueLibreEnBitmap(numeroNodo, bloquesOcupados[k]);
+		}
+
+	}
+	free(bloquesOcupados);
+	actualizarBitmapNodos();
+
+	return 1;
 }
