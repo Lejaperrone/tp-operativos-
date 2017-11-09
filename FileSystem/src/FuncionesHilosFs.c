@@ -15,9 +15,10 @@ extern t_log* loggerFS;
 extern int bloquesLibresTotales;
 
 void* levantarServidorFS(){
-
+	solicitudInfoNodos* solicitud;
+	bool noSeConectoYama = true;
 	int maxDatanodes;
-	int nuevoDataNode;
+	int nuevoCliente;
 	int cantidadNodos;
 	informacionNodo info;
 
@@ -32,38 +33,41 @@ void* levantarServidorFS(){
 	FD_ZERO(&datanodes);    // borra los conjuntos datanodes y temporal
 	FD_ZERO(&read_fds_datanodes);
 	// añadir listener al conjunto maestro
-	FD_SET(0, &datanodes);
 	FD_SET(servidorFS, &datanodes);
 	// seguir la pista del descriptor de fichero mayor
-	maxDatanodes = clienteYama; // por ahora es éste
+	maxDatanodes = servidorFS; // por ahora es éste
 	// bucle principal
+
 	while(1){
 		read_fds_datanodes = datanodes; // cópialo
 
-		if (select(maxDatanodes, &read_fds_datanodes, NULL, NULL, NULL) == -1) {
+		if (select(maxDatanodes+1, &read_fds_datanodes, NULL, NULL, NULL) == -1) {
 			perror("select");
 			exit(1);
 		}
+
 		// explorar conexiones existentes en busca de datos que leer
 		for(i = 0; i <= maxDatanodes; i++) {
 			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
-				if (i == servidorFS) {
+				printf("%d\n",i);
+				if (i == servidorFS && noSeConectoYama) {
 					// gestionar nuevas conexiones
 					addrlen = sizeof(direccionCliente);
-					if ((nuevoDataNode = accept(servidorFS, (struct sockaddr *)&direccionCliente,
+					if ((nuevoCliente = accept(servidorFS, (struct sockaddr *)&direccionCliente,
 							&addrlen)) == -1) {
 						perror("accept");
 					} else {
-						FD_SET(nuevoDataNode, &datanodes); // añadir al conjunto maestro
-						if (nuevoDataNode > maxDatanodes) {    // actualizar el máximo
-							maxDatanodes = nuevoDataNode;
+						FD_SET(nuevoCliente, &datanodes); // añadir al conjunto maestro
+						if (nuevoCliente > maxDatanodes) {    // actualizar el máximo
+							maxDatanodes = nuevoCliente;
+							printf("max %d\n\n",maxDatanodes);
 						}
 
-						conexionNueva = desempaquetar(nuevoDataNode);
+						conexionNueva = desempaquetar(nuevoCliente);
 
 						if (*(int*)conexionNueva.envio == idDataNodes){
 							//empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
-							paqueteInfoNodo = desempaquetar(nuevoDataNode);
+							paqueteInfoNodo = desempaquetar(nuevoCliente);
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
 							if (nodoRepetido(info) == 0){
 								pthread_mutex_lock(&logger_mutex);
@@ -71,7 +75,7 @@ void* levantarServidorFS(){
 								pthread_mutex_unlock(&logger_mutex);
 								info.bloquesOcupados = levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
 								bloquesLibresTotales += info.sizeNodo - info.bloquesOcupados;
-								info.socket = nuevoDataNode;
+								info.socket = nuevoCliente;
 								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
 								list_add(nodosConectados,paqueteInfoNodo.envio);
 								cantidadNodos = list_size(nodosConectados);
@@ -86,14 +90,29 @@ void* levantarServidorFS(){
 								pthread_mutex_unlock(&logger_mutex);
 							}
 						}
+						else if(*(int*)conexionNueva.envio == 1){//yama
+							clienteYama = nuevoCliente;
+							printf("%d yama la \n\n",clienteYama);
+							log_trace(loggerFS, "Nueva Conexion de Yama");
+							empaquetar(nuevoCliente,mensajeOk,0,0);
+							noSeConectoYama=false;
+						}
 
 					}
 				}
-				else {
-					//conexionNueva = desempaquetar(nuevoDataNode);
-					switch(conexionNueva.idMensaje){
+				else{
+					if (i == clienteYama){
+						conexionNueva= desempaquetar(clienteYama);
+						switch(conexionNueva.idMensaje){
 
+						case mensajeSolicitudInfoNodos:
+							solicitud = (solicitudInfoNodos*)conexionNueva.envio;
+							informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
+							empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
+							break;
+						}
 					}
+
 
 				}
 
@@ -390,7 +409,6 @@ void* manejarConexionYama(){
 			solicitud = (solicitudInfoNodos*)respuestaYama.envio;
 			informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
 			empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
-			desempaquetar(clienteYama);
 			break;
 		}
 	}

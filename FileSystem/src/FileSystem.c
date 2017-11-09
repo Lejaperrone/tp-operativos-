@@ -57,9 +57,10 @@ int main(void) {
 
 	printf("Ronan deja de robar aditions\n\n\n\n\n");
 
-	printf("Santi, arregla esa gilada que hiciste, de que yama se conecte antes de los datanodes, y hablamos.");
+	printf("Santi, el capo arreglo  todo .");
 	printf("Atte.");
 	printf("Ronan");
+	printf("PD: Le regale aditions a nacho");
 
 
 	limpiarPantalla();
@@ -82,16 +83,12 @@ int main(void) {
 
 	establecerServidor(servidorFS);
 
-	clienteYama = recibirConexionYama(servidorFS);
-
 	parametrosServidorFS.servidor = servidorFS;
 
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
-	pthread_create(&hiloConexionYama,NULL,manejarConexionYama ,NULL);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);
 
 	pthread_join(hiloServidorFS, NULL);
-	pthread_join(hiloConexionYama, NULL);
 	pthread_join(hiloConsolaFS, NULL);
 
 	return 0;
