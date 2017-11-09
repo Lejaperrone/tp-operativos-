@@ -389,26 +389,26 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 
 }
 
-void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,int etapa){
+void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,Etapa etapa){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg ) {
 		return reg->job == jobId && reg->etapa == etapa && reg->estado == EN_EJECUCION;
 	}
 
 	pthread_mutex_lock(&mutexTablaEstados);
-	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)faltanMasTareas);
-	pthread_mutex_lock(&mutexTablaEstados);
+	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
 
 	reg->estado=FINALIZADO_OK;
 }
 
-bool faltanMasTareas(int jobid,int etapa){
+bool faltanMasTareas(int jobid,Etapa etapa){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-		return reg->job == jobid && reg->etapa == etapa;
+		return reg->job == jobid && reg->etapa == etapa && reg->estado != FINALIZADO_OK;
 	}
 
 	pthread_mutex_lock(&mutexTablaEstados);
-	bool faltanTareas = list_any_satisfy(tablaDeEstados,(void*)faltanMasTareas);
-	pthread_mutex_lock(&mutexTablaEstados);
+	bool faltanTareas = list_any_satisfy(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
 
 	return faltanTareas;
 }

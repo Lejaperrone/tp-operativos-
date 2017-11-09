@@ -51,9 +51,14 @@ void planificar(job* job){
 
 	while(transformacionIncompleta){
 		respuesta respuestaPlanificacionMaster=  desempaquetar(job->socketFd);
+
 		if(respuestaPlanificacionMaster.idMensaje == mensajeTransformacionCompleta){
 			numeroBloqueTerminado = *(int*)respuestaPlanificacionMaster.envio;
 			printf("Num bloque terminado %d\n",numeroBloqueTerminado);
+
+			agregarBloqueTerminadoATablaEstados(numeroBloqueTerminado,job->id,TRANSFORMACION);
+			transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);
+
 
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloTransformacion){
@@ -63,8 +68,6 @@ void planificar(job* job){
 			replanificar(paraReplanificar,job,respuestaMaster,matrix,bloques);
 		}
 	}
-
-
 
 	enviarReduccionLocalAMaster(job);
 	actualizarCargasNodos(job->id,RED_LOCAL);
@@ -377,17 +380,15 @@ void enviarReduccionLocalAMaster(job* job){
 	respuestaReduccionLocal* respuestaTodos = malloc(sizeof(respuestaReduccionLocal));
 	respuestaTodos->workers = list_create();
 
-	bool encontrarEnTablaEstados(void *registro) {
-		registroTablaEstados* reg =(registroTablaEstados*)registro;
-		return reg->job == job->id && reg->etapa== TRANSFORMACION;
+	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
+		return reg->job == job->id && reg->etapa == TRANSFORMACION;
 	}
 
 	pthread_mutex_lock(&mutexTablaEstados);
-	t_list* registrosRedLocal =list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	t_list* registrosRedLocal = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
 	pthread_mutex_unlock(&mutexTablaEstados);
 
-	void meterEnRespuestaRedLocal(void *registroo){
-		registroTablaEstados* reg =(registroTablaEstados*)registroo;
+	void meterEnRespuestaRedLocal(registroTablaEstados* reg){
 		bloquesConSusArchivosRedLocal* bloquesArchivos = malloc(sizeof(bloquesConSusArchivosRedLocal));
 		workerDesdeYama* worker;
 
@@ -434,7 +435,7 @@ void enviarReduccionLocalAMaster(job* job){
 
 		pthread_mutex_lock(&mutexTablaEstados);
 		list_add(tablaDeEstados,registro);
-		pthread_mutex_lock(&mutexTablaEstados);
+		pthread_mutex_unlock(&mutexTablaEstados);
 	}
 
 	list_iterate(registrosRedLocal,(void*)meterEnRespuestaRedLocal);
@@ -512,7 +513,7 @@ void enviarReduccionGlobalAMaster(job* job){
 
 	pthread_mutex_lock(&mutexTablaEstados);
 	list_add(tablaDeEstados,registro);
-	pthread_mutex_lock(&mutexTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
 }
 
 int calcularNodoEncargado(t_list* registrosRedGlobal){

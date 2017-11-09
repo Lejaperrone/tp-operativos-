@@ -85,10 +85,6 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 
 char* dameUnNombreArchivoTemporal(int jobId,int numBloque,int etapa,int nodo);
 
-void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,int etapa);
-
-bool faltanMasTareas(int jobid,int etapa);
-
 void actualizarCargasNodos(int jobid,int etapa);
 
 void actualizarCargasNodosReplanificacion(int jobid,int etapa,int bloque);
@@ -102,5 +98,9 @@ void esperarRespuestaReduccionDeMaster(job* job,int etapa);
 infoNodo* obtenerNodo(int numero);
 
 void eliminarWorker(int id, t_list* listaNodos);
+
+bool faltanMasTareas(int jobid,Etapa etapa);
+
+void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,Etapa etapa);
 
 #endif /* FUNCIONESYAMA_H_ */
