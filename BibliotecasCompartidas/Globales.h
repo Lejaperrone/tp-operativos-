@@ -164,13 +164,15 @@ typedef struct parametrosLecturaBloque{
 }parametrosLecturaBloque;
 
 typedef struct {
-	int cantImpresiones;
-	int cantTareas;
+	int cantTareas[3];
 	int cantFallos;
 	time_t tiempoInicio;
-	time_t tiempoInicioTrans;
-	time_t tiempoInicioRedGlobal;
-	time_t tiempoInicioRedLocal;
+	t_list* tiempoInicioTrans;
+	t_list* tiempoInicioRedGlobal;
+	t_list* tiempoInicioRedLocal;
+	t_list* tiempoFinTrans;
+	t_list* tiempoFinRedGlobal;
+	t_list* tiempoFinRedLocal;
 }estadisticaProceso;
 
 typedef struct {
