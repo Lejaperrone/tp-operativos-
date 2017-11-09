@@ -33,7 +33,7 @@ struct t_tam{
 
 int crearSocket();
 
-void conectarCon(struct sockaddr_in direccionServidor, int cliente, int tipoCliente);
+bool conectarCon(struct sockaddr_in direccionServidor, int cliente, int tipoCliente);
 
 void enviarMensajeA(int *socket, int longitud);
 

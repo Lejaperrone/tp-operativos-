@@ -49,7 +49,6 @@ void* levantarServidorFS(){
 		// explorar conexiones existentes en busca de datos que leer
 		for(i = 0; i <= maxDatanodes; i++) {
 			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
-				printf("%d\n",i);
 				if (i == servidorFS && noSeConectoYama) {
 					// gestionar nuevas conexiones
 					addrlen = sizeof(direccionCliente);
@@ -60,13 +59,11 @@ void* levantarServidorFS(){
 						FD_SET(nuevoCliente, &datanodes); // añadir al conjunto maestro
 						if (nuevoCliente > maxDatanodes) {    // actualizar el máximo
 							maxDatanodes = nuevoCliente;
-							printf("max %d\n\n",maxDatanodes);
 						}
 
 						conexionNueva = desempaquetar(nuevoCliente);
 
 						if (*(int*)conexionNueva.envio == idDataNodes){
-							//empaquetar(nuevoDataNode,1,0,&bufferPrueba);//FIXME:SOLO A MODO DE PRUEBA
 							paqueteInfoNodo = desempaquetar(nuevoCliente);
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
 							if (nodoRepetido(info) == 0){
@@ -92,7 +89,6 @@ void* levantarServidorFS(){
 						}
 						else if(*(int*)conexionNueva.envio == 1){//yama
 							clienteYama = nuevoCliente;
-							printf("%d yama la \n\n",clienteYama);
 							log_trace(loggerFS, "Nueva Conexion de Yama");
 							empaquetar(nuevoCliente,mensajeOk,0,0);
 							noSeConectoYama=false;

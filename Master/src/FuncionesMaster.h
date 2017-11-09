@@ -56,20 +56,17 @@ job* crearJob(char* argv[]);
 
 estadisticaProceso* crearEstadisticasProceso();
 
-void setearFechaTransfromacion();
+void setearTiempo(t_list* tiempos);
 
-void setearFechaReduccionGlobal();
+void finalizarJob();
 
-void setearFechaReduccionLoacl();
+void crearHilosConexionTransformacion(respuestaSolicitudTransformacion* rtaYama);
 
-void calcularYMostrarEstadisticas();
-
-void crearHilosConexion(respuestaSolicitudTransformacion* rtaYama);
-
-void crearHilosPorBloque(workerDesdeYama* worker);
+void crearHilosPorBloqueTransformacion(workerDesdeYama* worker);
 
 void esperarReplanificaciones();
 
-//int dameUnID();
+double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin,int etapa);
+
 
 #endif /* FUNCIONESMASTER_H_ */
