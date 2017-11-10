@@ -30,10 +30,7 @@ void crearHilosConexionTransformacion(respuestaSolicitudTransformacion* rtaYama)
 	}
 }
 
-
 void crearHilosPorBloqueTransformacion(workerDesdeYama* worker){
-
-
 	parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
 
 	parametrosConexion->ip.cadena = worker->ip.cadena;
@@ -108,7 +105,93 @@ void* conectarseConWorkersTransformacion(void* params) {
 	}
 	return 0;
 }
+void crearHilosConexionRedLocal(respuestaReduccionLocal* rtaYama){
+	int i;
 
+		for(i=0 ; i<list_size(rtaYama->workers);i++){
+			workerDesdeYama* worker = list_get(rtaYama->workers, i);
+			crearHilosPorTmpRedLocal(worker);
+		}
+
+}
+
+void crearHilosPorTmpRedLocal(workerDesdeYama* worker){
+	parametrosReduccionLocal* parametrosConexion = malloc(sizeof(parametrosReduccionLocal));
+	int j;
+
+	parametrosConexion->ip.cadena = worker->ip.cadena;
+	parametrosConexion->ip.longitud = worker->ip.longitud;
+	parametrosConexion->numero = worker->numeroWorker;
+	parametrosConexion->puerto = worker->puerto;
+	parametrosConexion->archivosTemporales = list_create();
+
+	pthread_t hiloConexion;
+	for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
+		bloquesConSusArchivosRedLocal* bloque = list_get(worker->bloquesConSusArchivos, j);
+		parametrosConexion->rutaDestino = bloque->archivoReduccion;
+		list_add(parametrosConexion->archivosTemporales,bloque->archivoTransformacion.cadena);
+	}
+	if (pthread_create(&hiloConexion, NULL, (void *)conectarseConWorkersRedLocal, parametrosConexion) != 0) {
+		log_error(loggerMaster, "No se pudo crear el thread de conexion");
+		exit(-1);
+	}
+	pthread_join(hiloConexion, NULL);
+
+}
+
+void* conectarseConWorkersRedLocal(void* params){
+	parametrosReduccionLocal* infoRedLocal= (parametrosReduccionLocal*)params;
+	respuesta confirmacionWorker;
+	int numeroBloque;
+
+	int socketWorker = crearSocket();
+	struct sockaddr_in direccion = cargarDireccion(infoRedLocal->ip.cadena,infoRedLocal->puerto);
+	if(!conectarCon(direccion, socketWorker, 2)){//2 id master
+		//mandarAReplanificar(infoRedLocal);
+		return 0;
+
+	}
+
+	log_trace(loggerMaster, "Conexion con Worker %d para estos tmp %d", infoRedLocal->numero, list_size(infoRedLocal->archivosTemporales));
+
+	struct stat fileStat;
+	if(stat(miJob->rutaReductor.cadena,&fileStat) < 0){
+		printf("No se pudo abrir el archivo\n");
+		return 0;
+	}
+
+	int fd = open(miJob->rutaReductor.cadena,O_RDWR);
+	int size = fileStat.st_size;
+
+	infoRedLocal->contenidoScript.cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
+	infoRedLocal->contenidoScript.longitud = size;
+
+	empaquetar(socketWorker, mensajeProcesarRedLocal, 0, infoRedLocal);
+
+	confirmacionWorker = desempaquetar(socketWorker);
+
+	if (munmap(infoRedLocal->contenidoScript.cadena, infoRedLocal->contenidoScript.longitud) == -1){
+		perror("Error un-mmapping the file");
+		exit(EXIT_FAILURE);
+	}
+	close(fd);
+
+	switch(confirmacionWorker.idMensaje){
+
+	case mensajeRedLocalCompleta:
+		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroBloque);
+		//finalizarTiempo(estadisticas->tiempoFinTrans,numeroBloque);
+		break;
+
+	case mensajeDesconexion:
+		//mandarAReplanificar(infoRedLocal);
+		break;
+
+
+	}
+	return 0;
+
+}
 void mandarAReplanificar(parametrosTransformacion* infoTransformacion){
 	bloqueAReplanificar* bloqueReplanificar=malloc(sizeof(bloqueAReplanificar));
 	bloqueReplanificar->workerId = infoTransformacion->numero;
@@ -151,7 +234,7 @@ void esperarInstruccionesDeYama() {
 				break;
 			case mensajeRespuestaRedLocal:
 				infoRedLocal = (respuestaReduccionLocal*)instruccionesYama.envio;
-				printf("HOLA SANTI ESTOY HACIENDO UNA REDUCCION LOCAL %d\n", list_size(infoRedLocal->workers));
+				crearHilosConexionRedLocal(infoRedLocal);
 				break;
 			case mensajeDesconexion:
 				log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");

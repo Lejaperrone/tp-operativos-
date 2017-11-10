@@ -74,4 +74,10 @@ void finalizarTiempo(t_list* tiempos,int numero);
 
 void inicializarTiemposTransformacion(respuestaSolicitudTransformacion* infoTransformacion);
 
+void crearHilosConexionRedLocal(respuestaReduccionLocal* rtaYama);
+
+void crearHilosPorTmpRedLocal(workerDesdeYama* worker);
+
+void* conectarseConWorkersRedLocal(void* params);
+
 #endif /* FUNCIONESMASTER_H_ */
