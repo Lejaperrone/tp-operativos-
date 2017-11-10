@@ -1038,6 +1038,17 @@ void* serializarProcesarRedLocal(void* paquete, int* tamanio){
 	desplazamiento += reduccionLocal->rutaDestino.longitud;
 	*tamanio += sizeof(int);
 
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &reduccionLocal->contenidoScript.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += reduccionLocal->contenidoScript.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, reduccionLocal->contenidoScript.cadena, reduccionLocal->contenidoScript.longitud);
+	desplazamiento += reduccionLocal->contenidoScript.longitud;
+	*tamanio += sizeof(int);
+
 	return buffer;
 }
 
@@ -1083,6 +1094,13 @@ parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio){
 	reduccionLocal->rutaDestino.cadena = calloc(1,reduccionLocal->rutaDestino.longitud+1);
 	memcpy(reduccionLocal->rutaDestino.cadena, buffer + desplazamiento, reduccionLocal->rutaDestino.longitud);
 	desplazamiento += reduccionLocal->rutaDestino.longitud;
+
+	memcpy(&reduccionLocal->contenidoScript.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	reduccionLocal->contenidoScript.cadena = calloc(1,reduccionLocal->contenidoScript.longitud+1);
+	memcpy(reduccionLocal->contenidoScript.cadena, buffer + desplazamiento, reduccionLocal->contenidoScript.longitud);
+	desplazamiento += reduccionLocal->contenidoScript.longitud;
 
 	return reduccionLocal;
 }

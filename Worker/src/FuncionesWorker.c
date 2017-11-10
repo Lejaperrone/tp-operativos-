@@ -130,6 +130,7 @@ void crearScript(char* bufferScript, int etapa) {
 void handlerMaster(int clientSocket) {
 	respuesta paquete;
 	parametrosTransformacion* transformacion;
+	parametrosReduccionLocal* reduccionLocal;
 	char* destino;
 	char* contenidoScript;
 	char* command;
@@ -166,10 +167,12 @@ void handlerMaster(int clientSocket) {
 		exit(1);
 		break;
 	case mensajeProcesarRedLocal:
+		reduccionLocal = (parametrosReduccionLocal*)paquete.envio;
 		log_trace(logger, "Iniciando Reduccion Local");
-		contenidoScript = "contenidoScript reductorLocal";
-		listaArchivosTemporales = list_create(); //Recibir por socket la lista
-		destino = "/tmp/resultado";
+		contenidoScript = reduccionLocal->contenidoScript.cadena;
+		listaArchivosTemporales = list_create();
+		listaArchivosTemporales = reduccionLocal->archivosTemporales;
+		destino = reduccionLocal->rutaDestino.cadena;
 		rutaArchivoApareado = "/resultadoApareoLocal";
 		crearScript(contenidoScript, mensajeProcesarRedLocal);
 		apareoArchivosLocales(listaArchivosTemporales, rutaArchivoApareado);

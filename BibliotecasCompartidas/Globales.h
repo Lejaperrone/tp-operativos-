@@ -200,6 +200,7 @@ typedef struct{
 	string ip;
 	t_list* archivosTemporales;
 	string rutaDestino;
+	string contenidoScript;
 } parametrosReduccionLocal;
 
 typedef struct{
