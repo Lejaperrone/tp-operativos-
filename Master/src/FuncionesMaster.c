@@ -32,8 +32,8 @@ void crearHilosConexionTransformacion(respuestaSolicitudTransformacion* rtaYama)
 
 
 void crearHilosPorBloqueTransformacion(workerDesdeYama* worker){
-	setearTiempo(estadisticas->tiempoInicioTrans);
-	estadisticas->cantTareas[TRANSFORMACION]++;
+
+
 	parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
 
 	parametrosConexion->ip.cadena = worker->ip.cadena;
@@ -47,7 +47,7 @@ void crearHilosPorBloqueTransformacion(workerDesdeYama* worker){
 		bloquesConSusArchivosTransformacion* bloque = list_get(worker->bloquesConSusArchivos, j);
 		parametrosConexion->bloquesConSusArchivos = *bloque;
 
-		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
+		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkersTransformacion, parametrosConexion) != 0) {
 			log_error(loggerMaster, "No se pudo crear el thread de conexion");
 			exit(-1);
 		}
@@ -55,21 +55,15 @@ void crearHilosPorBloqueTransformacion(workerDesdeYama* worker){
 	}
 }
 
-void* conectarseConWorkers(void* params) {
+void* conectarseConWorkersTransformacion(void* params) {
 	parametrosTransformacion* infoTransformacion= (parametrosTransformacion*)params;
 	respuesta confirmacionWorker;
-	bloqueAReplanificar* bloqueReplanificar=malloc(sizeof(bloqueAReplanificar));
 	int numeroBloque;
 
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto);
 	if(!conectarCon(direccion, socketWorker, 2)){//2 id master
-		bloqueReplanificar->workerId = infoTransformacion->numero;
-		bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
-		empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
-		estadisticas->cantFallos++;
-		list_remove(estadisticas->tiempoInicioTrans,0);
-		estadisticas->cantTareas[TRANSFORMACION]--;
+		mandarAReplanificar(infoTransformacion);
 		return 0;
 
 	}
@@ -103,21 +97,25 @@ void* conectarseConWorkers(void* params) {
 		case mensajeTransformacionCompleta:
 			numeroBloque = *(int*)confirmacionWorker.envio;
 			empaquetar(socketYama, mensajeTransformacionCompleta, 0 , &numeroBloque);
-			setearTiempo(estadisticas->tiempoFinTrans);
+			finalizarTiempo(estadisticas->tiempoFinTrans,numeroBloque);
 			break;
-		//case mensajeFalloTransformacion:
+
 		case mensajeDesconexion:
-			bloqueReplanificar->workerId = infoTransformacion->numero;
-			bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
-			empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
-			estadisticas->cantFallos++;
-			list_remove(estadisticas->tiempoInicioTrans,0);
-			estadisticas->cantTareas[TRANSFORMACION]--;
+			mandarAReplanificar(infoTransformacion);
 			break;
 
 
 	}
 	return 0;
+}
+
+void mandarAReplanificar(parametrosTransformacion* infoTransformacion){
+	bloqueAReplanificar* bloqueReplanificar=malloc(sizeof(bloqueAReplanificar));
+	bloqueReplanificar->workerId = infoTransformacion->numero;
+	bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
+	empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
+	estadisticas->cantFallos++;
+	estadisticas->cantTareas[0]--;
 }
 
 void enviarJobAYama(job* miJob) {
@@ -148,6 +146,7 @@ void esperarInstruccionesDeYama() {
 
 			case mensajeRespuestaTransformacion:
 				infoTransformacion = (respuestaSolicitudTransformacion*)instruccionesYama.envio;
+				inicializarTiemposTransformacion(infoTransformacion);
 				crearHilosConexionTransformacion(infoTransformacion);
 				break;
 			case mensajeRespuestaRedLocal:
@@ -167,6 +166,18 @@ void esperarInstruccionesDeYama() {
 			case mensajeFinJob:
 				finalizarJob();
 				break;
+		}
+	}
+}
+
+void inicializarTiemposTransformacion(respuestaSolicitudTransformacion* infoTransformacion){
+	int i,j;
+	for(i=0 ; i<list_size(infoTransformacion->workers);i++){
+		workerDesdeYama* worker = list_get(infoTransformacion->workers, i);
+		for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
+			bloquesConSusArchivosTransformacion* bloque = list_get(worker->bloquesConSusArchivos, j);
+			setearTiempo(0,bloque->numBloque);
+			estadisticas->cantTareas[0]++;
 		}
 	}
 }
@@ -232,18 +243,55 @@ estadisticaProceso* crearEstadisticasProceso(){
 	return estadisticas;
 }
 
-void setearTiempo(t_list* tiempos){
-	time_t* actual = malloc(sizeof(time_t));
-	*actual = time(NULL);
-	list_add(tiempos,actual);
+void setearTiempo(int etapa,int numero){
+	t_list* tiemposInicio,*tiemposFin;
+	switch(etapa){
+		case 0:
+			tiemposInicio= estadisticas->tiempoInicioTrans;
+			tiemposFin=estadisticas->tiempoFinTrans;
+			break;
+
+		case 1:
+			tiemposInicio= estadisticas->tiempoInicioRedLocal;
+			tiemposFin=estadisticas->tiempoFinRedLocal;
+			break;
+
+		case 2:
+			tiemposInicio= estadisticas->tiempoInicioRedGlobal;
+			tiemposFin=estadisticas->tiempoFinRedGlobal;
+			break;
+	}
+
+
+	tiempoPorBloque* tiempoInicio = malloc(sizeof(tiempoPorBloque));
+	tiempoInicio->finalizo= true;
+	tiempoInicio->numero=numero;
+	tiempoInicio->tiempo=time(NULL);
+	list_add(tiemposInicio,tiempoInicio);
+
+	tiempoPorBloque* tiempoFin= malloc(sizeof(tiempoPorBloque));
+	tiempoFin->finalizo= false;
+	tiempoFin->numero=numero;
+	tiempoFin->tiempo=time(NULL);
+	list_add(tiemposFin,tiempoFin);
+}
+
+void finalizarTiempo(t_list* tiempos,int numero){
+	bool encontrarEnTablaEstados(tiempoPorBloque* time ) {
+		return time->numero == numero;
+	}
+
+	tiempoPorBloque* tiempo = list_get(tiempos,numero);
+	tiempo->finalizo=true;
+	tiempo->tiempo=time(NULL);
 }
 
 void finalizarJob(){
 	time_t fin= time(NULL);
 	double duracion = difftime(fin,estadisticas->tiempoInicio);
-	double promTransformacion = calcularDuracionPromedio(estadisticas->tiempoInicioTrans,estadisticas->tiempoFinTrans,TRANSFORMACION);
-	double promLocal = calcularDuracionPromedio(estadisticas->tiempoInicioRedLocal,estadisticas->tiempoFinRedLocal,RED_LOCAL);
-	double promGlobal= calcularDuracionPromedio(estadisticas->tiempoInicioRedGlobal,estadisticas->tiempoFinRedGlobal,RED_GLOBAL);
+	double promTransformacion = calcularDuracionPromedio(estadisticas->tiempoInicioTrans,estadisticas->tiempoFinTrans);
+	double promLocal = calcularDuracionPromedio(estadisticas->tiempoInicioRedLocal,estadisticas->tiempoFinRedLocal);
+	double promGlobal= calcularDuracionPromedio(estadisticas->tiempoInicioRedGlobal,estadisticas->tiempoFinRedGlobal);
 
 	printf("Duracion total: %f\n",duracion);
 	printf("Cantidad tareas transformacion %d\n",estadisticas->cantTareas[0]);
@@ -257,19 +305,23 @@ void finalizarJob(){
 	exit(0);
 }
 
-double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin,int etapa){
-	int restantes = list_size(tiemposInicio)-list_size(tiemposFin);
-	printf("%d,%d \n\n",list_size(tiemposInicio),list_size(tiemposFin));
-	printf("%d cuantas tengo \n\n",restantes);
-
+double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin){
 	int i;
 	double cont=0;
 
-	for(i=0;i<restantes;i++){
-		time_t* inicio = list_get(tiemposInicio,i);
-		time_t* fin = list_get(tiemposFin,i);
-		cont = cont + difftime(*fin,*inicio);
+	if(list_is_empty(tiemposFin)){
+		return 0;
 	}
-	return cont / restantes;
+
+	for(i=0;i<list_size(tiemposInicio);i++){
+		tiempoPorBloque* inicio = list_get(tiemposInicio,i);
+		tiempoPorBloque* fin = list_get(tiemposFin,i);
+		if(fin->finalizo){
+			cont = cont + difftime(fin->tiempo,inicio->tiempo);
+		}
+
+	}
+
+	return cont / list_size(tiemposInicio);
 
 }

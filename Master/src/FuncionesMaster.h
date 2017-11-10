@@ -42,7 +42,7 @@ pthread_mutex_t mutexReplanificar;
 
 void conectarseConYama(char* ip, int port);
 
-void* conectarseConWorkers(void* parametros);
+void* conectarseConWorkersTransformacion(void* parametros);
 
 void enviarJobAYama(job* job);
 
@@ -56,7 +56,7 @@ job* crearJob(char* argv[]);
 
 estadisticaProceso* crearEstadisticasProceso();
 
-void setearTiempo(t_list* tiempos);
+void setearTiempo(int etapa,int numero);
 
 void finalizarJob();
 
@@ -66,7 +66,12 @@ void crearHilosPorBloqueTransformacion(workerDesdeYama* worker);
 
 void esperarReplanificaciones();
 
-double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin,int etapa);
+double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin);
 
+void mandarAReplanificar(parametrosTransformacion* infoTransformacion);
+
+void finalizarTiempo(t_list* tiempos,int numero);
+
+void inicializarTiemposTransformacion(respuestaSolicitudTransformacion* infoTransformacion);
 
 #endif /* FUNCIONESMASTER_H_ */

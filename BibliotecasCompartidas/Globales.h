@@ -175,6 +175,12 @@ typedef struct {
 	t_list* tiempoFinRedLocal;
 }estadisticaProceso;
 
+typedef struct{
+	bool finalizo;
+	time_t tiempo;
+	int numero;
+}tiempoPorBloque;
+
 typedef struct {
 	int numero;
 	string ip;
