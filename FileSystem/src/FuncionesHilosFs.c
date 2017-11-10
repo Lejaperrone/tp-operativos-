@@ -132,6 +132,10 @@ void* consolaFS(){
 
 		char** arguments = string_split(comando, " ");
 
+		if(validarParametros(arguments, 1)){
+			continue;
+		}
+
 		//printf("----------------------%s\n",)
 
 		if (comando)
@@ -193,9 +197,20 @@ void* consolaFS(){
 			}
 
 			else if (arguments[1] != NULL) {
-				if (eliminarArchivo(comando) == 0){
+				resultado = eliminarArchivo(comando);
+				if (resultado == 0){
 					pthread_mutex_lock(&logger_mutex);
 					log_trace(loggerFS, "archivo eliminado");
+					pthread_mutex_unlock(&logger_mutex);
+				}
+				else if (resultado == 2){
+					pthread_mutex_lock(&logger_mutex);
+					log_trace(loggerFS, "la ruta ingresada no pertence a yamafs");
+					pthread_mutex_unlock(&logger_mutex);
+				}
+				else if (resultado == 3){
+					pthread_mutex_lock(&logger_mutex);
+					log_trace(loggerFS, "la ruta ingresada no pertenece a un archivo");
 					pthread_mutex_unlock(&logger_mutex);
 				}
 				else{
@@ -210,9 +225,20 @@ void* consolaFS(){
 			if(validarParametros(arguments, 3)){
 				continue;
 			}
-			if (cambiarNombre(comando) == 0){
+			resultado = cambiarNombre(comando);
+			if (resultado == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Renombrado");
+				pthread_mutex_unlock(&logger_mutex);
+			}
+			else if (resultado == 2){
+				pthread_mutex_lock(&logger_mutex);
+				log_trace(loggerFS, "la ruta ingresada no pertence a yamafs");
+				pthread_mutex_unlock(&logger_mutex);
+			}
+			else if (resultado == 3){
+				pthread_mutex_lock(&logger_mutex);
+				log_trace(loggerFS, "la ruta ingresada no pertenece a un archivo");
 				pthread_mutex_unlock(&logger_mutex);
 			}
 			else{
