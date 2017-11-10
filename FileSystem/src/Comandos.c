@@ -543,14 +543,16 @@ int informacion(char* comando){
 int formatearFS(){
 	int resultado = 0;
 
-	resultado += borrarDirectorios();
+	//resultado += borrarDirectorios();
 
-	resultado += borrarArchivosEnMetadata();
+	//resultado += borrarArchivosEnMetadata();
 
-	resultado += liberarNodosConectados();
+	//resultado += liberarNodosConectados();
 
-	if (resultado == 3)
-		return 0;
+	resultado += formatearDataBins();
 
-	return 1;
+	//if (resultado == 4)
+		//return 0;
+
+	return resultado;
 }

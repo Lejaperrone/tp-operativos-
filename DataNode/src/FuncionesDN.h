@@ -12,6 +12,8 @@ int setBloque(int numeroBloque, char* datos);
 
 char* getBloque(int numeroBloque, int sizeBloque);
 
+int borrarDataBin();
+
 void inicializarDataBin();
 
 void recibirMensajesFileSystem(int socketFs);

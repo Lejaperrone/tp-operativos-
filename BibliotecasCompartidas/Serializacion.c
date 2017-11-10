@@ -19,6 +19,20 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeFalloRedLocal:
 		case mensajeFalloRedGlobal:
 		case mensajeHandshake:
+		case mensajeBorrarDataBin:
+			tamanio = 1;
+			bloque = mallos(1);
+			char c = 'c';
+			memcpy(bloque, &c, tamanio);
+
+			break;
+		case mensajeRespuestaBorrarDataBin:
+			tamanio = tamanioS;
+			bloque = malloc(tamanio);
+			memcpy(bloque, paquete, tamanio);
+
+			break;
+
 		case mensajeTransformacionCompleta:
 			tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
@@ -139,6 +153,22 @@ respuesta desempaquetar(int socket){
 			case mensajeRedGlobalCompleta:
 			case mensajeFalloRedGlobal:
 			case mensajeHandshake:
+			case mensajeBorrarDataBin:
+
+				bufferOk = malloc(sizeof(char));
+				recv(socket, bufferOk, sizeof(char), 0);
+				free(bufferOk);
+				break;
+
+			case mensajeRespuestaBorrarDataBin:
+
+				bufferOk = malloc(sizeof(int));
+				recv(socket, bufferOk, sizeof(int), 0);
+				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
+				free(bufferOk);
+
+				break;
+
 			case mensajeTransformacionCompleta:
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);

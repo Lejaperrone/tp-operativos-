@@ -63,6 +63,11 @@ char* getBloque(int numeroBloque, int sizeBloque) {
 }
 
 int borrarDataBin(){
+	FILE* databin = fopen(config.RUTA_DATABIN,"w+");
+
+	truncate(config.RUTA_DATABIN, config.SIZE_NODO*mb);
+
+	fclose(databin);
 
 	return 0;
 }
@@ -128,6 +133,17 @@ void recibirMensajesFileSystem(int socketFs) {
 		empaquetar(socketFs, mensajeRespuestaGetBloque, strlen(data),data);
 		free(numeroBloque.envio);
 		break;
+
+	case mensajeBorrarDataBin:
+		success = borrarDataBin();
+		if (success == 1){
+			empaquetar(socketFs, mensajeRespuestaBorrarDataBin, sizeof(int), &success);
+			break;
+		}
+		success = 0;
+		empaquetar(socketFs, mensajeRespuestaBorrarDataBin, sizeof(int), &success);
+		break;
+
 
 
 	default:

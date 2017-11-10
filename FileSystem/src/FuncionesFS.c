@@ -1134,3 +1134,24 @@ int liberarNodosConectados(){
 
 	return 1;
 }
+
+int formatearDataBins(){
+	int resultado = 0;
+	int i;
+	int cantNodos = list_size(nodosConectados);
+	informacionNodo* nodo;
+	respuesta res;
+
+	for (i = 0; i < cantNodos; ++i){
+		nodo = (informacionNodo*) list_get(nodosConectados,i);
+		empaquetar(nodo->socket, mensajeBorrarDataBin, 0, 0);
+		res = desempaquetar(nodo->socket);
+		resultado += *(int*) res.envio;
+	}
+
+	if (resultado == cantNodos)
+		return 1;
+
+
+	return 0;
+}

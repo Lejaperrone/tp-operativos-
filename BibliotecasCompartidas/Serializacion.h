@@ -52,6 +52,8 @@
 #define mensajeRespuestaRedLocal 33
 #define mensajeRespuestaRedGlobal 34
 #define mensajeReplanificacion 35
+#define mensajeBorrarDataBin 36
+#define mensajeRespuestaBorrarDataBin 37
 
 
 typedef struct{
