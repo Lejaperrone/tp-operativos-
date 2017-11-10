@@ -20,7 +20,6 @@ int crearSocket() {
 bool conectarCon(struct sockaddr_in direccionServidor, int cliente,	int tipoCliente) { //Agregar un parametro para que cada cliente le envie su tipo
 
 	if (connect(cliente, (void*) &direccionServidor, sizeof(direccionServidor)) == -1) {
-		printf("No se pudo conectar\n");
 		return false;
 	}
 

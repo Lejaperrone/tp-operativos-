@@ -130,6 +130,7 @@ void crearScript(char* bufferScript, int etapa) {
 void handlerMaster(int clientSocket) {
 	respuesta paquete;
 	parametrosTransformacion* transformacion;
+	parametrosReduccionLocal* reduccionLocal;
 	char* destino;
 	char* contenidoScript;
 	char* command;
@@ -151,10 +152,14 @@ void handlerMaster(int clientSocket) {
 		crearScript(contenidoScript, mensajeProcesarTransformacion);
 		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i",
 				bytesRestantes, numeroBloqueTransformado);
+		char *pathTmp = string_new();
+		char cwd[1024];
+		string_append(&pathTmp, getcwd(cwd, sizeof(cwd)));
+		string_append(&pathTmp, "/tmp");
 		command =
 				string_from_format(
-						"head -c %d < %s | tail -c %d | sh %s | sort > /home/utnso/tp-2017-2c-PEQL/Worker/tmp/%s",
-						offset, config.RUTA_DATABIN, bytesRestantes, "../scripts/transformador.sh", destino);
+						"head -c %d < %s | tail -c %d | sh %s | sort > %s/%s",
+						offset, config.RUTA_DATABIN, bytesRestantes, "../scripts/transformador.sh", pathTmp , destino);
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
 		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);
@@ -162,10 +167,12 @@ void handlerMaster(int clientSocket) {
 		exit(1);
 		break;
 	case mensajeProcesarRedLocal:
+		reduccionLocal = (parametrosReduccionLocal*)paquete.envio;
 		log_trace(logger, "Iniciando Reduccion Local");
-		contenidoScript = "contenidoScript reductorLocal";
-		listaArchivosTemporales = list_create(); //Recibir por socket la lista
-		destino = "/tmp/resultado";
+		contenidoScript = reduccionLocal->contenidoScript.cadena;
+		listaArchivosTemporales = list_create();
+		listaArchivosTemporales = reduccionLocal->archivosTemporales;
+		destino = reduccionLocal->rutaDestino.cadena;
 		rutaArchivoApareado = "/resultadoApareoLocal";
 		crearScript(contenidoScript, mensajeProcesarRedLocal);
 		apareoArchivosLocales(listaArchivosTemporales, rutaArchivoApareado);

@@ -214,7 +214,7 @@ void validarCambiosConfig(){
 	if (strcmp(config.ALGORITMO_BALANCEO ,nuevoAlgoritmo)) {
 		log_info(logger, "<inotify> ALGORITMO_BALANCEO modificada. Anterior: %s || Actual: %s", config.ALGORITMO_BALANCEO , nuevoAlgoritmo);
 
-		if (!strcmp(nuevoAlgoritmo,"WCLOCK") || !strcmp(nuevoAlgoritmo,"CLOCK")) {
+		if (!string_equals_ignore_case(nuevoAlgoritmo,"WCLOCK") && !string_equals_ignore_case(nuevoAlgoritmo,"CLOCK")) {
 			log_error(logger, "El ALGORITMO_BALANCEO no puede ser diferente a CLOCK o WCLOCK. Se deja el anterior: %s.", config.ALGORITMO_BALANCEO);
 		}
 		else{
@@ -313,14 +313,16 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 	return matriz;
 }
 
-int nodoConOtraCopia(bloqueAReplanificar* replanificar,bool** matriz,int bloques){
+int nodoConOtraCopia(bloqueAReplanificar* replanificar,bool** matriz,int nodos){
+	matriz[replanificar->workerId][replanificar->bloque]=false;
+
 	int i=0;
-	for(i=0;i<bloques;i++){
+	for(i=0;i<nodos;i++){
 		if(matriz[i][replanificar->bloque] && (replanificar->workerId!= i ) ){
 			return i;
 		}
 	}
-	return i;
+	return -1;
 }
 
 void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques){
@@ -389,26 +391,26 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 
 }
 
-void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,int etapa){
+void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,Etapa etapa){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg ) {
 		return reg->job == jobId && reg->etapa == etapa && reg->estado == EN_EJECUCION;
 	}
 
 	pthread_mutex_lock(&mutexTablaEstados);
-	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)faltanMasTareas);
-	pthread_mutex_lock(&mutexTablaEstados);
+	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
 
 	reg->estado=FINALIZADO_OK;
 }
 
-bool faltanMasTareas(int jobid,int etapa){
+bool faltanMasTareas(int jobid,Etapa etapa){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-		return reg->job == jobid && reg->etapa == etapa;
+		return reg->job == jobid && reg->etapa == etapa && reg->estado != FINALIZADO_OK;
 	}
 
 	pthread_mutex_lock(&mutexTablaEstados);
-	bool faltanTareas = list_any_satisfy(tablaDeEstados,(void*)faltanMasTareas);
-	pthread_mutex_lock(&mutexTablaEstados);
+	bool faltanTareas = list_any_satisfy(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
 
 	return faltanTareas;
 }
@@ -417,6 +419,7 @@ void finalizarJob(job* job,int etapa){
 	actualizarCargasNodos(job->id,etapa);
 	borrarEntradasDeJob(job->id);
 	empaquetar(job->socketFd,mensajeFinJob,0,0);
+	log_trace(logger, "Finalizo job con id:",job->id);
 	pthread_exit(0);
 }
 
@@ -466,7 +469,7 @@ void borrarEntradasDeJob(int jobid){
 
 	pthread_mutex_lock(&mutexTablaEstados);
 	while(list_find(tablaDeEstados,(void*)encontrarEnTablaEstados)){
-		list_remove_by_condition(tablaDeEstados,(void*)borrarEntradasDeJob);
+		list_remove_by_condition(tablaDeEstados,(void*)encontrarEnTablaEstados);
 	}
 	pthread_mutex_unlock(&mutexTablaEstados);
 

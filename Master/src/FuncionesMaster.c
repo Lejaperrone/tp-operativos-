@@ -25,15 +25,12 @@ void crearHilosConexionTransformacion(respuestaSolicitudTransformacion* rtaYama)
 	int i;
 
 	for(i=0 ; i<list_size(rtaYama->workers);i++){
-		estadisticas->cantTareas[TRANSFORMACION]++;
 		workerDesdeYama* worker = list_get(rtaYama->workers, i);
 		crearHilosPorBloqueTransformacion(worker);
 	}
 }
 
-
 void crearHilosPorBloqueTransformacion(workerDesdeYama* worker){
-	setearTiempo(estadisticas->tiempoInicioTrans);
 	parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
 
 	parametrosConexion->ip.cadena = worker->ip.cadena;
@@ -47,7 +44,7 @@ void crearHilosPorBloqueTransformacion(workerDesdeYama* worker){
 		bloquesConSusArchivosTransformacion* bloque = list_get(worker->bloquesConSusArchivos, j);
 		parametrosConexion->bloquesConSusArchivos = *bloque;
 
-		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkers, parametrosConexion) != 0) {
+		if (pthread_create(&hiloConexion, NULL, (void *) conectarseConWorkersTransformacion, parametrosConexion) != 0) {
 			log_error(loggerMaster, "No se pudo crear el thread de conexion");
 			exit(-1);
 		}
@@ -55,23 +52,20 @@ void crearHilosPorBloqueTransformacion(workerDesdeYama* worker){
 	}
 }
 
-void* conectarseConWorkers(void* params) {
+void* conectarseConWorkersTransformacion(void* params) {
 	parametrosTransformacion* infoTransformacion= (parametrosTransformacion*)params;
 	respuesta confirmacionWorker;
-	bloqueAReplanificar* bloqueReplanificar=malloc(sizeof(bloqueAReplanificar));
 	int numeroBloque;
 
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto);
 	if(!conectarCon(direccion, socketWorker, 2)){//2 id master
-		bloqueReplanificar->workerId = infoTransformacion->numero;
-		bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
-		empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
+		mandarAReplanificar(infoTransformacion);
 		return 0;
 
 	}
 
-	log_trace(loggerMaster, "Conexion con Worker en %s:%i", infoTransformacion->ip.cadena, infoTransformacion->puerto);
+	log_trace(loggerMaster, "Conexion con Worker %d para bloque %d", infoTransformacion->numero, infoTransformacion->bloquesConSusArchivos.numBloque);
 
 	struct stat fileStat;
 	if(stat(miJob->rutaTransformador.cadena,&fileStat) < 0){
@@ -99,22 +93,112 @@ void* conectarseConWorkers(void* params) {
 
 		case mensajeTransformacionCompleta:
 			numeroBloque = *(int*)confirmacionWorker.envio;
-			printf("enviado a yama%d\n",numeroBloque);
 			empaquetar(socketYama, mensajeTransformacionCompleta, 0 , &numeroBloque);
-			setearTiempo(estadisticas->tiempoFinTrans);
+			finalizarTiempo(estadisticas->tiempoFinTrans,numeroBloque);
 			break;
-		//case mensajeFalloTransformacion:
+
 		case mensajeDesconexion:
-			bloqueReplanificar->workerId = infoTransformacion->numero;
-			bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
-			empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
-			estadisticas->cantFallos++;
-			list_remove(estadisticas->tiempoInicioTrans,0);
+			mandarAReplanificar(infoTransformacion);
 			break;
 
 
 	}
 	return 0;
+}
+void crearHilosConexionRedLocal(respuestaReduccionLocal* rtaYama){
+	int i;
+
+		for(i=0 ; i<list_size(rtaYama->workers);i++){
+			workerDesdeYama* worker = list_get(rtaYama->workers, i);
+			crearHilosPorTmpRedLocal(worker);
+		}
+
+}
+
+void crearHilosPorTmpRedLocal(workerDesdeYama* worker){
+	parametrosReduccionLocal* parametrosConexion = malloc(sizeof(parametrosReduccionLocal));
+	int j;
+
+	parametrosConexion->ip.cadena = worker->ip.cadena;
+	parametrosConexion->ip.longitud = worker->ip.longitud;
+	parametrosConexion->numero = worker->numeroWorker;
+	parametrosConexion->puerto = worker->puerto;
+	parametrosConexion->archivosTemporales = list_create();
+
+	pthread_t hiloConexion;
+	for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
+		bloquesConSusArchivosRedLocal* bloque = list_get(worker->bloquesConSusArchivos, j);
+		parametrosConexion->rutaDestino = bloque->archivoReduccion;
+		list_add(parametrosConexion->archivosTemporales,bloque->archivoTransformacion.cadena);
+	}
+	if (pthread_create(&hiloConexion, NULL, (void *)conectarseConWorkersRedLocal, parametrosConexion) != 0) {
+		log_error(loggerMaster, "No se pudo crear el thread de conexion");
+		exit(-1);
+	}
+	pthread_join(hiloConexion, NULL);
+
+}
+
+void* conectarseConWorkersRedLocal(void* params){
+	parametrosReduccionLocal* infoRedLocal= (parametrosReduccionLocal*)params;
+	respuesta confirmacionWorker;
+	int numeroBloque;
+
+	int socketWorker = crearSocket();
+	struct sockaddr_in direccion = cargarDireccion(infoRedLocal->ip.cadena,infoRedLocal->puerto);
+	if(!conectarCon(direccion, socketWorker, 2)){//2 id master
+		//mandarAReplanificar(infoRedLocal);
+		return 0;
+
+	}
+
+	log_trace(loggerMaster, "Conexion con Worker %d para estos tmp %d", infoRedLocal->numero, list_size(infoRedLocal->archivosTemporales));
+
+	struct stat fileStat;
+	if(stat(miJob->rutaReductor.cadena,&fileStat) < 0){
+		printf("No se pudo abrir el archivo\n");
+		return 0;
+	}
+
+	int fd = open(miJob->rutaReductor.cadena,O_RDWR);
+	int size = fileStat.st_size;
+
+	infoRedLocal->contenidoScript.cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
+	infoRedLocal->contenidoScript.longitud = size;
+
+	empaquetar(socketWorker, mensajeProcesarRedLocal, 0, infoRedLocal);
+
+	confirmacionWorker = desempaquetar(socketWorker);
+
+	if (munmap(infoRedLocal->contenidoScript.cadena, infoRedLocal->contenidoScript.longitud) == -1){
+		perror("Error un-mmapping the file");
+		exit(EXIT_FAILURE);
+	}
+	close(fd);
+
+	switch(confirmacionWorker.idMensaje){
+
+	case mensajeRedLocalCompleta:
+		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroBloque);
+		//finalizarTiempo(estadisticas->tiempoFinTrans,numeroBloque);
+		break;
+
+	case mensajeDesconexion:
+		//mandarAReplanificar(infoRedLocal);
+		break;
+
+
+	}
+	return 0;
+
+}
+void mandarAReplanificar(parametrosTransformacion* infoTransformacion){
+	bloqueAReplanificar* bloqueReplanificar=malloc(sizeof(bloqueAReplanificar));
+	bloqueReplanificar->workerId = infoTransformacion->numero;
+	bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
+	empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
+	estadisticas->cantFallos++;
+	estadisticas->cantTareas[0]--;
 }
 
 void enviarJobAYama(job* miJob) {
@@ -135,6 +219,7 @@ void enviarJobAYama(job* miJob) {
 void esperarInstruccionesDeYama() {
 	respuesta instruccionesYama;//= malloc(sizeof(respuesta));
 	respuestaSolicitudTransformacion* infoTransformacion = malloc(sizeof(respuestaSolicitudTransformacion));
+	respuestaReduccionLocal* infoRedLocal = malloc(sizeof(respuestaReduccionLocal));
 	workerDesdeYama* worker;
 
 	while (1) {
@@ -144,7 +229,12 @@ void esperarInstruccionesDeYama() {
 
 			case mensajeRespuestaTransformacion:
 				infoTransformacion = (respuestaSolicitudTransformacion*)instruccionesYama.envio;
+				inicializarTiemposTransformacion(infoTransformacion);
 				crearHilosConexionTransformacion(infoTransformacion);
+				break;
+			case mensajeRespuestaRedLocal:
+				infoRedLocal = (respuestaReduccionLocal*)instruccionesYama.envio;
+				crearHilosConexionRedLocal(infoRedLocal);
 				break;
 			case mensajeDesconexion:
 				log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
@@ -159,6 +249,18 @@ void esperarInstruccionesDeYama() {
 			case mensajeFinJob:
 				finalizarJob();
 				break;
+		}
+	}
+}
+
+void inicializarTiemposTransformacion(respuestaSolicitudTransformacion* infoTransformacion){
+	int i,j;
+	for(i=0 ; i<list_size(infoTransformacion->workers);i++){
+		workerDesdeYama* worker = list_get(infoTransformacion->workers, i);
+		for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
+			bloquesConSusArchivosTransformacion* bloque = list_get(worker->bloquesConSusArchivos, j);
+			setearTiempo(0,bloque->numBloque);
+			estadisticas->cantTareas[0]++;
 		}
 	}
 }
@@ -224,18 +326,55 @@ estadisticaProceso* crearEstadisticasProceso(){
 	return estadisticas;
 }
 
-void setearTiempo(t_list* tiempos){
-	time_t* actual = malloc(sizeof(time_t));
-	*actual = time(NULL);
-	list_add(tiempos,actual);
+void setearTiempo(int etapa,int numero){
+	t_list* tiemposInicio,*tiemposFin;
+	switch(etapa){
+		case 0:
+			tiemposInicio= estadisticas->tiempoInicioTrans;
+			tiemposFin=estadisticas->tiempoFinTrans;
+			break;
+
+		case 1:
+			tiemposInicio= estadisticas->tiempoInicioRedLocal;
+			tiemposFin=estadisticas->tiempoFinRedLocal;
+			break;
+
+		case 2:
+			tiemposInicio= estadisticas->tiempoInicioRedGlobal;
+			tiemposFin=estadisticas->tiempoFinRedGlobal;
+			break;
+	}
+
+
+	tiempoPorBloque* tiempoInicio = malloc(sizeof(tiempoPorBloque));
+	tiempoInicio->finalizo= true;
+	tiempoInicio->numero=numero;
+	tiempoInicio->tiempo=time(NULL);
+	list_add(tiemposInicio,tiempoInicio);
+
+	tiempoPorBloque* tiempoFin= malloc(sizeof(tiempoPorBloque));
+	tiempoFin->finalizo= false;
+	tiempoFin->numero=numero;
+	tiempoFin->tiempo=time(NULL);
+	list_add(tiemposFin,tiempoFin);
+}
+
+void finalizarTiempo(t_list* tiempos,int numero){
+	bool encontrarEnTablaEstados(tiempoPorBloque* time ) {
+		return time->numero == numero;
+	}
+
+	tiempoPorBloque* tiempo = list_get(tiempos,numero);
+	tiempo->finalizo=true;
+	tiempo->tiempo=time(NULL);
 }
 
 void finalizarJob(){
 	time_t fin= time(NULL);
 	double duracion = difftime(fin,estadisticas->tiempoInicio);
-	double promTransformacion = calcularDuracionPromedio(estadisticas->tiempoInicioTrans,estadisticas->tiempoFinTrans,TRANSFORMACION);
-	double promLocal = calcularDuracionPromedio(estadisticas->tiempoInicioRedLocal,estadisticas->tiempoFinRedLocal,RED_LOCAL);
-	double promGlobal= calcularDuracionPromedio(estadisticas->tiempoInicioRedGlobal,estadisticas->tiempoFinRedGlobal,RED_GLOBAL);
+	double promTransformacion = calcularDuracionPromedio(estadisticas->tiempoInicioTrans,estadisticas->tiempoFinTrans);
+	double promLocal = calcularDuracionPromedio(estadisticas->tiempoInicioRedLocal,estadisticas->tiempoFinRedLocal);
+	double promGlobal= calcularDuracionPromedio(estadisticas->tiempoInicioRedGlobal,estadisticas->tiempoFinRedGlobal);
 
 	printf("Duracion total: %f\n",duracion);
 	printf("Cantidad tareas transformacion %d\n",estadisticas->cantTareas[0]);
@@ -249,14 +388,23 @@ void finalizarJob(){
 	exit(0);
 }
 
-double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin,int etapa){
+double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin){
 	int i;
 	double cont=0;
-	for(i=0;i<estadisticas->cantTareas[etapa];i++){
-		time_t* inicio = list_get(tiemposInicio,i);
-		time_t* fin = list_get(tiemposFin,i);
-		cont = cont + difftime(*fin,*inicio);
+
+	if(list_is_empty(tiemposFin)){
+		return 0;
 	}
-	return cont / estadisticas->cantTareas[i];
+
+	for(i=0;i<list_size(tiemposInicio);i++){
+		tiempoPorBloque* inicio = list_get(tiemposInicio,i);
+		tiempoPorBloque* fin = list_get(tiemposFin,i);
+		if(fin->finalizo){
+			cont = cont + difftime(fin->tiempo,inicio->tiempo);
+		}
+
+	}
+
+	return cont / list_size(tiemposInicio);
 
 }
