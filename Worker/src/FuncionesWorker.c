@@ -130,7 +130,7 @@ void crearScript(char* bufferScript, int etapa) {
 void handlerMaster(int clientSocket) {
 	respuesta paquete;
 	parametrosTransformacion* transformacion;
-	parametrosReduccionLocal* reduccionLocal;
+	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
 	char* destino;
 	char* contenidoScript;
 	char* command;
@@ -164,11 +164,11 @@ void handlerMaster(int clientSocket) {
 		log_trace(logger, "Transformacion realizada correctamente");
 		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);
 		free(transformacion);
-		exit(1);
+		//exit(1);
 		break;
 	case mensajeProcesarRedLocal:
 		reduccionLocal = (parametrosReduccionLocal*)paquete.envio;
-		log_trace(logger, "Iniciando Reduccion Local");
+		log_trace(logger, "Iniciando Reduccion Local %s",reduccionLocal->rutaDestino.cadena);
 		contenidoScript = reduccionLocal->contenidoScript.cadena;
 		listaArchivosTemporales = list_create();
 		listaArchivosTemporales = reduccionLocal->archivosTemporales;
@@ -183,7 +183,8 @@ void handlerMaster(int clientSocket) {
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(clientSocket, mensajeOk, 0, 0);
-		exit(1);
+	//	exit(1);
+		free(reduccionLocal);
 		break;
 	case mensajeProcesarRedGlobal:
 		log_trace(logger, "Iniciando Reduccion Global");

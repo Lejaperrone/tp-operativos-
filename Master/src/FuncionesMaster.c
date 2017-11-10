@@ -41,6 +41,7 @@ void crearHilosPorBloqueTransformacion(workerDesdeYama* worker){
 	int j;
 	for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
 		pthread_t hiloConexion;
+
 		bloquesConSusArchivosTransformacion* bloque = list_get(worker->bloquesConSusArchivos, j);
 		parametrosConexion->bloquesConSusArchivos = *bloque;
 
@@ -125,17 +126,18 @@ void crearHilosPorTmpRedLocal(workerDesdeYama* worker){
 	parametrosConexion->puerto = worker->puerto;
 	parametrosConexion->archivosTemporales = list_create();
 
+
 	pthread_t hiloConexion;
 	for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
 		bloquesConSusArchivosRedLocal* bloque = list_get(worker->bloquesConSusArchivos, j);
 		parametrosConexion->rutaDestino = bloque->archivoReduccion;
-		list_add(parametrosConexion->archivosTemporales,bloque->archivoTransformacion.cadena);
+		list_add(parametrosConexion->archivosTemporales,&bloque->archivoTransformacion);
 	}
-	if (pthread_create(&hiloConexion, NULL, (void *)conectarseConWorkersRedLocal, parametrosConexion) != 0) {
+	if (pthread_create(&hiloConexion, NULL, (void*)conectarseConWorkersRedLocal, parametrosConexion) != 0) {
 		log_error(loggerMaster, "No se pudo crear el thread de conexion");
 		exit(-1);
 	}
-	pthread_join(hiloConexion, NULL);
+	//pthread_join(hiloConexion, NULL);
 
 }
 
@@ -240,12 +242,10 @@ void esperarInstruccionesDeYama() {
 				log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
 				exit(1);
 				break;
-
 			case mensajeReplanificacion:
 				worker= instruccionesYama.envio;
 				crearHilosPorBloqueTransformacion(worker);
 				break;
-
 			case mensajeFinJob:
 				finalizarJob();
 				break;
