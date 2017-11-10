@@ -25,7 +25,6 @@ void crearHilosConexionTransformacion(respuestaSolicitudTransformacion* rtaYama)
 	int i;
 
 	for(i=0 ; i<list_size(rtaYama->workers);i++){
-		estadisticas->cantTareas[TRANSFORMACION]++;
 		workerDesdeYama* worker = list_get(rtaYama->workers, i);
 		crearHilosPorBloqueTransformacion(worker);
 	}
@@ -34,6 +33,7 @@ void crearHilosConexionTransformacion(respuestaSolicitudTransformacion* rtaYama)
 
 void crearHilosPorBloqueTransformacion(workerDesdeYama* worker){
 	setearTiempo(estadisticas->tiempoInicioTrans);
+	estadisticas->cantTareas[TRANSFORMACION]++;
 	parametrosTransformacion* parametrosConexion = malloc(sizeof(parametrosTransformacion));
 
 	parametrosConexion->ip.cadena = worker->ip.cadena;
@@ -69,6 +69,7 @@ void* conectarseConWorkers(void* params) {
 		empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
 		estadisticas->cantFallos++;
 		list_remove(estadisticas->tiempoInicioTrans,0);
+		estadisticas->cantTareas[TRANSFORMACION]--;
 		return 0;
 
 	}
@@ -111,6 +112,7 @@ void* conectarseConWorkers(void* params) {
 			empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
 			estadisticas->cantFallos++;
 			list_remove(estadisticas->tiempoInicioTrans,0);
+			estadisticas->cantTareas[TRANSFORMACION]--;
 			break;
 
 
@@ -256,13 +258,18 @@ void finalizarJob(){
 }
 
 double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin,int etapa){
+	int restantes = list_size(tiemposInicio)-list_size(tiemposFin);
+	printf("%d,%d \n\n",list_size(tiemposInicio),list_size(tiemposFin));
+	printf("%d cuantas tengo \n\n",restantes);
+
 	int i;
 	double cont=0;
-	for(i=0;i<estadisticas->cantTareas[etapa];i++){
+
+	for(i=0;i<restantes;i++){
 		time_t* inicio = list_get(tiemposInicio,i);
 		time_t* fin = list_get(tiemposFin,i);
 		cont = cont + difftime(*fin,*inicio);
 	}
-	return cont / estadisticas->cantTareas[i];
+	return cont / restantes;
 
 }

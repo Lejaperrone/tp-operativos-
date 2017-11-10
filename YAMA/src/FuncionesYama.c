@@ -313,14 +313,16 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 	return matriz;
 }
 
-int nodoConOtraCopia(bloqueAReplanificar* replanificar,bool** matriz,int bloques){
+int nodoConOtraCopia(bloqueAReplanificar* replanificar,bool** matriz,int nodos){
+	matriz[replanificar->workerId][replanificar->bloque]=false;
+
 	int i=0;
-	for(i=0;i<bloques;i++){
+	for(i=0;i<nodos;i++){
 		if(matriz[i][replanificar->bloque] && (replanificar->workerId!= i ) ){
 			return i;
 		}
 	}
-	return i;
+	return -1;
 }
 
 void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques){
@@ -417,6 +419,7 @@ void finalizarJob(job* job,int etapa){
 	actualizarCargasNodos(job->id,etapa);
 	borrarEntradasDeJob(job->id);
 	empaquetar(job->socketFd,mensajeFinJob,0,0);
+	log_trace(logger, "Finalizo job con id:",job->id);
 	pthread_exit(0);
 }
 
@@ -466,7 +469,7 @@ void borrarEntradasDeJob(int jobid){
 
 	pthread_mutex_lock(&mutexTablaEstados);
 	while(list_find(tablaDeEstados,(void*)encontrarEnTablaEstados)){
-		list_remove_by_condition(tablaDeEstados,(void*)borrarEntradasDeJob);
+		list_remove_by_condition(tablaDeEstados,(void*)encontrarEnTablaEstados);
 	}
 	pthread_mutex_unlock(&mutexTablaEstados);
 

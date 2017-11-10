@@ -874,8 +874,6 @@ void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 
 	*tamanio = sizeof(int);
 	void* buffer =malloc(*tamanio);
-	*tamanio += sizeof(int);
-	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, &infoWorker->numero, sizeof(int));
 	desplazamiento += sizeof(int);
 
@@ -893,8 +891,8 @@ void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, infoWorker->ip.cadena, infoWorker->ip.longitud);
 	desplazamiento += infoWorker->ip.longitud;
-	*tamanio += sizeof(int);
 
+	*tamanio += sizeof(int);
 	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, &infoWorker->bloquesConSusArchivos.numBloque, sizeof(int));
 	desplazamiento += sizeof(int);

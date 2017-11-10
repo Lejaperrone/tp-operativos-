@@ -65,7 +65,7 @@ void planificar(job* job){
 			paraReplanificar = (bloqueAReplanificar*) respuestaPlanificacionMaster.envio;
 			log_trace(logger,"Entro a replanificar se desconecto un worker %d", paraReplanificar->workerId);
 
-			replanificar(paraReplanificar,job,respuestaMaster,matrix,bloques);
+			replanificar(paraReplanificar,job,respuestaMaster,matrix,nodos);
 		}
 	}
 
@@ -94,7 +94,6 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 			if(workerDesignado->disponibilidad > 0){
 				modificarCargayDisponibilidad(workerDesignado);
 				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
-				//log_trace(logger,"CLOCK---> w:%i | disp: %i",workerDesignado->numero,workerDesignado->disponibilidad);
 				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
 
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
@@ -114,7 +113,6 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 				modificarCargayDisponibilidad(workerDesignado);
 
 				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
-				//log_trace(logger,"CLOCK---> w:%i | disp: %i",workerDesignado->numero,workerDesignado->disponibilidad);
 				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
 
@@ -339,6 +337,10 @@ void replanificar(bloqueAReplanificar* paraReplanificar,job* jobi,respuestaSolic
 	respuestaAMaster->bloquesConSusArchivos= list_create();
 
 	int nodoNuevo = nodoConOtraCopia(paraReplanificar,matrix,bloques);
+
+	if(nodoNuevo == -1){
+		finalizarJob(jobi,TRANSFORMACION);
+	}
 
 	bool nodoConNumero(workerDesdeYama* worker){
 		return worker->numeroWorker == paraReplanificar->workerId ;
