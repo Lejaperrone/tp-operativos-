@@ -151,10 +151,14 @@ void handlerMaster(int clientSocket) {
 		crearScript(contenidoScript, mensajeProcesarTransformacion);
 		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i",
 				bytesRestantes, numeroBloqueTransformado);
+		char *pathTmp = string_new();
+		char cwd[1024];
+		string_append(&pathTmp, getcwd(cwd, sizeof(cwd)));
+		string_append(&pathTmp, "/tmp");
 		command =
 				string_from_format(
-						"head -c %d < %s | tail -c %d | sh %s | sort > /home/utnso/tp-2017-2c-PEQL/Worker/tmp/%s",
-						offset, config.RUTA_DATABIN, bytesRestantes, "../scripts/transformador.sh", destino);
+						"head -c %d < %s | tail -c %d | sh %s | sort > %s/%s",
+						offset, config.RUTA_DATABIN, bytesRestantes, "../scripts/transformador.sh", pathTmp , destino);
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
 		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);

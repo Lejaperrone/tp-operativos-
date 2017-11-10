@@ -67,7 +67,7 @@ void* conectarseConWorkers(void* params) {
 		bloqueReplanificar->workerId = infoTransformacion->numero;
 		bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
 		empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
-		estadisticas.cantFallos++;
+		estadisticas->cantFallos++;
 		list_remove(estadisticas->tiempoInicioTrans,0);
 		return 0;
 
