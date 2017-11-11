@@ -126,18 +126,22 @@ void crearHilosPorTmpRedLocal(workerDesdeYama* worker){
 	parametrosConexion->puerto = worker->puerto;
 	parametrosConexion->archivosTemporales = list_create();
 
-
 	pthread_t hiloConexion;
 	for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
 		bloquesConSusArchivosRedLocal* bloque = list_get(worker->bloquesConSusArchivos, j);
 		parametrosConexion->rutaDestino = bloque->archivoReduccion;
-		list_add(parametrosConexion->archivosTemporales,&bloque->archivoTransformacion);
+
+		string* ruta = malloc(sizeof(string));
+		ruta->cadena = strdup(bloque->archivoTransformacion.cadena);
+		ruta->longitud = bloque->archivoTransformacion.longitud;
+
+		list_add(parametrosConexion->archivosTemporales,ruta);
 	}
 	if (pthread_create(&hiloConexion, NULL, (void*)conectarseConWorkersRedLocal, parametrosConexion) != 0) {
 		log_error(loggerMaster, "No se pudo crear el thread de conexion");
 		exit(-1);
 	}
-	//pthread_join(hiloConexion, NULL);
+	pthread_join(hiloConexion, NULL);
 
 }
 

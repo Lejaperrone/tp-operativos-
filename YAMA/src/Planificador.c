@@ -418,8 +418,9 @@ void enviarReduccionLocalAMaster(job* job){
 		char* archivoReduccion = dameUnNombreArchivoTemporal(job->id,reg->bloque,RED_LOCAL,worker->numeroWorker);
 
 		bloquesArchivos->numBloque = reg->bloque;
-		bloquesArchivos->archivoTransformacion.longitud = string_length(reg->rutaArchivoTemp);
+
 		bloquesArchivos->archivoTransformacion.cadena = strdup(reg->rutaArchivoTemp);
+		bloquesArchivos->archivoTransformacion.longitud = string_length(reg->rutaArchivoTemp);
 
 		bloquesArchivos->archivoReduccion.longitud = string_length(archivoReduccion);
 		bloquesArchivos->archivoReduccion.cadena = strdup(archivoReduccion);

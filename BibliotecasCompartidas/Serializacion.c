@@ -1057,7 +1057,7 @@ parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio){
 
 	memcpy(&reduccionLocal->numero, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
-
+	printf("NUMERO%d\n",reduccionLocal->numero);
 	memcpy(&reduccionLocal->puerto, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
@@ -1077,9 +1077,11 @@ parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio){
 	for (i = 0; i < longitud; ++i) {
 		string* archivoTemporal = malloc(sizeof(string));
 
+		memcpy(&archivoTemporal->longitud, buffer + desplazamiento, sizeof(int));
+		desplazamiento += sizeof(int);
+		archivoTemporal->cadena = calloc(1,archivoTemporal->longitud+1);
 		memcpy(archivoTemporal->cadena, buffer + desplazamiento, archivoTemporal->longitud);
 		desplazamiento += archivoTemporal->longitud;
-
 		list_add(reduccionLocal->archivosTemporales, archivoTemporal);
 	}
 
@@ -1088,7 +1090,7 @@ parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio){
 
 	reduccionLocal->rutaDestino.cadena = calloc(1,reduccionLocal->rutaDestino.longitud+1);
 	memcpy(reduccionLocal->rutaDestino.cadena, buffer + desplazamiento, reduccionLocal->rutaDestino.longitud);
-	printf("%s",reduccionLocal->contenidoScript.cadena);
+
 	desplazamiento += reduccionLocal->rutaDestino.longitud;
 
 	memcpy(&reduccionLocal->contenidoScript.longitud, buffer + desplazamiento, sizeof(int) );
