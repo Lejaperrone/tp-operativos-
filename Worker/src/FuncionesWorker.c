@@ -131,12 +131,11 @@ void handlerMaster(int clientSocket) {
 	respuesta paquete;
 	parametrosTransformacion* transformacion;
 	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
-	char* destino;
-	char* contenidoScript;
-	char* command;
-	char* rutaArchivoApareado;
-	t_list* listaArchivosTemporales;
-	t_list* archivosAReducir;
+	char* destino, *contenidoScript, *command, *rutaArchivoApareado, *archivoPreReduccion = "preReduccion";
+	t_list* listaArchivosTemporales, *archivosAReducir;
+	char *path = string_new();
+	char cwd[1024];
+	string_append(&path, getcwd(cwd, sizeof(cwd)));
 
 	paquete = desempaquetar(clientSocket);
 	switch (paquete.idMensaje) {
@@ -152,14 +151,11 @@ void handlerMaster(int clientSocket) {
 		crearScript(contenidoScript, mensajeProcesarTransformacion);
 		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i",
 				bytesRestantes, numeroBloqueTransformado);
-		char *pathTmp = string_new();
-		char cwd[1024];
-		string_append(&pathTmp, getcwd(cwd, sizeof(cwd)));
-		string_append(&pathTmp, "/tmp");
+		string_append(&path, "/tmp");
 		command =
 				string_from_format(
 						"head -c %d < %s | tail -c %d | sh %s | sort > %s/%s",
-						offset, config.RUTA_DATABIN, bytesRestantes, "../scripts/transformador.sh", pathTmp , destino);
+						offset, config.RUTA_DATABIN, bytesRestantes, "../scripts/transformador.sh", path , destino);
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
 		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);
@@ -173,13 +169,10 @@ void handlerMaster(int clientSocket) {
 		listaArchivosTemporales = list_create();
 		listaArchivosTemporales = reduccionLocal->archivosTemporales;
 		destino = reduccionLocal->rutaDestino.cadena;
-		rutaArchivoApareado = "/resultadoApareoLocal";
 		crearScript(contenidoScript, mensajeProcesarRedLocal);
-		apareoArchivosLocales(listaArchivosTemporales, rutaArchivoApareado);
-		FILE* archivoTemporalDeReduccionLocal = fopen(destino, "w+");
-		command = string_from_format(" %s | ./%s/reductor.sh > %s ",
-				rutaArchivoApareado, config.RUTA_DATABIN,
-				archivoTemporalDeReduccionLocal);
+		char* aux = string_from_format("%s/tmp/%s", path, archivoPreReduccion); // /home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/preReduccion
+		apareoArchivosLocales(listaArchivosTemporales, aux);
+		command = string_from_format("cat %s | perl %s > %s", aux, string_from_format("../scripts/reductorLocal.pl"), string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(clientSocket, mensajeOk, 0, 0);

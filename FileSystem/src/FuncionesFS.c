@@ -968,7 +968,7 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	strcat(rutaArchivo,"/");
 	strcat(rutaArchivo,rutaDatos.cadena);
 
-	char* rutaPrueba = "../metadata/Archivos/0/hola3.txt";
+	char* rutaPrueba = "../metadata/Archivos/6/WBAN.txt";
 
 	t_config* archivo = config_create(rutaPrueba);
 
