@@ -503,6 +503,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + strlen(tipo) + 2);
 	memset(rutaFinal, 0, strlen(ruta) + strlen(nombre) +  strlen(tipo) + 2);
 
+
 	if (!validarDirectorio(ruta))
 		mkdir(ruta,0777);
 
@@ -668,7 +669,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
-		config_set_value(infoArchivo, "RUTA", rutaFinal);
+		config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombre));
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
@@ -968,7 +969,7 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	strcat(rutaArchivo,"/");
 	strcat(rutaArchivo,rutaDatos.cadena);
 
-	char* rutaPrueba = "../metadata/Archivos/6/WBAN.txt";
+	char* rutaPrueba = "../metadata/Archivos/0/hola3.txt";
 
 	t_config* archivo = config_create(rutaPrueba);
 

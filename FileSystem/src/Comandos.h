@@ -61,4 +61,6 @@ int generarArchivoMD5(char* comando);//md5
 
 int formatearFS();//format
 
+int esRutaDeYama(char* ruta);
+
 #endif /* FILESYSTEM_COMANDOS_H_ */
