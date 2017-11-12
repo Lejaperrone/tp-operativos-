@@ -33,6 +33,9 @@ int sizeBloque;
 int successArchivoCopiado;
 extern int bloquesLibresTotales;
 sem_t sem;
+extern pthread_mutex_t listSemMutex;
+int bla = 0;
+
 
 void establecerServidor(){
 	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
@@ -280,7 +283,7 @@ char* rutaSinArchivo(char* rutaArchivo){
 		++cantidadPartesRuta;
 
 	if (cantidadPartesRuta == 1)
-		return "/";
+		return "yamafs:/";
 
 	memset(nombreInvertido,0,strlen(rutaArchivo)+1);
 	memset(rutaFinal,0,strlen(rutaArchivo)+1);
@@ -297,6 +300,8 @@ char* rutaSinArchivo(char* rutaArchivo){
 	memcpy(rutaFinal, rutaArchivo, strlen(rutaArchivo)-index-1);
 
 	printf("ruta sin archivo %s\n", rutaFinal);
+	if(strcmp(rutaFinal, "yamafs:") == 0)
+		return "yamafs:/";
 
 	//free(rutaFinal);
 	free(currentChar);
@@ -503,6 +508,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + strlen(tipo) + 2);
 	memset(rutaFinal, 0, strlen(ruta) + strlen(nombre) +  strlen(tipo) + 2);
 
+	if(validarArchivo(string_from_format("%s/%s%s", ruta, nombre, tipo))){
+		return 3;
+	}
 
 	if (!validarDirectorio(ruta))
 		mkdir(ruta,0777);
@@ -565,6 +573,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	printf("cant nod %d\n", cantidadNodos);
 
+	bla = cantBloquesArchivo;
+
 	for (i = 0; i < cantBloquesArchivo; ++i){
 		for (j = 0; j < cantidadNodos; ++j){
 			if(pruebaEspacioDisponible[contador] > 0){
@@ -584,11 +594,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	pthread_t nuevoHilo[cantBloquesArchivo*2];
-	int respuestas[cantBloquesArchivo*2];
-
-	for (i = 0; i < cantBloquesArchivo*2; ++i){
-		respuestas[cantBloquesArchivo*2] = -1;
-	}
 
 	for (i = 0; i < cantBloquesArchivo; ++i){	//Primer for: itera por cada bloque que ocupa el archivo //Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
 		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
@@ -621,7 +626,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		else
 			ultimoSize = sizeUltimoNodo;
 
-		for (j = 0; j < numeroCopiasBloque; ++j){
+		for (j = 0; j < numeroCopiasBloque-1; ++j){
 			for (k = 0; k < cantidadNodos; ++k)
 				if(masBloquesLibres[j] ==  indexNodos[k]){
 					nodoAUtilizar = k;
@@ -661,11 +666,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		}
 		if (i < cantBloquesArchivo-1)
 			offset += mb;
-
-	}
-
-	for (i = 0; i < cantBloquesArchivo*2; ++i){
-		pthread_join(nuevoHilo[i], (void**)&respuestas[i]);
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
@@ -674,6 +674,11 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
 	free(rutaFinal);
+	printf("--%d\n",i);
+
+	while(bla > 0){
+
+	}
 
 	return successArchivoCopiado;
 
@@ -682,9 +687,11 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 void* enviarADataNode(void* parametros){
 	 struct parametrosEnvioBloque* params;
 	 params = (struct parametrosEnvioBloque*) parametros;
-	 int success = 1;
-	 sem_t semaforo = *(sem_t*)list_get(pedidosFS,params->sem);
-	 sem_wait(&semaforo);
+	 int success;
+	 pthread_mutex_lock(&listSemMutex);
+	 sem_t* semaforo = (sem_t*)list_get(pedidosFS,params->sem);
+	 pthread_mutex_unlock(&listSemMutex);
+	 sem_wait(semaforo);
 	 char* buff = malloc(params->sizeBloque + 1);
 	 memset(buff,0, params->sizeBloque + 1);
 	 memcpy(buff, params->mapa+params->offset-params->restanteAnterior, params->sizeBloque);
@@ -692,12 +699,16 @@ void* enviarADataNode(void* parametros){
 	 empaquetar(params->socket, mensajeEnvioBloqueANodo, params->sizeBloque,buff);
 	 respuesta res = desempaquetar(params->socket);
 	 memcpy(&success, res.envio, sizeof(int));
+	 printf("params %d %d %d\n", params->offset, params->restanteAnterior, res.idMensaje);
 	 if (success == 0){
 		 successArchivoCopiado = 0;
 	 }
+		// printf("--------%d\n", params->bloque);
 	 free(buff);
-	 sem_post(&semaforo);
-	 pthread_exit(&success);
+	 sem_post(semaforo);
+	 --bla;
+	 printf("%d asda \n", bla);
+	 pthread_exit(NULL);
 }
 
 int bytesACortar(char* mapa, int offset){

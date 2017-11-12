@@ -119,8 +119,12 @@ int copiarArchivoAFs(char* comando){
 	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
 	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
-	if (atoi(buscarRutaArchivo(directorioYamafs)) == -1)
+	char* rutaMetadata = buscarRutaArchivo(directorioYamafs);
+	if (strcmp(rutaMetadata, "-1") == -0)
 		return respuesta;
+
+	if(!validarArchivo(string_from_format("%s/%s", rutaMetadata,ultimaParteDeRuta(rutaArchivoYamafs))))
+		return 1;
 
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	char* nombre = ultimaParteDeRuta(rutaArchivoYamafs);
@@ -128,10 +132,11 @@ int copiarArchivoAFs(char* comando){
 
 	char* rutaFinal = string_from_format("%s/%s", rutaDirFs, nombre);
 
-	FILE* archivo = fopen(rutaFinal, nombre);
+	FILE* archivo = fopen(rutaFinal, "w");
 	fwrite(contenido, strlen(contenido), 1, archivo);
 
 	fclose(archivo);
+	free(contenido);
 	free(rutaFinal);
 	respuesta = 0;
 

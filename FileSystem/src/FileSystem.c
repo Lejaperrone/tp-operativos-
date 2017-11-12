@@ -50,6 +50,7 @@ extern sem_t actualizarNodos;
 int clienteYama;
 int servidorFS;
 pthread_mutex_t logger_mutex;
+pthread_mutex_t listSemMutex;
 int EstadoFS = 0;
 int bloquesLibresTotales = 0;
 
@@ -71,6 +72,7 @@ int main(void) {
 	pedidosFS = list_create();
 
 	pthread_mutex_init(&logger_mutex, NULL);
+	pthread_mutex_init(&listSemMutex, NULL);
 	pthread_t hiloServidorFS, hiloConsolaFS, hiloConexionYama;
 	parametrosServidorHilo parametrosServidorFS;
 	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);

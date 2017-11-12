@@ -75,7 +75,9 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeRespuestaEnvioBloqueANodo:
 		case mensajeNumeroCopiaBloqueANodo:
 			tamanio = sizeof(int);
-			bloque = malloc(tamanio);
+			tamanioS = tamanio;
+			bloque = malloc(tamanio + 1);
+			memset(bloque, 0, tamanio + 1);
 			memcpy(bloque,paquete,tamanio);
 			break;
 
@@ -108,8 +110,8 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 	cabecera.tamanio = tamanio;
 	int desplazamiento =0;
 	int tamanioTotal = 2* sizeof(int) + tamanio;
-    void* buffer = malloc(tamanioTotal);
-
+    void* buffer = malloc(tamanioTotal + 1);
+    memset(buffer, 0, tamanioTotal + 1);
 	memcpy(buffer , &cabecera, sizeof(header));
 	desplazamiento += sizeof(header);
 	memcpy(buffer + desplazamiento, bloque, tamanio);
@@ -136,6 +138,12 @@ respuesta desempaquetar(int socket){
 			case mensajeFalloRedLocal:
 			case mensajeRedLocalCompleta:
 			case mensajeHandshake:
+<<<<<<< HEAD
+=======
+			case mensajeTransformacionCompleta:
+			case mensajeRespuestaEnvioBloqueANodo:
+			case mensajeNumeroCopiaBloqueANodo:
+>>>>>>> espero que fix cpfrom
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);
 				miRespuesta.envio = malloc(sizeof(int));
@@ -186,15 +194,14 @@ respuesta desempaquetar(int socket){
 				miRespuesta.envio = deserializarInformacionNodos(socket, cabecera->tamanio);
 				break;
 
-			case mensajeRespuestaEnvioBloqueANodo:
-			case mensajeNumeroCopiaBloqueANodo:
-				bufferOk = malloc(sizeof(int));
+				/*bufferOk = malloc(sizeof(int) + 1);
+				memset(bufferOk,0, sizeof(int) + 1);
 				recv(socket,bufferOk,sizeof(int),MSG_WAITALL);
 				miRespuesta.envio = malloc(sizeof(int));
 				memset(miRespuesta.envio, 0 , sizeof(int));
 				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
 				free(bufferOk);
-				break;
+				break;*/
 
 			case mensajeEnvioBloqueANodo:
 			case mensajeRespuestaGetBloque:

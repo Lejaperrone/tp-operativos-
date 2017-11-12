@@ -47,6 +47,7 @@ void* levantarServidorFS(){
 		}
 
 		// explorar conexiones existentes en busca de datos que leer
+		if (noSeConectoYama)
 		for(i = 0; i <= maxDatanodes; i++) {
 			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
 				if (i == servidorFS && noSeConectoYama) {
@@ -316,6 +317,11 @@ void* consolaFS(){
 			else if(resultado == 2){
 				pthread_mutex_lock(&logger_mutex);
 				log_error(loggerFS, "No se pudo copiar el archivo, espacio insuficiente");
+				pthread_mutex_unlock(&logger_mutex);
+			}
+			else if(resultado == 3){
+				pthread_mutex_lock(&logger_mutex);
+				log_error(loggerFS, "No se pudo copiar el archivo, ya existe");
 				pthread_mutex_unlock(&logger_mutex);
 			}
 		}
