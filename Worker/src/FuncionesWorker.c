@@ -165,10 +165,10 @@ void handlerMaster(int clientSocket) {
 	case mensajeProcesarRedLocal:
 		reduccionLocal = (parametrosReduccionLocal*)paquete.envio;
 		log_trace(logger, "Iniciando Reduccion Local %s",reduccionLocal->rutaDestino.cadena);
-		contenidoScript = reduccionLocal->contenidoScript.cadena;
+		contenidoScript = strdup(reduccionLocal->contenidoScript.cadena);
 		listaArchivosTemporales = list_create();
-		listaArchivosTemporales = reduccionLocal->archivosTemporales;
-		destino = reduccionLocal->rutaDestino.cadena;
+		list_add_all(listaArchivosTemporales,reduccionLocal->archivosTemporales);
+		destino = strdup(reduccionLocal->rutaDestino.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedLocal);
 		char* aux = string_from_format("%s/tmp/%s", path, archivoPreReduccion); // /home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/preReduccion
 		apareoArchivosLocales(listaArchivosTemporales, aux);
