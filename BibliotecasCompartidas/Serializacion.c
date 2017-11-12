@@ -138,12 +138,8 @@ respuesta desempaquetar(int socket){
 			case mensajeFalloRedLocal:
 			case mensajeRedLocalCompleta:
 			case mensajeHandshake:
-<<<<<<< HEAD
-=======
-			case mensajeTransformacionCompleta:
 			case mensajeRespuestaEnvioBloqueANodo:
 			case mensajeNumeroCopiaBloqueANodo:
->>>>>>> espero que fix cpfrom
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);
 				miRespuesta.envio = malloc(sizeof(int));
