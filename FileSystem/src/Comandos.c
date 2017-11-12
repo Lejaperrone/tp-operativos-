@@ -39,7 +39,15 @@ int copiarArchivo(char* comando){
 	char* dot = ".";
 	char* caracterActual = string_substring(rutaInvertida, indice, 1);
 
-	char* rutaFSMetadata = buscarRutaArchivo(rutaFS);
+	char* rutaMetadata = buscarRutaArchivo(rutaFS);
+	if (strcmp(rutaMetadata, "-1") == 0)
+		return 1;
+
+	printf("%s\n", rutaFS);
+	if (!string_starts_with(rutaFS,"yamafs:/"))
+		return 0;
+
+	char* rutaFSMetadata = buscarRutaArchivo(rutaSinPrefijoYama(rutaFS));
 	if (strcmp(rutaFSMetadata, "-1") == 0){
 		printf("No existe el directorio\n");
 		return 0;
@@ -302,7 +310,7 @@ int eliminarBloque(char* comando){
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
 
-	if (atoi(rutaDirectorioMetadata) == -1)
+	if (strcmp(rutaDirectorioMetadata, "-1") == 0)
 		return respuesta;
 
 	char* rutaArchivoEnMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
@@ -436,10 +444,13 @@ int cambiarNombre(char* comando){
 		++posicion;
 		caracterActual = string_substring(rutaNombreViejoReverse, posicion, 1);
 	}
-
+	char* rutaSinNombre = string_substring(rutaNombreViejo, 0, strlen(rutaNombreViejo) - posicion);
 	char* nombre = string_substring(rutaNombreViejo, strlen(rutaNombreViejo) - posicion, posicion);
-	char* ruta = buscarRutaArchivo(string_substring(rutaNombreViejo, 0, strlen(rutaNombreViejo) - posicion));
 
+	char* ruta = buscarRutaArchivo(rutaSinNombre);
+
+	if(strcmp(ruta, "-1") == 0)
+		return 2;
 
 	rutaNombreViejoReverse = string_substring_from(rutaNombreViejoReverse, longitudNombreOriginal + 1 );
 	rutaNombreViejoReverse = string_reverse(rutaNombreViejoReverse);
@@ -451,37 +462,104 @@ int cambiarNombre(char* comando){
 	memcpy(rutaNuevaDefinitiva + strlen(rutaNombreViejoReverse) + strlen(slash), nombreNuevo, strlen(nombreNuevo) + 1);
 
 	char* nuevo = string_from_format("%s/%s", ruta, nombreNuevo);
+
+	if (!validarArchivo(nuevo))
+		return 0;
+
 	char* nombreViejo = string_from_format("%s/%s", ruta, nombre);
 
+	t_config* c = config_create(nombreViejo);
+	config_set_value(c, "RUTA", string_from_format("%s%s", rutaSinNombre, nombre));
+	config_save_in_file(c, nombreViejo);
+	config_destroy(c);
 
-	if (rename(nombreViejo,nuevo) == 0){
-		free(rutaNombreViejoReverse);
-		free(caracterActual);
-		free(rutaNuevaDefinitiva);
-		free(nuevo);
-		free(nombre);
-		free(nombreViejo);
-		return 0;
-	}else{
-		free(rutaNombreViejoReverse);
-		free(caracterActual);
-		free(rutaNuevaDefinitiva);
-		free(nuevo);
-		free(nombreViejo);
-		free(nombre);
-		return 1;
-	}
+	int resultado = rename(nombreViejo,nuevo);
+
+	free(rutaNombreViejoReverse);
+	free(caracterActual);
+	free(rutaNuevaDefinitiva);
+	free(nuevo);
+	free(nombre);
+	free(nombreViejo);
+	free(rutaSinNombre);
+
+	return resultado;
+}
+
+int esRutaDeYama(char* ruta){
+	return string_starts_with(ruta, "yamafs:/");
 }
 
 int mover(char* comando){
+	char* slash = "/";
+	char* dot = ".";
 
-	char* rutaArchivoVieja = devolverRuta(comando, 1);
-	int success = 1;
+	char** arguments = string_split(comando, " ");
 
-	if (!validarArchivo(rutaArchivoVieja))
-		return success;
+	if(strcmp(arguments[1], "yamafs:/") == 0)
+		return 3;
 
-	success = system(comando);
+	if(!esRutaDeYama(arguments[1]) || !esRutaDeYama(arguments[2]))
+		return 2;
+
+	int indice = 0;
+	char* rutaInvertida = string_reverse(arguments[1]);
+	char* caracterActual = string_substring(rutaInvertida, indice, 1);
+	int tipo = 0; //archivo
+
+	while(strcmp(caracterActual,dot) != 0 && tipo == 0){
+		++indice;
+		caracterActual = string_substring(rutaInvertida, indice, 1);
+		if (strcmp(caracterActual,slash) == 0){
+			tipo = 1; //directorio
+		}
+	}
+
+	int length = 0;
+	if(strcmp(arguments[2], "yamafs:/") != 0){
+		char* rutaInvertidaNuevaDir = string_reverse(arguments[2]);
+		while(strcmp(caracterActual,slash) ){
+			++length;
+			caracterActual = string_substring(rutaInvertidaNuevaDir, length, 1);
+			if (strcmp(caracterActual,dot) == 0){
+				printf("ruta invalida, es un archivo");
+				return 3;
+			}
+		}
+	}
+
+	int success = 0;
+	if(tipo == 1){
+		int indexDir = getIndexDirectorio(rutaSinPrefijoYama(arguments[1]));
+		int indexDirPadre = getIndexDirectorio(rutaSinPrefijoYama(arguments[2]));
+		if (indexDir == -1 || indexDirPadre == -1)
+			return 2;
+		tablaDeDirectorios[indexDir].padre = indexDirPadre;
+		success = 0;
+		guardarTablaDirectorios();
+	}
+	else{
+		char* rutaAnterior;
+		char* rutaNueva = buscarRutaArchivo(arguments[2]);
+		rutaAnterior = buscarRutaArchivo(rutaSinArchivo(arguments[1]));
+		if(strcmp(rutaAnterior, "yamafs:") == 0){
+			rutaAnterior = string_from_format("%s/",rutaAnterior);
+		}
+
+		char** partesRutaAnterior = string_split(arguments[1],"/");
+		int i = 0;
+		while(partesRutaAnterior[i] != NULL)
+			++i;
+		char* nombreArchivo = partesRutaAnterior[i-1];
+		char* rutaFinalAnterior = string_from_format("%s/%s", rutaAnterior, nombreArchivo);
+		if (!validarArchivo(rutaFinalAnterior))
+			return 3;
+		t_config* c = config_create(rutaFinalAnterior);
+		config_set_value(c, "RUTA", string_from_format("%s/%s", arguments[2], nombreArchivo));
+		config_save_in_file(c, rutaFinalAnterior);
+		config_destroy(c);
+		success = system(string_from_format("mv %s %s", rutaFinalAnterior, rutaNueva));
+	}
 
 	return success;
 }
@@ -490,8 +568,9 @@ int generarArchivoMD5(char* comando){
 	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
 	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
-	if (atoi(buscarRutaArchivo(directorioYamafs)) == -1)
+	if (strcmp(buscarRutaArchivo(directorioYamafs), "-1") == 0){
 		return respuesta;
+	}
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 

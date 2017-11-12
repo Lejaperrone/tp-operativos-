@@ -313,7 +313,7 @@ void* consolaFS(){
 				log_error(loggerFS, "No se pudo copiar el archivo");
 				pthread_mutex_unlock(&logger_mutex);
 			}
-			else{
+			else if(resultado == 2){
 				pthread_mutex_lock(&logger_mutex);
 				log_error(loggerFS, "No se pudo copiar el archivo, espacio insuficiente");
 				pthread_mutex_unlock(&logger_mutex);
