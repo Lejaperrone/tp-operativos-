@@ -75,7 +75,7 @@ void inicializarEstructuras();
 
 bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques);
 
-int nodoConOtraCopia(bloqueAReplanificar* replanificar,bool** matriz,int nodos);
+int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos);
 
 void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques);
 
@@ -102,5 +102,9 @@ void eliminarWorker(int id, t_list* listaNodos);
 bool faltanMasTareas(int jobid,Etapa etapa);
 
 void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,Etapa etapa);
+
+bool faltanBloquesTransformacionParaNodo(int jobid,int nodo);
+
+void mostrarTablaDeEstados();
 
 #endif /* FUNCIONESYAMA_H_ */

@@ -80,4 +80,6 @@ void crearHilosPorTmpRedLocal(workerDesdeYama* worker);
 
 void* conectarseConWorkersRedLocal(void* params);
 
+void mandarFalloEnReduccion();
+
 #endif /* FUNCIONESMASTER_H_ */

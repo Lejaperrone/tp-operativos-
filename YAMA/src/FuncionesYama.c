@@ -313,7 +313,7 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 	return matriz;
 }
 
-int nodoConOtraCopia(bloqueAReplanificar* replanificar,bool** matriz,int nodos){
+int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos){
 	matriz[replanificar->workerId][replanificar->bloque]=false;
 
 	int i=0;
@@ -393,7 +393,7 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 
 void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,Etapa etapa){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg ) {
-		return reg->job == jobId && reg->etapa == etapa && reg->estado == EN_EJECUCION;
+		return reg->job == jobId && reg->etapa == etapa && reg->estado == EN_EJECUCION && reg->bloque==bloque;
 	}
 
 	pthread_mutex_lock(&mutexTablaEstados);
@@ -526,11 +526,31 @@ void eliminarWorker(int id, t_list* listaNodos){
 
 
 	pthread_mutex_lock(&mutex_NodosConectados);
-	workerEnGlobal = list_find(nodosConectados, nodoConNumero);
+	workerEnGlobal = list_find(nodosConectados, (void*)nodoConNumero);
 	workerEnGlobal->conectado = false;
 	pthread_mutex_unlock(&mutex_NodosConectados);
 
 	worker = list_find(listaNodos, (void*)nodoConNumero);
 	worker->conectado = false;
 
+}
+
+bool faltanBloquesTransformacionParaNodo(int jobid,int nodo){
+	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
+		return reg->job == jobid && reg->etapa == TRANSFORMACION && reg->estado != FINALIZADO_OK && reg->nodo==nodo;
+	}
+
+	pthread_mutex_lock(&mutexTablaEstados);
+	bool faltanTareas = list_any_satisfy(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
+
+	return faltanTareas;
+}
+
+void mostrarTablaDeEstados(){
+	void iterar(registroTablaEstados* reg){
+			printf("numero %d, bloque %d, etapa %d estado %d, ruta %s \n\n",reg->nodo,reg->bloque,reg->etapa,reg->estado,reg->rutaArchivoTemp);
+		}
+
+		list_iterate(tablaDeEstados,(void*)iterar);
 }

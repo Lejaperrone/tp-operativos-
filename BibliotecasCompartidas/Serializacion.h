@@ -52,7 +52,7 @@
 #define mensajeRespuestaRedLocal 33
 #define mensajeRespuestaRedGlobal 34
 #define mensajeReplanificacion 35
-
+#define mensajeFalloReduccion 36
 
 typedef struct{
 	int idMensaje;
@@ -95,8 +95,8 @@ respuestaReduccionGlobal* deserializarRespuestaRedGlobal(int socket,int tamanio)
 void* serializarProcesarTransformacion(void* paquete, int* tamanio);
 parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tamanio);
 
-void* serializarFalloTransformacion(void* paquete, int* tamanio);
-bloqueAReplanificar* deserializarFalloTransformacion(int socket, int tamanio);
+void* serializarBloqueYNodo(void* paquete, int* tamanio);
+bloqueYNodo* deserializarBloqueYNodo(int socket, int tamanio);
 
 void* serializarReplanificacion(void* paquete, int* tamanio);
 workerDesdeYama* deserializarReplanificacion(int socket, int tamanio);

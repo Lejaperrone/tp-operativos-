@@ -210,10 +210,9 @@ typedef struct{
 } parametrosReduccionLocal;
 
 typedef struct{
-	t_list* bloques;
 	int bloque;
 	int workerId;
-}bloqueAReplanificar;
+}bloqueYNodo;
 
 int redondearHaciaArriba(int num,int num2);
 

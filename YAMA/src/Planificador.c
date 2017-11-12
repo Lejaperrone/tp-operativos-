@@ -44,34 +44,44 @@ void planificar(job* job){
 
 	actualizarCargasNodos(job->id,TRANSFORMACION);
 
-	bool transformacionIncompleta = true;
+	bool redLocalIncompleta= true;
 
-	int numeroBloqueTerminado;
-	bloqueAReplanificar* paraReplanificar;
+	bloqueYNodo* bloqueNodo;
 
-	while(transformacionIncompleta){
+	while(redLocalIncompleta){
 		respuesta respuestaPlanificacionMaster=  desempaquetar(job->socketFd);
 
 		if(respuestaPlanificacionMaster.idMensaje == mensajeTransformacionCompleta){
-			numeroBloqueTerminado = *(int*)respuestaPlanificacionMaster.envio;
-			log_trace(logger,"Finalizada tarea transformacion en bloque %d", numeroBloqueTerminado);
+			bloqueNodo = (bloqueYNodo*) respuestaPlanificacionMaster.envio;
+			log_trace(logger,"Finalizada tarea transformacion en bloque %d", bloqueNodo->bloque);
 
-			agregarBloqueTerminadoATablaEstados(numeroBloqueTerminado,job->id,TRANSFORMACION);
-			transformacionIncompleta = faltanMasTareas(job->id,TRANSFORMACION);
+			agregarBloqueTerminadoATablaEstados(bloqueNodo->bloque,job->id,TRANSFORMACION);
 
+			if(!faltanBloquesTransformacionParaNodo(job->id,bloqueNodo->workerId)){
+				log_trace(logger,"Envio reduccion local de nodo %d", bloqueNodo->workerId);
+				enviarReduccionLocalAMaster(job,bloqueNodo->workerId);
+			}
 
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloTransformacion){
-			paraReplanificar = (bloqueAReplanificar*) respuestaPlanificacionMaster.envio;
-			log_trace(logger,"Entro a replanificar se desconecto un worker %d", paraReplanificar->workerId);
+			bloqueNodo = (bloqueYNodo*) respuestaPlanificacionMaster.envio;
+			log_trace(logger,"Entro a replanificar se desconecto un worker %d", bloqueNodo->workerId);
 
-			replanificar(paraReplanificar,job,respuestaMaster,matrix,nodos);
+			replanificar(bloqueNodo,job,respuestaMaster,matrix,nodos);
+		}
+
+		else if(respuestaPlanificacionMaster.idMensaje == mensajeRedLocalCompleta){
+			bloqueNodo = (bloqueYNodo*) respuestaPlanificacionMaster.envio;
+			log_trace(logger,"Finalizada tarea reduccion nodo %d", bloqueNodo->workerId);
+			agregarBloqueTerminadoATablaEstados(bloqueNodo->bloque,job->id,RED_LOCAL);
+			redLocalIncompleta= faltanMasTareas(job->id,RED_LOCAL);
+		}
+
+		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloReduccion){
+			log_trace(logger,"Fallo en reduccion local del job %d", job->id);
+			finalizarJob(job,RED_LOCAL);
 		}
 	}
-
-	enviarReduccionLocalAMaster(job);
-	actualizarCargasNodos(job->id,RED_LOCAL);
-	esperarRespuestaReduccionDeMaster(job,RED_LOCAL);
 
 	enviarReduccionGlobalAMaster(job);
 	actualizarCargasNodos(job->id,RED_GLOBAL);
@@ -332,7 +342,7 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 
 }
 
-void replanificar(bloqueAReplanificar* paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques){
+void replanificar(bloqueYNodo* paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques){
 	workerDesdeYama* respuestaAMaster = malloc(sizeof(workerDesdeYama));
 	respuestaAMaster->bloquesConSusArchivos= list_create();
 
@@ -378,12 +388,12 @@ void replanificar(bloqueAReplanificar* paraReplanificar,job* jobi,respuestaSolic
 
 }
 
-void enviarReduccionLocalAMaster(job* job){
+void enviarReduccionLocalAMaster(job* job,int nodo){
 	respuestaReduccionLocal* respuestaTodos = malloc(sizeof(respuestaReduccionLocal));
 	respuestaTodos->workers = list_create();
 
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-		return reg->job == job->id && reg->etapa == TRANSFORMACION;
+		return reg->job == job->id && reg->etapa == TRANSFORMACION && reg->nodo==nodo;
 	}
 
 	pthread_mutex_lock(&mutexTablaEstados);

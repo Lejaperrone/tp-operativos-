@@ -56,7 +56,7 @@ void crearHilosPorBloqueTransformacion(workerDesdeYama* worker){
 void* conectarseConWorkersTransformacion(void* params) {
 	parametrosTransformacion* infoTransformacion= (parametrosTransformacion*)params;
 	respuesta confirmacionWorker;
-	int numeroBloque;
+	bloqueYNodo* bloqueOK;
 
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(infoTransformacion->ip.cadena,infoTransformacion->puerto);
@@ -93,9 +93,11 @@ void* conectarseConWorkersTransformacion(void* params) {
 	switch(confirmacionWorker.idMensaje){
 
 		case mensajeTransformacionCompleta:
-			numeroBloque = *(int*)confirmacionWorker.envio;
-			empaquetar(socketYama, mensajeTransformacionCompleta, 0 , &numeroBloque);
-			finalizarTiempo(estadisticas->tiempoFinTrans,numeroBloque);
+			bloqueOK = malloc(sizeof(bloqueYNodo));
+			bloqueOK->workerId = infoTransformacion->numero;
+			bloqueOK->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
+			empaquetar(socketYama, mensajeTransformacionCompleta, 0 , bloqueOK);
+			free(bloqueOK);
 			break;
 
 		case mensajeDesconexion:
@@ -153,7 +155,7 @@ void* conectarseConWorkersRedLocal(void* params){
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(infoRedLocal->ip.cadena,infoRedLocal->puerto);
 	if(!conectarCon(direccion, socketWorker, 2)){//2 id master
-		//mandarAReplanificar(infoRedLocal);
+		mandarFalloEnReduccion();
 		return 0;
 
 	}
@@ -186,11 +188,11 @@ void* conectarseConWorkersRedLocal(void* params){
 
 	case mensajeRedLocalCompleta:
 		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroBloque);
-		//finalizarTiempo(estadisticas->tiempoFinTrans,numeroBloque);
+		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroBloque);
 		break;
 
 	case mensajeDesconexion:
-		//mandarAReplanificar(infoRedLocal);
+		mandarFalloEnReduccion();
 		break;
 
 
@@ -198,13 +200,19 @@ void* conectarseConWorkersRedLocal(void* params){
 	return 0;
 
 }
+
+void mandarFalloEnReduccion(){
+	empaquetar(socketYama,mensajeFalloReduccion,0,0);
+}
+
 void mandarAReplanificar(parametrosTransformacion* infoTransformacion){
-	bloqueAReplanificar* bloqueReplanificar=malloc(sizeof(bloqueAReplanificar));
+	bloqueYNodo* bloqueReplanificar=malloc(sizeof(bloqueYNodo));
 	bloqueReplanificar->workerId = infoTransformacion->numero;
 	bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
 	empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
 	estadisticas->cantFallos++;
 	estadisticas->cantTareas[0]--;
+	free(bloqueReplanificar);
 }
 
 void enviarJobAYama(job* miJob) {

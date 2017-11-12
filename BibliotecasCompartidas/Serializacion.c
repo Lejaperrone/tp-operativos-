@@ -16,15 +16,13 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeNumeroLecturaBloqueANodo:
 		case mensajeSizeLecturaBloqueANodo:
 		case mensajeRedLocalCompleta:
-		case mensajeFalloRedLocal:
-		case mensajeFalloRedGlobal:
 		case mensajeHandshake:
-		case mensajeTransformacionCompleta:
-			tamanio = sizeof(int);
+		tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
 			memcpy(bloque,paquete,sizeof(int));
 			break;
 
+		case mensajeFalloReduccion:
 		case mensajeInfoArchivo:
 		case mensajeDesignarWorker:
 		case mensajeFinJob:
@@ -46,8 +44,9 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			bloque = serializarString(paquete,&tamanio);
 			break;
 
+		case mensajeTransformacionCompleta:
 		case mensajeFalloTransformacion:
-			bloque = serializarFalloTransformacion(paquete, &tamanio);
+			bloque = serializarBloqueYNodo(paquete, &tamanio);
 			break;
 
 		case mensajeProcesarTransformacion:
@@ -135,10 +134,8 @@ respuesta desempaquetar(int socket){
 		switch (miRespuesta.idMensaje) {
 
 			case mensajeFalloRedLocal:
-			case mensajeRedGlobalCompleta:
-			case mensajeFalloRedGlobal:
+			case mensajeRedLocalCompleta:
 			case mensajeHandshake:
-			case mensajeTransformacionCompleta:
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);
 				miRespuesta.envio = malloc(sizeof(int));
@@ -152,10 +149,11 @@ respuesta desempaquetar(int socket){
 				miRespuesta.envio = deserializarString(socket,cabecera->tamanio);
 				break;
 
+			case mensajeRedGlobalCompleta:
 			case mensajeInfoArchivo://todo
 			case mensajeFinJob:
 			case mensajeOk:
-
+			case mensajeFalloReduccion:
 				bufferOk = malloc(sizeof(char));
 				recv(socket,bufferOk,sizeof(char),0);
 				free(bufferOk);
@@ -167,16 +165,19 @@ respuesta desempaquetar(int socket){
 				free(bufferOk);
 				break;
 
+			case mensajeTransformacionCompleta:
 			case mensajeFalloTransformacion:
-				miRespuesta.envio = deserializarFalloTransformacion(socket, cabecera->tamanio);
+				miRespuesta.envio = deserializarBloqueYNodo(socket, cabecera->tamanio);
 				break;
 
 			case mensajeProcesarTransformacion:
 				miRespuesta.envio = deserializarProcesarTransformacion(socket, cabecera->tamanio);
 				break;
+
 			case mensajeProcesarRedLocal:
 				miRespuesta.envio = deserializarProcesarRedLocal(socket, cabecera->tamanio);
 				break;
+
 			case mensajeSolicitudTransformacion:
 				miRespuesta.envio = deserializarJob(socket, cabecera->tamanio);//FIXME
 				break;
@@ -271,24 +272,34 @@ void* serializarJob(void* paquete, int* tamanio){
 	job* unJob = (job*)paquete;
 	int desplazamiento = 0;
 
-	//Estaba -(4*sizeof(int))
-	*tamanio = sizeof(job) -(2*sizeof(int)) + unJob->rutaDatos.longitud + unJob->rutaResultado.longitud;
+	*tamanio = sizeof(int);
 	void* buffer = malloc(*tamanio);
-
 	memcpy(buffer + desplazamiento, &(unJob->id), sizeof(int));
 	desplazamiento += sizeof(int);
 
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, &(unJob->socketFd), sizeof(int));
 	desplazamiento += sizeof(int);
 
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, &(unJob->rutaDatos.longitud), sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, unJob->rutaDatos.cadena, unJob->rutaDatos.longitud+1);
+
+	*tamanio += unJob->rutaDatos.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, unJob->rutaDatos.cadena, unJob->rutaDatos.longitud);
 	desplazamiento += unJob->rutaDatos.longitud;
 
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, &(unJob->rutaResultado.longitud), sizeof(int));
 	desplazamiento += sizeof(int);
-	memcpy(buffer + desplazamiento, unJob->rutaResultado.cadena, unJob->rutaResultado.longitud+1);
+
+	*tamanio += unJob->rutaResultado.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, unJob->rutaResultado.cadena, unJob->rutaResultado.longitud);
 	desplazamiento += unJob->rutaResultado.longitud;
 
 	return buffer;
@@ -983,8 +994,6 @@ void* serializarProcesarRedLocal(void* paquete, int* tamanio){
 
 	*tamanio = sizeof(int);
 	void* buffer =malloc(*tamanio);
-	*tamanio += sizeof(int);
-	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, &reduccionLocal->numero, sizeof(int));
 	desplazamiento += sizeof(int);
 
@@ -1103,9 +1112,8 @@ parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio){
 	return reduccionLocal;
 }
 
-void* serializarFalloTransformacion(void* paquete, int* tamanio){
-	bloqueAReplanificar* replanif = (bloqueAReplanificar*)paquete;
-
+void* serializarBloqueYNodo(void* paquete, int* tamanio){
+	bloqueYNodo* replanif = (bloqueYNodo*)paquete;
 	int desplazamiento = 0;
 
 	*tamanio = sizeof(int);
@@ -1121,11 +1129,11 @@ void* serializarFalloTransformacion(void* paquete, int* tamanio){
 	return buffer;
 }
 
-bloqueAReplanificar* deserializarFalloTransformacion(int socket, int tamanio){
+bloqueYNodo* deserializarBloqueYNodo(int socket, int tamanio){
 	int desplazamiento = 0;
 	void* buffer = malloc(tamanio);
 	recv(socket,buffer,tamanio,0);
-	bloqueAReplanificar* replanif = malloc(sizeof(bloqueAReplanificar));
+	bloqueYNodo* replanif = malloc(sizeof(bloqueYNodo));
 
 	memcpy(&replanif->workerId, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
