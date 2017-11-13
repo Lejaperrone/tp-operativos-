@@ -47,7 +47,6 @@ void* levantarServidorFS(){
 		}
 
 		// explorar conexiones existentes en busca de datos que leer
-		if (noSeConectoYama)
 		for(i = 0; i <= maxDatanodes; i++) {
 			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
 				if (i == servidorFS && noSeConectoYama) {
