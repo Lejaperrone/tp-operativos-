@@ -108,3 +108,5 @@ int borrarDirectorios();
 int borrarArchivosEnMetadata();
 
 int liberarNodosConectados();
+
+int formatearDataBins();

@@ -64,7 +64,13 @@ char* getBloque(int numeroBloque, int sizeBloque) {
 
 int borrarDataBin(){
 
-	return 0;
+	FILE* databin = fopen(config.RUTA_DATABIN,"w+");
+
+	truncate(config.RUTA_DATABIN, config.SIZE_NODO*mb);
+
+	fclose(databin);
+
+	return 1;
 }
 
 void inicializarDataBin(){
@@ -127,6 +133,16 @@ void recibirMensajesFileSystem(int socketFs) {
 		printf("envioooo %d\n", strlen(data));
 		empaquetar(socketFs, mensajeRespuestaGetBloque, strlen(data),data);
 		free(numeroBloque.envio);
+		break;
+
+	case mensajeOk:
+		success = borrarDataBin();
+		if (success == 1){
+			empaquetar(socketFs, mensajeNumeroCopiaBloqueANodo, sizeof(int), &success);
+			break;
+		}
+		success = 0;
+		empaquetar(socketFs, mensajeNumeroCopiaBloqueANodo, sizeof(int), &success);
 		break;
 
 

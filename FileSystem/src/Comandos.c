@@ -633,7 +633,9 @@ int formatearFS(){
 
 	resultado += liberarNodosConectados();
 
-	if (resultado == 3)
+	resultado += formatearDataBins();
+
+	if (resultado == 4)
 		return 0;
 
 	return 1;
