@@ -625,15 +625,23 @@ int informacion(char* comando){
 }
 
 int formatearFS(){
-	int resultado = 0;
+	int resultado = 0, i;
+
+	for (i = 0; i < 10; ++i){
+		printf("%s\n", tablaDeDirectorios[i].nombre);
+	}
 
 	resultado += borrarDirectorios();
 
-	resultado += borrarArchivosEnMetadata();
+	//resultado += borrarArchivosEnMetadata();
 
-	resultado += liberarNodosConectados();
+	//resultado += liberarNodosConectados();
 
-	resultado += formatearDataBins();
+	//resultado += formatearDataBins();
+
+	for (i = 0; i < 10; ++i){
+		printf("%s\n", tablaDeDirectorios[i].nombre);
+	}
 
 	if (resultado == 1)
 		return 0;

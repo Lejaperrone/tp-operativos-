@@ -1096,8 +1096,11 @@ int borrarDirectorios(){
 	for (i = 1; i < 100; ++i){
 		tablaDeDirectorios[i].index = -1;
 		tablaDeDirectorios[i].padre = -1;
+		memset(tablaDeDirectorios[i].nombre,0,255);
 		memcpy(tablaDeDirectorios[i].nombre," ",1);
 	}
+
+	guardarTablaDirectorios();
 
 	return 1;
 }
