@@ -1108,13 +1108,11 @@ int borrarDirectorios(){
 int borrarArchivosEnMetadata(){
 	int respuesta;
 
-	char* rutaMetadata = ".../tp-2017-2c-PEQL/FileSystem/metadata/Archivos";
-
-	char* rmComando = string_from_format("rm -r %s", rutaMetadata);
+	char* rmComando = string_from_format("rm -r %s", rutaArchivos);
 
 	respuesta = system(rmComando);
 
-	char* mkdirComando = string_from_format("mkdir %s", rutaMetadata);
+	char* mkdirComando = string_from_format("mkdir %s", rutaArchivos);
 
 	respuesta = system(mkdirComando);
 
