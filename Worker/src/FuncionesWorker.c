@@ -160,7 +160,7 @@ void handlerMaster(int clientSocket) {
 		log_trace(logger, "Transformacion realizada correctamente");
 		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);
 		free(transformacion);
-		//exit(1);
+		exit(0);
 		break;
 	case mensajeProcesarRedLocal:
 		reduccionLocal = (parametrosReduccionLocal*)paquete.envio;
@@ -176,8 +176,8 @@ void handlerMaster(int clientSocket) {
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(clientSocket, mensajeOk, 0, 0);
-	//	exit(1);
 		free(reduccionLocal);
+		exit(0);
 		break;
 	case mensajeProcesarRedGlobal:
 		log_trace(logger, "Iniciando Reduccion Global");
@@ -194,7 +194,7 @@ void handlerMaster(int clientSocket) {
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion global realizada correctamente");
 		empaquetar(clientSocket, mensajeOk, 0, 0);
-		exit(1);
+		exit(0);
 		break;
 	default:
 		break;
