@@ -135,14 +135,14 @@ void recibirMensajesFileSystem(int socketFs) {
 		free(numeroBloque.envio);
 		break;
 
-	case mensajeOk:
+	case mensajeBorraDataBin:
 		success = borrarDataBin();
 		if (success == 1){
-			empaquetar(socketFs, mensajeNumeroCopiaBloqueANodo, sizeof(int), &success);
+			empaquetar(socketFs, mensajeRespuestaBorraDataBin, sizeof(int), &success);
 			break;
 		}
 		success = 0;
-		empaquetar(socketFs, mensajeNumeroCopiaBloqueANodo, sizeof(int), &success);
+		empaquetar(socketFs, mensajeRespuestaBorraDataBin, sizeof(int), &success);
 		break;
 
 

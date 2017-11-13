@@ -53,6 +53,8 @@
 #define mensajeRespuestaRedGlobal 34
 #define mensajeReplanificacion 35
 #define mensajeFalloReduccion 36
+#define mensajeBorraDataBin 37
+#define mensajeRespuestaBorraDataBin 38
 
 typedef struct{
 	int idMensaje;

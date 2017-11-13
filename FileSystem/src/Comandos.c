@@ -635,7 +635,7 @@ int formatearFS(){
 
 	resultado += formatearDataBins();
 
-	if (resultado == 4)
+	if (resultado == 1)
 		return 0;
 
 	return 1;

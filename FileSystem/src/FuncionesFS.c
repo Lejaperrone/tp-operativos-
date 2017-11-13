@@ -1156,7 +1156,7 @@ int formatearDataBins(){
 
  	for (i = 0; i < cantNodos; ++i){
  		nodo = (informacionNodo*) list_get(nodosConectados,i);
- 		empaquetar(nodo->socket, mensajeOk, 0, 0);
+ 		empaquetar(nodo->socket, mensajeBorraDataBin, 0, 0);
  		res = desempaquetar(nodo->socket);
  		resultado += *(int*) res.envio;
  		printf("Nodo%d formateado\n", nodo->numeroNodo);
