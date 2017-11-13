@@ -573,7 +573,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	printf("cant nod %d\n", cantidadNodos);
 
-	bla = cantBloquesArchivo;
+	bla = cantBloquesArchivo*2;
 
 	for (i = 0; i < cantBloquesArchivo; ++i){
 		for (j = 0; j < cantidadNodos; ++j){
@@ -626,7 +626,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		else
 			ultimoSize = sizeUltimoNodo;
 
-		for (j = 0; j < numeroCopiasBloque-1; ++j){
+		for (j = 0; j < numeroCopiasBloque; ++j){
 			for (k = 0; k < cantidadNodos; ++k)
 				if(masBloquesLibres[j] ==  indexNodos[k]){
 					nodoAUtilizar = k;
