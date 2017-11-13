@@ -132,7 +132,7 @@ void handlerMaster(int clientSocket) {
 	parametrosTransformacion* transformacion;
 	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
 	char* destino, *contenidoScript, *command, *rutaArchivoApareado, *archivoPreReduccion = "preReduccion";
-	t_list* listaArchivosTemporales, *archivosAReducir;
+	t_list* listaArchivosTemporales, *archivosAReducir, *listAux;
 	char *path = string_new();
 	char cwd[1024];
 	string_append(&path, getcwd(cwd, sizeof(cwd)));
@@ -166,11 +166,17 @@ void handlerMaster(int clientSocket) {
 		reduccionLocal = (parametrosReduccionLocal*)paquete.envio;
 		log_trace(logger, "Iniciando Reduccion Local %s",reduccionLocal->rutaDestino.cadena);
 		contenidoScript = strdup(reduccionLocal->contenidoScript.cadena);
+		listAux = list_create();
 		listaArchivosTemporales = list_create();
-		list_add_all(listaArchivosTemporales,reduccionLocal->archivosTemporales);
+		list_add_all(listAux,reduccionLocal->archivosTemporales);
+		void agregarPathAElemento(string* elemento){
+			char* ruta = string_from_format("%s/tmp/%s", path, elemento->cadena);
+			list_add(listaArchivosTemporales, ruta);
+		}
+		list_iterate(listAux, (void*) agregarPathAElemento);
 		destino = strdup(reduccionLocal->rutaDestino.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedLocal);
-		char* aux = string_from_format("%s/tmp/%s", path, archivoPreReduccion); // /home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/preReduccion
+		char* aux = string_from_format("%s/tmp/%s%i", path, archivoPreReduccion); // /home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/preReduccion
 		apareoArchivosLocales(listaArchivosTemporales, aux);
 		command = string_from_format("cat %s | perl %s > %s", aux, string_from_format("../scripts/reductorLocal.pl"), string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
