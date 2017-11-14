@@ -45,7 +45,7 @@ char* rutaSinPrefijoYama(char* ruta);
 
 int verificarEstado();
 
-int bytesACortar(char* mapa, int offset);
+int bytesACortar(char* mapa, int offset, int sizeRestante);
 
 void* leerDeDataNode(void* parametros);
 

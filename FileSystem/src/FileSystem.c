@@ -47,6 +47,7 @@ t_list* bitmapsNodos;
 sem_t pedidoFS;
 t_list* pedidosFS;
 extern sem_t actualizarNodos;
+sem_t pedidoTerminado;
 int clienteYama;
 int servidorFS;
 pthread_mutex_t logger_mutex;
@@ -66,6 +67,7 @@ int main(void) {
 
 	limpiarPantalla();
 	sem_init(&pedidoFS,0,0);
+	sem_init(&pedidoTerminado,0,0);
 	sem_init(&actualizarNodos,1,0);
 	nodosConectados = list_create();
 	bitmapsNodos = list_create();

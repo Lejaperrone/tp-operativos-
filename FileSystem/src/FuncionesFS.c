@@ -33,6 +33,7 @@ int sizeBloque;
 int successArchivoCopiado;
 extern int bloquesLibresTotales;
 sem_t sem;
+extern sem_t pedidoTerminado;
 extern pthread_mutex_t listSemMutex;
 int bla = 0;
 
@@ -642,7 +643,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			params[i+cantBloquesArchivo*j].bloque = bloqueLibre;
 
 			if (i < cantBloquesArchivo-1){
-				 sizeRestante = bytesACortar(params[i+cantBloquesArchivo*j].mapa, offset);
+				if (j == 0)
+				 sizeRestante = bytesACortar(params[i].mapa, offset, sizeRestante);
 				 params[i+cantBloquesArchivo*j].sizeBloque = mb -sizeRestante;
 				 totalRestante += sizeRestante;
 			 }
@@ -674,11 +676,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
 	free(rutaFinal);
-	printf("--%d\n",i);
 
-	while(bla > 0){
-
-	}
+	for (i = 0; i < cantBloquesArchivo * 2; ++i)
+		sem_wait(&pedidoTerminado);
 
 	return successArchivoCopiado;
 
@@ -703,19 +703,17 @@ void* enviarADataNode(void* parametros){
 	 if (success == 0){
 		 successArchivoCopiado = 0;
 	 }
-		// printf("--------%d\n", params->bloque);
 	 free(buff);
 	 sem_post(semaforo);
-	 --bla;
-	 printf("%d asda \n", bla);
+	 sem_post(&pedidoTerminado);
 	 pthread_exit(NULL);
 }
 
-int bytesACortar(char* mapa, int offset){
+int bytesACortar(char* mapa, int offset, int sizeRestante){
 	int index = 0;
 	char* bloque = malloc(mb + 1);
 	memset(bloque,0, mb+1);
-	memcpy(bloque,mapa+offset,mb);
+	memcpy(bloque,mapa+offset-sizeRestante,mb);
 	char* mapaInvertido = string_reverse(bloque);
 	char currentChar;
 	memcpy(&currentChar,mapaInvertido,1);
