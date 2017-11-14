@@ -37,6 +37,8 @@ extern char* rutaBitmaps;
 pthread_mutex_t logger_mutex;
 extern int EstadoFS;
 
+void verificarEstadoAnterior();
+
 int validarArchivoYamaFS(char* ruta);
 
 void inicializarTablaDirectorios();

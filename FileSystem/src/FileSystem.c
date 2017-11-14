@@ -54,6 +54,7 @@ pthread_mutex_t logger_mutex;
 pthread_mutex_t listSemMutex;
 int EstadoFS = 0;
 int bloquesLibresTotales = 0;
+bool recuperarEstado = 0;
 
 struct configuracionFileSystem config;
 
@@ -84,7 +85,12 @@ int main(int argc, char *argv[]) {
 
 	parametrosServidorFS.cliente = clienteYama;
 
-	inicializarTablaDirectorios();
+	verificarEstadoAnterior();
+
+	if (recuperarEstado == 1)
+		inicializarTablaDirectorios();
+	else
+		formatearFS();
 
 	servidorFS = crearSocket();
 

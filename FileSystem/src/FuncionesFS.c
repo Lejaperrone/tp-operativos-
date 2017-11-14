@@ -25,6 +25,7 @@
 #include <math.h>
 
 char* pathArchivoDirectorios = "../metadata/Directorios.dat";
+char* pathArchivoNodos = "../metadata/Nodos.bin";
 struct sockaddr_in direccionCliente;
 unsigned int tamanioDireccion = sizeof(direccionCliente);
 int servidorFS;
@@ -36,6 +37,7 @@ sem_t sem;
 extern sem_t pedidoTerminado;
 extern pthread_mutex_t listSemMutex;
 int bla = 0;
+extern bool recuperarEstado;
 
 
 void establecerServidor(char* ip, int port){
@@ -131,6 +133,7 @@ int verificarEstado(){
 			}
 			free(pathDir);
 		}
+	actualizarArchivoNodos();
 	return 1;
 }
 
@@ -1103,7 +1106,7 @@ int borrarDirectorios(){
 int borrarArchivosEnMetadata(){
 	int respuesta;
 
-	char* rutaMetadata = ".../tp-2017-2c-PEQL/FileSystem/metadata/Archivos";
+	char* rutaMetadata = "../metadata/Archivos";
 
 	char* rmComando = string_from_format("rm -r %s", rutaMetadata);
 
@@ -1120,29 +1123,39 @@ int borrarArchivosEnMetadata(){
 }
 
 int liberarNodosConectados(){
+	char* rutaMetadataBitmaps = "../metadata/Bitmaps";
 	int cantNodosConectados = list_size(nodosConectados);
 	int i, k;
 	int cantBloquesOcupados, numeroNodo;
 	informacionNodo nodo;
 	int* bloquesOcupados;
+	int respuesta = 1;
 
+	if (cantNodosConectados > 0){
+		for (i = 0; i < cantNodosConectados; ++i){
+			nodo = *(informacionNodo*) list_get(nodosConectados, i);
+			cantBloquesOcupados = nodo.bloquesOcupados;
+			numeroNodo = nodo.numeroNodo;
+			bloquesOcupados = arrayBloquesOcupados(nodo);
 
+			for (k = 0; k < cantBloquesOcupados; ++k){
+				setearBloqueLibreEnBitmap(numeroNodo, bloquesOcupados[k]);
+			}
 
-	for (i = 0; i < cantNodosConectados; ++i){
-		nodo = *(informacionNodo*) list_get(nodosConectados, i);
-		cantBloquesOcupados = nodo.bloquesOcupados;
-		numeroNodo = nodo.numeroNodo;
-		bloquesOcupados = arrayBloquesOcupados(nodo);
-
-		for (k = 0; k < cantBloquesOcupados; ++k){
-			setearBloqueLibreEnBitmap(numeroNodo, bloquesOcupados[k]);
 		}
-
+		actualizarBitmapNodos();
 	}
-	free(bloquesOcupados);
-	actualizarBitmapNodos();
+	else{
+		char* rmComando = string_from_format("rm -r %s", rutaMetadataBitmaps);
 
-	return 1;
+		respuesta = system(rmComando);
+
+		char* mkdirComando = string_from_format("mkdir %s", rutaMetadataBitmaps);
+
+		respuesta = system(mkdirComando);
+	}
+
+	return respuesta;
 }
 
 int formatearDataBins(){
