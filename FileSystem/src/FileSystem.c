@@ -25,7 +25,6 @@
 #include "FuncionesFS.h"
 #include <pthread.h>
 #include <sys/types.h>
-
 #include "FuncionesHilosFs.h"
 
 #define cantDataNodes 10
@@ -70,6 +69,12 @@ int main(int argc, char *argv[]) {
 
 	limpiarPantalla();
 	cargarConfiguracionFileSystem(&config,argv[1]);
+
+	if (argv[2] != NULL)
+		if (strcmp(argv[2],"--clean") == 0 && validarArchivo("../metadata/Nodos.bin")){
+			system("rm ../metadata/Nodos.bin");
+		}
+
 	sem_init(&pedidoFS,0,0);
 	sem_init(&pedidoTerminado,0,0);
 	sem_init(&actualizarNodos,1,0);

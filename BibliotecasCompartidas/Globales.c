@@ -26,10 +26,8 @@ int redondearHaciaArriba(int num,int num2){
 
 bool validarArchivo(char* path) {
 	if (access(path, R_OK) == -1) {
-		printf("No existe el archivo %s en el FileSystem\n", path);
 		return 0;
 	} else {
-		printf("Existe el archivo %s en el FileSystem\n", path);
 		return 1;
 	}
 }

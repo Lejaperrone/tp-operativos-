@@ -48,6 +48,9 @@ void establecerServidor(char* ip, int port){
 	asociarSocketA(direccionServidor, servidorFS);
 }
 
+void verificarEstadoAnterior(){
+	recuperarEstado = validarArchivo(pathArchivoNodos);
+}
 int verificarEstado(){
     DIR* directorio;
 	struct dirent* in_file;
@@ -1099,6 +1102,9 @@ int borrarDirectorios(){
 		tablaDeDirectorios[i].padre = -1;
 		memcpy(tablaDeDirectorios[i].nombre," ",1);
 	}
+
+	if(validarArchivo("../metadata/Directorios.dat"))
+		system("rm ../metadata/Directorios.dat");
 
 	return 1;
 }
