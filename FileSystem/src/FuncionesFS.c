@@ -236,6 +236,7 @@ char* buscarRutaArchivo(char* ruta){
 	int indexDirectorio = getIndexDirectorio(ruta);
 	if (indexDirectorio == -1)
 		return "-1";
+	printf("%s\n", ruta);
 	char* numeroIndexString = string_itoa(indexDirectorio);
 	char* rutaGenerada = calloc(1,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memset(rutaGenerada,0,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
@@ -671,7 +672,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
-		config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombre));
+		config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombre));
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
