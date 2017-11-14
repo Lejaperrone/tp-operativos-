@@ -28,7 +28,7 @@
 #define mensajeInformacionNodo 8
 #define mensajeProcesarTransformacion 10
 #define mensajeProcesarRedLocal 11
-#define mensajeProcesarRedGlobal 12
+#define mensajeDesignarEncargado 12
 #define mensajeProcesarAlmFinal 13
 #define mensajeDesignarWorker 14
 #define mensajeInfoArchivo 15

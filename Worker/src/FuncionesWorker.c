@@ -113,7 +113,7 @@ void crearScript(char* bufferScript, int etapa) {
 		nombreArchivo = "transformador.sh";
 	else if (etapa == mensajeProcesarRedLocal)
 		nombreArchivo = "reductorLocal.pl";
-	else if (etapa == mensajeProcesarRedGlobal)
+	else if (etapa == mensajeDesignarEncargado)
 		nombreArchivo = "reductorGlobal.pl";
 
 	char* ruta = string_from_format("../scripts/%s", nombreArchivo);
@@ -185,21 +185,10 @@ void handlerMaster(int clientSocket) {
 		free(reduccionLocal);
 		exit(0);
 		break;
-	case mensajeProcesarRedGlobal:
-		log_trace(logger, "Iniciando Reduccion Global");
-		contenidoScript = "contenidoScript reductorGlobal";
-		rutaArchivoApareado = "/resultadoApareoGlobal";
-		destino = "/tmp/resultado";
-		crearScript(contenidoScript, mensajeProcesarRedGlobal);
-		archivosAReducir = crearListaParaReducir();
-		apareoArchivosLocales(archivosAReducir, rutaArchivoApareado);
-		FILE* archivoTemporalDeReduccionGlobal = fopen(destino, "w+");
-		command = string_from_format("%s | ./%s/reductorGlobal.sh > %s",
-				rutaArchivoApareado, config.RUTA_DATABIN,
-				archivoTemporalDeReduccionGlobal);
-		ejecutarComando(command, clientSocket);
-		log_trace(logger, "Reduccion global realizada correctamente");
-		empaquetar(clientSocket, mensajeOk, 0, 0);
+	case mensajeDesignarEncargado:
+		log_trace(logger, "Soy el Worker encargado");
+		//Recibir lista con informacion de workers a conectarme
+		//Conectarme con los demas workers y pedirle el archivo a aparear
 		exit(0);
 		break;
 	default:

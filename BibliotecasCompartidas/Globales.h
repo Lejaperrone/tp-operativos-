@@ -210,6 +210,16 @@ typedef struct{
 } parametrosReduccionLocal;
 
 typedef struct{
+	int puerto;
+	string ip;
+} infoWorker;
+
+typedef struct{
+	t_list* infoWorkers; //Lista de infoWorker
+	string contenidoScript; //Contenido del script reductor
+} parametrosReduccionGlobal;
+
+typedef struct{
 	int bloque;
 	int workerId;
 }bloqueYNodo;
