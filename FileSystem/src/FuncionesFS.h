@@ -85,7 +85,7 @@ void* enviarADataNode(void* parametros);
 
 informacionNodo* informacionNodosConectados();
 
-void establecerServidor();
+void establecerServidor(char* ip, int port);
 
 int recibirConexionYama();
 

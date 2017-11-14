@@ -55,7 +55,9 @@ pthread_mutex_t listSemMutex;
 int EstadoFS = 0;
 int bloquesLibresTotales = 0;
 
-int main(void) {
+struct configuracionFileSystem config;
+
+int main(int argc, char *argv[]) {
 
 	printf("Ronan deja de robar aditions\n\n\n\n\n");
 
@@ -66,6 +68,7 @@ int main(void) {
 
 
 	limpiarPantalla();
+	cargarConfiguracionFileSystem(&config,argv[1]);
 	sem_init(&pedidoFS,0,0);
 	sem_init(&pedidoTerminado,0,0);
 	sem_init(&actualizarNodos,1,0);
@@ -85,7 +88,7 @@ int main(void) {
 
 	servidorFS = crearSocket();
 
-	establecerServidor(servidorFS);
+	establecerServidor(config.IP_FILESYSTEM, config.PUERTO_FS);
 
 	parametrosServidorFS.servidor = servidorFS;
 

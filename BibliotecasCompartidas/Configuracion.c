@@ -115,6 +115,22 @@ void cargarConfiguracionNodo(struct configuracionNodo *config,char* rutaAConfig)
 	}
 }
 
+void cargarConfiguracionFileSystem(struct configuracionFileSystem *config,char* rutaAConfig){
+	char* pathArchConfig = obtenerRutaRealConfiguracion(rutaAConfig);
+
+	t_config* configFS = config_create(pathArchConfig);
+
+	if (config_has_property(configFS, "IP_FILESYSTEM")){
+		config->IP_FILESYSTEM= config_get_string_value(configFS,"IP_FILESYSTEM");
+		printf("La IP del FileSystem es %s \n",config->IP_FILESYSTEM);
+	}
+
+	if (config_has_property(configFS, "PUERTO_FILESYSTEM")){
+		config->PUERTO_FS= config_get_int_value(configFS,"PUERTO_FILESYSTEM");
+		printf("El puerto del FileSystem es: %d \n",config->PUERTO_FS);
+	}
+}
+
 char* obtenerRutaRealConfiguracion(char* rutaAConfig){
 	char cwd [1024];    // Variable donde voy a guardar el path absoluto hasta el /Debug
 	char* pathArchConfig = string_from_format("%s/%s", getcwd(cwd, sizeof(cwd)), rutaAConfig); // String que va a tener el path absoluto para pasarle al config_create

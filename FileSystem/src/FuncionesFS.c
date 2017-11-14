@@ -38,8 +38,8 @@ extern pthread_mutex_t listSemMutex;
 int bla = 0;
 
 
-void establecerServidor(){
-	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
+void establecerServidor(char* ip, int port){
+	struct sockaddr_in direccionServidor = cargarDireccion(ip, port);
 	int activado = 1;
 	setsockopt(servidorFS, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
 
