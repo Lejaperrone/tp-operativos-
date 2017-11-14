@@ -975,13 +975,12 @@ informacionNodo* informacionNodosConectados(){
 informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	informacionArchivoFsYama info;
 	info.informacionBloques = list_create();
-	char* rutaArchivo = buscarRutaArchivo(rutaDatos.cadena);
-	strcat(rutaArchivo,"/");
-	strcat(rutaArchivo,rutaDatos.cadena);
 
-	char* rutaPrueba = "../metadata/Archivos/0/hola3.txt";
+	char* directorio = rutaSinArchivo(rutaDatos.cadena);
+	char* rutaArchivo = buscarRutaArchivo(directorio);
+	char* rutaMetadata = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivo), ultimaParteDeRuta(rutaDatos.cadena));
 
-	t_config* archivo = config_create(rutaPrueba);
+	t_config* archivo = config_create(rutaMetadata);
 
 	info.tamanioTotal = config_get_int_value(archivo,"TAMANIO");
 
