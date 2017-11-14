@@ -212,6 +212,7 @@ typedef struct{
 typedef struct{
 	int puerto;
 	string ip;
+	string nombreArchivoReducido;
 } infoWorker;
 
 typedef struct{
