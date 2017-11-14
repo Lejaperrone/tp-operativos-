@@ -388,7 +388,6 @@ int crearDirectorio(char* comando){
 
 	if (respuesta == -1){
 		rutaPadre = rutaSinArchivo(path);
-		printf("ruta padre %s\n", rutaPadre);
 		indexPadre = getIndexDirectorio(rutaSinPrefijoYama(rutaPadre));
 		if (indexPadre == -1){
 			printf("no existe ruta padre %d\n", respuesta);

@@ -76,10 +76,13 @@ void* levantarServidorFS(){
 								memcpy(paqueteInfoNodo.envio, &info, sizeof(informacionNodo));
 								list_add(nodosConectados,paqueteInfoNodo.envio);
 								cantidadNodos = list_size(nodosConectados);
-								actualizarArchivoNodos();
+								if (EstadoFS == 1)
+									actualizarArchivoNodos();
 								sem_t semaforo;
 								sem_init(&semaforo,1,1);
 								list_add(pedidosFS, &semaforo);
+								EstadoFS = verificarEstado();
+								printf("estado fs %d\n", EstadoFS);
 							}
 							else{
 								pthread_mutex_lock(&logger_mutex);
