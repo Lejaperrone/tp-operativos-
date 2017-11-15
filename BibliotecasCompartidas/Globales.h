@@ -93,12 +93,13 @@ typedef struct respuestaReduccionGlobal{
 typedef struct {
 	int puerto;
 	string ip;
-	string archivo;
+	string nombreArchivoReducido;
 }infoWorker;
 
 typedef struct{
 	t_list* infoWorkers;
 	string contenidoScript;
+	string archivoTemporal;
 }parametrosReduccionGlobal;
 
 typedef struct {

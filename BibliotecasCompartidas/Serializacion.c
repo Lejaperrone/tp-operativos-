@@ -17,7 +17,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeSizeLecturaBloqueANodo:
 		case mensajeRedLocalCompleta:
 		case mensajeHandshake:
-		tamanio = sizeof(int);
+			tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
 			memcpy(bloque,paquete,sizeof(int));
 			break;
@@ -26,6 +26,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeInfoArchivo:
 		case mensajeDesignarWorker:
 		case mensajeFinJob:
+		case mensajeBorraDataBin:
 		case mensajeOk:
 			tamanio =1;
 			bloque = malloc(1);
@@ -40,6 +41,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			memcpy(bloque,&b,1);
 			break;
 
+		case mensajeSolicitudArchivo:
 		case mensajeArchivo:
 			bloque = serializarString(paquete,&tamanio);
 			break;
@@ -77,6 +79,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeRespuestaEnvioBloqueANodo:
+		case mensajeRespuestaBorraDataBin:
 		case mensajeNumeroCopiaBloqueANodo:
 			tamanio = sizeof(int);
 			tamanioS = tamanio;
@@ -143,8 +146,8 @@ respuesta desempaquetar(int socket){
 			case mensajeRedLocalCompleta:
 			case mensajeHandshake:
 			case mensajeRespuestaEnvioBloqueANodo:
+			case mensajeRespuestaBorraDataBin:
 			case mensajeNumeroCopiaBloqueANodo:
-
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);
 				miRespuesta.envio = malloc(sizeof(int));
@@ -152,6 +155,7 @@ respuesta desempaquetar(int socket){
 				free(bufferOk);
 				break;
 
+			case mensajeSolicitudArchivo:
 			case mensajeNumeroLecturaBloqueANodo:
 			case mensajeSizeLecturaBloqueANodo:
 			case mensajeArchivo:
@@ -161,6 +165,7 @@ respuesta desempaquetar(int socket){
 			case mensajeRedGlobalCompleta:
 			case mensajeInfoArchivo://todo
 			case mensajeFinJob:
+			case mensajeBorraDataBin:
 			case mensajeOk:
 			case mensajeFalloReduccion:
 				bufferOk = malloc(sizeof(char));
@@ -198,15 +203,6 @@ respuesta desempaquetar(int socket){
 			case mensajeInformacionNodo:
 				miRespuesta.envio = deserializarInformacionNodos(socket, cabecera->tamanio);
 				break;
-
-				/*bufferOk = malloc(sizeof(int) + 1);
-				memset(bufferOk,0, sizeof(int) + 1);
-				recv(socket,bufferOk,sizeof(int),MSG_WAITALL);
-				miRespuesta.envio = malloc(sizeof(int));
-				memset(miRespuesta.envio, 0 , sizeof(int));
-				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
-				free(bufferOk);
-				break;*/
 
 			case mensajeEnvioBloqueANodo:
 			case mensajeRespuestaGetBloque:
@@ -1212,13 +1208,13 @@ void* serializarRespuestaRedGlobal(void* paquete,int* tamanio){
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &info->archivo.longitud, sizeof(int));
+		memcpy(buffer + desplazamiento, &info->nombreArchivoReducido.longitud, sizeof(int));
 		desplazamiento += sizeof(int);
 
-		*tamanio += info->archivo.longitud;
+		*tamanio += info->nombreArchivoReducido.longitud;
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, info->archivo.cadena, info->archivo.longitud);
-		desplazamiento += info->archivo.longitud;
+		memcpy(buffer + desplazamiento, info->nombreArchivoReducido.cadena, info->nombreArchivoReducido.longitud);
+		desplazamiento += info->nombreArchivoReducido.longitud;
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
@@ -1276,12 +1272,12 @@ respuestaReduccionGlobal* deserializarRespuestaRedGlobal(int socket,int tamanio)
 		memcpy(&info->puerto, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
-		memcpy(&info->archivo.longitud, buffer + desplazamiento, sizeof(int) );
+		memcpy(&info->nombreArchivoReducido.longitud, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
-		info->archivo.cadena = calloc(1,info->archivo.longitud+1);
-		memcpy(info->archivo.cadena, buffer + desplazamiento, info->archivo.longitud);
-		desplazamiento += info->archivo.longitud;
+		info->nombreArchivoReducido.cadena = calloc(1,info->nombreArchivoReducido.longitud+1);
+		memcpy(info->nombreArchivoReducido.cadena, buffer + desplazamiento, info->nombreArchivoReducido.longitud);
+		desplazamiento += info->nombreArchivoReducido.longitud;
 
 		memcpy(&info->ip.longitud, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
@@ -1439,13 +1435,13 @@ void* serializarProcesarRedGlobal(void* paquete, int* tamanio){
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &info->archivo.longitud, sizeof(int));
+		memcpy(buffer + desplazamiento, &info->nombreArchivoReducido.longitud, sizeof(int));
 		desplazamiento += sizeof(int);
 
-		*tamanio += info->archivo.longitud;
+		*tamanio += info->nombreArchivoReducido.longitud;
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, info->archivo.cadena, info->archivo.longitud);
-		desplazamiento += info->archivo.longitud;
+		memcpy(buffer + desplazamiento, info->nombreArchivoReducido.cadena, info->nombreArchivoReducido.longitud);
+		desplazamiento += info->nombreArchivoReducido.longitud;
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
@@ -1486,12 +1482,12 @@ parametrosReduccionGlobal* deserializarProcesarRedGlobal(int socket, int tamanio
 		memcpy(&info->puerto, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
-		memcpy(&info->archivo.longitud, buffer + desplazamiento, sizeof(int) );
+		memcpy(&info->nombreArchivoReducido.longitud, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
-		info->archivo.cadena = calloc(1,info->archivo.longitud+1);
-		memcpy(info->archivo.cadena, buffer + desplazamiento, info->archivo.longitud);
-		desplazamiento += info->archivo.longitud;
+		info->nombreArchivoReducido.cadena = calloc(1,info->nombreArchivoReducido.longitud+1);
+		memcpy(info->nombreArchivoReducido.cadena, buffer + desplazamiento, info->nombreArchivoReducido.longitud);
+		desplazamiento += info->nombreArchivoReducido.longitud;
 
 		memcpy(&info->ip.longitud, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);

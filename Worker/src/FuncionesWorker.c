@@ -113,7 +113,7 @@ void crearScript(char* bufferScript, int etapa) {
 		nombreArchivo = "transformador.sh";
 	else if (etapa == mensajeProcesarRedLocal)
 		nombreArchivo = "reductorLocal.pl";
-	else if (etapa == mensajeProcesarRedGlobal)
+	else if (etapa == mensajeDesignarEncargado)
 		nombreArchivo = "reductorGlobal.pl";
 
 	char* ruta = string_from_format("../scripts/%s", nombreArchivo);
@@ -131,11 +131,9 @@ void handlerMaster(int clientSocket) {
 	respuesta paquete;
 	parametrosTransformacion* transformacion;
 	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
-	char* destino, *contenidoScript, *command, *rutaArchivoApareado, *archivoPreReduccion = "preReduccion";
-	t_list* listaArchivosTemporales, *archivosAReducir;
-	char *path = string_new();
-	char cwd[1024];
-	string_append(&path, getcwd(cwd, sizeof(cwd)));
+	char* destino, *contenidoScript, *command, *rutaArchivoApareado, *archivoFinal, *archivoPreReduccion = "preReduccion";
+	t_list* listaArchivosTemporales, *archivosAReducir, *listAux, *listaWorkers;
+	char* path = obtenerPathActual();
 
 	paquete = desempaquetar(clientSocket);
 	switch (paquete.idMensaje) {
@@ -160,49 +158,103 @@ void handlerMaster(int clientSocket) {
 		log_trace(logger, "Transformacion realizada correctamente");
 		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);
 		free(transformacion);
-		//exit(1);
+		exit(0);
 		break;
 	case mensajeProcesarRedLocal:
 		reduccionLocal = (parametrosReduccionLocal*)paquete.envio;
 		log_trace(logger, "Iniciando Reduccion Local %s",reduccionLocal->rutaDestino.cadena);
 		contenidoScript = strdup(reduccionLocal->contenidoScript.cadena);
+		listAux = list_create();
 		listaArchivosTemporales = list_create();
-		list_add_all(listaArchivosTemporales,reduccionLocal->archivosTemporales);
+		list_add_all(listAux,reduccionLocal->archivosTemporales);
+		void agregarPathAElemento(string* elemento){
+			char* ruta = string_from_format("%s/tmp/%s", path, elemento->cadena);
+			list_add(listaArchivosTemporales, ruta);
+		}
+		list_iterate(listAux, (void*) agregarPathAElemento);
 		destino = strdup(reduccionLocal->rutaDestino.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedLocal);
-		char* aux = string_from_format("%s/tmp/%s", path, archivoPreReduccion); // /home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/preReduccion
+		char* aux = string_from_format("%s/tmp/%s%i", path, archivoPreReduccion); // /home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/preReduccion
 		apareoArchivosLocales(listaArchivosTemporales, aux);
 		command = string_from_format("cat %s | perl %s > %s", aux, string_from_format("../scripts/reductorLocal.pl"), string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(clientSocket, mensajeOk, 0, 0);
-	//	exit(1);
 		free(reduccionLocal);
+		exit(0);
 		break;
-	case mensajeProcesarRedGlobal:
-		log_trace(logger, "Iniciando Reduccion Global");
-		contenidoScript = "contenidoScript reductorGlobal";
-		rutaArchivoApareado = "/resultadoApareoGlobal";
-		destino = "/tmp/resultado";
-		crearScript(contenidoScript, mensajeProcesarRedGlobal);
-		archivosAReducir = crearListaParaReducir();
-		apareoArchivosLocales(archivosAReducir, rutaArchivoApareado);
-		FILE* archivoTemporalDeReduccionGlobal = fopen(destino, "w+");
-		command = string_from_format("%s | ./%s/reductorGlobal.sh > %s",
-				rutaArchivoApareado, config.RUTA_DATABIN,
-				archivoTemporalDeReduccionGlobal);
-		ejecutarComando(command, clientSocket);
-		log_trace(logger, "Reduccion global realizada correctamente");
-		empaquetar(clientSocket, mensajeOk, 0, 0);
-		exit(1);
+	case mensajeDesignarEncargado:
+		log_trace(logger, "Soy el Worker Encargado");
+		listaWorkers = list_create();
+		archivoFinal = crearRutaArchivoAReducir(listaWorkers);
+		//Ejecutarle la reduccion a archivoFinal
+		//Enviar ok a Master
+		exit(0);
 		break;
 	default:
 		break;
 	}
 }
 
-void handlerWorker() {
+char* obtenerPathActual(){
+	char *path = string_new();
+	char cwd[1024];
+	string_append(&path, getcwd(cwd, sizeof(cwd)));
+	return path;
+}
 
+char* crearRutaArchivoAReducir(t_list* listaWorkers) {
+	log_trace(logger, "Creando ruta de archivo final a reducir");
+	t_list* archivosAReducir = list_create();
+	t_list* socketsAWorker = list_create();
+	int socket;
+	char* rutaArchivoAReducir;
+	char* path = obtenerPathActual();
+
+	log_trace(logger, "Cantidad de Workers a conectar:%i", list_size(listaWorkers));
+	rutaArchivoAReducir = string_from_format("%s/%s", path, "ArchivoAReducir");
+	int i;
+	for (i = 0; i < list_size(listaWorkers); i++) {
+		infoWorker* worker = list_get(listaWorkers, i);
+		if (!string_equals_ignore_case(config.IP_NODO, worker->ip.cadena) && config.PUERTO_WORKER != worker->puerto) {
+			socket = crearSocket();
+			struct sockaddr_in direccion = cargarDireccion(worker->ip.cadena,
+					worker->puerto);
+			conectarCon(direccion, socket, idWorker);
+			respuesta respuestaHandShake = desempaquetar(socket);
+
+			if (respuestaHandShake.idMensaje != mensajeOk) {
+				log_error(logger, "Conexion fallida con Worker");
+				exit(1);
+			}
+
+			log_trace(logger, "Conexion con Worker establecida");
+			list_add(socketsAWorker, &socket);
+
+			string* nombreArchivo = malloc(sizeof(string));
+			nombreArchivo->cadena = "nombreArchivo";
+			empaquetar(socket, mensajeSolicitudArchivo, 0, nombreArchivo);
+			log_trace(logger, "Enviando solicitud de archivo a Worker");
+
+			respuesta respuesta = desempaquetar(socket);
+			string* contenidoArchivo = (string*) respuesta.envio;
+
+			char* rutaArchivo = string_from_format("%s/%s", path, nombreArchivo);
+			FILE* archivo = fopen(rutaArchivo, "w+");
+			fwrite(contenidoArchivo->cadena, sizeof(char), contenidoArchivo->longitud, archivo);
+			fclose(archivo);
+			list_add(archivosAReducir, rutaArchivo);
+		} else {
+			char* rutaArchivo = string_from_format("%s/%s", path, "Nombre archivo temporal local de encargado");
+			list_add(archivosAReducir, rutaArchivo);
+		}
+	}
+	apareoArchivosLocales(archivosAReducir, rutaArchivoAReducir);
+	return rutaArchivoAReducir;
+}
+
+void handlerWorker(int clientSocket) {
+	//Me mandan peticionesde pedir archivo, hacer switch y responder con el contenido del archivo local
 }
 
 void levantarServidorWorker(char* ip, int port) {
@@ -237,11 +289,12 @@ void levantarServidorWorker(char* ip, int port) {
 				} else if (pid < 0) {
 					log_error(logger, "NO SE PUDO HACER EL FORK");
 				}
-			} else if (*(int*) conexionNueva.envio == 100) { //Averiguar cual es el id del worker
+			} else if (*(int*) conexionNueva.envio == idWorker) {
+				empaquetar(clientSocket,mensajeOk,0,0);
 				log_trace(logger, "Conexion con Worker establecida");
 				if ((pid = fork()) == 0) {
 					log_trace(logger, "Proceso hijo de worker:%d", pid);
-					handlerWorker();
+					handlerWorker(clientSocket);
 				} else if (pid > 0) {
 					log_trace(logger, "Proceso Worker Padre:%d", pid);
 				} else if (pid < 0) {

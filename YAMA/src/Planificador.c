@@ -462,8 +462,8 @@ void enviarReduccionGlobalAMaster(job* job){
 		info->puerto = infoNod->puerto;;
 		info->ip.longitud = infoNod->ip.longitud;
 		info->ip.cadena = strdup(infoNod->ip.cadena);
-		info->archivo.longitud = string_length(reg->rutaArchivoTemp);
-		info->archivo.cadena = strdup(reg->rutaArchivoTemp);
+		info->nombreArchivoReducido.longitud = string_length(reg->rutaArchivoTemp);
+		info->nombreArchivoReducido.cadena = strdup(reg->rutaArchivoTemp);
 		list_add(respuesta->parametros->infoWorkers,info);
 
 	}
@@ -520,8 +520,6 @@ t_list* buscarCopiasBloques(t_list* listaBloques,t_list* listaNodos,informacionA
 	}
 
 	listaNodosActivos = list_filter(listaNodos, (void*)nodosConectadosConBloques);
-
-
 
 	return listaNodosActivos;
 }

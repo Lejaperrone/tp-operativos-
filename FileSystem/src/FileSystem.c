@@ -25,7 +25,6 @@
 #include "FuncionesFS.h"
 #include <pthread.h>
 #include <sys/types.h>
-
 #include "FuncionesHilosFs.h"
 
 #define cantDataNodes 10
@@ -47,14 +46,18 @@ t_list* bitmapsNodos;
 sem_t pedidoFS;
 t_list* pedidosFS;
 extern sem_t actualizarNodos;
+sem_t pedidoTerminado;
 int clienteYama;
 int servidorFS;
 pthread_mutex_t logger_mutex;
 pthread_mutex_t listSemMutex;
 int EstadoFS = 0;
 int bloquesLibresTotales = 0;
+bool recuperarEstado = 0;
 
-int main(void) {
+struct configuracionFileSystem config;
+
+int main(int argc, char *argv[]) {
 
 	printf("Ronan deja de robar aditions\n\n\n\n\n");
 
@@ -65,7 +68,15 @@ int main(void) {
 
 
 	limpiarPantalla();
+	cargarConfiguracionFileSystem(&config,argv[1]);
+
+	if (argv[2] != NULL)
+		if (strcmp(argv[2],"--clean") == 0 && validarArchivo("../metadata/Nodos.bin")){
+			system("rm ../metadata/Nodos.bin");
+		}
+
 	sem_init(&pedidoFS,0,0);
+	sem_init(&pedidoTerminado,0,0);
 	sem_init(&actualizarNodos,1,0);
 	nodosConectados = list_create();
 	bitmapsNodos = list_create();
@@ -79,11 +90,16 @@ int main(void) {
 
 	parametrosServidorFS.cliente = clienteYama;
 
-	inicializarTablaDirectorios();
+	verificarEstadoAnterior();
+
+	if (recuperarEstado == 1)
+		inicializarTablaDirectorios();
+	else
+		formatearFS();
 
 	servidorFS = crearSocket();
 
-	establecerServidor(servidorFS);
+	establecerServidor(config.IP_FILESYSTEM, config.PUERTO_FS);
 
 	parametrosServidorFS.servidor = servidorFS;
 

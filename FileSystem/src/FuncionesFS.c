@@ -25,6 +25,7 @@
 #include <math.h>
 
 char* pathArchivoDirectorios = "../metadata/Directorios.dat";
+char* pathArchivoNodos = "../metadata/Nodos.bin";
 struct sockaddr_in direccionCliente;
 unsigned int tamanioDireccion = sizeof(direccionCliente);
 int servidorFS;
@@ -33,18 +34,23 @@ int sizeBloque;
 int successArchivoCopiado;
 extern int bloquesLibresTotales;
 sem_t sem;
+extern sem_t pedidoTerminado;
 extern pthread_mutex_t listSemMutex;
 int bla = 0;
+extern bool recuperarEstado;
 
 
-void establecerServidor(){
-	struct sockaddr_in direccionServidor = cargarDireccion("127.0.0.1",7000);
+void establecerServidor(char* ip, int port){
+	struct sockaddr_in direccionServidor = cargarDireccion(ip, port);
 	int activado = 1;
 	setsockopt(servidorFS, SOL_SOCKET, SO_REUSEADDR, &activado, sizeof(activado));
 
 	asociarSocketA(direccionServidor, servidorFS);
 }
 
+void verificarEstadoAnterior(){
+	recuperarEstado = validarArchivo(pathArchivoNodos);
+}
 int verificarEstado(){
     DIR* directorio;
 	struct dirent* in_file;
@@ -130,6 +136,7 @@ int verificarEstado(){
 			}
 			free(pathDir);
 		}
+	actualizarArchivoNodos();
 	return 1;
 }
 
@@ -235,6 +242,7 @@ char* buscarRutaArchivo(char* ruta){
 	int indexDirectorio = getIndexDirectorio(ruta);
 	if (indexDirectorio == -1)
 		return "-1";
+	printf("%s\n", ruta);
 	char* numeroIndexString = string_itoa(indexDirectorio);
 	char* rutaGenerada = calloc(1,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memset(rutaGenerada,0,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
@@ -573,7 +581,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	printf("cant nod %d\n", cantidadNodos);
 
-	bla = cantBloquesArchivo;
+	bla = cantBloquesArchivo*2;
 
 	for (i = 0; i < cantBloquesArchivo; ++i){
 		for (j = 0; j < cantidadNodos; ++j){
@@ -626,7 +634,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		else
 			ultimoSize = sizeUltimoNodo;
 
-		for (j = 0; j < numeroCopiasBloque-1; ++j){
+		for (j = 0; j < numeroCopiasBloque; ++j){
 			for (k = 0; k < cantidadNodos; ++k)
 				if(masBloquesLibres[j] ==  indexNodos[k]){
 					nodoAUtilizar = k;
@@ -642,7 +650,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			params[i+cantBloquesArchivo*j].bloque = bloqueLibre;
 
 			if (i < cantBloquesArchivo-1){
-				 sizeRestante = bytesACortar(params[i+cantBloquesArchivo*j].mapa, offset);
+				if (j == 0)
+				 sizeRestante = bytesACortar(params[i].mapa, offset, sizeRestante);
 				 params[i+cantBloquesArchivo*j].sizeBloque = mb -sizeRestante;
 				 totalRestante += sizeRestante;
 			 }
@@ -669,16 +678,14 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
-		config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombre));
+		config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombre));
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
 	free(rutaFinal);
-	printf("--%d\n",i);
 
-	while(bla > 0){
-
-	}
+	for (i = 0; i < cantBloquesArchivo * 2; ++i)
+		sem_wait(&pedidoTerminado);
 
 	return successArchivoCopiado;
 
@@ -703,19 +710,17 @@ void* enviarADataNode(void* parametros){
 	 if (success == 0){
 		 successArchivoCopiado = 0;
 	 }
-		// printf("--------%d\n", params->bloque);
 	 free(buff);
 	 sem_post(semaforo);
-	 --bla;
-	 printf("%d asda \n", bla);
+	 sem_post(&pedidoTerminado);
 	 pthread_exit(NULL);
 }
 
-int bytesACortar(char* mapa, int offset){
+int bytesACortar(char* mapa, int offset, int sizeRestante){
 	int index = 0;
 	char* bloque = malloc(mb + 1);
 	memset(bloque,0, mb+1);
-	memcpy(bloque,mapa+offset,mb);
+	memcpy(bloque,mapa+offset-sizeRestante,mb);
 	char* mapaInvertido = string_reverse(bloque);
 	char currentChar;
 	memcpy(&currentChar,mapaInvertido,1);
@@ -976,13 +981,12 @@ informacionNodo* informacionNodosConectados(){
 informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	informacionArchivoFsYama info;
 	info.informacionBloques = list_create();
-	char* rutaArchivo = buscarRutaArchivo(rutaDatos.cadena);
-	strcat(rutaArchivo,"/");
-	strcat(rutaArchivo,rutaDatos.cadena);
 
-	char* rutaPrueba = "../metadata/Archivos/0/hola3.txt";
+	char* directorio = rutaSinArchivo(rutaDatos.cadena);
+	char* rutaArchivo = buscarRutaArchivo(directorio);
+	char* rutaMetadata = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivo), ultimaParteDeRuta(rutaDatos.cadena));
 
-	t_config* archivo = config_create(rutaPrueba);
+	t_config* archivo = config_create(rutaMetadata);
 
 	info.tamanioTotal = config_get_int_value(archivo,"TAMANIO");
 
@@ -1099,13 +1103,16 @@ int borrarDirectorios(){
 		memcpy(tablaDeDirectorios[i].nombre," ",1);
 	}
 
+	if(validarArchivo("../metadata/Directorios.dat"))
+		system("rm ../metadata/Directorios.dat");
+
 	return 1;
 }
 
 int borrarArchivosEnMetadata(){
 	int respuesta;
 
-	char* rutaMetadata = ".../tp-2017-2c-PEQL/FileSystem/metadata/Archivos";
+	char* rutaMetadata = "../metadata/Archivos";
 
 	char* rmComando = string_from_format("rm -r %s", rutaMetadata);
 
@@ -1122,27 +1129,59 @@ int borrarArchivosEnMetadata(){
 }
 
 int liberarNodosConectados(){
+	char* rutaMetadataBitmaps = "../metadata/Bitmaps";
 	int cantNodosConectados = list_size(nodosConectados);
 	int i, k;
 	int cantBloquesOcupados, numeroNodo;
 	informacionNodo nodo;
 	int* bloquesOcupados;
+	int respuesta = 1;
 
+	if (cantNodosConectados > 0){
+		for (i = 0; i < cantNodosConectados; ++i){
+			nodo = *(informacionNodo*) list_get(nodosConectados, i);
+			cantBloquesOcupados = nodo.bloquesOcupados;
+			numeroNodo = nodo.numeroNodo;
+			bloquesOcupados = arrayBloquesOcupados(nodo);
 
+			for (k = 0; k < cantBloquesOcupados; ++k){
+				setearBloqueLibreEnBitmap(numeroNodo, bloquesOcupados[k]);
+			}
 
-	for (i = 0; i < cantNodosConectados; ++i){
-		nodo = *(informacionNodo*) list_get(nodosConectados, i);
-		cantBloquesOcupados = nodo.bloquesOcupados;
-		numeroNodo = nodo.numeroNodo;
-		bloquesOcupados = arrayBloquesOcupados(nodo);
-
-		for (k = 0; k < cantBloquesOcupados; ++k){
-			setearBloqueLibreEnBitmap(numeroNodo, bloquesOcupados[k]);
 		}
-
+		actualizarBitmapNodos();
 	}
-	free(bloquesOcupados);
-	actualizarBitmapNodos();
+	else{
+		char* rmComando = string_from_format("rm -r %s", rutaMetadataBitmaps);
 
-	return 1;
+		respuesta = system(rmComando);
+
+		char* mkdirComando = string_from_format("mkdir %s", rutaMetadataBitmaps);
+
+		respuesta = system(mkdirComando);
+	}
+
+	return respuesta;
 }
+
+int formatearDataBins(){
+ 	int resultado = 0;
+ 	int i;
+ 	int cantNodos = list_size(nodosConectados);
+ 	informacionNodo* nodo;
+ 	respuesta res;
+
+ 	for (i = 0; i < cantNodos; ++i){
+ 		nodo = (informacionNodo*) list_get(nodosConectados,i);
+ 		empaquetar(nodo->socket, mensajeBorraDataBin, 0, 0);
+ 		res = desempaquetar(nodo->socket);
+ 		resultado += *(int*) res.envio;
+ 		printf("Nodo%d formateado\n", nodo->numeroNodo);
+ 	}
+
+ 	if (resultado == cantNodos)
+ 		return 1;
+
+
+ 	return 0;
+ }

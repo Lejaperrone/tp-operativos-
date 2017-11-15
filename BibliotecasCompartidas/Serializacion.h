@@ -28,7 +28,7 @@
 #define mensajeInformacionNodo 8
 #define mensajeProcesarTransformacion 10
 #define mensajeProcesarRedLocal 11
-#define mensajeProcesarRedGlobal 12
+#define mensajeDesignarEncargado 12
 #define mensajeProcesarAlmFinal 13
 #define mensajeDesignarWorker 14
 #define mensajeInfoArchivo 15
@@ -53,6 +53,10 @@
 #define mensajeRespuestaRedGlobal 34
 #define mensajeReplanificacion 35
 #define mensajeFalloReduccion 36
+#define mensajeBorraDataBin 37
+#define mensajeRespuestaBorraDataBin 38
+#define mensajeSolicitudArchivo 39
+#define mensajeProcesarRedGlobal 40
 
 typedef struct{
 	int idMensaje;
