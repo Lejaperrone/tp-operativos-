@@ -93,7 +93,7 @@ void finalizarJob(job* job, int etapa);
 
 void borrarEntradasDeJob(int jobid);
 
-void esperarRespuestaReduccionDeMaster(job* job,int etapa);
+void esperarRespuestaReduccionDeMaster(job* job);
 
 infoNodo* obtenerNodo(int numero);
 
@@ -106,5 +106,7 @@ void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,Etapa etapa);
 bool faltanBloquesTransformacionParaNodo(int jobid,int nodo);
 
 void mostrarTablaDeEstados();
+
+void actualizarCargasNodosRedLocal(int jobid,int numNodo);
 
 #endif /* FUNCIONESYAMA_H_ */

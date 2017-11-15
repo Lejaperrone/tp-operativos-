@@ -82,4 +82,8 @@ void* conectarseConWorkersRedLocal(void* params);
 
 void mandarFalloEnReduccion();
 
+void enviarAEncargadoRedGlobal(respuestaReduccionGlobal* infoRedGlobal);
+
+void* conectarseConWorkerRedGlobal(void* params);
+
 #endif /* FUNCIONESMASTER_H_ */

@@ -104,4 +104,7 @@ workerDesdeYama* deserializarReplanificacion(int socket, int tamanio);
 void* serializarProcesarRedLocal(void* paquete, int* tamanio);
 parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio);
 
+void* serializarProcesarRedGlobal(void* paquete, int* tamanio);
+parametrosReduccionGlobal* deserializarProcesarRedGlobal(int socket, int tamanio);
+
 #endif /* SERIALIZACION_H_ */

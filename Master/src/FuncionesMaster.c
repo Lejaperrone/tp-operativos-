@@ -237,9 +237,10 @@ void enviarJobAYama(job* miJob) {
 }
 
 void esperarInstruccionesDeYama() {
-	respuesta instruccionesYama;//= malloc(sizeof(respuesta));
-	respuestaSolicitudTransformacion* infoTransformacion = malloc(sizeof(respuestaSolicitudTransformacion));
-	respuestaReduccionLocal* infoRedLocal = malloc(sizeof(respuestaReduccionLocal));
+	respuesta instruccionesYama;
+	respuestaSolicitudTransformacion* infoTransformacion ;
+	respuestaReduccionLocal* infoRedLocal;
+	respuestaReduccionGlobal* infoRedGlobal;
 	workerDesdeYama* worker;
 
 	while (1) {
@@ -252,20 +253,29 @@ void esperarInstruccionesDeYama() {
 				inicializarTiemposTransformacion(infoTransformacion);
 				crearHilosConexionTransformacion(infoTransformacion);
 				break;
+
 			case mensajeRespuestaRedLocal:
 				infoRedLocal = (respuestaReduccionLocal*)instruccionesYama.envio;
 				crearHilosConexionRedLocal(infoRedLocal);
 				break;
+
 			case mensajeDesconexion:
 				log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
 				exit(1);
 				break;
+
 			case mensajeReplanificacion:
 				worker= instruccionesYama.envio;
 				crearHilosPorBloqueTransformacion(worker);
 				break;
+
 			case mensajeFinJob:
 				finalizarJob();
+				break;
+
+			case mensajeRespuestaRedGlobal:
+				infoRedGlobal = instruccionesYama.envio;
+				enviarAEncargadoRedGlobal(infoRedGlobal);
 				break;
 		}
 	}
@@ -425,4 +435,67 @@ double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin){
 
 	return cont / list_size(tiemposInicio);
 
+}
+
+void enviarAEncargadoRedGlobal(respuestaReduccionGlobal* infoRedGlobal){
+	pthread_t nuevoHilo;
+	pthread_attr_t attr;
+
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+	if (pthread_create(&nuevoHilo, &attr, (void*)conectarseConWorkerRedGlobal, infoRedGlobal) != 0) {
+		log_error(loggerMaster, "No se pudo crear el thread de conexion");
+		exit(-1);
+	}
+}
+
+void* conectarseConWorkerRedGlobal(void* params){
+	parametrosReduccionGlobal* parametrosConexion= malloc(sizeof(parametrosReduccionGlobal));
+	respuestaReduccionGlobal* infoRedGlobal =(respuestaReduccionGlobal*) params;
+	respuesta confirmacionWorker ;
+
+	int socketWorker = crearSocket();
+	struct sockaddr_in direccion = cargarDireccion(infoRedGlobal->ip.cadena,infoRedGlobal->puerto);
+	if(!conectarCon(direccion, socketWorker, 2)){//2 id master
+		mandarFalloEnReduccion();
+		return 0;
+	}
+
+	log_trace(loggerMaster, "Inicio Red. Global con Worker %d para Job %d", infoRedGlobal->numero, infoRedGlobal->job);
+
+	struct stat fileStat;
+	if(stat(miJob->rutaReductor.cadena,&fileStat) < 0){
+		printf("No se pudo abrir el archivo\n");
+		return 0;
+	}
+
+	int fd = open(miJob->rutaReductor.cadena,O_RDWR);
+	int size = fileStat.st_size;
+
+	parametrosConexion->contenidoScript.cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
+	parametrosConexion->contenidoScript.longitud = size;
+
+	empaquetar(socketWorker, mensajeProcesarRedGlobal, 0, parametrosConexion);
+
+	confirmacionWorker = desempaquetar(socketWorker);
+
+	if (munmap(parametrosConexion->contenidoScript.cadena, parametrosConexion->contenidoScript.longitud) == -1){
+		perror("Error un-mmapping the file");
+		exit(EXIT_FAILURE);
+	}
+	close(fd);
+
+	switch(confirmacionWorker.idMensaje){
+		case mensajeRedLocalCompleta:
+			empaquetar(socketYama, mensajeRedGlobalCompleta, 0 , 0);
+			finalizarTiempo(estadisticas->tiempoFinRedLocal,0);
+			break;
+
+		case mensajeDesconexion:
+			mandarFalloEnReduccion();
+			break;
+	}
+
+	return 0;
 }

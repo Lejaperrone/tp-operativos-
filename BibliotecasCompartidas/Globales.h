@@ -91,9 +91,23 @@ typedef struct respuestaReduccionGlobal{
 }bloquesConSusArchivosRedGlobal;
 
 typedef struct {
-	t_list* workers;
-	int nodoEncargado;
-	string archivoReduccionGlobal;
+	int puerto;
+	string ip;
+	string archivo;
+}infoWorker;
+
+typedef struct{
+	t_list* infoWorkers;
+	string contenidoScript;
+}parametrosReduccionGlobal;
+
+typedef struct {
+	parametrosReduccionGlobal* parametros;
+	int puerto;
+	string ip;
+	string archivoTemporal;
+	int numero;
+	int job;
 }respuestaReduccionGlobal;
 
 typedef struct registroTablaEstados{
