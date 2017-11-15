@@ -195,7 +195,7 @@ void* conectarseConWorkersRedLocal(void* params){
 	case mensajeRedLocalCompleta:
 		numeroNodo = *(int*)confirmacionWorker.envio;
 		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroNodo);
-		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
+		//finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
 		break;
 
 	case mensajeDesconexion:
@@ -275,7 +275,7 @@ void esperarInstruccionesDeYama() {
 				break;
 
 			case mensajeRespuestaRedGlobal:
-				infoRedGlobal = instruccionesYama.envio;
+				infoRedGlobal = (respuestaReduccionGlobal*)instruccionesYama.envio;
 				enviarAEncargadoRedGlobal(infoRedGlobal);
 				break;
 		}
@@ -476,6 +476,10 @@ void* conectarseConWorkerRedGlobal(void* params){
 
 	parametrosConexion->contenidoScript.cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
 	parametrosConexion->contenidoScript.longitud = size;
+	parametrosConexion->archivoTemporal.cadena = strdup(infoRedGlobal->archivoTemporal.cadena);
+	parametrosConexion->archivoTemporal.longitud = infoRedGlobal->archivoTemporal.longitud;
+	parametrosConexion->infoWorkers = list_create();
+	list_add_all(parametrosConexion->infoWorkers,infoRedGlobal->parametros->infoWorkers);
 
 	empaquetar(socketWorker, mensajeProcesarRedGlobal, 0, parametrosConexion);
 

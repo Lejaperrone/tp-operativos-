@@ -423,35 +423,14 @@ void enviarReduccionLocalAMaster(job* job,int nodo){
 
 void enviarReduccionGlobalAMaster(job* job){
 	respuestaReduccionGlobal* respuesta = malloc(sizeof(respuestaReduccionGlobal));
+	respuesta->parametros = malloc(sizeof(parametrosReduccionGlobal));
 	respuesta->parametros->infoWorkers = list_create();
 
 	bool encontrarEnTablaEstados(void *registro) {
 		registroTablaEstados* reg =(registroTablaEstados*)registro;
 		return reg->job == job->id && reg->etapa== RED_LOCAL;
 	}
-
-	pthread_mutex_lock(&mutexTablaEstados);
-	t_list* registrosRedGlobal = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
-	pthread_mutex_unlock(&mutexTablaEstados);
-
-	pthread_mutex_lock(&mutex_NodosConectados);
-
-	infoNodo* nodoEncargado = obtenerNodo(calcularNodoEncargado(registrosRedGlobal));
-
-	char* archivoReduccionGlobal = dameUnNombreArchivoTemporal(job->id,0,RED_GLOBAL,0);
-
-	respuesta->archivoTemporal.longitud = string_length(archivoReduccionGlobal);
-	respuesta->archivoTemporal.cadena = strdup(archivoReduccionGlobal);
-
-	respuesta->ip.cadena = strdup(nodoEncargado->ip.cadena);
-	respuesta->ip.longitud = nodoEncargado->ip.longitud;
-
-	respuesta->puerto=nodoEncargado->puerto;
-
-	respuesta->numero = nodoEncargado->numero;
-	respuesta->job = job->id;
-	void meterEnRespuestaRedGlobal(void *registro){
-		registroTablaEstados* reg =(registroTablaEstados*)registro;
+	void meterEnRespuestaRedGlobal(registroTablaEstados* reg){
 		infoWorker* info = malloc(sizeof(infoWorker));
 		infoNodo* infoNod = obtenerNodo(reg->nodo);
 
@@ -468,6 +447,26 @@ void enviarReduccionGlobalAMaster(job* job){
 
 	}
 
+	pthread_mutex_lock(&mutexTablaEstados);
+	t_list* registrosRedGlobal = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	pthread_mutex_unlock(&mutexTablaEstados);
+
+	//pthread_mutex_lock(&mutex_NodosConectados);
+	infoNodo* nodoEncargado = obtenerNodo(calcularNodoEncargado(registrosRedGlobal));
+
+	char* archivoReduccionGlobal = dameUnNombreArchivoTemporal(job->id,0,RED_GLOBAL,0);
+
+	respuesta->archivoTemporal.longitud = string_length(archivoReduccionGlobal);
+	respuesta->archivoTemporal.cadena = strdup(archivoReduccionGlobal);
+
+	respuesta->ip.cadena = strdup(nodoEncargado->ip.cadena);
+	respuesta->ip.longitud = nodoEncargado->ip.longitud;
+
+	respuesta->puerto=nodoEncargado->puerto;
+
+	respuesta->numero = nodoEncargado->numero;
+	respuesta->job = job->id;
+
 	list_iterate(registrosRedGlobal,(void*)meterEnRespuestaRedGlobal);
 	empaquetar(job->socketFd,mensajeRespuestaRedGlobal,0,respuesta);
 
@@ -478,12 +477,12 @@ void enviarReduccionGlobalAMaster(job* job){
 	registro->job= job->id;
 	registro->nodo= nodoEncargado->numero;
 	registro->rutaArchivoTemp = strdup(respuesta->archivoTemporal.cadena);
-
-	pthread_mutex_unlock(&mutex_NodosConectados);
+	//pthread_mutex_unlock(&mutex_NodosConectados);
 
 	pthread_mutex_lock(&mutexTablaEstados);
 	list_add(tablaDeEstados,registro);
 	pthread_mutex_unlock(&mutexTablaEstados);
+
 }
 
 int calcularNodoEncargado(t_list* registrosRedGlobal){
@@ -550,15 +549,14 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloTransformacion){
-			numNodo = *(int*) respuestaPlanificacionMaster.envio;
-			log_trace(logger,"Entro a replanificar se desconecto un worker %d", numNodo);
-			bloqueNodo->workerId = numNodo;
+			bloqueNodo = (bloqueYNodo*) respuestaPlanificacionMaster.envio;
+			log_trace(logger,"Entro a replanificar se desconecto un worker %d", bloqueNodo->workerId);
 			replanificar(bloqueNodo,job,respuestaMaster,matrix,nodos);
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeRedLocalCompleta){
-			bloqueNodo = (bloqueYNodo*) respuestaPlanificacionMaster.envio;
-			log_trace(logger,"Finalizada tarea reduccion nodo %d", bloqueNodo->workerId);
-			agregarBloqueTerminadoATablaEstados(bloqueNodo->bloque,job->id,RED_LOCAL);
+			numNodo = *(int*) respuestaPlanificacionMaster.envio;
+			log_trace(logger,"Finalizada tarea reduccion nodo %d", numNodo);
+			agregarBloqueTerminadoATablaEstadosRedLocal(numNodo,job->id,RED_LOCAL);
 			redLocalIncompleta= faltanMasTareas(job->id,RED_LOCAL);
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloReduccion){

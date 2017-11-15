@@ -1074,7 +1074,7 @@ parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio){
 
 	memcpy(&reduccionLocal->numero, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
-	printf("NUMERO%d\n",reduccionLocal->numero);
+
 	memcpy(&reduccionLocal->puerto, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
@@ -1260,6 +1260,7 @@ respuestaReduccionGlobal* deserializarRespuestaRedGlobal(int socket,int tamanio)
 	memcpy(respuesta->ip.cadena, buffer + desplazamiento, respuesta->ip.longitud);
 	desplazamiento += respuesta->ip.longitud;
 
+	respuesta->parametros = malloc(sizeof(parametrosReduccionGlobal));
 	respuesta->parametros->infoWorkers= list_create();
 	int longitud = 0;
 	memcpy(&longitud, buffer + desplazamiento, sizeof(int) );

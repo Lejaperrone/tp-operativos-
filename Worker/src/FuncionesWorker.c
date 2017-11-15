@@ -137,6 +137,7 @@ void handlerMaster(int clientSocket) {
 	char* path = obtenerPathActual();
 
 	paquete = desempaquetar(clientSocket);
+
 	switch (paquete.idMensaje) {
 	case mensajeProcesarTransformacion:
 		transformacion = (parametrosTransformacion*)paquete.envio;
@@ -163,8 +164,8 @@ void handlerMaster(int clientSocket) {
 		break;
 	case mensajeProcesarRedLocal:
 		reduccionLocal = (parametrosReduccionLocal*)paquete.envio;
-		int numeroNodo = reduccionLocal->numero;
 		log_trace(logger, "Iniciando Reduccion Local %s",reduccionLocal->rutaDestino.cadena);
+		int numeroNodo = reduccionLocal->numero;
 		contenidoScript = strdup(reduccionLocal->contenidoScript.cadena);
 		listAux = list_create();
 		listaArchivosTemporales = list_create();
