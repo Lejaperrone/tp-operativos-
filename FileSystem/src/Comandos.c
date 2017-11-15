@@ -10,16 +10,14 @@
 
 #define mb 1048576
 
-extern char* rutaArchivos;
-
-char* devolverRuta(char* comando, int numeroParametro){
+char* devolverRuta(char* comando, int posicionPalabra){
 	char* copiaComando = malloc(strlen(comando)+1);
 	memset(copiaComando,0, strlen(comando)+1);
 	memcpy(copiaComando, comando,strlen(comando)+1);
 	char* ruta = strtok(copiaComando, " ");
 	int i;
 
-	for (i = 0; i < numeroParametro; ++i){
+	for (i = 0; i < posicionPalabra; ++i){
 		ruta = strtok(NULL, " ");
 	}
 	//free(copiaComando);
@@ -639,7 +637,7 @@ int formatearFS(){
 
 	resultado += formatearDataBins();
 
-	if (resultado == 1)
+	if (resultado == 4)
 		return 0;
 
 	return 1;

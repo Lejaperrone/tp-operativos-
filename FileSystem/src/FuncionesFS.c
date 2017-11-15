@@ -1091,7 +1091,7 @@ int obtenerNumeroCopia(t_config* infoArchivo,int bloqueACopiar){
 }
 
 int borrarDirectorios(){
-	int i;
+	int i, respuesta = 1;
 
 	tablaDeDirectorios[0].index = 0;
 	tablaDeDirectorios[0].padre = -1;
@@ -1100,25 +1100,34 @@ int borrarDirectorios(){
 	for (i = 1; i < 100; ++i){
 		tablaDeDirectorios[i].index = -1;
 		tablaDeDirectorios[i].padre = -1;
+		memset(tablaDeDirectorios[i].nombre,0,255);
 		memcpy(tablaDeDirectorios[i].nombre," ",1);
 	}
 
-	if(validarArchivo("../metadata/Directorios.dat"))
-		system("rm ../metadata/Directorios.dat");
+	guardarTablaDirectorios();
 
-	return 1;
+	if(validarArchivo(pathArchivoDirectorios)){
+		char* rmDirectorios = string_from_format("rm %s", pathArchivoDirectorios);
+
+		respuesta = system(rmDirectorios);
+
+		free(rmDirectorios);
+
+		if (respuesta == 0)
+			respuesta = 1;
+	}
+
+	return respuesta;
 }
 
 int borrarArchivosEnMetadata(){
 	int respuesta;
 
-	char* rutaMetadata = "../metadata/Archivos";
-
-	char* rmComando = string_from_format("rm -r %s", rutaMetadata);
+	char* rmComando = string_from_format("rm -r %s", rutaArchivos);
 
 	respuesta = system(rmComando);
 
-	char* mkdirComando = string_from_format("mkdir %s", rutaMetadata);
+	char* mkdirComando = string_from_format("mkdir %s", rutaArchivos);
 
 	respuesta = system(mkdirComando);
 
