@@ -28,7 +28,7 @@
 #define mensajeInformacionNodo 8
 #define mensajeProcesarTransformacion 10
 #define mensajeProcesarRedLocal 11
-#define mensajeProcesarRedGlobal 12
+#define mensajeDesignarEncargado 12
 #define mensajeProcesarAlmFinal 13
 #define mensajeDesignarWorker 14
 #define mensajeInfoArchivo 15
@@ -55,6 +55,8 @@
 #define mensajeFalloReduccion 36
 #define mensajeBorraDataBin 37
 #define mensajeRespuestaBorraDataBin 38
+#define mensajeSolicitudArchivo 39
+#define mensajeProcesarRedGlobal 40
 
 typedef struct{
 	int idMensaje;
@@ -105,5 +107,8 @@ workerDesdeYama* deserializarReplanificacion(int socket, int tamanio);
 
 void* serializarProcesarRedLocal(void* paquete, int* tamanio);
 parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio);
+
+void* serializarProcesarRedGlobal(void* paquete, int* tamanio);
+parametrosReduccionGlobal* deserializarProcesarRedGlobal(int socket, int tamanio);
 
 #endif /* SERIALIZACION_H_ */

@@ -14,6 +14,7 @@
 #include "Globales.h"
 
 #define mb 1048576
+#define idWorker 100
 
 /*------VARIABLES-------------*/
 struct configuracionNodo config;
@@ -23,7 +24,7 @@ t_log* logger;
 
 /*----PROTOTIPOS--------------------*/
 void handlerMaster(int clientSocket);
-void handlerWorker();
+void handlerWorker(int clientSocket);
 void levantarServidorWorker(char* ip, int port);
 void ejecutarTransformacion();
 void crearScript(char* bufferScript, int etapa);
@@ -32,5 +33,7 @@ t_list* crearListaParaReducir();
 void ejecutarComando(char* command, int socketMaster);
 void traverse_nodes(t_list* list, void funcion(void*));
 char *get_line(FILE *fp);
+char* crearRutaArchivoAReducir(t_list* listaWorkers);
+char* obtenerPathActual();
 
 #endif /* FUNCIONESWORKER_H_ */

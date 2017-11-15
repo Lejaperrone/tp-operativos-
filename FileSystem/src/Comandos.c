@@ -39,7 +39,7 @@ int copiarArchivo(char* comando){
 
 	char* rutaMetadata = buscarRutaArchivo(rutaFS);
 	if (strcmp(rutaMetadata, "-1") == 0)
-		return 1;
+		return 0;
 
 	printf("%s\n", rutaFS);
 	if (!string_starts_with(rutaFS,"yamafs:/"))
@@ -368,16 +368,17 @@ int crearDirectorio(char* comando){
 	char* rutaPadre;
 	int indexPadre = 0;
 	char* nombre;
+	int success = 1;
 
 	if (validarArchivoYamaFS(pathComando) == 0){
 		printf("no se creo el directorio, ruta invalida\n");
-		return 0;
+		return 2;
 	}
 
 	path = rutaSinPrefijoYama(pathComando);
 	if (strcmp("/", path) == 0){
 		printf("no se creo el directorio, el directorio no puede ser root\n");
-		return 0;
+		return 2;
 	}
 
 	respuesta = getIndexDirectorio(path);
@@ -385,13 +386,16 @@ int crearDirectorio(char* comando){
 
 	if (respuesta == -1){
 		rutaPadre = rutaSinArchivo(path);
-		indexPadre = getIndexDirectorio(rutaPadre);
-		if (indexPadre == -1)
+		indexPadre = getIndexDirectorio(rutaSinPrefijoYama(rutaPadre));
+		if (indexPadre == -1){
 			printf("no existe ruta padre %d\n", respuesta);
+			return 1;
+		}
 		else{
 			while(tablaDeDirectorios[i].index != -1){
 				++i;
 			}
+			success = 0;
 			tablaDeDirectorios[i].index = i;
 			tablaDeDirectorios[i].padre = indexPadre;
 			nombre = ultimaParteDeRuta(path);
@@ -403,7 +407,7 @@ int crearDirectorio(char* comando){
 	else
 		printf("ya existe el directorio\n");
 
-	return 0;
+	return success;
 }
 
 int mostrarArchivo(char* comando){

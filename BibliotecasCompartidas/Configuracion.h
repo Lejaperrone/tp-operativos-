@@ -40,11 +40,18 @@ struct configuracionMaster{
 	int YAMA_PUERTO;
 }configuracionMaster;
 
+struct configuracionFileSystem{
+	char* IP_FILESYSTEM;
+	int PUERTO_FS;
+}configuracionFileSystem;
+
 void cargarConfiguracionYama(struct configuracionYama *config,char* rutaAConfig);
 
 void cargarConfiguracionMaster(struct configuracionMaster *config,char* rutaAConfig);
 
 void cargarConfiguracionNodo(struct configuracionNodo *config,char* rutaAConfig);
+
+void cargarConfiguracionFileSystem(struct configuracionFileSystem *config, char* rutaAConfig);
 
 char* obtenerRutaRealConfiguracion(char* rutaAConfig);
 

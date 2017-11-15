@@ -37,6 +37,8 @@ extern char* rutaBitmaps;
 pthread_mutex_t logger_mutex;
 extern int EstadoFS;
 
+void verificarEstadoAnterior();
+
 int validarArchivoYamaFS(char* ruta);
 
 void inicializarTablaDirectorios();
@@ -45,7 +47,7 @@ char* rutaSinPrefijoYama(char* ruta);
 
 int verificarEstado();
 
-int bytesACortar(char* mapa, int offset);
+int bytesACortar(char* mapa, int offset, int sizeRestante);
 
 void* leerDeDataNode(void* parametros);
 
@@ -85,7 +87,7 @@ void* enviarADataNode(void* parametros);
 
 informacionNodo* informacionNodosConectados();
 
-void establecerServidor();
+void establecerServidor(char* ip, int port);
 
 int recibirConexionYama();
 

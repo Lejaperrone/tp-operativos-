@@ -41,6 +41,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			memcpy(bloque,&b,1);
 			break;
 
+		case mensajeSolicitudArchivo:
 		case mensajeArchivo:
 			bloque = serializarString(paquete,&tamanio);
 			break;
@@ -56,6 +57,10 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 		case mensajeProcesarRedLocal:
 			bloque = serializarProcesarRedLocal(paquete, &tamanio);
+			break;
+
+		case mensajeProcesarRedGlobal:
+			bloque = serializarProcesarRedGlobal(paquete, &tamanio);
 			break;
 
 		case mensajeSolicitudTransformacion:
@@ -150,6 +155,7 @@ respuesta desempaquetar(int socket){
 				free(bufferOk);
 				break;
 
+			case mensajeSolicitudArchivo:
 			case mensajeNumeroLecturaBloqueANodo:
 			case mensajeSizeLecturaBloqueANodo:
 			case mensajeArchivo:
@@ -186,6 +192,10 @@ respuesta desempaquetar(int socket){
 				miRespuesta.envio = deserializarProcesarRedLocal(socket, cabecera->tamanio);
 				break;
 
+			case mensajeProcesarRedGlobal:
+				miRespuesta.envio = deserializarProcesarRedGlobal(socket, cabecera->tamanio);
+				break;
+
 			case mensajeSolicitudTransformacion:
 				miRespuesta.envio = deserializarJob(socket, cabecera->tamanio);//FIXME
 				break;
@@ -193,15 +203,6 @@ respuesta desempaquetar(int socket){
 			case mensajeInformacionNodo:
 				miRespuesta.envio = deserializarInformacionNodos(socket, cabecera->tamanio);
 				break;
-
-				/*bufferOk = malloc(sizeof(int) + 1);
-				memset(bufferOk,0, sizeof(int) + 1);
-				recv(socket,bufferOk,sizeof(int),MSG_WAITALL);
-				miRespuesta.envio = malloc(sizeof(int));
-				memset(miRespuesta.envio, 0 , sizeof(int));
-				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
-				free(bufferOk);
-				break;*/
 
 			case mensajeEnvioBloqueANodo:
 			case mensajeRespuestaGetBloque:
@@ -1157,89 +1158,73 @@ void* serializarRespuestaRedGlobal(void* paquete,int* tamanio){
 
 	*tamanio = sizeof(int);
 	void* buffer = malloc(*tamanio);
-	memcpy(buffer + desplazamiento, &respuesta->nodoEncargado, sizeof(int));
+	memcpy(buffer + desplazamiento, &respuesta->numero, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer,*tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->puerto, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer,*tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->job, sizeof(int));
 	desplazamiento += sizeof(int);
 
 	*tamanio += sizeof(int);
 	buffer = realloc(buffer, *tamanio);
-	memcpy(buffer + desplazamiento, &respuesta->archivoReduccionGlobal.longitud, sizeof(int));
+	memcpy(buffer + desplazamiento, &respuesta->archivoTemporal.longitud, sizeof(int));
 	desplazamiento += sizeof(int);
 
-	*tamanio += respuesta->archivoReduccionGlobal.longitud;
+	*tamanio += respuesta->archivoTemporal.longitud;
 	buffer = realloc(buffer, *tamanio);
-	memcpy(buffer + desplazamiento, respuesta->archivoReduccionGlobal.cadena, respuesta->archivoReduccionGlobal.longitud);
-	desplazamiento += respuesta->archivoReduccionGlobal.longitud;
+	memcpy(buffer + desplazamiento, respuesta->archivoTemporal.cadena, respuesta->archivoTemporal.longitud);
+	desplazamiento += respuesta->archivoTemporal.longitud;
 
 	*tamanio += sizeof(int);
-	int longitud = list_size(respuesta->workers);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->ip.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += respuesta->ip.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, respuesta->ip.cadena, respuesta->ip.longitud);
+	desplazamiento += respuesta->ip.longitud;
+
+	*tamanio += sizeof(int);
+	int longitud = list_size(respuesta->parametros->infoWorkers);
 	buffer = realloc(buffer, *tamanio);
 	memcpy(buffer + desplazamiento, &longitud, sizeof(int));
 	desplazamiento += sizeof(int);
 
-	int i,j;
-	for (j = 0; j < list_size(respuesta->workers); ++j) {
-		workerDesdeYama* infoWorker = (workerDesdeYama*)list_get(respuesta->workers, j);
+	int j;
+	for (j = 0; j < list_size(respuesta->parametros->infoWorkers); ++j) {
+		infoWorker* info = (infoWorker*)list_get(respuesta->parametros->infoWorkers, j);
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoWorker->numeroWorker, sizeof(int));
+		memcpy(buffer + desplazamiento, &info->puerto, sizeof(int));
 		desplazamiento += sizeof(int);
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoWorker->puerto, sizeof(int));
+		memcpy(buffer + desplazamiento, &info->nombreArchivoReducido.longitud, sizeof(int));
 		desplazamiento += sizeof(int);
+
+		*tamanio += info->nombreArchivoReducido.longitud;
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, info->nombreArchivoReducido.cadena, info->nombreArchivoReducido.longitud);
+		desplazamiento += info->nombreArchivoReducido.longitud;
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoWorker->ip.longitud, sizeof(int));
+		memcpy(buffer + desplazamiento, &info->ip.longitud, sizeof(int));
 		desplazamiento += sizeof(int);
 
-		*tamanio += infoWorker->ip.longitud;
+		*tamanio += info->ip.longitud;
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, infoWorker->ip.cadena, infoWorker->ip.longitud);
-		desplazamiento += infoWorker->ip.longitud;
-
-		*tamanio += sizeof(int);
-		buffer = realloc(buffer, *tamanio);
-		int longitud = list_size(infoWorker->bloquesConSusArchivos);
-		memcpy(buffer + desplazamiento, &longitud, sizeof(int));
-		desplazamiento += sizeof(int);
-
-		for (i = 0; i < list_size(infoWorker->bloquesConSusArchivos); ++i) {
-			bloquesConSusArchivosRedGlobal* bloquesArchivos = (bloquesConSusArchivosRedGlobal*)list_get(infoWorker->bloquesConSusArchivos, i);
-
-			*tamanio += sizeof(int);
-			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, &bloquesArchivos->puerto, sizeof(int));
-			desplazamiento += sizeof(int);
-
-			*tamanio += sizeof(bool);
-			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, &bloquesArchivos->encargado, sizeof(bool));
-			desplazamiento += sizeof(bool);
-
-			*tamanio += sizeof(int);
-			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, &bloquesArchivos->archivoReduccionLocal.longitud, sizeof(int));
-			desplazamiento += sizeof(int);
-
-			*tamanio += bloquesArchivos->archivoReduccionLocal.longitud;
-			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, bloquesArchivos->archivoReduccionLocal.cadena, bloquesArchivos->archivoReduccionLocal.longitud);
-			desplazamiento += bloquesArchivos->archivoReduccionLocal.longitud;
-
-			*tamanio += sizeof(int);
-			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, &bloquesArchivos->ip.longitud, sizeof(int));
-			desplazamiento += sizeof(int);
-
-			*tamanio += bloquesArchivos->ip.longitud;
-			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, bloquesArchivos->ip.cadena, bloquesArchivos->ip.longitud);
-			desplazamiento += bloquesArchivos->ip.longitud;
-
-		}
+		memcpy(buffer + desplazamiento, info->ip.cadena, info->ip.longitud);
+		desplazamiento += info->ip.longitud;
 	}
 
 	return buffer;
@@ -1252,70 +1237,56 @@ respuestaReduccionGlobal* deserializarRespuestaRedGlobal(int socket,int tamanio)
 	void* buffer = malloc(tamanio);
 	recv(socket,buffer,tamanio,0);
 
-	memcpy(&respuesta->nodoEncargado, buffer + desplazamiento, sizeof(int) );
+	memcpy(&respuesta->numero, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
-	memcpy(&respuesta->archivoReduccionGlobal.longitud, buffer + desplazamiento, sizeof(int) );
+	memcpy(&respuesta->puerto, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
-	respuesta->archivoReduccionGlobal.cadena = calloc(1,respuesta->archivoReduccionGlobal.longitud+1);
-	memcpy(respuesta->archivoReduccionGlobal.cadena, buffer + desplazamiento, respuesta->archivoReduccionGlobal.longitud);
-	desplazamiento += respuesta->archivoReduccionGlobal.longitud;
+	memcpy(&respuesta->job, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
 
-	respuesta->workers= list_create();
+	memcpy(&respuesta->archivoTemporal.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	respuesta->archivoTemporal.cadena = calloc(1,respuesta->archivoTemporal.longitud+1);
+	memcpy(respuesta->archivoTemporal.cadena, buffer + desplazamiento, respuesta->archivoTemporal.longitud);
+	desplazamiento += respuesta->archivoTemporal.longitud;
+
+	memcpy(&respuesta->ip.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	respuesta->ip.cadena = calloc(1,respuesta->ip.longitud+1);
+	memcpy(respuesta->ip.cadena, buffer + desplazamiento, respuesta->ip.longitud);
+	desplazamiento += respuesta->ip.longitud;
+
+	respuesta->parametros->infoWorkers= list_create();
 	int longitud = 0;
 	memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
-	int i,j;
+	int i;
 	for (i = 0; i < longitud; ++i) {
-		workerDesdeYama* infoWorker = malloc(sizeof(workerDesdeYama));
+		infoWorker* info = malloc(sizeof(infoWorker));
 
-		memcpy(&infoWorker->numeroWorker, buffer + desplazamiento, sizeof(int) );
+		memcpy(&info->puerto, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
-		memcpy(&infoWorker->puerto, buffer + desplazamiento, sizeof(int) );
+		memcpy(&info->nombreArchivoReducido.longitud, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
-		memcpy(&infoWorker->ip.longitud, buffer + desplazamiento, sizeof(int) );
+		info->nombreArchivoReducido.cadena = calloc(1,info->nombreArchivoReducido.longitud+1);
+		memcpy(info->nombreArchivoReducido.cadena, buffer + desplazamiento, info->nombreArchivoReducido.longitud);
+		desplazamiento += info->nombreArchivoReducido.longitud;
+
+		memcpy(&info->ip.longitud, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
-		infoWorker->ip.cadena = calloc(1,infoWorker->ip.longitud+1);
-		memcpy(infoWorker->ip.cadena, buffer + desplazamiento, infoWorker->ip.longitud);
-		desplazamiento += infoWorker->ip.longitud;
+		info->ip.cadena = calloc(1,info->ip.longitud+1);
+		memcpy(info->ip.cadena, buffer + desplazamiento, info->ip.longitud);
+		desplazamiento += info->ip.longitud;
 
-		infoWorker->bloquesConSusArchivos = list_create();
-		int longitud = 0;
-		memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
-		desplazamiento += sizeof(int);
-
-		for (j = 0; j < longitud; ++j) {
-			bloquesConSusArchivosRedGlobal* bloqueArchivos = malloc(sizeof(bloquesConSusArchivosRedGlobal));
-
-			memcpy(&bloqueArchivos->puerto, buffer + desplazamiento, sizeof(int) );
-			desplazamiento += sizeof(int);
-
-			memcpy(&bloqueArchivos->encargado, buffer + desplazamiento, sizeof(int) );
-			desplazamiento += sizeof(bool);
-
-			memcpy(&bloqueArchivos->archivoReduccionLocal.longitud, buffer + desplazamiento, sizeof(int) );
-			desplazamiento += sizeof(int);
-
-			bloqueArchivos->archivoReduccionLocal.cadena = calloc(1,bloqueArchivos->archivoReduccionLocal.longitud+1);
-			memcpy(bloqueArchivos->archivoReduccionLocal.cadena, buffer + desplazamiento, bloqueArchivos->archivoReduccionLocal.longitud);
-			desplazamiento += bloqueArchivos->archivoReduccionLocal.longitud;
-
-			memcpy(&bloqueArchivos->ip.longitud, buffer + desplazamiento, sizeof(int) );
-			desplazamiento += sizeof(int);
-
-			bloqueArchivos->ip.cadena = calloc(1,bloqueArchivos->ip.longitud+1);
-			memcpy(bloqueArchivos->ip.cadena, buffer + desplazamiento, bloqueArchivos->ip.longitud);
-			desplazamiento += bloqueArchivos->ip.longitud;
-
-			list_add(infoWorker->bloquesConSusArchivos, bloqueArchivos);
-		}
-
-		list_add(respuesta->workers, infoWorker);
+		list_add(respuesta->parametros->infoWorkers, info);
 	}
 
 	return respuesta;
@@ -1390,7 +1361,6 @@ workerDesdeYama* deserializarReplanificacion(int socket, int tamanio){
 	void* buffer = malloc(tamanio);
 	recv(socket,buffer,tamanio,0);
 
-
 	memcpy(&infoWorker->numeroWorker, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
@@ -1432,4 +1402,102 @@ workerDesdeYama* deserializarReplanificacion(int socket, int tamanio){
 		list_add(infoWorker->bloquesConSusArchivos, bloqueArchivos);
 	}
 	return infoWorker;
+}
+
+void* serializarProcesarRedGlobal(void* paquete, int* tamanio){
+	parametrosReduccionGlobal* respuesta = (parametrosReduccionGlobal*)paquete;
+	int desplazamiento=0;
+
+	*tamanio = sizeof(int);
+	void* buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->contenidoScript.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += respuesta->contenidoScript.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, respuesta->contenidoScript.cadena, respuesta->contenidoScript.longitud);
+	desplazamiento += respuesta->contenidoScript.longitud;
+
+	*tamanio += sizeof(int);
+	int longitud = list_size(respuesta->infoWorkers);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	int j;
+	for (j = 0; j < list_size(respuesta->infoWorkers); ++j) {
+		infoWorker* info = (infoWorker*)list_get(respuesta->infoWorkers, j);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &info->puerto, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &info->nombreArchivoReducido.longitud, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += info->nombreArchivoReducido.longitud;
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, info->nombreArchivoReducido.cadena, info->nombreArchivoReducido.longitud);
+		desplazamiento += info->nombreArchivoReducido.longitud;
+
+		*tamanio += sizeof(int);
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, &info->ip.longitud, sizeof(int));
+		desplazamiento += sizeof(int);
+
+		*tamanio += info->ip.longitud;
+		buffer = realloc(buffer, *tamanio);
+		memcpy(buffer + desplazamiento, info->ip.cadena, info->ip.longitud);
+		desplazamiento += info->ip.longitud;
+	}
+
+	return buffer;
+}
+
+parametrosReduccionGlobal* deserializarProcesarRedGlobal(int socket, int tamanio){
+	int desplazamiento = 0;
+	void* buffer = malloc(tamanio);
+	recv(socket,buffer,tamanio,0);
+	parametrosReduccionGlobal* respuesta = malloc(sizeof(parametrosReduccionGlobal));
+
+	memcpy(&respuesta->contenidoScript.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	respuesta->contenidoScript.cadena = calloc(1,respuesta->contenidoScript.longitud+1);
+	memcpy(respuesta->contenidoScript.cadena, buffer + desplazamiento, respuesta->contenidoScript.longitud);
+	desplazamiento += respuesta->contenidoScript.longitud;
+
+	respuesta->infoWorkers= list_create();
+	int longitud = 0;
+	memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	int i;
+	for (i = 0; i < longitud; ++i) {
+		infoWorker* info = malloc(sizeof(infoWorker));
+
+		memcpy(&info->puerto, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		memcpy(&info->nombreArchivoReducido.longitud, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		info->nombreArchivoReducido.cadena = calloc(1,info->nombreArchivoReducido.longitud+1);
+		memcpy(info->nombreArchivoReducido.cadena, buffer + desplazamiento, info->nombreArchivoReducido.longitud);
+		desplazamiento += info->nombreArchivoReducido.longitud;
+
+		memcpy(&info->ip.longitud, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		info->ip.cadena = calloc(1,info->ip.longitud+1);
+		memcpy(info->ip.cadena, buffer + desplazamiento, info->ip.longitud);
+		desplazamiento += info->ip.longitud;
+
+		list_add(respuesta->infoWorkers, info);
+	}
+
+	return respuesta;
 }

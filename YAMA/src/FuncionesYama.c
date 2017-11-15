@@ -244,7 +244,6 @@ void recibirContenidoMaster(int nuevoMaster) {
 
 	planificar(jobAPlanificar);
 
-
 }
 
 informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud){
@@ -417,6 +416,7 @@ bool faltanMasTareas(int jobid,Etapa etapa){
 
 void finalizarJob(job* job,int etapa){
 	actualizarCargasNodos(job->id,etapa);
+	close(job->socketFd);
 	borrarEntradasDeJob(job->id);
 	empaquetar(job->socketFd,mensajeFinJob,0,0);
 	log_trace(logger, "Finalizo job con id:",job->id);
@@ -443,6 +443,23 @@ void actualizarCargasNodos(int jobid,int etapa){
 	}
 
 	list_iterate(registros,(void*)actualizarCarga);
+}
+
+void actualizarCargasNodosRedLocal(int jobid,int numNodo){
+	bool encontrarEnTablaEstados(void *registro) {
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+		return reg->job == jobid && reg->etapa== RED_LOCAL && reg->nodo==numNodo;
+	}
+
+	pthread_mutex_lock(&mutexTablaEstados);
+	registroTablaEstados* reg= list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
+
+	pthread_mutex_lock(&mutex_NodosConectados);
+	infoNodo* nodo = obtenerNodo(reg->nodo);
+	nodo->carga=nodo->carga-1;
+	pthread_mutex_unlock(&mutex_NodosConectados);
+	pthread_mutex_unlock(&mutexTablaEstados);
+
 }
 
 void actualizarCargasNodosReplanificacion(int jobid,int etapa,int bloque){
@@ -475,37 +492,15 @@ void borrarEntradasDeJob(int jobid){
 
 }
 
-void esperarRespuestaReduccionDeMaster(job* job,int etapa){
-	int mensajeOkRedu,mensajeFalloRedu;
+void esperarRespuestaReduccionDeMaster(job* job){
+	respuesta respuestaMaster=  desempaquetar(job->socketFd);
 
-	if(etapa ==  RED_LOCAL){
-		mensajeOkRedu=mensajeRedLocalCompleta;
-		mensajeFalloRedu=mensajeFalloRedLocal;
+	if(respuestaMaster.idMensaje == mensajeRedGlobalCompleta){
+		agregarBloqueTerminadoATablaEstados(0,job->id,RED_GLOBAL);
+		return;
 	}
-	else{
-		mensajeOkRedu=mensajeRedGlobalCompleta;
-		mensajeFalloRedu=mensajeFalloRedGlobal;
-	}
-
-	int i;
-	t_list* listaBloques;
-	bool reduccionIncompleta = true;
-	while(reduccionIncompleta){
-		respuesta respuestaMaster=  desempaquetar(job->socketFd);
-
-		if(respuestaMaster.idMensaje == mensajeOkRedu){
-			listaBloques = (t_list*)respuestaMaster.envio;
-
-			for(i=0;i<list_size(listaBloques);i++){
-				bloquesConSusArchivosRedLocal* bloque = list_get(listaBloques, i);
-				agregarBloqueTerminadoATablaEstados(bloque->numBloque,job->id,TRANSFORMACION);
-				}
-
-			reduccionIncompleta = faltanMasTareas(job->id,etapa);
-		}
-		else if(respuestaMaster.idMensaje == mensajeFalloRedu){
-			finalizarJob(job,etapa);
-		}
+	else if(respuestaMaster.idMensaje == mensajeFalloRedGlobal){
+		finalizarJob(job,RED_GLOBAL);
 	}
 }
 
@@ -523,7 +518,6 @@ void eliminarWorker(int id, t_list* listaNodos){
 	}
 	infoNodo* workerEnGlobal = malloc(sizeof(infoNodo));
 	infoNodo* worker = malloc(sizeof(infoNodo));
-
 
 	pthread_mutex_lock(&mutex_NodosConectados);
 	workerEnGlobal = list_find(nodosConectados, (void*)nodoConNumero);
@@ -549,8 +543,8 @@ bool faltanBloquesTransformacionParaNodo(int jobid,int nodo){
 
 void mostrarTablaDeEstados(){
 	void iterar(registroTablaEstados* reg){
-			printf("numero %d, bloque %d, etapa %d estado %d, ruta %s \n\n",reg->nodo,reg->bloque,reg->etapa,reg->estado,reg->rutaArchivoTemp);
-		}
+		printf("numero %d, bloque %d, etapa %d estado %d, ruta %s \n\n",reg->nodo,reg->bloque,reg->etapa,reg->estado,reg->rutaArchivoTemp);
+	}
 
-		list_iterate(tablaDeEstados,(void*)iterar);
+	list_iterate(tablaDeEstados,(void*)iterar);
 }
