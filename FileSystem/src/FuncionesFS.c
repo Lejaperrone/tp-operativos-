@@ -26,6 +26,7 @@
 
 char* pathArchivoDirectorios = "../metadata/Directorios.dat";
 char* pathArchivoNodos = "../metadata/Nodos.bin";
+char* rutaMetadataBitmaps = "../metadata/Bitmaps";
 struct sockaddr_in direccionCliente;
 unsigned int tamanioDireccion = sizeof(direccionCliente);
 int servidorFS;
@@ -1138,7 +1139,6 @@ int borrarArchivosEnMetadata(){
 }
 
 int liberarNodosConectados(){
-	char* rutaMetadataBitmaps = "../metadata/Bitmaps";
 	int cantNodosConectados = list_size(nodosConectados);
 	int i, k;
 	int cantBloquesOcupados, numeroNodo;
@@ -1194,3 +1194,55 @@ int formatearDataBins(){
 
  	return 0;
  }
+
+char* devolverRuta(char* comando, int posicionPalabra){
+	char* copiaComando = malloc(strlen(comando)+1);
+	memset(copiaComando,0, strlen(comando)+1);
+	memcpy(copiaComando, comando,strlen(comando)+1);
+	char* ruta = strtok(copiaComando, " ");
+	int i;
+
+	for (i = 0; i < posicionPalabra; ++i){
+		ruta = strtok(NULL, " ");
+	}
+	//free(copiaComando);
+	return ruta;
+}
+
+bool validarDirectorio(char* path){
+	DIR* dir = opendir(path);
+	if (dir)
+	{
+	    printf("Exite el directorio %s en el FileSystem\n", path);
+	    return true;
+	}
+	else if (ENOENT == errno)
+	{
+	    printf("No existe el archivo %s en el FileSystem\n", path);
+	    return false;
+	}
+	else
+	{
+	    return false;
+	}
+}
+
+bool isDirectoryEmpty(char *dirname) {
+  int n = 0;
+  struct dirent *d;
+  DIR *dir = opendir(dirname);
+  if (dir == NULL)
+    return false;
+  while ((d = readdir(dir)) != NULL) {
+    if(++n > 2)
+      break;
+  }
+  closedir(dir);
+
+  return n <= 2;
+}
+
+
+int esRutaDeYama(char* ruta){
+	return string_starts_with(ruta, "yamafs:/");
+}

@@ -112,3 +112,11 @@ int borrarArchivosEnMetadata();
 int liberarNodosConectados();
 
 int formatearDataBins();
+
+char* devolverRuta(char* comando, int posicionPalabra);
+
+bool validarDirectorio(char* path);
+
+bool isDirectoryEmpty(char *dirname);
+
+int esRutaDeYama(char* ruta);

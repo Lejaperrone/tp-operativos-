@@ -27,11 +27,7 @@
 #include <sys/mman.h>
 #include <ctype.h>
 
-char* devolverRuta(char* comando, int cantidadDeComandos);
-
-bool validarDirectorio(char* path);
-
-bool isDirectoryEmpty(char *dirname);
+int formatearFS();//format
 
 int eliminarArchivo(char* comando);//rm
 
@@ -39,17 +35,13 @@ int eliminarDirectorio(char* comando);//rm -d
 
 int eliminarBloque(char* comando);//rm -b
 
-int listarArchivos(char* comando);//ls
-
-int crearDirectorio(char* comando);//mkdir
-
-int mostrarArchivo(char* comando);//cat
-
 int cambiarNombre(char* comando);//rename
 
 int mover(char* comando);//mv
 
-int informacion(char* comando);//info
+int mostrarArchivo(char* comando);//cat
+
+int crearDirectorio(char* comando);//mkdir
 
 int copiarArchivo(char* comando);//cpfrom
 
@@ -59,8 +51,8 @@ int copiarBloqueANodo(char* comando);//cpblock
 
 int generarArchivoMD5(char* comando);//md5
 
-int formatearFS();//format
+int listarArchivos(char* comando);//ls
 
-int esRutaDeYama(char* ruta);
+int informacion(char* comando);//info
 
 #endif /* FILESYSTEM_COMANDOS_H_ */
