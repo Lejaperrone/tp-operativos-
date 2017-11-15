@@ -531,6 +531,7 @@ void realizarAlmacenamientoFinal(){
 void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTransformacion* respuestaMaster,int nodos){
 	bool redLocalIncompleta= true;
 	bloqueYNodo* bloqueNodo;
+	int numNodo;
 
 	while(redLocalIncompleta){
 		respuesta respuestaPlanificacionMaster=  desempaquetar(job->socketFd);
@@ -549,8 +550,9 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloTransformacion){
-			bloqueNodo = (bloqueYNodo*) respuestaPlanificacionMaster.envio;
-			log_trace(logger,"Entro a replanificar se desconecto un worker %d", bloqueNodo->workerId);
+			numNodo = *(int*) respuestaPlanificacionMaster.envio;
+			log_trace(logger,"Entro a replanificar se desconecto un worker %d", numNodo);
+			bloqueNodo->workerId = numNodo;
 			replanificar(bloqueNodo,job,respuestaMaster,matrix,nodos);
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeRedLocalCompleta){

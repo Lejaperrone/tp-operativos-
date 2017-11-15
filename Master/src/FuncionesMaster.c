@@ -156,7 +156,7 @@ void crearHilosPorTmpRedLocal(workerDesdeYama* worker){
 void* conectarseConWorkersRedLocal(void* params){
 	parametrosReduccionLocal* infoRedLocal= (parametrosReduccionLocal*)params;
 	respuesta confirmacionWorker;
-	int numeroBloque;
+	int numeroNodo;
 
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(infoRedLocal->ip.cadena,infoRedLocal->puerto);
@@ -193,8 +193,9 @@ void* conectarseConWorkersRedLocal(void* params){
 	switch(confirmacionWorker.idMensaje){
 
 	case mensajeRedLocalCompleta:
-		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroBloque);
-		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroBloque);
+		numeroNodo = *(int*)confirmacionWorker.envio;
+		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroNodo);
+		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
 		break;
 
 	case mensajeDesconexion:
