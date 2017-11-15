@@ -97,8 +97,6 @@ void obtenerInfoNodo(ubicacionBloque* ubicacion);
 
 char* leerArchivo(char* rutaArchivo);
 
-char* rutaSinArchivo(char* rutaArchivo);
-
 char* ultimaParteDeRuta(char* rutaArchivo);
 
 int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo);
@@ -114,8 +112,6 @@ int liberarNodosConectados();
 int formatearDataBins();
 
 char* devolverRuta(char* comando, int posicionPalabra);
-
-bool validarDirectorio(char* path);
 
 bool isDirectoryEmpty(char *dirname);
 

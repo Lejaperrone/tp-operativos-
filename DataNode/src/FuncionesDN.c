@@ -75,6 +75,13 @@ int borrarDataBin(){
 
 void inicializarDataBin(){
 	if (!validarArchivo(config.RUTA_DATABIN)){
+		char* directorioDataBin = rutaSinArchivo(config.RUTA_DATABIN);
+		if (!validarDirectorio(directorioDataBin)){
+			char* mkdirDirectorio = string_from_format("mkdir %s", directorioDataBin);
+			system(mkdirDirectorio);
+			free(mkdirDirectorio);
+		}
+
 		printf("Se crea el archivo data.bin\n");
 		FILE* databin = fopen(config.RUTA_DATABIN,"w+");
 		truncate(config.RUTA_DATABIN, config.SIZE_NODO*mb);

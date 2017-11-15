@@ -38,7 +38,7 @@ int eliminarArchivo(char* comando){
 	if (strcmp(rutaMetadata, "-1") == 0)
 		return 1;
 
-	if (!string_starts_with(rutaArchivoYamafs,"yamafs:/"));
+	if (!string_starts_with(rutaArchivoYamafs,"yamafs:/"))
 		return 2;
 
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);

@@ -233,6 +233,10 @@ int redondearHaciaArriba(int num,int num2);
 
 bool validarArchivo(char* path);
 
+bool validarDirectorio(char* path);
+
+char* rutaSinArchivo(char* rutaArchivo);
+
 void obtenerNumeroNodo(t_config* archivo,char* claveCopia,ubicacionBloque* ubi);
 
 void limpiarPantalla();
