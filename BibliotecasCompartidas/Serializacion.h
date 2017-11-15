@@ -55,6 +55,7 @@
 #define mensajeFalloReduccion 36
 #define mensajeBorraDataBin 37
 #define mensajeRespuestaBorraDataBin 38
+#define mensajeSolicitudArchivo 39
 
 typedef struct{
 	int idMensaje;

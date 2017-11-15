@@ -34,5 +34,6 @@ void ejecutarComando(char* command, int socketMaster);
 void traverse_nodes(t_list* list, void funcion(void*));
 char *get_line(FILE *fp);
 char* crearRutaArchivoAReducir(t_list* listaWorkers);
+char* obtenerPathActual();
 
 #endif /* FUNCIONESWORKER_H_ */

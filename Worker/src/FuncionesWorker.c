@@ -133,10 +133,7 @@ void handlerMaster(int clientSocket) {
 	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
 	char* destino, *contenidoScript, *command, *rutaArchivoApareado, *archivoFinal, *archivoPreReduccion = "preReduccion";
 	t_list* listaArchivosTemporales, *archivosAReducir, *listAux, *listaWorkers;
-	char *path = string_new();
-	char cwd[1024];
-	string_append(&path, getcwd(cwd, sizeof(cwd)));
-
+	char* path = obtenerPathActual();
 
 	paquete = desempaquetar(clientSocket);
 	switch (paquete.idMensaje) {
@@ -199,40 +196,61 @@ void handlerMaster(int clientSocket) {
 	}
 }
 
-char* crearRutaArchivoAReducir(t_list* listaWorkers){
+char* obtenerPathActual(){
+	char *path = string_new();
+	char cwd[1024];
+	string_append(&path, getcwd(cwd, sizeof(cwd)));
+	return path;
+}
+
+char* crearRutaArchivoAReducir(t_list* listaWorkers) {
 	log_trace(logger, "Creando ruta de archivo final a reducir");
 	t_list* archivosAReducir = list_create();
 	t_list* socketsAWorker = list_create();
 	int socket;
-	char* archivoAReducir ;
-	char *path = string_new();
-	char cwd[1024];
-	string_append(&path, getcwd(cwd, sizeof(cwd)));
+	char* rutaArchivoAReducir;
+	char* path = obtenerPathActual();
 
 	log_trace(logger, "Cantidad de Workers a conectar:%i", list_size(listaWorkers));
-	archivoAReducir = string_from_format("%s/%s", path, "archivo");
+	rutaArchivoAReducir = string_from_format("%s/%s", path, "ArchivoAReducir");
 	int i;
 	for (i = 0; i < list_size(listaWorkers); i++) {
 		infoWorker* worker = list_get(listaWorkers, i);
-		socket = crearSocket();
-		struct sockaddr_in direccion = cargarDireccion(worker->ip.cadena, worker->puerto);
-		conectarCon(direccion, socket, idWorker);
-		respuesta respuestaHandShake = desempaquetar(socket);
+		if (!string_equals_ignore_case(config.IP_NODO, worker->ip.cadena) && config.PUERTO_WORKER != worker->puerto) {
+			socket = crearSocket();
+			struct sockaddr_in direccion = cargarDireccion(worker->ip.cadena,
+					worker->puerto);
+			conectarCon(direccion, socket, idWorker);
+			respuesta respuestaHandShake = desempaquetar(socket);
 
-		if(respuestaHandShake.idMensaje != mensajeOk){
-			log_error(logger, "Conexion fallida con Worker");
-			exit(1);
+			if (respuestaHandShake.idMensaje != mensajeOk) {
+				log_error(logger, "Conexion fallida con Worker");
+				exit(1);
+			}
+
+			log_trace(logger, "Conexion con Worker establecida");
+			list_add(socketsAWorker, &socket);
+
+			string* nombreArchivo = malloc(sizeof(string));
+			nombreArchivo->cadena = "nombreArchivo";
+			empaquetar(socket, mensajeSolicitudArchivo, 0, nombreArchivo);
+			log_trace(logger, "Enviando solicitud de archivo a Worker");
+
+			respuesta respuesta = desempaquetar(socket);
+			string* contenidoArchivo = (string*) respuesta.envio;
+
+			char* rutaArchivo = string_from_format("%s/%s", path, nombreArchivo);
+			FILE* archivo = fopen(rutaArchivo, "w+");
+			fwrite(contenidoArchivo->cadena, sizeof(char), contenidoArchivo->longitud, archivo);
+			fclose(archivo);
+			list_add(archivosAReducir, rutaArchivo);
+		} else {
+			char* rutaArchivo = string_from_format("%s/%s", path, "Nombre archivo temporal local de encargado");
+			list_add(archivosAReducir, rutaArchivo);
 		}
-		log_trace(logger, "Conexion con Worker establecida");
-		list_add(socketsAWorker, &socket);
-		//Pedir contenido archivo al worker
-		//Crear arhivo con el contenido recibido
-		//Agregar el path del archivo a lista archivosAReducir
 	}
-	//Agregar path del archivo a reducir del worker en el que estoy (encargado)
-	//Agregarle path a los nombres de archivos
-	//Aparearlos
-	return archivoAReducir;
+	apareoArchivosLocales(archivosAReducir, rutaArchivoAReducir);
+	return rutaArchivoAReducir;
 }
 
 void handlerWorker(int clientSocket) {
