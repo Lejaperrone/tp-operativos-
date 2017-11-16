@@ -110,36 +110,18 @@ void* conectarseConWorkersTransformacion(void* params) {
 	}
 	return 0;
 }
-void crearHilosConexionRedLocal(respuestaReduccionLocal* rtaYama){
-	int i;
-
-		for(i=0 ; i<list_size(rtaYama->workers);i++){
-			workerDesdeYama* worker = list_get(rtaYama->workers, i);
-			crearHilosPorTmpRedLocal(worker);
-		}
-
-}
-
-void crearHilosPorTmpRedLocal(workerDesdeYama* worker){
+void crearHilosConexionRedLocal(nodosRedLocal* worker){
 
 	parametrosReduccionLocal* parametrosConexion = malloc(sizeof(parametrosReduccionLocal));
-	parametrosConexion->ip.cadena = worker->ip.cadena;
+	parametrosConexion->ip.cadena = strdup(worker->ip.cadena);
 	parametrosConexion->ip.longitud = worker->ip.longitud;
-	parametrosConexion->numero = worker->numeroWorker;
+	parametrosConexion->numero = worker->numeroNodo;
 	parametrosConexion->puerto = worker->puerto;
+	parametrosConexion->rutaDestino.longitud = worker->archivoTemporal.longitud;
+	parametrosConexion->rutaDestino.cadena = strdup(worker->archivoTemporal.cadena);
 	parametrosConexion->archivosTemporales = list_create();
+	list_add_all(parametrosConexion->archivosTemporales,worker->archivos);
 
-	int j;
-	for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
-		bloquesConSusArchivosRedLocal* bloque = list_get(worker->bloquesConSusArchivos, j);
-		parametrosConexion->rutaDestino = bloque->archivoReduccion;
-
-		string* ruta = malloc(sizeof(string));
-		ruta->cadena = strdup(bloque->archivoTransformacion.cadena);
-		ruta->longitud = bloque->archivoTransformacion.longitud;
-
-		list_add(parametrosConexion->archivosTemporales,ruta);
-	}
 	pthread_t nuevoHilo;
 	pthread_attr_t attr;
 
@@ -151,6 +133,7 @@ void crearHilosPorTmpRedLocal(workerDesdeYama* worker){
 		log_error(loggerMaster, "No se pudo crear el thread de conexion");
 		exit(-1);
 	}
+
 }
 
 void* conectarseConWorkersRedLocal(void* params){
@@ -240,7 +223,7 @@ void enviarJobAYama(job* miJob) {
 void esperarInstruccionesDeYama() {
 	respuesta instruccionesYama;
 	respuestaSolicitudTransformacion* infoTransformacion ;
-	respuestaReduccionLocal* infoRedLocal;
+	nodosRedLocal* infoRedLocal;
 	respuestaReduccionGlobal* infoRedGlobal;
 	workerDesdeYama* worker;
 
@@ -256,7 +239,7 @@ void esperarInstruccionesDeYama() {
 				break;
 
 			case mensajeRespuestaRedLocal:
-				infoRedLocal = (respuestaReduccionLocal*)instruccionesYama.envio;
+				infoRedLocal = (nodosRedLocal*)instruccionesYama.envio;
 				crearHilosConexionRedLocal(infoRedLocal);
 				break;
 

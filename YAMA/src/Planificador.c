@@ -50,6 +50,7 @@ void planificar(job* job){
 	planificarReduccionesLocales(job,matrix,respuestaMaster,nodos);
 
 	enviarReduccionGlobalAMaster(job);
+
 	actualizarCargasNodos(job->id,RED_GLOBAL);
 	esperarRespuestaReduccionDeMaster(job);
 
@@ -355,10 +356,11 @@ void replanificar(bloqueYNodo* paraReplanificar,job* jobi,respuestaSolicitudTran
 }
 
 void enviarReduccionLocalAMaster(job* job,int nodo){
-	respuestaReduccionLocal* respuestaTodos = malloc(sizeof(respuestaReduccionLocal));
-	respuestaTodos->workers = list_create();
+	nodosRedLocal* respuestaTodos = malloc(sizeof(nodosRedLocal));
+	registroTablaEstados* registro = malloc(sizeof(registroTablaEstados));
 
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
+
 		return reg->job == job->id && reg->etapa == TRANSFORMACION && reg->nodo==nodo;
 	}
 
@@ -366,58 +368,50 @@ void enviarReduccionLocalAMaster(job* job,int nodo){
 	t_list* registrosRedLocal = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
 	pthread_mutex_unlock(&mutexTablaEstados);
 
+	t_list* nodosCargados = list_create();
+
+	infoNodo* infoNod = obtenerNodo(nodo);
+	char* archivo = dameUnNombreArchivoTemporal(job->id,0,RED_LOCAL,nodo);
+
+	respuestaTodos->numeroNodo=nodo;
+	respuestaTodos->puerto = infoNod->puerto;
+	respuestaTodos->ip.longitud = infoNod->ip.longitud;
+	respuestaTodos->ip.cadena = strdup(infoNod->ip.cadena);
+	respuestaTodos->archivoTemporal.longitud = string_length(archivo);
+	respuestaTodos->archivoTemporal.cadena =  strdup(archivo);
+	respuestaTodos->archivos = list_create();
+
 	void meterEnRespuestaRedLocal(registroTablaEstados* reg){
-		bloquesConSusArchivosRedLocal* bloquesArchivos = malloc(sizeof(bloquesConSusArchivosRedLocal));
-		workerDesdeYama* worker;
-
-		//pthread_mutex_lock(&mutex_NodosConectados);
-		infoNodo* infoNod = obtenerNodo(reg->nodo);
-
-		bool nodoConNumero(workerDesdeYama* worker){
-			return worker->numeroWorker == infoNod->numero;
+		bool encontrar(int* nodo){
+			return *nodo == reg->nodo;
 		}
 
-		if( list_find(respuestaTodos->workers, (void*) nodoConNumero)){
-			worker = list_find(respuestaTodos->workers, (void*) nodoConNumero);
+		bool encontrartabla(registroTablaEstados* registro){
+			return registro->nodo == reg->nodo;
 		}
-		else{
-			worker = malloc(sizeof(workerDesdeYama));
-			worker->numeroWorker = reg->nodo;
-			worker->puerto = infoNod->puerto;
-			worker->ip.longitud = infoNod->ip.longitud;
-			worker->ip.cadena = strdup(infoNod->ip.cadena);
-			worker->bloquesConSusArchivos = list_create();
-			list_add(respuestaTodos->workers,worker);
-		}
-		//pthread_mutex_unlock(&mutex_NodosConectados);
 
-		char* archivoReduccion = dameUnNombreArchivoTemporal(job->id,reg->bloque,RED_LOCAL,worker->numeroWorker);
+		string* strArchivo = malloc(sizeof(string));
+		strArchivo->longitud = string_length(reg->rutaArchivoTemp);
+		strArchivo->cadena = strdup(reg->rutaArchivoTemp);
+		list_add(respuestaTodos->archivos,strArchivo);
 
-		bloquesArchivos->numBloque = reg->bloque;
-
-		bloquesArchivos->archivoTransformacion.cadena = strdup(reg->rutaArchivoTemp);
-		bloquesArchivos->archivoTransformacion.longitud = string_length(reg->rutaArchivoTemp);
-
-		bloquesArchivos->archivoReduccion.longitud = string_length(archivoReduccion);
-		bloquesArchivos->archivoReduccion.cadena = strdup(archivoReduccion);
-
-		list_add(worker->bloquesConSusArchivos,bloquesArchivos);
-
-		registroTablaEstados* registro = malloc(sizeof(registroTablaEstados));
-		registro->bloque=reg->bloque;
+		registro->bloque=0;
 		registro->estado=EN_EJECUCION;
 		registro->etapa=RED_LOCAL;
 		registro->job= job->id;
 		registro->nodo= reg->nodo;
-		registro->rutaArchivoTemp = strdup(archivoReduccion);
+		registro->rutaArchivoTemp = strdup(archivo);
 
 		//pthread_mutex_lock(&mutexTablaEstados);
 		list_add(tablaDeEstados,registro);
 		//pthread_mutex_unlock(&mutexTablaEstados);
+
 	}
+
 	pthread_mutex_lock(&mutexTablaEstados);
 	list_iterate(registrosRedLocal,(void*)meterEnRespuestaRedLocal);
 	pthread_mutex_unlock(&mutexTablaEstados);
+
 	empaquetar(job->socketFd,mensajeRespuestaRedLocal,0,respuestaTodos);
 }
 

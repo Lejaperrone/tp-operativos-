@@ -35,15 +35,6 @@ typedef enum {TRANSFORMACION, RED_LOCAL, RED_GLOBAL, ALM_FINAL}Etapa;
 
 typedef enum {EN_EJECUCION, ERROR, FINALIZADO_OK}Estado;
 
-/*typedef struct {
-	int nodo;
-	string ip;
-	int puerto;
-	t_list* bloques;
-	int bytesOcupado;//FIXME
-	string rutaArchivoTemp;
-}respuestaSolicitudTransformacion;*/
-
 typedef struct {
 	t_list* workers;
 }respuestaSolicitudTransformacion;
@@ -54,6 +45,14 @@ typedef struct {
 	int puerto;
 	t_list* bloquesConSusArchivos;
 }workerDesdeYama;
+
+typedef struct{
+	int numeroNodo;
+	int puerto;
+	string ip;
+	string archivoTemporal;
+	t_list* archivos;
+}nodosRedLocal;
 
 typedef struct{
 	//infoBloque bloque;

@@ -132,8 +132,8 @@ void handlerMaster(int clientSocket) {
 	parametrosTransformacion* transformacion;
 	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
 	parametrosReduccionGlobal* reduccionGlobal = malloc(sizeof(parametrosReduccionGlobal));
-	char* destino, *contenidoScript, *command, *rutaArchivoApareado, *archivoFinal, *archivoPreReduccion = "preReduccion";
-	t_list* listaArchivosTemporales, *archivosAReducir, *listAux, *listaWorkers;
+	char* destino, *contenidoScript, *command, *rutaArchivoFinal, *archivoPreReduccion = "preReduccion";
+	t_list* listaArchivosTemporales, *listAux, *listaWorkers;
 	char* path = obtenerPathActual();
 
 	paquete = desempaquetar(clientSocket);
@@ -187,6 +187,7 @@ void handlerMaster(int clientSocket) {
 		exit(0);
 		break;
 	case mensajeProcesarRedGlobal:
+		printf("LLEGA EL MENSAJE");
 		reduccionGlobal = (parametrosReduccionGlobal*)paquete.envio;
 		printf("\n%s\n",reduccionGlobal->archivoTemporal.cadena);
 		int i;
@@ -197,7 +198,7 @@ void handlerMaster(int clientSocket) {
 		}
 		log_trace(logger, "Soy el Worker Encargado");
 		listaWorkers = list_create();
-		archivoFinal = crearRutaArchivoAReducir(listaWorkers);
+		rutaArchivoFinal = crearRutaArchivoAReducir(listaWorkers);
 		//Ejecutarle la reduccion a archivoFinal
 		//Enviar ok a Master
 		free(reduccionGlobal);

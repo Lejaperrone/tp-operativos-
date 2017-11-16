@@ -74,7 +74,7 @@ void finalizarTiempo(t_list* tiempos,int numero);
 
 void inicializarTiemposTransformacion(respuestaSolicitudTransformacion* infoTransformacion);
 
-void crearHilosConexionRedLocal(respuestaReduccionLocal* rtaYama);
+void crearHilosConexionRedLocal(nodosRedLocal* rtaYama);
 
 void crearHilosPorTmpRedLocal(workerDesdeYama* worker);
 
