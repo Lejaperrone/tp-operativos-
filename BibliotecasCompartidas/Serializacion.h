@@ -55,7 +55,6 @@
 #define mensajeFalloReduccion 36
 #define mensajeBorraDataBin 37
 #define mensajeRespuestaBorraDataBin 38
-#define mensajeSolicitudArchivo 39
 #define mensajeProcesarRedGlobal 40
 #define mensajeNoEstable 41
 

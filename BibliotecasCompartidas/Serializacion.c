@@ -42,7 +42,6 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			memcpy(bloque,&b,1);
 			break;
 
-		case mensajeSolicitudArchivo:
 		case mensajeArchivo:
 			bloque = serializarString(paquete,&tamanio);
 			break;
@@ -156,7 +155,6 @@ respuesta desempaquetar(int socket){
 				free(bufferOk);
 				break;
 
-			case mensajeSolicitudArchivo:
 			case mensajeNumeroLecturaBloqueANodo:
 			case mensajeSizeLecturaBloqueANodo:
 			case mensajeArchivo:
@@ -276,7 +274,6 @@ string* deserializarString(int socket,int tamanio){
 
  	return cadena;
  }
-
 
 void* serializarJob(void* paquete, int* tamanio){
 	job* unJob = (job*)paquete;
