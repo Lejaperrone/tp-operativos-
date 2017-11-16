@@ -1423,6 +1423,16 @@ void* serializarProcesarRedGlobal(void* paquete, int* tamanio){
 		desplazamiento += info->ip.longitud;
 	}
 
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->archivoTemporal.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += respuesta->archivoTemporal.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, respuesta->archivoTemporal.cadena, respuesta->archivoTemporal.longitud);
+	desplazamiento += respuesta->archivoTemporal.longitud;
+
 	return buffer;
 }
 
@@ -1467,6 +1477,13 @@ parametrosReduccionGlobal* deserializarProcesarRedGlobal(int socket, int tamanio
 
 		list_add(respuesta->infoWorkers, info);
 	}
+
+	memcpy(&respuesta->archivoTemporal.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	respuesta->archivoTemporal.cadena = calloc(1,respuesta->archivoTemporal.longitud+1);
+	memcpy(respuesta->archivoTemporal.cadena, buffer + desplazamiento, respuesta->archivoTemporal.longitud);
+	desplazamiento += respuesta->archivoTemporal.longitud;
 
 	return respuesta;
 }

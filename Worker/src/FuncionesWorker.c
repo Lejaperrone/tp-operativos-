@@ -188,13 +188,8 @@ void handlerMaster(int clientSocket) {
 		break;
 	case mensajeProcesarRedGlobal:
 		reduccionGlobal = (parametrosReduccionGlobal*)paquete.envio;
-		printf("\n%s\n",reduccionGlobal->archivoTemporal.cadena);
-		int i;
-		infoWorker* nodo;
-		for(i=0;i<list_size(reduccionGlobal->infoWorkers);i++){
-			nodo = list_get(reduccionGlobal->infoWorkers,i);
-			printf("IP: %s | ARCHIVO REDLOCAL: %s\n\n",nodo->ip.cadena, nodo->nombreArchivoReducido.cadena);
-		}
+		log_trace(logger, "Soy el Worker Encargado");
+		destino = reduccionGlobal->archivoTemporal;
 		log_trace(logger, "Soy el Worker Encargado");
 		listaWorkers = list_create();
 		rutaArchivoFinal = crearRutaArchivoAReducir(listaWorkers);
