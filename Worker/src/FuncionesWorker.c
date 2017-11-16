@@ -264,7 +264,7 @@ void handlerWorker(int clientSocket) {
 		solicitudWorker = desempaquetar(clientSocket);
 
 		switch (solicitudWorker.idMensaje) {
-			case mensajeSolicitudArchivo:
+			//case mensajeSolicitudArchivo:
 				log_trace(logger, "LLEGA");
 				archivoSolicitado = (string*)solicitudWorker.envio;
 				printf("Archivo Solicitado: %s", archivoSolicitado->cadena);
