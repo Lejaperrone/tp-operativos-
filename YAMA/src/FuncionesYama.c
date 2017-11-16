@@ -18,10 +18,16 @@
 int disponibilidadBase;
 
 int conectarseConFs() {
+	respuesta respuesta;
 	int socketFs = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(config.FS_IP, config.FS_PUERTO);
 	conectarCon(direccion, socketFs, 1);
-	desempaquetar(socketFs);
+	respuesta = desempaquetar(socketFs);
+	if (respuesta.idMensaje == mensajeNoEstable){
+		printf("File system en estado inestable, no se puede conectar\n");
+		exit(1);
+	}
+
 	log_trace(logger, "Conexion exitosa con File System");
 	return socketFs;
 }

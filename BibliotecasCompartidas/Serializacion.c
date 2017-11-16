@@ -35,6 +35,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeError:
+		case mensajeNoEstable:
 			tamanio =1;
 			bloque = malloc(1);
 			char b = 'b';
@@ -174,6 +175,7 @@ respuesta desempaquetar(int socket){
 				break;
 
 			case mensajeError:
+			case mensajeNoEstable:
 				bufferOk = malloc(sizeof(char));
 				recv(socket,bufferOk,sizeof(char),0);
 				free(bufferOk);
