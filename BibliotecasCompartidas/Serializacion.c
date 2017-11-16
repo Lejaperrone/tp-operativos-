@@ -35,6 +35,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeError:
+		case mensajeNoEstable:
 			tamanio =1;
 			bloque = malloc(1);
 			char b = 'b';
@@ -174,6 +175,7 @@ respuesta desempaquetar(int socket){
 				break;
 
 			case mensajeError:
+			case mensajeNoEstable:
 				bufferOk = malloc(sizeof(char));
 				recv(socket,bufferOk,sizeof(char),0);
 				free(bufferOk);
@@ -1074,7 +1076,7 @@ parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio){
 
 	memcpy(&reduccionLocal->numero, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
-	printf("NUMERO%d\n",reduccionLocal->numero);
+
 	memcpy(&reduccionLocal->puerto, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
@@ -1260,6 +1262,7 @@ respuestaReduccionGlobal* deserializarRespuestaRedGlobal(int socket,int tamanio)
 	memcpy(respuesta->ip.cadena, buffer + desplazamiento, respuesta->ip.longitud);
 	desplazamiento += respuesta->ip.longitud;
 
+	respuesta->parametros = malloc(sizeof(parametrosReduccionGlobal));
 	respuesta->parametros->infoWorkers= list_create();
 	int longitud = 0;
 	memcpy(&longitud, buffer + desplazamiento, sizeof(int) );

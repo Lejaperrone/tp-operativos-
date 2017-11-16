@@ -109,4 +109,6 @@ void mostrarTablaDeEstados();
 
 void actualizarCargasNodosRedLocal(int jobid,int numNodo);
 
+void agregarBloqueTerminadoATablaEstadosRedLocal(int nodo,int jobId,Etapa etapa);
+
 #endif /* FUNCIONESYAMA_H_ */

@@ -156,7 +156,7 @@ void crearHilosPorTmpRedLocal(workerDesdeYama* worker){
 void* conectarseConWorkersRedLocal(void* params){
 	parametrosReduccionLocal* infoRedLocal= (parametrosReduccionLocal*)params;
 	respuesta confirmacionWorker;
-	int numeroBloque;
+	int numeroNodo;
 
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(infoRedLocal->ip.cadena,infoRedLocal->puerto);
@@ -193,8 +193,9 @@ void* conectarseConWorkersRedLocal(void* params){
 	switch(confirmacionWorker.idMensaje){
 
 	case mensajeRedLocalCompleta:
-		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroBloque);
-		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroBloque);
+		numeroNodo = *(int*)confirmacionWorker.envio;
+		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroNodo);
+		//finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
 		break;
 
 	case mensajeDesconexion:
@@ -274,7 +275,7 @@ void esperarInstruccionesDeYama() {
 				break;
 
 			case mensajeRespuestaRedGlobal:
-				infoRedGlobal = instruccionesYama.envio;
+				infoRedGlobal = (respuestaReduccionGlobal*)instruccionesYama.envio;
 				enviarAEncargadoRedGlobal(infoRedGlobal);
 				break;
 		}
@@ -475,6 +476,10 @@ void* conectarseConWorkerRedGlobal(void* params){
 
 	parametrosConexion->contenidoScript.cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
 	parametrosConexion->contenidoScript.longitud = size;
+	parametrosConexion->archivoTemporal.cadena = strdup(infoRedGlobal->archivoTemporal.cadena);
+	parametrosConexion->archivoTemporal.longitud = infoRedGlobal->archivoTemporal.longitud;
+	parametrosConexion->infoWorkers = list_create();
+	list_add_all(parametrosConexion->infoWorkers,infoRedGlobal->parametros->infoWorkers);
 
 	empaquetar(socketWorker, mensajeProcesarRedGlobal, 0, parametrosConexion);
 

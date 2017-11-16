@@ -57,6 +57,7 @@
 #define mensajeRespuestaBorraDataBin 38
 #define mensajeSolicitudArchivo 39
 #define mensajeProcesarRedGlobal 40
+#define mensajeNoEstable 41
 
 typedef struct{
 	int idMensaje;

@@ -131,11 +131,13 @@ void handlerMaster(int clientSocket) {
 	respuesta paquete;
 	parametrosTransformacion* transformacion;
 	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
+	parametrosReduccionGlobal* reduccionGlobal = malloc(sizeof(parametrosReduccionGlobal));
 	char* destino, *contenidoScript, *command, *rutaArchivoApareado, *archivoFinal, *archivoPreReduccion = "preReduccion";
 	t_list* listaArchivosTemporales, *archivosAReducir, *listAux, *listaWorkers;
 	char* path = obtenerPathActual();
 
 	paquete = desempaquetar(clientSocket);
+
 	switch (paquete.idMensaje) {
 	case mensajeProcesarTransformacion:
 		transformacion = (parametrosTransformacion*)paquete.envio;
@@ -163,6 +165,7 @@ void handlerMaster(int clientSocket) {
 	case mensajeProcesarRedLocal:
 		reduccionLocal = (parametrosReduccionLocal*)paquete.envio;
 		log_trace(logger, "Iniciando Reduccion Local %s",reduccionLocal->rutaDestino.cadena);
+		int numeroNodo = reduccionLocal->numero;
 		contenidoScript = strdup(reduccionLocal->contenidoScript.cadena);
 		listAux = list_create();
 		listaArchivosTemporales = list_create();
@@ -179,16 +182,25 @@ void handlerMaster(int clientSocket) {
 		command = string_from_format("cat %s | perl %s > %s", aux, string_from_format("../scripts/reductorLocal.pl"), string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
-		empaquetar(clientSocket, mensajeOk, 0, 0);
+		empaquetar(clientSocket, mensajeRedLocalCompleta, 0, &numeroNodo);
 		free(reduccionLocal);
 		exit(0);
 		break;
-	case mensajeDesignarEncargado:
+	case mensajeProcesarRedGlobal:
+		reduccionGlobal = (parametrosReduccionGlobal*)paquete.envio;
+		printf("\n%s\n",reduccionGlobal->archivoTemporal.cadena);
+		int i;
+		infoWorker* nodo;
+		for(i=0;i<list_size(reduccionGlobal->infoWorkers);i++){
+			nodo = list_get(reduccionGlobal->infoWorkers,i);
+			printf("IP: %s | ARCHIVO REDLOCAL: %s\n\n",nodo->ip.cadena, nodo->nombreArchivoReducido.cadena);
+		}
 		log_trace(logger, "Soy el Worker Encargado");
 		listaWorkers = list_create();
 		archivoFinal = crearRutaArchivoAReducir(listaWorkers);
 		//Ejecutarle la reduccion a archivoFinal
 		//Enviar ok a Master
+		free(reduccionGlobal);
 		exit(0);
 		break;
 	default:

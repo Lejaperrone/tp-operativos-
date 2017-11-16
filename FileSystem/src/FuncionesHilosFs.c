@@ -91,6 +91,12 @@ void* levantarServidorFS(){
 							}
 						}
 						else if(*(int*)conexionNueva.envio == 1){//yama
+							if(!EstadoFS){
+								empaquetar(nuevoCliente,mensajeNoEstable,0,0);
+								close(nuevoCliente);
+								FD_CLR(nuevoCliente, &datanodes);
+								continue;
+							}
 							clienteYama = nuevoCliente;
 							log_trace(loggerFS, "Nueva Conexion de Yama");
 							empaquetar(nuevoCliente,mensajeOk,0,0);

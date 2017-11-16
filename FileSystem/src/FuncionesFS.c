@@ -51,6 +51,7 @@ void establecerServidor(char* ip, int port){
 
 void verificarEstadoAnterior(){
 	recuperarEstado = validarArchivo(pathArchivoNodos);
+	printf("rec %d\n", recuperarEstado);
 }
 int verificarEstado(){
     DIR* directorio;

@@ -18,10 +18,16 @@
 int disponibilidadBase;
 
 int conectarseConFs() {
+	respuesta respuesta;
 	int socketFs = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(config.FS_IP, config.FS_PUERTO);
 	conectarCon(direccion, socketFs, 1);
-	desempaquetar(socketFs);
+	respuesta = desempaquetar(socketFs);
+	if (respuesta.idMensaje == mensajeNoEstable){
+		printf("File system en estado inestable, no se puede conectar\n");
+		exit(1);
+	}
+
 	log_trace(logger, "Conexion exitosa con File System");
 	return socketFs;
 }
@@ -401,7 +407,21 @@ void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,Etapa etapa){
 
 	reg->estado=FINALIZADO_OK;
 }
+void agregarBloqueTerminadoATablaEstadosRedLocal(int nodo,int jobId,Etapa etapa){
+	bool encontrarEnTablaEstados(registroTablaEstados* reg ) {
+		return reg->job == jobId && reg->etapa == etapa && reg->estado == EN_EJECUCION && reg->nodo==nodo;
+	}
+	void modificarEstado(registroTablaEstados* reg){
+		if(encontrarEnTablaEstados(reg)){
+			reg->estado=FINALIZADO_OK;
+		}
+	}
+	pthread_mutex_lock(&mutexTablaEstados);
+	list_iterate(tablaDeEstados, modificarEstado);
+	pthread_mutex_unlock(&mutexTablaEstados);
 
+
+}
 bool faltanMasTareas(int jobid,Etapa etapa){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
 		return reg->job == jobid && reg->etapa == etapa && reg->estado != FINALIZADO_OK;
