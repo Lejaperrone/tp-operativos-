@@ -1013,7 +1013,7 @@ int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
 	}
 	info = *(informacionNodo*)list_get(nodosConectados,nodo - 1);
 	paramLectura.socket = info.socket;
-	paramLectura.bloque = 28;
+	paramLectura.bloque = bloque;
 	paramLectura.sem = nodo;
 
 	pthread_create(&nuevoHilo, NULL, &leerDeDataNode,(void*) &paramLectura);
@@ -1192,4 +1192,34 @@ bool isDirectoryEmpty(char *dirname) {
 
 int esRutaDeYama(char* ruta){
 	return string_starts_with(ruta, "yamafs:/");
+}
+
+void borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
+	char* rutaNueva = string_from_format("%s/%s", rutaSinArchivo(ruta), "copia.txt");
+	printf("%s\n", rutaNueva);
+	FILE* replica = fopen(rutaNueva, "w+");
+	FILE* archivo = fopen(ruta, "r");
+
+	char* contenido = string_new();
+	char* texto = string_new();
+
+	char* keyBloque = string_from_format("BLOQUE%dCOPIA%d", bloque, copia);
+
+	printf("%s\n", keyBloque);
+
+
+	while (fgets(contenido, 30, archivo) != NULL){
+		if (!string_starts_with(contenido, keyBloque)){
+			string_append_with_format(&texto, "%s", contenido);
+		}
+		contenido = string_new();
+	}
+
+	fwrite(texto, sizeof(texto), strlen(texto), replica);
+
+	fclose(replica);
+	fclose(archivo);
+
+	rename(rutaNueva, ruta);
+
 }

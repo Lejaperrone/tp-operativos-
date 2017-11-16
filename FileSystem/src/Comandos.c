@@ -132,12 +132,12 @@ int eliminarBloque(char* comando){
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
 
 	if (strcmp(rutaDirectorioMetadata, "-1") == 0)
-		return respuesta;
+		return 3;
 
 	char* rutaArchivoEnMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
 
 	if (!validarArchivo(rutaArchivoEnMetadata))
-		return respuesta;
+		return 3;
 
 	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
 
@@ -146,17 +146,19 @@ int eliminarBloque(char* comando){
 	else
 		otraCopia = 0;
 
-	if (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,numeroCopia))
-			&& config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,otraCopia))){
-		arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,numeroCopia));
-		numeroNodo = atoi(string_substring_from(arrayInfoBloque[0], 4));
-		bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
-		setearBloqueLibreEnBitmap(numeroNodo, bloqueNodo);
-		actualizarBitmapNodos();
-		respuesta = 0;
-	}else{
-		printf("El bloque no tiene ninguna copia en el FileSystem");
-	}
+	if (!config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,numeroCopia)))
+		return 1;
+
+	if (!config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,otraCopia)))
+		return 2;
+
+	arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,numeroCopia));
+	numeroNodo = atoi(string_substring_from(arrayInfoBloque[0], 4));
+	bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
+	setearBloqueLibreEnBitmap(numeroNodo, bloqueNodo);
+	actualizarBitmapNodos();
+	borrarDeArchivoMetadata(rutaArchivoEnMetadata, numeroBloque, numeroCopia);
+	respuesta = 0;
 
 	free(rutaArchivoEnMetadata);
 
@@ -513,7 +515,7 @@ int copiarBloqueANodo(char* comando){
 
 	bloqueNuevo = guardarBloqueEnNodo(bloqueACopiar, nodoACopiar, infoArchivo);
 
-	if (bloqueNuevo == 1){
+	if (bloqueNuevo == -1){
 		printf("No existe el bloque");
 		return respuesta;
 	}

@@ -191,12 +191,31 @@ void* consolaFS(){
 			}
 
 			else if (strcmp(arguments[1], "-b") == 0) {
-				if(validarParametros(arguments, 3)){
+				if(validarParametros(arguments, 5)){
 					continue;
 				}
-				pthread_mutex_lock(&logger_mutex);
-				log_trace(loggerFS, "Bloque eliminado");
-				pthread_mutex_unlock(&logger_mutex);
+				resultado = eliminarBloque(comando);
+				if (resultado == 0){
+					pthread_mutex_lock(&logger_mutex);
+					log_trace(loggerFS, "Bloque eliminado");
+					pthread_mutex_unlock(&logger_mutex);
+				}
+				else if (resultado == 1){
+					pthread_mutex_lock(&logger_mutex);
+					log_error(loggerFS, "El bloque no existe");
+					pthread_mutex_unlock(&logger_mutex);
+				}
+				else if (resultado == 2){
+					pthread_mutex_lock(&logger_mutex);
+					log_error(loggerFS, "El bloque es la ultima copia");
+					pthread_mutex_unlock(&logger_mutex);
+				}
+				else{
+					pthread_mutex_lock(&logger_mutex);
+					log_error(loggerFS, "Error al intentar eliminar el bloque");
+					pthread_mutex_unlock(&logger_mutex);
+				}
+
 			}
 
 			else if (arguments[1] != NULL) {

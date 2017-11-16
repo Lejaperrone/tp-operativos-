@@ -116,3 +116,5 @@ char* devolverRuta(char* comando, int posicionPalabra);
 bool isDirectoryEmpty(char *dirname);
 
 int esRutaDeYama(char* ruta);
+
+void borrarDeArchivoMetadata(char* ruta, int bloque, int copia);
