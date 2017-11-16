@@ -187,7 +187,6 @@ void handlerMaster(int clientSocket) {
 		exit(0);
 		break;
 	case mensajeProcesarRedGlobal:
-		printf("LLEGA EL MENSAJE");
 		reduccionGlobal = (parametrosReduccionGlobal*)paquete.envio;
 		printf("\n%s\n",reduccionGlobal->archivoTemporal.cadena);
 		int i;
