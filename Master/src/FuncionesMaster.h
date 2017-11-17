@@ -86,4 +86,6 @@ void enviarAEncargadoRedGlobal(respuestaReduccionGlobal* infoRedGlobal);
 
 void* conectarseConWorkerRedGlobal(void* params);
 
+void mostrarListasEstadisticas();
+
 #endif /* FUNCIONESMASTER_H_ */

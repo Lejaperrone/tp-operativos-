@@ -317,6 +317,7 @@ void replanificar(bloqueYNodo* paraReplanificar,job* jobi,respuestaSolicitudTran
 	int nodoNuevo = nodoConOtraCopia(paraReplanificar,matrix,bloques);
 
 	if(nodoNuevo == -1){
+		log_trace(logger,"Fallo en replanificar bloque  %d", paraReplanificar->bloque);
 		finalizarJob(jobi,TRANSFORMACION);
 	}
 

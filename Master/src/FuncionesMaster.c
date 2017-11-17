@@ -95,10 +95,13 @@ void* conectarseConWorkersTransformacion(void* params) {
 	switch(confirmacionWorker.idMensaje){
 
 		case mensajeTransformacionCompleta:
+			log_trace(loggerMaster, "Informo a  YAMA fin Transformacion para bloque %d en nodo %d.",infoTransformacion->bloquesConSusArchivos.numBloque,infoTransformacion->numero);
 			bloqueOK = malloc(sizeof(bloqueYNodo));
 			bloqueOK->workerId = infoTransformacion->numero;
 			bloqueOK->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
 			empaquetar(socketYama, mensajeTransformacionCompleta, 0 , bloqueOK);
+			finalizarTiempo(estadisticas->tiempoFinTrans,bloqueOK->bloque);
+			estadisticas->cantTareas[0]++;
 			free(bloqueOK);
 			break;
 
@@ -121,6 +124,8 @@ void crearHilosConexionRedLocal(nodosRedLocal* worker){
 	parametrosConexion->rutaDestino.cadena = strdup(worker->archivoTemporal.cadena);
 	parametrosConexion->archivosTemporales = list_create();
 	list_add_all(parametrosConexion->archivosTemporales,worker->archivos);
+
+	setearTiempo(1,worker->numeroNodo);
 
 	pthread_t nuevoHilo;
 	pthread_attr_t attr;
@@ -176,12 +181,15 @@ void* conectarseConWorkersRedLocal(void* params){
 	switch(confirmacionWorker.idMensaje){
 
 	case mensajeRedLocalCompleta:
+		log_trace(loggerMaster, "Informo a  YAMA fin Reduccion Loacl en nodo %d.",infoRedLocal->numero);
 		numeroNodo = *(int*)confirmacionWorker.envio;
 		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroNodo);
-		//finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
+		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
 		break;
 
 	case mensajeDesconexion:
+		log_trace(loggerMaster, "Informo a  YAMA fallo en Reduccion Local en nodo %d.",infoRedLocal->numero);
+		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
 		mandarFalloEnReduccion();
 		break;
 
@@ -192,16 +200,17 @@ void* conectarseConWorkersRedLocal(void* params){
 }
 
 void mandarFalloEnReduccion(){
+	estadisticas->cantFallos++;
 	empaquetar(socketYama,mensajeFalloReduccion,0,0);
 }
 
 void mandarAReplanificar(parametrosTransformacion* infoTransformacion){
+	log_trace(loggerMaster, "Informo a  YAMA replanificacion nodo %d.",infoTransformacion->numero);
 	bloqueYNodo* bloqueReplanificar=malloc(sizeof(bloqueYNodo));
 	bloqueReplanificar->workerId = infoTransformacion->numero;
 	bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
 	empaquetar(socketYama, mensajeFalloTransformacion, 0 , bloqueReplanificar);
 	estadisticas->cantFallos++;
-	estadisticas->cantTareas[0]--;
 	free(bloqueReplanificar);
 }
 
@@ -229,17 +238,18 @@ void esperarInstruccionesDeYama() {
 
 	while (1) {
 		instruccionesYama = desempaquetar(socketYama);
-
 		switch (instruccionesYama.idMensaje) {
 
 			case mensajeRespuestaTransformacion:
 				infoTransformacion = (respuestaSolicitudTransformacion*)instruccionesYama.envio;
+				log_trace(loggerMaster, "Recibo Transformacion de YAMA.");
 				inicializarTiemposTransformacion(infoTransformacion);
 				crearHilosConexionTransformacion(infoTransformacion);
 				break;
 
 			case mensajeRespuestaRedLocal:
 				infoRedLocal = (nodosRedLocal*)instruccionesYama.envio;
+				log_trace(loggerMaster, "Recibo Reduccion Local en nodo %d de YAMA.",infoRedLocal->numeroNodo);
 				crearHilosConexionRedLocal(infoRedLocal);
 				break;
 
@@ -250,15 +260,18 @@ void esperarInstruccionesDeYama() {
 
 			case mensajeReplanificacion:
 				worker= instruccionesYama.envio;
+				log_trace(loggerMaster, "Recibo Replanificacion para bloque en nodo %d de YAMA.",worker->numeroWorker);
 				crearHilosPorBloqueTransformacion(worker);
 				break;
 
 			case mensajeFinJob:
+				log_trace(loggerMaster, "Finaliza job.");
 				finalizarJob();
 				break;
 
 			case mensajeRespuestaRedGlobal:
 				infoRedGlobal = (respuestaReduccionGlobal*)instruccionesYama.envio;
+				log_trace(loggerMaster, "Recibo Reduccion Global en nodo %d de YAMA.",infoRedGlobal->numero);
 				enviarAEncargadoRedGlobal(infoRedGlobal);
 				break;
 		}
@@ -272,7 +285,6 @@ void inicializarTiemposTransformacion(respuestaSolicitudTransformacion* infoTran
 		for(j=0 ; j<list_size(worker->bloquesConSusArchivos);j++){
 			bloquesConSusArchivosTransformacion* bloque = list_get(worker->bloquesConSusArchivos, j);
 			setearTiempo(0,bloque->numBloque);
-			estadisticas->cantTareas[0]++;
 		}
 	}
 }
@@ -372,23 +384,25 @@ void setearTiempo(int etapa,int numero){
 }
 
 void finalizarTiempo(t_list* tiempos,int numero){
-	bool encontrarEnTablaEstados(tiempoPorBloque* time ) {
+	bool encontrarEnTiempos(tiempoPorBloque* time ) {
 		return time->numero == numero;
 	}
 
-	tiempoPorBloque* tiempo = list_get(tiempos,numero);
+	tiempoPorBloque* tiempo = list_find(tiempos,(void*)encontrarEnTiempos);
 	tiempo->finalizo=true;
 	tiempo->tiempo=time(NULL);
 }
 
 void finalizarJob(){
+	//mostrarListasEstadisticas();
+
 	time_t fin= time(NULL);
-	double duracion = difftime(fin,estadisticas->tiempoInicio);
+	int duracion = difftime(fin,estadisticas->tiempoInicio);
 	double promTransformacion = calcularDuracionPromedio(estadisticas->tiempoInicioTrans,estadisticas->tiempoFinTrans);
 	double promLocal = calcularDuracionPromedio(estadisticas->tiempoInicioRedLocal,estadisticas->tiempoFinRedLocal);
 	double promGlobal= calcularDuracionPromedio(estadisticas->tiempoInicioRedGlobal,estadisticas->tiempoFinRedGlobal);
 
-	printf("Duracion total: %f\n",duracion);
+	printf("\nDuracion total: %d\n",duracion);
 	printf("Cantidad tareas transformacion %d\n",estadisticas->cantTareas[0]);
 	printf("Duracion promedio transformacion: %f\n",promTransformacion);
 	printf("Cantidad tareas reduccion local: %d\n",estadisticas->cantTareas[1]);
@@ -422,6 +436,7 @@ double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin){
 }
 
 void enviarAEncargadoRedGlobal(respuestaReduccionGlobal* infoRedGlobal){
+	setearTiempo(2,infoRedGlobal->numero);
 	pthread_t nuevoHilo;
 	pthread_attr_t attr;
 
@@ -475,15 +490,36 @@ void* conectarseConWorkerRedGlobal(void* params){
 	close(fd);
 
 	switch(confirmacionWorker.idMensaje){
-		case mensajeRedLocalCompleta:
+		case mensajeRedGlobalCompleta:
+			log_trace(loggerMaster, "Informo YAMA fin de Reduccion Global en nodo.",infoRedGlobal->numero);
 			empaquetar(socketYama, mensajeRedGlobalCompleta, 0 , 0);
-			finalizarTiempo(estadisticas->tiempoFinRedLocal,0);
+			finalizarTiempo(estadisticas->tiempoFinRedGlobal,infoRedGlobal->numero);
 			break;
 
 		case mensajeDesconexion:
+			log_trace(loggerMaster, "Informo a  YAMA fallo en Reduccion Global del nodo %d.",infoRedGlobal->numero);
+			finalizarTiempo(estadisticas->tiempoFinRedGlobal,infoRedGlobal->numero);
 			mandarFalloEnReduccion();
 			break;
 	}
 
 	return 0;
+}
+
+void mostrarListasEstadisticas(){
+	void mostrar(tiempoPorBloque* tiempo){
+		printf("NUMERO: %d || FINALIZO: %d || TIEMPO: %s \n",tiempo->numero,tiempo->finalizo,ctime(&tiempo->tiempo));
+	}
+
+
+	printf("\n inicio transformacion \n");
+	list_iterate(estadisticas->tiempoInicioTrans,(void*)mostrar);
+
+	printf("\n fin transformacion \n");
+	list_iterate(estadisticas->tiempoFinTrans,(void*)mostrar);
+
+	//list_iterate(estadisticas->tiempoInicioRedLocal,(void*)mostrar);
+	//list_iterate(estadisticas->tiempoFinRedLocal,(void*)mostrar);
+	//list_iterate(estadisticas->tiempoInicioRedGlobal,(void*)mostrar);
+	//list_iterate(estadisticas->tiempoFinRedGlobal,(void*)mostrar);
 }

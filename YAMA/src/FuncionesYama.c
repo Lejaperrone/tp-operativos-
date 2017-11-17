@@ -417,7 +417,7 @@ void agregarBloqueTerminadoATablaEstadosRedLocal(int nodo,int jobId,Etapa etapa)
 		}
 	}
 	pthread_mutex_lock(&mutexTablaEstados);
-	list_iterate(tablaDeEstados, modificarEstado);
+	list_iterate(tablaDeEstados, (void*)modificarEstado);
 	pthread_mutex_unlock(&mutexTablaEstados);
 
 
@@ -436,10 +436,18 @@ bool faltanMasTareas(int jobid,Etapa etapa){
 
 void finalizarJob(job* job,int etapa){
 	actualizarCargasNodos(job->id,etapa);
-	close(job->socketFd);
 	borrarEntradasDeJob(job->id);
 	empaquetar(job->socketFd,mensajeFinJob,0,0);
+	respuesta respuestaFin;
+	respuestaFin = desempaquetar(job->socketFd);
+
+	while(respuestaFin.idMensaje != mensajeDesconexion){
+		respuestaFin = desempaquetar(job->socketFd);
+	}
+
 	log_trace(logger, "Finalizo job con id:",job->id);
+	free(job);
+	close(job->socketFd);
 	pthread_exit(0);
 }
 

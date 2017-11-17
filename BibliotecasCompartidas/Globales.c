@@ -85,7 +85,7 @@ bool validarDirectorio(char* path){
 char* rutaSinArchivo(char* rutaArchivo){
 	int index = 0, cantidadPartesRuta = 0;
 	char* rutaInvertida = string_reverse(rutaArchivo);
-	char* rutaFinal = malloc(strlen(rutaArchivo)+1);
+	char* rutaFinal = malloc(string_length(rutaArchivo)+1);
 	char* currentChar = malloc(2);
 	char* nombreInvertido = malloc(strlen(rutaArchivo)+1);
 	char** arrayPath = string_split(rutaArchivo, "/");
@@ -96,8 +96,8 @@ char* rutaSinArchivo(char* rutaArchivo){
 	if (cantidadPartesRuta == 1)
 		return "yamafs:/";
 
-	memset(nombreInvertido,0,strlen(rutaArchivo)+1);
-	memset(rutaFinal,0,strlen(rutaArchivo)+1);
+	memset(nombreInvertido,0,string_length(rutaArchivo)+1);
+	memset(rutaFinal,0,string_length(rutaArchivo)+1);
 	memset(currentChar,0,2);
 
 	currentChar = string_substring(rutaInvertida, index, 1);
@@ -108,7 +108,7 @@ char* rutaSinArchivo(char* rutaArchivo){
 	}
 
 
-	memcpy(rutaFinal, rutaArchivo, strlen(rutaArchivo)-index-1);
+	memcpy(rutaFinal, rutaArchivo, string_length(rutaArchivo)-index-1);
 
 	printf("ruta sin archivo %s\n", rutaFinal);
 	if(strcmp(rutaFinal, "yamafs:") == 0)
