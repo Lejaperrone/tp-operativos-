@@ -358,6 +358,7 @@ void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo){
 
 void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque){
 	infoNodo* nodoAPlanificar = malloc(sizeof(infoNodo));
+	nodoAPlanificar->bloques = list_create();
 
 	bool funcionFind(void *nodo) {
 		return(((infoNodo*)nodo)->numero == ubicacion.numeroNodo);
@@ -372,6 +373,7 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 	else if (list_find(nodosConectados,funcionFind)) {
 		infoNodo* nodo = (infoNodo*)list_find(nodosConectados,funcionFind);
 		memcpy(nodoAPlanificar,nodo,sizeof(infoNodo));
+		nodoAPlanificar->bloques = list_create();
 		list_add(nodoAPlanificar->bloques,&bloque);
 		list_add(listaNodos,nodoAPlanificar);
 	}
@@ -445,9 +447,9 @@ void finalizarJob(job* job,int etapa){
 		respuestaFin = desempaquetar(job->socketFd);
 	}
 
-	log_trace(logger, "Finalizo job con id:",job->id);
-	free(job);
+	log_trace(logger, "Finalizo job con id: %d",job->id);
 	close(job->socketFd);
+	free(job);
 	pthread_exit(0);
 }
 

@@ -56,6 +56,14 @@ void planificar(job* job){
 	esperarRespuestaReduccionDeMaster(job);
 
 	realizarAlmacenamientoFinal();
+
+	free(infoArchivo);
+	free(respuestaMaster);
+	free(listaNodos);
+	free(worker);
+
+
+	finalizarJob(job,4);
 }
 
 

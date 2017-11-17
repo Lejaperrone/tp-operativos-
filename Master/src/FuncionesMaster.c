@@ -21,6 +21,79 @@ void conectarseConYama(char* ip, int port) {
 	log_trace(loggerMaster, "Conexion con Yama establecida");
 }
 
+
+job* crearJob(char* argv[]){
+	job* nuevo = (job*)malloc(sizeof(job));
+
+	nuevo->id = 0;
+	nuevo->socketFd = 0;
+
+	nuevo->rutaTransformador.cadena = string_duplicate(argv[2]);
+	nuevo->rutaTransformador.longitud = string_length(nuevo->rutaTransformador.cadena);
+
+	nuevo->rutaReductor.cadena = string_duplicate(argv[3]);
+	nuevo->rutaReductor.longitud = string_length(nuevo->rutaReductor.cadena);
+
+	nuevo->rutaDatos.cadena= string_duplicate(argv[4]);
+	nuevo->rutaDatos.longitud = string_length(nuevo->rutaDatos.cadena);
+
+	nuevo->rutaResultado.cadena = string_duplicate(argv[5]);
+	nuevo->rutaResultado.longitud = string_length(nuevo->rutaResultado.cadena);
+
+	estadisticas = crearEstadisticasProceso();
+	return nuevo;
+}
+
+void esperarInstruccionesDeYama() {
+	respuesta instruccionesYama;
+	respuestaSolicitudTransformacion* infoTransformacion ;
+	nodosRedLocal* infoRedLocal;
+	respuestaReduccionGlobal* infoRedGlobal;
+	workerDesdeYama* worker;
+
+	while (1) {
+		instruccionesYama = desempaquetar(socketYama);
+		switch (instruccionesYama.idMensaje) {
+
+			case mensajeRespuestaTransformacion:
+				infoTransformacion = (respuestaSolicitudTransformacion*)instruccionesYama.envio;
+				log_trace(loggerMaster, "Recibo Transformacion de YAMA.");
+				inicializarTiemposTransformacion(infoTransformacion);
+				crearHilosConexionTransformacion(infoTransformacion);
+				break;
+
+			case mensajeRespuestaRedLocal:
+				infoRedLocal = (nodosRedLocal*)instruccionesYama.envio;
+				log_trace(loggerMaster, "Recibo Reduccion Local en nodo %d de YAMA.",infoRedLocal->numeroNodo);
+				crearHilosConexionRedLocal(infoRedLocal);
+				break;
+
+			case mensajeDesconexion:
+				log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
+				exit(1);
+				break;
+
+			case mensajeReplanificacion:
+				worker= instruccionesYama.envio;
+				log_trace(loggerMaster, "Recibo Replanificacion para bloque en nodo %d de YAMA.",worker->numeroWorker);
+				crearHilosPorBloqueTransformacion(worker);
+				break;
+
+			case mensajeFinJob:
+				log_trace(loggerMaster, "Finaliza job.");
+				finalizarJob();
+				break;
+
+			case mensajeRespuestaRedGlobal:
+				finalizarJob();
+				infoRedGlobal = (respuestaReduccionGlobal*)instruccionesYama.envio;
+				log_trace(loggerMaster, "Recibo Reduccion Global en nodo %d de YAMA.",infoRedGlobal->numero);
+				enviarAEncargadoRedGlobal(infoRedGlobal);
+				break;
+		}
+	}
+}
+
 void crearHilosConexionTransformacion(respuestaSolicitudTransformacion* rtaYama) {
 	int i;
 
@@ -194,11 +267,8 @@ void* conectarseConWorkersRedLocal(void* params){
 		estadisticas->cantFallos++;
 		mandarFalloEnReduccion();
 		break;
-
-
 	}
 	return 0;
-
 }
 
 void mandarFalloEnReduccion(){
@@ -231,55 +301,7 @@ void enviarJobAYama(job* miJob) {
 
 }
 
-void esperarInstruccionesDeYama() {
-	respuesta instruccionesYama;
-	respuestaSolicitudTransformacion* infoTransformacion ;
-	nodosRedLocal* infoRedLocal;
-	respuestaReduccionGlobal* infoRedGlobal;
-	workerDesdeYama* worker;
 
-	while (1) {
-		instruccionesYama = desempaquetar(socketYama);
-		switch (instruccionesYama.idMensaje) {
-
-			case mensajeRespuestaTransformacion:
-				infoTransformacion = (respuestaSolicitudTransformacion*)instruccionesYama.envio;
-				log_trace(loggerMaster, "Recibo Transformacion de YAMA.");
-				inicializarTiemposTransformacion(infoTransformacion);
-				crearHilosConexionTransformacion(infoTransformacion);
-				break;
-
-			case mensajeRespuestaRedLocal:
-				infoRedLocal = (nodosRedLocal*)instruccionesYama.envio;
-				log_trace(loggerMaster, "Recibo Reduccion Local en nodo %d de YAMA.",infoRedLocal->numeroNodo);
-				crearHilosConexionRedLocal(infoRedLocal);
-				break;
-
-			case mensajeDesconexion:
-				log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
-				exit(1);
-				break;
-
-			case mensajeReplanificacion:
-				worker= instruccionesYama.envio;
-				log_trace(loggerMaster, "Recibo Replanificacion para bloque en nodo %d de YAMA.",worker->numeroWorker);
-				crearHilosPorBloqueTransformacion(worker);
-				break;
-
-			case mensajeFinJob:
-				log_trace(loggerMaster, "Finaliza job.");
-				finalizarJob();
-				break;
-
-			case mensajeRespuestaRedGlobal:
-				finalizarJob();
-				infoRedGlobal = (respuestaReduccionGlobal*)instruccionesYama.envio;
-				log_trace(loggerMaster, "Recibo Reduccion Global en nodo %d de YAMA.",infoRedGlobal->numero);
-				enviarAEncargadoRedGlobal(infoRedGlobal);
-				break;
-		}
-	}
-}
 
 void inicializarTiemposTransformacion(respuestaSolicitudTransformacion* infoTransformacion){
 	int i,j;
@@ -290,38 +312,6 @@ void inicializarTiemposTransformacion(respuestaSolicitudTransformacion* infoTran
 			setearTiempo(TRANSFORMACION,bloque->numBloque);
 		}
 	}
-}
-
-char* recibirRuta(char* mensaje) {
-	printf("%s\n", mensaje);
-	char* comando = malloc(sizeof(char) * 256);
-	bzero(comando, 256);
-	fgets(comando, 256, stdin);
-	string_trim(&comando);
-	return comando;
-}
-
-
-job* crearJob(char* argv[]){
-	job* nuevo = (job*)malloc(sizeof(job));
-
-	nuevo->id = 0;
-	nuevo->socketFd = 0;
-
-	nuevo->rutaTransformador.cadena = string_duplicate(argv[2]);
-	nuevo->rutaTransformador.longitud = string_length(nuevo->rutaTransformador.cadena);
-
-	nuevo->rutaReductor.cadena = string_duplicate(argv[3]);
-	nuevo->rutaReductor.longitud = string_length(nuevo->rutaReductor.cadena);
-
-	nuevo->rutaDatos.cadena= string_duplicate(argv[4]);
-	nuevo->rutaDatos.longitud = string_length(nuevo->rutaDatos.cadena);
-
-	nuevo->rutaResultado.cadena = string_duplicate(argv[5]);
-	nuevo->rutaResultado.longitud = string_length(nuevo->rutaResultado.cadena);
-
-	estadisticas = crearEstadisticasProceso();
-	return nuevo;
 }
 
 string* contenidoArchivo(char* pathArchivo){
@@ -335,6 +325,81 @@ string* contenidoArchivo(char* pathArchivo){
 
 	close(fd);
 	return paquete;
+}
+
+
+
+void enviarAEncargadoRedGlobal(respuestaReduccionGlobal* infoRedGlobal){
+	setearTiempo(RED_GLOBAL,infoRedGlobal->numero);
+	pthread_t nuevoHilo;
+	pthread_attr_t attr;
+
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+	if (pthread_create(&nuevoHilo, &attr, (void*)conectarseConWorkerRedGlobal, infoRedGlobal) != 0) {
+		log_error(loggerMaster, "No se pudo crear el thread de conexion");
+		exit(-1);
+	}
+}
+
+void* conectarseConWorkerRedGlobal(void* params){
+	parametrosReduccionGlobal* parametrosConexion= malloc(sizeof(parametrosReduccionGlobal));
+	respuestaReduccionGlobal* infoRedGlobal =(respuestaReduccionGlobal*) params;
+	respuesta confirmacionWorker ;
+
+	int socketWorker = crearSocket();
+	struct sockaddr_in direccion = cargarDireccion(infoRedGlobal->ip.cadena,infoRedGlobal->puerto);
+	if(!conectarCon(direccion, socketWorker, 2)){//2 id master
+		mandarFalloEnReduccion();
+		return 0;
+	}
+
+	log_trace(loggerMaster, "Inicio Red. Global con Worker %d para Job %d", infoRedGlobal->numero, infoRedGlobal->job);
+
+	struct stat fileStat;
+	if(stat(miJob->rutaReductor.cadena,&fileStat) < 0){
+		printf("No se pudo abrir el archivo\n");
+		return 0;
+	}
+
+	int fd = open(miJob->rutaReductor.cadena,O_RDWR);
+	int size = fileStat.st_size;
+
+	parametrosConexion->contenidoScript.cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
+	parametrosConexion->contenidoScript.longitud = size;
+	parametrosConexion->archivoTemporal.cadena = strdup(infoRedGlobal->archivoTemporal.cadena);
+	parametrosConexion->archivoTemporal.longitud = infoRedGlobal->archivoTemporal.longitud;
+	parametrosConexion->infoWorkers = list_create();
+	list_add_all(parametrosConexion->infoWorkers,infoRedGlobal->parametros->infoWorkers);
+
+	empaquetar(socketWorker, mensajeProcesarRedGlobal, 0, parametrosConexion);
+
+	confirmacionWorker = desempaquetar(socketWorker);
+
+	if (munmap(parametrosConexion->contenidoScript.cadena, parametrosConexion->contenidoScript.longitud) == -1){
+		perror("Error un-mmapping the file");
+		exit(EXIT_FAILURE);
+	}
+	close(fd);
+
+	switch(confirmacionWorker.idMensaje){
+		case mensajeRedGlobalCompleta:
+			log_trace(loggerMaster, "Informo YAMA fin de Reduccion Global en nodo.",infoRedGlobal->numero);
+			empaquetar(socketYama, mensajeRedGlobalCompleta, 0 , 0);
+			estadisticas->cantTareas[RED_GLOBAL]++;
+			finalizarTiempo(estadisticas->tiempoFinRedGlobal,infoRedGlobal->numero);
+			break;
+
+		case mensajeDesconexion:
+			log_trace(loggerMaster, "Informo a  YAMA fallo en Reduccion Global del nodo %d.",infoRedGlobal->numero);
+			finalizarTiempo(estadisticas->tiempoFinRedGlobal,infoRedGlobal->numero);
+			estadisticas->cantFallos++;
+			mandarFalloEnReduccion();
+			break;
+	}
+
+	return 0;
 }
 
 estadisticaProceso* crearEstadisticasProceso(){
@@ -436,79 +501,6 @@ double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin){
 
 	return cont / list_size(tiemposInicio);
 
-}
-
-void enviarAEncargadoRedGlobal(respuestaReduccionGlobal* infoRedGlobal){
-	setearTiempo(RED_GLOBAL,infoRedGlobal->numero);
-	pthread_t nuevoHilo;
-	pthread_attr_t attr;
-
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-	if (pthread_create(&nuevoHilo, &attr, (void*)conectarseConWorkerRedGlobal, infoRedGlobal) != 0) {
-		log_error(loggerMaster, "No se pudo crear el thread de conexion");
-		exit(-1);
-	}
-}
-
-void* conectarseConWorkerRedGlobal(void* params){
-	parametrosReduccionGlobal* parametrosConexion= malloc(sizeof(parametrosReduccionGlobal));
-	respuestaReduccionGlobal* infoRedGlobal =(respuestaReduccionGlobal*) params;
-	respuesta confirmacionWorker ;
-
-	int socketWorker = crearSocket();
-	struct sockaddr_in direccion = cargarDireccion(infoRedGlobal->ip.cadena,infoRedGlobal->puerto);
-	if(!conectarCon(direccion, socketWorker, 2)){//2 id master
-		mandarFalloEnReduccion();
-		return 0;
-	}
-
-	log_trace(loggerMaster, "Inicio Red. Global con Worker %d para Job %d", infoRedGlobal->numero, infoRedGlobal->job);
-
-	struct stat fileStat;
-	if(stat(miJob->rutaReductor.cadena,&fileStat) < 0){
-		printf("No se pudo abrir el archivo\n");
-		return 0;
-	}
-
-	int fd = open(miJob->rutaReductor.cadena,O_RDWR);
-	int size = fileStat.st_size;
-
-	parametrosConexion->contenidoScript.cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
-	parametrosConexion->contenidoScript.longitud = size;
-	parametrosConexion->archivoTemporal.cadena = strdup(infoRedGlobal->archivoTemporal.cadena);
-	parametrosConexion->archivoTemporal.longitud = infoRedGlobal->archivoTemporal.longitud;
-	parametrosConexion->infoWorkers = list_create();
-	list_add_all(parametrosConexion->infoWorkers,infoRedGlobal->parametros->infoWorkers);
-
-	empaquetar(socketWorker, mensajeProcesarRedGlobal, 0, parametrosConexion);
-
-	confirmacionWorker = desempaquetar(socketWorker);
-
-	if (munmap(parametrosConexion->contenidoScript.cadena, parametrosConexion->contenidoScript.longitud) == -1){
-		perror("Error un-mmapping the file");
-		exit(EXIT_FAILURE);
-	}
-	close(fd);
-
-	switch(confirmacionWorker.idMensaje){
-		case mensajeRedGlobalCompleta:
-			log_trace(loggerMaster, "Informo YAMA fin de Reduccion Global en nodo.",infoRedGlobal->numero);
-			empaquetar(socketYama, mensajeRedGlobalCompleta, 0 , 0);
-			estadisticas->cantTareas[RED_GLOBAL]++;
-			finalizarTiempo(estadisticas->tiempoFinRedGlobal,infoRedGlobal->numero);
-			break;
-
-		case mensajeDesconexion:
-			log_trace(loggerMaster, "Informo a  YAMA fallo en Reduccion Global del nodo %d.",infoRedGlobal->numero);
-			finalizarTiempo(estadisticas->tiempoFinRedGlobal,infoRedGlobal->numero);
-			estadisticas->cantFallos++;
-			mandarFalloEnReduccion();
-			break;
-	}
-
-	return 0;
 }
 
 void mostrarListasEstadisticas(){
