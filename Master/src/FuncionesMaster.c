@@ -85,7 +85,6 @@ void esperarInstruccionesDeYama() {
 				break;
 
 			case mensajeRespuestaRedGlobal:
-				finalizarJob();
 				infoRedGlobal = (respuestaReduccionGlobal*)instruccionesYama.envio;
 				log_trace(loggerMaster, "Recibo Reduccion Global en nodo %d de YAMA.",infoRedGlobal->numero);
 				enviarAEncargadoRedGlobal(infoRedGlobal);
