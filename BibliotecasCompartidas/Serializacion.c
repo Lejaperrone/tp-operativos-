@@ -42,6 +42,11 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			memcpy(bloque,&b,1);
 			break;
 
+		case mensajeRespuestaSolicitudArchivo:
+		case mensajeSolicitudArchivo:
+			bloque = serializarSolicitudArchivo(paquete, &tamanio);
+			break;
+
 		case mensajeArchivo:
 			bloque = serializarString(paquete,&tamanio);
 			break;
@@ -161,6 +166,11 @@ respuesta desempaquetar(int socket){
 				miRespuesta.envio = deserializarString(socket,cabecera->tamanio);
 				break;
 
+			case mensajeRespuestaSolicitudArchivo:
+			case mensajeSolicitudArchivo:
+				miRespuesta.envio = deserializarSolicitudArchivo(socket, cabecera->tamanio);
+				break;
+
 			case mensajeRedGlobalCompleta:
 			case mensajeInfoArchivo://todo
 			case mensajeFinJob:
@@ -274,6 +284,39 @@ string* deserializarString(int socket,int tamanio){
 
  	return cadena;
  }
+
+void* serializarSolicitudArchivo(void* paquete,int *tamanio){
+	string* nombreArchivo = (string*)paquete;
+	*tamanio = sizeof(int);
+	void* buffer = malloc(*tamanio);
+	int desplazamiento = 0;
+
+	memcpy(buffer, &nombreArchivo->longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += nombreArchivo->longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, nombreArchivo->cadena, nombreArchivo->longitud);
+
+	return buffer;
+
+}
+
+string* deserializarSolicitudArchivo(int socket,int tamanio){
+	int desplazamiento = 0;
+	string* nombreArchivo = malloc(sizeof(string));
+
+	void* buffer = malloc(tamanio);
+	recv(socket,buffer,tamanio,0);
+
+	memcpy(&nombreArchivo->longitud, buffer + desplazamiento, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	nombreArchivo->cadena = calloc(1,nombreArchivo->longitud+1);
+	memcpy(nombreArchivo->cadena, buffer + desplazamiento, nombreArchivo->longitud);
+
+	return nombreArchivo;
+}
 
 void* serializarJob(void* paquete, int* tamanio){
 	job* unJob = (job*)paquete;

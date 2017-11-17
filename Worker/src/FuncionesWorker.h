@@ -11,6 +11,10 @@
 #include "FuncionesWorker.h"
 #include <commons/string.h>
 #include <sys/stat.h>
+ #include <sys/mman.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "Globales.h"
 
 #define mb 1048576

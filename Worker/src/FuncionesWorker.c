@@ -129,7 +129,7 @@ void crearScript(char* bufferScript, int etapa) {
 
 void handlerMaster(int clientSocket) {
 	respuesta paquete;
-	parametrosTransformacion* transformacion;
+	parametrosTransformacion* transformacion = malloc(sizeof(parametrosReduccionLocal));
 	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
 	parametrosReduccionGlobal* reduccionGlobal = malloc(sizeof(parametrosReduccionGlobal));
 	char* destino, *contenidoScript, *command, *rutaArchivoFinal, *archivoPreReduccion = "preReduccion";
@@ -188,14 +188,14 @@ void handlerMaster(int clientSocket) {
 		break;
 	case mensajeProcesarRedGlobal:
 		reduccionGlobal = (parametrosReduccionGlobal*)paquete.envio;
-
 		log_trace(logger, "Soy el Worker Encargado");
 		destino = reduccionGlobal->archivoTemporal.cadena;
 		listaWorkers = list_create();
 		list_add_all(listaWorkers, reduccionGlobal->infoWorkers);
 		rutaArchivoFinal = crearRutaArchivoAReducir(listaWorkers);
-		//Ejecutarle la reduccion a archivoFinal
-		//Enviar ok a Master
+		command = string_from_format("cat %s | perl %s > %s", rutaArchivoFinal, string_from_format("../scripts/reductorGlobal.pl"), string_from_format("%s/tmp/%s", path, destino));
+		ejecutarComando(command, clientSocket);
+		empaquetar(clientSocket, mensajeRedGlobalCompleta, 0, 0);
 		free(reduccionGlobal);
 		exit(0);
 		break;
@@ -217,8 +217,8 @@ char* crearRutaArchivoAReducir(t_list* listaWorkers) {
 	int socket;
 	char* rutaArchivoAReducir;
 	char* path = obtenerPathActual();
-	log_trace(logger, "Cantidad de Workers a conectar:%i", list_size(listaWorkers)); //Necesito que me llegue una lista con la cantidad de workers a conectar (2)
-	rutaArchivoAReducir = string_from_format("%s/%s", path, "ArchivoAReducir");
+	log_trace(logger, "Cantidad de Workers a los que me tengo que conectar: %i", list_size(listaWorkers)-1);
+	rutaArchivoAReducir = string_from_format("%s/tmp/%s", path, "ArchivoFinalAReducir");
 	int i;
 	for (i = 0; i < list_size(listaWorkers); i++) {
 		infoWorker* worker = list_get(listaWorkers, i);
@@ -235,21 +235,27 @@ char* crearRutaArchivoAReducir(t_list* listaWorkers) {
 			}
 			log_trace(logger, "Conexion con Worker establecida");
 
-			string* nombreArchivo = malloc(sizeof(string));
-			nombreArchivo->cadena = "nombreArchivo";
-			nombreArchivo->longitud = strlen(nombreArchivo->cadena);
+			string* rutaArchivo = malloc(sizeof(string));
+			rutaArchivo->cadena = string_from_format("%s/tmp/%s", path, worker->nombreArchivoReducido.cadena);
+			rutaArchivo->longitud = strlen(rutaArchivo->cadena);
 			log_trace(logger, "Enviando solicitud de archivo a Worker");
 
-			respuesta respuesta = desempaquetar(socket);
-			string* contenidoArchivo = (string*) respuesta.envio;
+			empaquetar(socket, mensajeSolicitudArchivo, 0, rutaArchivo);
 
-			char* rutaArchivo = string_from_format("%s/%s", path, nombreArchivo);
-			FILE* archivo = fopen(rutaArchivo, "w+");
+			respuesta respuesta = desempaquetar(socket);
+			string* contenidoArchivo = (string*)respuesta.envio;
+
+			log_trace(logger, "Recibo contenido del archivo y lo creo");
+
+			char* preGlobal = string_from_format("%sGLOBAL", rutaArchivo->cadena);
+			FILE* archivo = fopen(preGlobal, "w+");
 			fwrite(contenidoArchivo->cadena, sizeof(char), contenidoArchivo->longitud, archivo);
 			fclose(archivo);
-			list_add(archivosAReducir, rutaArchivo);
+			list_add(archivosAReducir, preGlobal);
+			close(socket);
 		} else {
-			char* rutaArchivo = string_from_format("%s/%s", path, "Nombre archivo temporal local de encargado");
+			log_trace(logger, "Agrego a la lista mi archivo local");
+			char* rutaArchivo = string_from_format("%s/tmp/%s", path, worker->nombreArchivoReducido.cadena);
 			list_add(archivosAReducir, rutaArchivo);
 		}
 	}
@@ -259,17 +265,40 @@ char* crearRutaArchivoAReducir(t_list* listaWorkers) {
 
 void handlerWorker(int clientSocket) {
 	respuesta solicitudWorker;
-	string* archivoSolicitado = malloc(sizeof(string));
+	string* rutaArchivoSolicitado = malloc(sizeof(string));
+	string* contenidoArchivo = malloc(sizeof(string));
 
 	while (1) {
 		solicitudWorker = desempaquetar(clientSocket);
-
 		switch (solicitudWorker.idMensaje) {
-			//case mensajeSolicitudArchivo:
-				log_trace(logger, "LLEGA");
-				archivoSolicitado = (string*)solicitudWorker.envio;
-				printf("Archivo Solicitado: %s", archivoSolicitado->cadena);
-				break;
+		case mensajeSolicitudArchivo:
+
+			rutaArchivoSolicitado = (string*)solicitudWorker.envio;
+			log_trace(logger, "Archivo solicitado en: %s", rutaArchivoSolicitado->cadena);
+
+			struct stat fileStat;
+			if(stat(rutaArchivoSolicitado->cadena,&fileStat) < 0){
+				printf("No se pudo abrir el archivo\n");
+			}
+
+			int fd = open(rutaArchivoSolicitado->cadena,O_RDWR);
+			int size = fileStat.st_size;
+
+			contenidoArchivo->cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
+			contenidoArchivo->longitud = size;
+
+			empaquetar(clientSocket, mensajeRespuestaSolicitudArchivo, 0, contenidoArchivo);
+
+			log_trace(logger, "Envio contenido de archivo");
+
+			if (munmap(contenidoArchivo->cadena, contenidoArchivo->longitud) == -1){
+				perror("Error un-mmapping the file");
+				exit(EXIT_FAILURE);
+			}
+
+			break;
+		default:
+			break;
 		}
 	}
 }

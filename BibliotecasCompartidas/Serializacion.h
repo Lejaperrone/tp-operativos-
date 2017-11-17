@@ -55,8 +55,10 @@
 #define mensajeFalloReduccion 36
 #define mensajeBorraDataBin 37
 #define mensajeRespuestaBorraDataBin 38
+#define mensajeSolicitudArchivo 39
 #define mensajeProcesarRedGlobal 40
 #define mensajeNoEstable 41
+#define mensajeRespuestaSolicitudArchivo 42
 
 typedef struct{
 	int idMensaje;
@@ -110,5 +112,8 @@ parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio);
 
 void* serializarProcesarRedGlobal(void* paquete, int* tamanio);
 parametrosReduccionGlobal* deserializarProcesarRedGlobal(int socket, int tamanio);
+
+void* serializarSolicitudArchivo(void* paquete, int* tamanio);
+string* deserializarSolicitudArchivo(int socket, int tamanio);
 
 #endif /* SERIALIZACION_H_ */
