@@ -550,7 +550,7 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 			numNodo = *(int*) respuestaPlanificacionMaster.envio;
 			log_trace(logger,"Finalizada tarea reduccion nodo %d", numNodo);
 			agregarBloqueTerminadoATablaEstadosRedLocal(numNodo,job->id,RED_LOCAL);
-			redLocalIncompleta= faltanMasTareas(job->id,RED_LOCAL);
+			redLocalIncompleta= faltanMasTareas(job->id,RED_LOCAL) || faltanMasTareas(job->id,TRANSFORMACION);
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloReduccion){
 			log_trace(logger,"Fallo en reduccion local del job %d", job->id);
