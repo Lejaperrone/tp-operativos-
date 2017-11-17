@@ -594,10 +594,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 				}
 			}
 		}
-		if (i < cantBloquesArchivo-1)
-			ultimoSize = mb;
-		else
-			ultimoSize = sizeUltimoNodo;
 
 		for (j = 0; j < numeroCopiasBloque; ++j){
 			for (k = 0; k < cantidadNodos; ++k)
@@ -607,7 +603,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 			params[i+cantBloquesArchivo*j].mapa = mapeoArchivo->cadena;
 			params[i+cantBloquesArchivo*j].offset = offset;
-			params[i+cantBloquesArchivo*j].sizeBloque = ultimoSize;
 			infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[nodoAUtilizar]);
 
 			bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[nodoAUtilizar], infoAux.sizeNodo);
@@ -615,14 +610,16 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			params[i+cantBloquesArchivo*j].bloque = bloqueLibre;
 
 			if (i < cantBloquesArchivo-1){
-				if (j == 0)
+				if (j == 0){
 				 sizeRestante = bytesACortar(params[i].mapa, offset, sizeRestante);
-				 params[i+cantBloquesArchivo*j].sizeBloque = mb -sizeRestante;
 				 totalRestante += sizeRestante;
+				}
+				 params[i+cantBloquesArchivo*j].sizeBloque = mb -sizeRestante;
 			 }
 			 else{
-				params[i+cantBloquesArchivo*j].sizeBloque += sizeRestante;
-				sizeUltimoNodo = params[i+cantBloquesArchivo*j].sizeBloque;
+				params[i+cantBloquesArchivo*j].sizeBloque = sizeUltimoNodo + totalRestante;
+				printf("size res %d\n", sizeUltimoNodo + totalRestante);
+				//sizeUltimoNodo = params[i+cantBloquesArchivo*j].sizeBloque;
 				//totalAsignado = 1;
 			 }
 			if(j==0)
@@ -643,7 +640,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
-		config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombre));
+		config_set_value(infoArchivo, "RUTA", string_from_format("%s%s%s", path, nombre, tipo));
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos

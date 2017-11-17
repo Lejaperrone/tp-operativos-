@@ -544,17 +544,17 @@ int generarArchivoMD5(char* comando){
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 
-	char* ubicacionArchivoTemporal = string_from_format("/tmp/%s", nombreArchivo);
-	FILE* file = fopen(ubicacionArchivoTemporal, "w+");
+	char* ubicacionArchivoTemporal = string_from_format("%s", nombreArchivo);
+	FILE* file = fopen(ubicacionArchivoTemporal, "w");
 	fwrite(contenido, sizeof(char), string_length(contenido), file);
 
-	char* MD5 = string_from_format("md5sum /tmp/%s", nombreArchivo);
-	char* RM = string_from_format("rm /tmp/%s", nombreArchivo);
+	char* MD5 = string_from_format("md5sum %s", nombreArchivo);
+	char* RM = string_from_format("rm %s", nombreArchivo);
 	fclose(file);
 
 	respuesta = system(MD5);
 	printf("\n");
-	respuesta = system(RM);
+	//respuesta = system(RM);
 	free(MD5);
 	free(RM);
 	free(ubicacionArchivoTemporal);
