@@ -188,6 +188,7 @@ void handlerMaster(int clientSocket) {
 		break;
 	case mensajeProcesarRedGlobal:
 		reduccionGlobal = (parametrosReduccionGlobal*)paquete.envio;
+
 		log_trace(logger, "Soy el Worker Encargado");
 		destino = reduccionGlobal->archivoTemporal.cadena;
 		listaWorkers = list_create();

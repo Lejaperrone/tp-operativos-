@@ -52,6 +52,7 @@ void planificar(job* job){
 	enviarReduccionGlobalAMaster(job);
 
 	actualizarCargasNodos(job->id,RED_GLOBAL);
+	mostrarTablaDeEstados();
 	esperarRespuestaReduccionDeMaster(job);
 
 	realizarAlmacenamientoFinal();
@@ -368,8 +369,6 @@ void enviarReduccionLocalAMaster(job* job,int nodo){
 	t_list* registrosRedLocal = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
 	pthread_mutex_unlock(&mutexTablaEstados);
 
-	t_list* nodosCargados = list_create();
-
 	infoNodo* infoNod = obtenerNodo(nodo);
 	char* archivo = dameUnNombreArchivoTemporal(job->id,0,RED_LOCAL,nodo);
 
@@ -394,19 +393,18 @@ void enviarReduccionLocalAMaster(job* job,int nodo){
 		strArchivo->longitud = string_length(reg->rutaArchivoTemp);
 		strArchivo->cadena = strdup(reg->rutaArchivoTemp);
 		list_add(respuestaTodos->archivos,strArchivo);
-
-		registro->bloque=0;
-		registro->estado=EN_EJECUCION;
-		registro->etapa=RED_LOCAL;
-		registro->job= job->id;
-		registro->nodo= reg->nodo;
-		registro->rutaArchivoTemp = strdup(archivo);
-
-		//pthread_mutex_lock(&mutexTablaEstados);
-		list_add(tablaDeEstados,registro);
-		//pthread_mutex_unlock(&mutexTablaEstados);
-
 	}
+
+	registro->bloque=0;
+	registro->estado=EN_EJECUCION;
+	registro->etapa=RED_LOCAL;
+	registro->job= job->id;
+	registro->nodo= nodo;
+	registro->rutaArchivoTemp = strdup(archivo);
+
+	//pthread_mutex_lock(&mutexTablaEstados);
+	list_add(tablaDeEstados,registro);
+	//pthread_mutex_unlock(&mutexTablaEstados);
 
 	pthread_mutex_lock(&mutexTablaEstados);
 	list_iterate(registrosRedLocal,(void*)meterEnRespuestaRedLocal);
@@ -448,7 +446,7 @@ void enviarReduccionGlobalAMaster(job* job){
 	//pthread_mutex_lock(&mutex_NodosConectados);
 	infoNodo* nodoEncargado = obtenerNodo(calcularNodoEncargado(registrosRedGlobal));
 
-	char* archivoReduccionGlobal = dameUnNombreArchivoTemporal(job->id,0,RED_GLOBAL,0);
+	char* archivoReduccionGlobal = dameUnNombreArchivoTemporal(job->id,0,RED_GLOBAL,nodoEncargado->numero);
 
 	respuesta->archivoTemporal.longitud = string_length(archivoReduccionGlobal);
 	respuesta->archivoTemporal.cadena = strdup(archivoReduccionGlobal);
