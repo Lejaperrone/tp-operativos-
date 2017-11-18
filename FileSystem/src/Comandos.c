@@ -555,10 +555,11 @@ int generarArchivoMD5(char* comando){
 
 	respuesta = system(MD5);
 	printf("\n");
-	respuesta = system(RM);
+	//respuesta = system(RM);
 	free(MD5);
 	free(RM);
 	free(ubicacionArchivoTemporal);
+	free(contenido);
 
 	return respuesta;
 }
