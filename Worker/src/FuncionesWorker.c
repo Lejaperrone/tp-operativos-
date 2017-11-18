@@ -129,9 +129,11 @@ void crearScript(char* bufferScript, int etapa) {
 
 void handlerMaster(int clientSocket) {
 	respuesta paquete;
-	parametrosTransformacion* transformacion = malloc(sizeof(parametrosReduccionLocal));
-	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
-	parametrosReduccionGlobal* reduccionGlobal = malloc(sizeof(parametrosReduccionGlobal));
+	parametrosAlmacenamiento* almacenamiwnto;
+	parametrosTransformacion* transformacion;
+	parametrosReduccionLocal* reduccionLocal;
+	parametrosReduccionGlobal* reduccionGlobal ;
+
 	char* destino, *contenidoScript, *command, *rutaArchivoFinal, *archivoPreReduccion = "preReduccion";
 	t_list* listaArchivosTemporales, *listAux, *listaWorkers;
 	char* path = obtenerPathActual();
@@ -202,6 +204,18 @@ void handlerMaster(int clientSocket) {
 		free(reduccionGlobal);
 		exit(0);
 		break;
+
+	case mensajeProcesarAlmacenamiento:
+		log_trace(logger, "Soy el Worker Encargado de almacenar");
+		almacenamiwnto = (parametrosAlmacenamiento*)paquete.envio;
+
+		printf("TEMPORAL: %s || ALMACENAMIENTO %s \n\n",almacenamiwnto->archivoTemporal.cadena,almacenamiwnto->rutaAlmacenamiento.cadena);
+		empaquetar(clientSocket,mensajeAlmacenamientoCompleto,0,0);
+		exit(0);
+		break;
+
+
+
 	default:
 		break;
 	}

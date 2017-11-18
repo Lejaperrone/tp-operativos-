@@ -30,6 +30,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeOk:
 		case mensajeAlmacenamientoCompleto:
 		case mensajeFalloAlmacenamiento:
+		case mensajeRedGlobalCompleta:
 			tamanio =1;
 			bloque = malloc(1);
 			char a = 'a';
@@ -68,6 +69,10 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 
 		case mensajeProcesarRedGlobal:
 			bloque = serializarProcesarRedGlobal(paquete, &tamanio);
+			break;
+
+		case mensajeProcesarAlmacenamiento:
+			bloque = serializarProcesarAlmacenamiento(paquete, &tamanio);
 			break;
 
 		case mensajeSolicitudTransformacion:
@@ -212,6 +217,10 @@ respuesta desempaquetar(int socket){
 
 			case mensajeProcesarRedGlobal:
 				miRespuesta.envio = deserializarProcesarRedGlobal(socket, cabecera->tamanio);
+				break;
+
+			case mensajeProcesarAlmacenamiento:
+				miRespuesta.envio = deserializarProcesarAlmacenamiento(socket, cabecera->tamanio);
 				break;
 
 			case mensajeSolicitudTransformacion:

@@ -29,7 +29,6 @@
 #define mensajeProcesarTransformacion 10
 #define mensajeProcesarRedLocal 11
 #define mensajeDesignarEncargado 12
-#define mensajeProcesarAlmFinal 13
 #define mensajeDesignarWorker 14
 #define mensajeInfoArchivo 15
 #define mensajeEnvioBloqueANodo 16

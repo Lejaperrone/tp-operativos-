@@ -543,7 +543,7 @@ void realizarAlmacenamientoFinal(job* job){
 	respuesta->archivo.longitud = string_length(reg->rutaArchivoTemp);
 	respuesta->archivo.cadena = strdup(reg->rutaArchivoTemp);
 
-	empaquetar(job->socketFd,mensajeRespuestaAlmacenamiento,0,&respuesta);
+	empaquetar(job->socketFd,mensajeRespuestaAlmacenamiento,0,respuesta);
 	desempaquetar(job->socketFd);
 }
 
