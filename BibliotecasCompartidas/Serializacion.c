@@ -70,9 +70,11 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeProcesarRedGlobal:
 			bloque = serializarProcesarRedGlobal(paquete, &tamanio);
 			break;
+
 		case mensajeProcesarAlmacenamiento:
 			bloque = serializarProcesarAlmacenamiento(paquete, &tamanio);
 			break;
+
 		case mensajeSolicitudTransformacion:
 			bloque = serializarJob(paquete, &tamanio);
 			break;
