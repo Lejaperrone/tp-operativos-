@@ -17,6 +17,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeSizeLecturaBloqueANodo:
 		case mensajeRedLocalCompleta:
 		case mensajeHandshake:
+		case mensajeRestanteAnterior:
 			tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
 			memcpy(bloque,paquete,sizeof(int));
@@ -153,6 +154,7 @@ respuesta desempaquetar(int socket){
 			case mensajeRespuestaEnvioBloqueANodo:
 			case mensajeRespuestaBorraDataBin:
 			case mensajeNumeroCopiaBloqueANodo:
+			case mensajeRestanteAnterior:
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), 0);
 				miRespuesta.envio = malloc(sizeof(int));

@@ -502,13 +502,40 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int cantBloquesArchivo = 0;
 	int ultimoSize = 0, sizeEnvio = 0;
 
+	int i, j, k, bloqueLibre = -1;
 	while(sizeAux > 0){
 		sizeAux -= mb;
 		++cantBloquesArchivo;
 	}
 	//--cantBloquesArchivo;
 
+	int bytesACortarAux[cantBloquesArchivo];
+	int off = 0;
+	int resTotal = 0;
+	int auxSizeBytes = 0;
+	int realTotal = cantBloquesArchivo;
+
 	int sizeUltimoNodo = sizeAux+mb;
+	for (i = 0; i < cantBloquesArchivo-1; ++i){
+		bytesACortarAux[i] = bytesACortar(mapeoArchivo->cadena,off,0);
+		off += mb - bytesACortarAux[i];
+		resTotal += bytesACortarAux[i];
+	}
+
+	if (resTotal > mb)
+		realTotal += redondearHaciaArriba(resTotal,mb);
+
+	int bytesACortarArray[realTotal];
+	for(i = 0; i < cantBloquesArchivo-1; ++i){
+		bytesACortarArray[i] = bytesACortarAux[i];
+	}
+	if (resTotal > mb){
+		for(; i < realTotal - 1; ++i){
+			bytesACortarArray[cantBloquesArchivo + i] = bytesACortar(mapeoArchivo->cadena,off,0);
+			off += mb - bytesACortarArray[cantBloquesArchivo - 1 + i];
+			resTotal -= mb;
+		}
+	}
 
 	FILE* archivos = fopen(rutaFinal, "wb+");
 	fclose(archivos); //para dejarlo vacio
@@ -517,14 +544,14 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	//Busco la ruta donde tengo que guardar el archivo y lo dejo en blanco
 
-	int i, j, k, bloqueLibre = -1;
 	int nodoAUtilizar = -1;
 	int offset = 0;
 	int sizeRestante = 0;
 	int totalAsignado = 0;
 	successArchivoCopiado = 1;
 
-	printf("bloques necesarios %d\n",cantBloquesArchivo);
+	printf("bloques necesarios %d\n",realTotal);
+	printf("%d %d bytes \n", realTotal, cantBloquesArchivo);
 	informacionNodo infoAux;
 	int cantidadNodos = list_size(nodosConectados);
 	int bloquesLibreNodo[cantidadNodos];
@@ -532,13 +559,13 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int masBloquesLibres[numeroCopiasBloque];
 	int nodosEnUso[cantidadNodos];
 	int indexNodoEnListaConectados[numeroCopiasBloque];
-	parametrosEnvioBloque params[cantBloquesArchivo*2];
+	parametrosEnvioBloque params[realTotal*2];
 	int sizeTotal = 0, ultimoUtilizado = 0;
 	int pruebaEspacioDisponible[cantidadNodos];
 	int contadorPrueba = 0;
 
 	params[0].restanteAnterior = 0;
-	params[cantBloquesArchivo].restanteAnterior = 0;
+	params[realTotal].restanteAnterior = 0;
 	for (i = 0; i < cantidadNodos; ++i){
 		infoAux = *(informacionNodo*)list_get(nodosConectados,i);
 		bloquesLibreNodo[i] = infoAux.sizeNodo-infoAux.bloquesOcupados;
@@ -549,11 +576,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 	int contador = 0;
 
-	printf("cant nod %d\n", cantidadNodos);
+	printf("cant nod %d\n", strlen(mapeoArchivo->cadena));
 
-	bla = cantBloquesArchivo*2;
-
-	for (i = 0; i < cantBloquesArchivo; ++i){
+	for (i = 0; i < realTotal; ++i){
 		for (j = 0; j < cantidadNodos; ++j){
 			if(pruebaEspacioDisponible[contador] > 0){
 				++contador;
@@ -571,9 +596,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			contadorPrueba = 0;
 	}
 
-	pthread_t nuevoHilo[cantBloquesArchivo*2];
+	pthread_t nuevoHilo[realTotal*2];
 
-	for (i = 0; i < cantBloquesArchivo; ++i){	//Primer for: itera por cada bloque que ocupa el archivo //Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
+	for (i = 0; i < realTotal; ++i){	//Primer for: itera por cada bloque que ocupa el archivo //Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
 		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
 			masBloquesLibres[j] = -1;				//criterio
 
@@ -606,52 +631,61 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 					nodoAUtilizar = k;
 				}
 
-			params[i+cantBloquesArchivo*j].mapa = mapeoArchivo->cadena;
-			params[i+cantBloquesArchivo*j].offset = offset;
+			params[i+realTotal*j].mapa = mapeoArchivo->cadena;
+			params[i+realTotal*j].offset = offset;
 			infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[nodoAUtilizar]);
 
+			if ( i > 0)
+				params[i+realTotal*j].restanteAnterior = mb - params[i+realTotal*j-1].sizeBloque;
+			else
+				params[i+realTotal*j].restanteAnterior = 0;
 			bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[nodoAUtilizar], infoAux.sizeNodo);
-			params[i+cantBloquesArchivo*j].socket = infoAux.socket;
-			params[i+cantBloquesArchivo*j].bloque = bloqueLibre;
+			params[i+realTotal*j].socket = infoAux.socket;
+			params[i+realTotal*j].bloque = bloqueLibre;
 
-			if (i < cantBloquesArchivo-1){
+			if (i < realTotal-1){
 				if (j == 0){
-				 sizeRestante = bytesACortar(params[i].mapa, offset, sizeRestante);
-				 totalRestante += sizeRestante;
+				 sizeRestante = bytesACortarArray[i];
 				}
-				 params[i+cantBloquesArchivo*j].sizeBloque = mb -sizeRestante;
+				 params[i+realTotal*j].sizeBloque = mb -sizeRestante;
+				 printf("lala %d \n", params[i+realTotal*j].sizeBloque);
 			 }
 			 else{
-				params[i+cantBloquesArchivo*j].sizeBloque = sizeUltimoNodo + totalRestante;
-				printf("size res %d\n", sizeUltimoNodo + totalRestante);
+				params[i+realTotal*j].sizeBloque = resTotal;
+				/*if (params[i+cantBloquesArchivo*j].sizeBloque > mb){
+					++cantBloquesArchivo;
+					params[i+cantBloquesArchivo*j].sizeBloque -= mb;
+				}*/
+				printf("laaaaaaaaaaaaaaaaaaaaaaaaa %d\n", params[i].sizeBloque);
 				//sizeUltimoNodo = params[i+cantBloquesArchivo*j].sizeBloque;
 				//totalAsignado = 1;
 			 }
 			if(j==0)
-				sizeTotal += params[i+cantBloquesArchivo*j].sizeBloque;
+				sizeTotal += params[i+realTotal*j].sizeBloque;
 
-			params[i+cantBloquesArchivo*j].sem = indexNodoEnListaConectados[nodoAUtilizar];
-			pthread_create(&nuevoHilo[i+cantBloquesArchivo*j], NULL, &enviarADataNode,(void*) &params[i+cantBloquesArchivo*j]);
+			params[i+realTotal*j].sem = indexNodoEnListaConectados[nodoAUtilizar];
+			pthread_create(&nuevoHilo[i+realTotal*j], NULL, &enviarADataNode,(void*) &params[i+realTotal*j]);
 
 			if (successArchivoCopiado == 1){
 				setearBloqueOcupadoEnBitmap(indexNodoEnListaConectados[nodoAUtilizar], bloqueLibre);
-				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(params[i+cantBloquesArchivo*j].sizeBloque));
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(params[i+realTotal*j].sizeBloque));
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(masBloquesLibres[j], bloqueLibre));
 			}
-			params[i+cantBloquesArchivo*j+1].restanteAnterior = sizeRestante;
 		}
-		if (i < cantBloquesArchivo-1)
-			offset += mb;
+		//printf("size res %d\n", i);
+		if (i < realTotal-1)
+			offset += params[i].sizeBloque;
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
 		config_set_value(infoArchivo, "RUTA", string_from_format("%s%s%s", path, nombre, tipo));
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
+	printf("size total %d\n", sizeTotal);
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
 	free(rutaFinal);
 
-	for (i = 0; i < cantBloquesArchivo * 2; ++i)
+	for (i = 0; i < realTotal * 2; ++i)
 		sem_wait(&pedidoTerminado);
 
 	return successArchivoCopiado;
@@ -668,12 +702,12 @@ void* enviarADataNode(void* parametros){
 	 sem_wait(semaforo);
 	 char* buff = malloc(params->sizeBloque + 1);
 	 memset(buff,0, params->sizeBloque + 1);
-	 memcpy(buff, params->mapa+params->offset-params->restanteAnterior, params->sizeBloque);
+	 memcpy(buff, params->mapa+params->offset, params->sizeBloque);
 	 empaquetar(params->socket, mensajeNumeroCopiaBloqueANodo, sizeof(int),&params->bloque);
 	 empaquetar(params->socket, mensajeEnvioBloqueANodo, params->sizeBloque,buff);
 	 respuesta res = desempaquetar(params->socket);
 	 memcpy(&success, res.envio, sizeof(int));
-	 printf("params %d %d %d\n", params->offset, params->restanteAnterior, res.idMensaje);
+	 //printf("params %d %d %d\n", params->sizeBloque, params->restanteAnterior, res.idMensaje);
 	 if (success == 0){
 		 successArchivoCopiado = 0;
 	 }
@@ -689,12 +723,11 @@ int bytesACortar(char* mapa, int offset, int sizeRestante){
 	memset(bloque,0, mb+1);
 	memcpy(bloque,mapa+offset-sizeRestante,mb);
 	char* mapaInvertido = string_reverse(bloque);
-	char* currentChar = malloc(2);
-	memset(currentChar,0,2);
+	char currentChar;
 	memcpy(&currentChar,mapaInvertido,1);
-	while(strcmp(currentChar, "\n") == 0){
+	while(currentChar != '\n'){
 		++index;
-		memcpy(currentChar,mapaInvertido + index,1);
+		memcpy(&currentChar,mapaInvertido + index,1);
 	}
 	free(bloque);
 	free(mapaInvertido);

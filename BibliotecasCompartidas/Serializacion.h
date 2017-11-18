@@ -59,6 +59,7 @@
 #define mensajeProcesarRedGlobal 40
 #define mensajeNoEstable 41
 #define mensajeRespuestaSolicitudArchivo 42
+#define mensajeRestanteAnterior 43
 
 typedef struct{
 	int idMensaje;
