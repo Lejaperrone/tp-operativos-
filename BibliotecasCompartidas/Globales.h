@@ -89,6 +89,18 @@ typedef struct respuestaReduccionGlobal{
 	bool encargado;
 }bloquesConSusArchivosRedGlobal;
 
+typedef struct{
+	int puerto;
+	string ip;
+	int nodo;
+	string archivo;
+}respuestaAlmacenamiento;
+
+typedef struct{
+	string rutaAlmacenamiento;
+	string archivoTemporal;
+}parametrosAlmacenamiento;
+
 typedef struct {
 	int puerto;
 	string ip;

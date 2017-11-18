@@ -55,7 +55,7 @@ void planificar(job* job){
 	mostrarTablaDeEstados();
 	esperarRespuestaReduccionDeMaster(job);
 
-	realizarAlmacenamientoFinal();
+	realizarAlmacenamientoFinal(job);
 
 	free(infoArchivo);
 	free(respuestaMaster);
@@ -478,12 +478,12 @@ void enviarReduccionGlobalAMaster(job* job){
 	registro->job= job->id;
 	registro->nodo= nodoEncargado->numero;
 	registro->rutaArchivoTemp = strdup(respuesta->archivoTemporal.cadena);
+
 	//pthread_mutex_unlock(&mutex_NodosConectados);
 
 	pthread_mutex_lock(&mutexTablaEstados);
 	list_add(tablaDeEstados,registro);
 	pthread_mutex_unlock(&mutexTablaEstados);
-
 }
 
 int calcularNodoEncargado(t_list* registrosRedGlobal){
@@ -524,8 +524,27 @@ t_list* buscarCopiasBloques(t_list* listaBloques,t_list* listaNodos,informacionA
 	return listaNodosActivos;
 }
 
-void realizarAlmacenamientoFinal(){
+void realizarAlmacenamientoFinal(job* job){
+	bool encontrarEnTablaEstados(void *registro) {
+		registroTablaEstados* reg =(registroTablaEstados*)registro;
+		return reg->job == job->id && reg->etapa== RED_GLOBAL;
+	}
 
+	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
+
+	respuestaAlmacenamiento* respuesta = malloc(sizeof(respuestaAlmacenamiento));
+	infoNodo* infoNod = obtenerNodo(reg->nodo);
+
+	respuesta->ip.longitud = infoNod->ip.longitud;
+	respuesta->ip.cadena = strdup(infoNod->ip.cadena);
+
+	respuesta->nodo = reg->nodo;
+	respuesta->puerto = infoNod->puerto;
+	respuesta->archivo.longitud = string_length(reg->rutaArchivoTemp);
+	respuesta->archivo.cadena = strdup(reg->rutaArchivoTemp);
+
+	empaquetar(job->socketFd,mensajeRespuestaAlmacenamiento,0,&respuesta);
+	desempaquetar(job->socketFd);
 }
 
 void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTransformacion* respuestaMaster,int nodos){

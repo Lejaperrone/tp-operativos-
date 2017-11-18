@@ -28,6 +28,8 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeFinJob:
 		case mensajeBorraDataBin:
 		case mensajeOk:
+		case mensajeAlmacenamientoCompleto:
+		case mensajeFalloAlmacenamiento:
 			tamanio =1;
 			bloque = malloc(1);
 			char a = 'a';
@@ -113,6 +115,10 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			bloque = serializarRespuestaRedGlobal(paquete,&tamanio);
 			break;
 
+		case mensajeRespuestaAlmacenamiento:
+			bloque = serializarRespuestaAlmacenamiento(paquete,&tamanio);
+			break;
+
 		case mensajeReplanificacion:
 			bloque = serializarReplanificacion(paquete,&tamanio);
 			break;
@@ -177,6 +183,8 @@ respuesta desempaquetar(int socket){
 			case mensajeBorraDataBin:
 			case mensajeOk:
 			case mensajeFalloReduccion:
+			case mensajeAlmacenamientoCompleto:
+			case mensajeFalloAlmacenamiento:
 				bufferOk = malloc(sizeof(char));
 				recv(socket,bufferOk,sizeof(char),0);
 				free(bufferOk);
@@ -244,6 +252,10 @@ respuesta desempaquetar(int socket){
 
 			case mensajeRespuestaRedGlobal:
 				miRespuesta.envio = deserializarRespuestaRedGlobal(socket,cabecera->tamanio);
+				break;
+
+			case mensajeRespuestaAlmacenamiento:
+				miRespuesta.envio = deserializarRespuestaAlmacenamiento(socket,cabecera->tamanio);
 				break;
 
 			case mensajeReplanificacion:
@@ -844,7 +856,7 @@ void* serializarRespuestaRedLocal(void* paquete,int* tamanio){
 	return buffer;
 }
 
-respuestaReduccionLocal* deserializarRespuestaRedLocal(int socket,int tamanio){
+nodosRedLocal* deserializarRespuestaRedLocal(int socket,int tamanio){
 	int desplazamiento = 0;
 	nodosRedLocal* respuesta= malloc(sizeof(nodosRedLocal));
 
@@ -1524,6 +1536,122 @@ parametrosReduccionGlobal* deserializarProcesarRedGlobal(int socket, int tamanio
 	respuesta->archivoTemporal.cadena = calloc(1,respuesta->archivoTemporal.longitud+1);
 	memcpy(respuesta->archivoTemporal.cadena, buffer + desplazamiento, respuesta->archivoTemporal.longitud);
 	desplazamiento += respuesta->archivoTemporal.longitud;
+
+	return respuesta;
+}
+
+void* serializarRespuestaAlmacenamiento(void* paquete, int* tamanio){
+	respuestaAlmacenamiento* respuesta = (respuestaAlmacenamiento*)paquete;
+	int desplazamiento=0;
+
+	*tamanio = sizeof(int);
+	void* buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->nodo, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer,*tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->puerto, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->archivo.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += respuesta->archivo.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, respuesta->archivo.cadena, respuesta->archivo.longitud);
+	desplazamiento += respuesta->archivo.longitud;
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->ip.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += respuesta->ip.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, respuesta->ip.cadena, respuesta->ip.longitud);
+	desplazamiento += respuesta->ip.longitud;
+
+	return buffer;
+}
+
+respuestaAlmacenamiento* deserializarRespuestaAlmacenamiento(int socket, int tamanio){
+	int desplazamiento = 0;
+	void* buffer = malloc(tamanio);
+	recv(socket,buffer,tamanio,0);
+	respuestaAlmacenamiento* respuesta = malloc(sizeof(respuestaAlmacenamiento));
+
+	memcpy(&respuesta->nodo, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	memcpy(&respuesta->puerto, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	memcpy(&respuesta->archivo.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	respuesta->archivo.cadena = calloc(1,respuesta->archivo.longitud+1);
+	memcpy(respuesta->archivo.cadena, buffer + desplazamiento, respuesta->archivo.longitud);
+	desplazamiento += respuesta->archivo.longitud;
+
+	memcpy(&respuesta->ip.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	respuesta->ip.cadena = calloc(1,respuesta->ip.longitud+1);
+	memcpy(respuesta->ip.cadena, buffer + desplazamiento, respuesta->ip.longitud);
+	desplazamiento += respuesta->ip.longitud;
+
+	return respuesta;
+}
+
+void* serializarProcesarAlmacenamiento(void* paquete, int* tamanio){
+	parametrosAlmacenamiento* respuesta = (parametrosAlmacenamiento*)paquete;
+	int desplazamiento=0;
+
+	*tamanio = sizeof(int);
+	void* buffer = malloc(*tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->archivoTemporal.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += respuesta->archivoTemporal.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, respuesta->archivoTemporal.cadena, respuesta->archivoTemporal.longitud);
+	desplazamiento += respuesta->archivoTemporal.longitud;
+
+	*tamanio += sizeof(int);
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, &respuesta->rutaAlmacenamiento.longitud, sizeof(int));
+	desplazamiento += sizeof(int);
+
+	*tamanio += respuesta->rutaAlmacenamiento.longitud;
+	buffer = realloc(buffer, *tamanio);
+	memcpy(buffer + desplazamiento, respuesta->rutaAlmacenamiento.cadena, respuesta->rutaAlmacenamiento.longitud);
+	desplazamiento += respuesta->rutaAlmacenamiento.longitud;
+
+	return buffer;
+}
+
+parametrosAlmacenamiento* deserializarProcesarAlmacenamiento(int socket, int tamanio){
+	int desplazamiento = 0;
+	void* buffer = malloc(tamanio);
+	recv(socket,buffer,tamanio,0);
+	parametrosAlmacenamiento* respuesta = malloc(sizeof(parametrosAlmacenamiento));
+
+	memcpy(&respuesta->archivoTemporal.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	respuesta->archivoTemporal.cadena = calloc(1,respuesta->archivoTemporal.longitud+1);
+	memcpy(respuesta->archivoTemporal.cadena, buffer + desplazamiento, respuesta->archivoTemporal.longitud);
+	desplazamiento += respuesta->archivoTemporal.longitud;
+
+	memcpy(&respuesta->rutaAlmacenamiento.longitud, buffer + desplazamiento, sizeof(int) );
+	desplazamiento += sizeof(int);
+
+	respuesta->rutaAlmacenamiento.cadena = calloc(1,respuesta->rutaAlmacenamiento.longitud+1);
+	memcpy(respuesta->rutaAlmacenamiento.cadena, buffer + desplazamiento, respuesta->rutaAlmacenamiento.longitud);
+	desplazamiento += respuesta->rutaAlmacenamiento.longitud;
 
 	return respuesta;
 }

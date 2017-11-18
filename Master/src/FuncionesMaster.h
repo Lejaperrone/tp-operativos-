@@ -88,4 +88,8 @@ void* conectarseConWorkerRedGlobal(void* params);
 
 void mostrarListasEstadisticas();
 
+void enviarAlmacenamientoFinal(respuestaAlmacenamiento* almacenamiento);
+
+void* conectarseConWorkerAlmacenamiento(void* params);
+
 #endif /* FUNCIONESMASTER_H_ */

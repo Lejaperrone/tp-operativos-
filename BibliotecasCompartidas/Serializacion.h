@@ -59,6 +59,10 @@
 #define mensajeProcesarRedGlobal 40
 #define mensajeNoEstable 41
 #define mensajeRespuestaSolicitudArchivo 42
+#define mensajeRespuestaAlmacenamiento 43
+#define mensajeAlmacenamientoCompleto 44
+#define mensajeFalloAlmacenamiento 45
+#define mensajeProcesarAlmacenamiento 46
 
 typedef struct{
 	int idMensaje;
@@ -93,7 +97,7 @@ void* serializarRespuestaTransformacion(void* paquete,int* tamanio);
 respuestaSolicitudTransformacion* deserializarRespuestaTransformacion(int socket,int tamanio);
 
 void* serializarRespuestaRedLocal(void* paquete,int* tamanio);
-respuestaReduccionLocal* deserializarRespuestaRedLocal(int socket,int tamanio);
+nodosRedLocal* deserializarRespuestaRedLocal(int socket,int tamanio);
 
 void* serializarRespuestaRedGlobal(void* paquete,int* tamanio);
 respuestaReduccionGlobal* deserializarRespuestaRedGlobal(int socket,int tamanio);
@@ -115,5 +119,11 @@ parametrosReduccionGlobal* deserializarProcesarRedGlobal(int socket, int tamanio
 
 void* serializarSolicitudArchivo(void* paquete, int* tamanio);
 string* deserializarSolicitudArchivo(int socket, int tamanio);
+
+void* serializarRespuestaAlmacenamiento(void* paquete, int* tamanio);
+respuestaAlmacenamiento* deserializarRespuestaAlmacenamiento(int socket, int tamanio);
+
+void* serializarProcesarAlmacenamiento(void* paquete, int* tamanio);
+parametrosAlmacenamiento* deserializarProcesarAlmacenamiento(int socket, int tamanio);
 
 #endif /* SERIALIZACION_H_ */

@@ -50,6 +50,7 @@ void esperarInstruccionesDeYama() {
 	nodosRedLocal* infoRedLocal;
 	respuestaReduccionGlobal* infoRedGlobal;
 	workerDesdeYama* worker;
+	respuestaAlmacenamiento* almacenamiento;
 
 	while (1) {
 		instruccionesYama = desempaquetar(socketYama);
@@ -88,6 +89,12 @@ void esperarInstruccionesDeYama() {
 				infoRedGlobal = (respuestaReduccionGlobal*)instruccionesYama.envio;
 				log_trace(loggerMaster, "Recibo Reduccion Global en nodo %d de YAMA.",infoRedGlobal->numero);
 				enviarAEncargadoRedGlobal(infoRedGlobal);
+				break;
+
+			case mensajeRespuestaAlmacenamiento:
+				almacenamiento = (respuestaAlmacenamiento*)instruccionesYama.envio;
+				log_trace(loggerMaster, "Recibo Almacenamiento Final en nodo %d de YAMA.",almacenamiento->nodo);
+				enviarAlmacenamientoFinal(almacenamiento);
 				break;
 		}
 	}
@@ -253,7 +260,7 @@ void* conectarseConWorkersRedLocal(void* params){
 	switch(confirmacionWorker.idMensaje){
 
 	case mensajeRedLocalCompleta:
-		log_trace(loggerMaster, "Informo a  YAMA fin Reduccion Loacl en nodo %d.",infoRedLocal->numero);
+		log_trace(loggerMaster, "Informo a  YAMA fin Reduccion Local en nodo %d.",infoRedLocal->numero);
 		numeroNodo = *(int*)confirmacionWorker.envio;
 		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroNodo);
 		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
@@ -261,6 +268,7 @@ void* conectarseConWorkersRedLocal(void* params){
 		break;
 
 	case mensajeDesconexion:
+	case mensajeFalloRedLocal:
 		log_trace(loggerMaster, "Informo a  YAMA fallo en Reduccion Local en nodo %d.",infoRedLocal->numero);
 		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
 		estadisticas->cantFallos++;
@@ -391,10 +399,63 @@ void* conectarseConWorkerRedGlobal(void* params){
 			break;
 
 		case mensajeDesconexion:
+		case mensajeFalloRedGlobal:
 			log_trace(loggerMaster, "Informo a  YAMA fallo en Reduccion Global del nodo %d.",infoRedGlobal->numero);
 			finalizarTiempo(estadisticas->tiempoFinRedGlobal,infoRedGlobal->numero);
 			estadisticas->cantFallos++;
 			mandarFalloEnReduccion();
+			break;
+	}
+
+	return 0;
+}
+
+void enviarAlmacenamientoFinal(respuestaAlmacenamiento* almacenamiento){
+	pthread_t nuevoHilo;
+	pthread_attr_t attr;
+
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+	if (pthread_create(&nuevoHilo, &attr, (void*)conectarseConWorkerAlmacenamiento, almacenamiento) != 0) {
+		log_error(loggerMaster, "No se pudo crear el thread de conexion");
+		exit(-1);
+	}
+}
+
+void* conectarseConWorkerAlmacenamiento(void* params){
+	parametrosAlmacenamiento* parametrosConexion= malloc(sizeof(parametrosAlmacenamiento));
+	respuestaAlmacenamiento* almacenamiento =(respuestaAlmacenamiento*) params;
+	respuesta confirmacionWorker ;
+
+	int socketWorker = crearSocket();
+	struct sockaddr_in direccion = cargarDireccion(almacenamiento->ip.cadena,almacenamiento->puerto);
+	if(!conectarCon(direccion, socketWorker, 2)){//2 id master
+		mandarFalloEnReduccion();
+		return 0;
+	}
+
+	log_trace(loggerMaster, "Inicio Red. Global con Worker %d", almacenamiento->nodo);
+
+	parametrosConexion->rutaAlmacenamiento.longitud = miJob->rutaResultado.longitud;
+	parametrosConexion->rutaAlmacenamiento.cadena= strdup(miJob->rutaResultado.cadena);
+	parametrosConexion->archivoTemporal.cadena = strdup(almacenamiento->archivo.cadena);
+	parametrosConexion->archivoTemporal.longitud = almacenamiento->archivo.longitud;
+
+	empaquetar(socketWorker, mensajeProcesarAlmacenamiento, 0, parametrosConexion);
+
+	confirmacionWorker = desempaquetar(socketWorker);
+
+	switch(confirmacionWorker.idMensaje){
+		case mensajeAlmacenamientoCompleto:
+			log_trace(loggerMaster, "Informo YAMA fin de Almacenamiento Final en nodo.",almacenamiento->nodo);
+			empaquetar(socketYama, mensajeAlmacenamientoCompleto, 0 , 0);
+			break;
+
+		case mensajeDesconexion:
+			log_trace(loggerMaster, "Informo a  YAMA fallo en Almacenamiento Final del nodo %d.",almacenamiento->nodo);
+			estadisticas->cantFallos++;
+			empaquetar(socketYama, mensajeFalloAlmacenamiento, 0 , 0);
 			break;
 	}
 
