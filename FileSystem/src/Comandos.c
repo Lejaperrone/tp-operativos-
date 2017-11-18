@@ -542,7 +542,7 @@ int generarArchivoMD5(char* comando){
 		return respuesta;
 	}
 	char* contenido = leerArchivo(rutaArchivoYamafs);
-	//printf("%s\n", contenido);
+	//printf("%d\n", strlen(contenido));
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 
 	char* ubicacionArchivoTemporal = string_from_format("%s", nombreArchivo);

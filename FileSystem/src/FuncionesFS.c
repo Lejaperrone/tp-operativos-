@@ -363,7 +363,7 @@ char* leerArchivo(char* rutaArchivo){
 
 	sizeAux = sizeArchivo;
 
-	while(sizeAux > 0){
+	while(config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA0",cantBloquesArchivo))){
 		sizeAux -= mb;
 		++cantBloquesArchivo;
 	}
@@ -511,30 +511,38 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	int bytesACortarAux[cantBloquesArchivo];
 	int off = 0;
-	int resTotal = 0;
 	int auxSizeBytes = 0;
 	int realTotal = cantBloquesArchivo;
 
 	int sizeUltimoNodo = sizeAux+mb;
+	int resTotal = 0;
 	for (i = 0; i < cantBloquesArchivo-1; ++i){
 		bytesACortarAux[i] = bytesACortar(mapeoArchivo->cadena,off,0);
 		off += mb - bytesACortarAux[i];
 		resTotal += bytesACortarAux[i];
 	}
 
-	if (resTotal > mb)
+	resTotal += sizeUltimoNodo;
+	if (resTotal > mb){
 		realTotal += redondearHaciaArriba(resTotal,mb);
+		--realTotal;
+		printf("blaaa %d\n", realTotal);
+	}
 
 	int bytesACortarArray[realTotal];
 	for(i = 0; i < cantBloquesArchivo-1; ++i){
 		bytesACortarArray[i] = bytesACortarAux[i];
+		printf("iiiilal %d %d\n",i, bytesACortarArray[i]);
 	}
-	if (resTotal > mb){
-		for(; i < realTotal - 1; ++i){
-			bytesACortarArray[cantBloquesArchivo + i] = bytesACortar(mapeoArchivo->cadena,off,0);
-			off += mb - bytesACortarArray[cantBloquesArchivo - 1 + i];
-			resTotal -= mb;
-		}
+	printf("iiii %d\n",i);
+	while (resTotal > mb){
+		printf("jeje\n");
+		bytesACortarArray[i] = bytesACortar(mapeoArchivo->cadena,off,0);
+		off += mb - bytesACortarArray[i];
+		resTotal -= mb;
+		resTotal += bytesACortarArray[i];
+		printf("iiii %d %d\n",i, bytesACortarArray[i]);
+		++i;
 	}
 
 	FILE* archivos = fopen(rutaFinal, "wb+");
@@ -645,10 +653,11 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 			if (i < realTotal-1){
 				if (j == 0){
+					printf("bytes a %d %d\n", i, bytesACortarArray[i]);
 				 sizeRestante = bytesACortarArray[i];
 				}
 				 params[i+realTotal*j].sizeBloque = mb -sizeRestante;
-				 printf("lala %d \n", params[i+realTotal*j].sizeBloque);
+				 //printf("lala %d \n", params[i+realTotal*j].sizeBloque);
 			 }
 			 else{
 				params[i+realTotal*j].sizeBloque = resTotal;
@@ -728,9 +737,12 @@ int bytesACortar(char* mapa, int offset, int sizeRestante){
 	while(currentChar != '\n'){
 		++index;
 		memcpy(&currentChar,mapaInvertido + index,1);
+		if (index == mb)
+			return 0;
 	}
 	free(bloque);
 	free(mapaInvertido);
+	printf("index %d\n", index);
 	return index;
 }
 
