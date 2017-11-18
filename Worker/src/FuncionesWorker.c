@@ -113,7 +113,7 @@ void crearScript(char* bufferScript, int etapa) {
 		nombreArchivo = "transformador.sh";
 	else if (etapa == mensajeProcesarRedLocal)
 		nombreArchivo = "reductorLocal.pl";
-	else if (etapa == mensajeDesignarEncargado)
+	else if (etapa == mensajeProcesarRedGlobal)
 		nombreArchivo = "reductorGlobal.pl";
 
 	char* ruta = string_from_format("../scripts/%s", nombreArchivo);
@@ -192,9 +192,12 @@ void handlerMaster(int clientSocket) {
 		destino = reduccionGlobal->archivoTemporal.cadena;
 		listaWorkers = list_create();
 		list_add_all(listaWorkers, reduccionGlobal->infoWorkers);
+		contenidoScript = strdup(reduccionGlobal->contenidoScript.cadena);
+		crearScript(contenidoScript, mensajeProcesarRedGlobal);
 		rutaArchivoFinal = crearRutaArchivoAReducir(listaWorkers);
 		command = string_from_format("cat %s | perl %s > %s", rutaArchivoFinal, string_from_format("../scripts/reductorGlobal.pl"), string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
+		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(clientSocket, mensajeRedGlobalCompleta, 0, 0);
 		free(reduccionGlobal);
 		exit(0);
