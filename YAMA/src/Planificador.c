@@ -62,7 +62,6 @@ void planificar(job* job){
 	free(listaNodos);
 	free(worker);
 
-
 	finalizarJob(job,4);
 }
 
@@ -543,7 +542,7 @@ void realizarAlmacenamientoFinal(job* job){
 	respuesta->archivo.longitud = string_length(reg->rutaArchivoTemp);
 	respuesta->archivo.cadena = strdup(reg->rutaArchivoTemp);
 
-	empaquetar(job->socketFd,mensajeRespuestaAlmacenamiento,0,&respuesta);
+	empaquetar(job->socketFd,mensajeRespuestaAlmacenamiento,0,respuesta);
 	desempaquetar(job->socketFd);
 }
 

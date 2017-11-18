@@ -197,7 +197,7 @@ void handlerMaster(int clientSocket) {
 		rutaArchivoFinal = crearRutaArchivoAReducir(listaWorkers);
 		command = string_from_format("cat %s | perl %s > %s", rutaArchivoFinal, string_from_format("../scripts/reductorGlobal.pl"), string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
-		log_trace(logger, "Reduccion local realizada correctamente");
+		log_trace(logger, "Reduccion global realizada correctamente");
 		empaquetar(clientSocket, mensajeRedGlobalCompleta, 0, 0);
 		free(reduccionGlobal);
 		exit(0);
@@ -225,6 +225,7 @@ char* crearRutaArchivoAReducir(t_list* listaWorkers) {
 	int i;
 	for (i = 0; i < list_size(listaWorkers); i++) {
 		infoWorker* worker = list_get(listaWorkers, i);
+
 		if (config.PUERTO_WORKER != worker->puerto) { // !string_equals_ignore_case(config.IP_NODO, worker->ip.cadena) SE SACA PARA PROBAR LOCAL
 			log_trace(logger, "Iniciando conexion con %s:%i", worker->ip.cadena, worker->puerto);
 			socket = crearSocket();
@@ -272,6 +273,7 @@ void handlerWorker(int clientSocket) {
 	string* contenidoArchivo = malloc(sizeof(string));
 
 	while (1) {
+
 		solicitudWorker = desempaquetar(clientSocket);
 		switch (solicitudWorker.idMensaje) {
 		case mensajeSolicitudArchivo:
@@ -298,7 +300,6 @@ void handlerWorker(int clientSocket) {
 				perror("Error un-mmapping the file");
 				exit(EXIT_FAILURE);
 			}
-
 			break;
 		default:
 			break;

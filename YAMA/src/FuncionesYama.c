@@ -524,9 +524,9 @@ void borrarEntradasDeJob(int jobid){
 
 void esperarRespuestaReduccionDeMaster(job* job){
 	respuesta respuestaMaster=  desempaquetar(job->socketFd);
-
 	if(respuestaMaster.idMensaje == mensajeRedGlobalCompleta){
 		agregarBloqueTerminadoATablaEstados(0,job->id,RED_GLOBAL);
+
 		return;
 	}
 	else if(respuestaMaster.idMensaje == mensajeFalloRedGlobal){

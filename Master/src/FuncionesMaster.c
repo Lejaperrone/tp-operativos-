@@ -353,7 +353,7 @@ void enviarAEncargadoRedGlobal(respuestaReduccionGlobal* infoRedGlobal){
 void* conectarseConWorkerRedGlobal(void* params){
 	parametrosReduccionGlobal* parametrosConexion= malloc(sizeof(parametrosReduccionGlobal));
 	respuestaReduccionGlobal* infoRedGlobal =(respuestaReduccionGlobal*) params;
-	respuesta confirmacionWorker ;
+	respuesta confirmacionWorker;
 
 	int socketWorker = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(infoRedGlobal->ip.cadena,infoRedGlobal->puerto);
@@ -384,6 +384,8 @@ void* conectarseConWorkerRedGlobal(void* params){
 
 	confirmacionWorker = desempaquetar(socketWorker);
 
+	printf("\n%d\n\n",confirmacionWorker.idMensaje);
+
 	if (munmap(parametrosConexion->contenidoScript.cadena, parametrosConexion->contenidoScript.longitud) == -1){
 		perror("Error un-mmapping the file");
 		exit(EXIT_FAILURE);
@@ -391,8 +393,9 @@ void* conectarseConWorkerRedGlobal(void* params){
 	close(fd);
 
 	switch(confirmacionWorker.idMensaje){
+		case mensajeOk:
 		case mensajeRedGlobalCompleta:
-			log_trace(loggerMaster, "Informo YAMA fin de Reduccion Global en nodo.",infoRedGlobal->numero);
+			log_trace(loggerMaster, "Informo YAMA fin de Reduccion Global en nodo %i",infoRedGlobal->numero);
 			empaquetar(socketYama, mensajeRedGlobalCompleta, 0 , 0);
 			estadisticas->cantTareas[RED_GLOBAL]++;
 			finalizarTiempo(estadisticas->tiempoFinRedGlobal,infoRedGlobal->numero);
@@ -435,7 +438,7 @@ void* conectarseConWorkerAlmacenamiento(void* params){
 		return 0;
 	}
 
-	log_trace(loggerMaster, "Inicio Red. Global con Worker %d", almacenamiento->nodo);
+	log_trace(loggerMaster, "Inicio Almacenamiento Final con Worker %d", almacenamiento->nodo);
 
 	parametrosConexion->rutaAlmacenamiento.longitud = miJob->rutaResultado.longitud;
 	parametrosConexion->rutaAlmacenamiento.cadena= strdup(miJob->rutaResultado.cadena);
