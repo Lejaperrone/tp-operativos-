@@ -444,8 +444,12 @@ char* leerArchivo(char* rutaArchivo){
 	for (i = 0; i < cantBloquesArchivo; ++i){
 		memcpy(lectura + contador, respuestas[i], strlen(respuestas[i]));
 		contador += strlen(respuestas[i]);
-		//free(respuestas[i]);
+		//printf("%s\n", respuestas[i]);
+		free(respuestas[i]);
 	}
+
+	for (i = 0; i < cantBloquesArchivo; ++i)
+		sem_wait(&pedidoTerminado);
 
 
 	free(currentChar);
@@ -469,6 +473,7 @@ void* leerDeDataNode(void* parametros){
 	 memset(params->contenidoBloque, 0, params->sizeBloque + 1);
 	 memcpy(params->contenidoBloque, respuesta.envio, params->sizeBloque);
 	 sem_post(semaforo);
+	 sem_post(&pedidoTerminado);
 	 pthread_exit(params->contenidoBloque);//(void*)params->contenidoBloque;
 }
 
@@ -684,11 +689,12 @@ int bytesACortar(char* mapa, int offset, int sizeRestante){
 	memset(bloque,0, mb+1);
 	memcpy(bloque,mapa+offset-sizeRestante,mb);
 	char* mapaInvertido = string_reverse(bloque);
-	char currentChar;
+	char* currentChar = malloc(2);
+	memset(currentChar,0,2);
 	memcpy(&currentChar,mapaInvertido,1);
-	while(currentChar != '\n'){
+	while(strcmp(currentChar, "\n") == 0){
 		++index;
-		memcpy(&currentChar,mapaInvertido + index,1);
+		memcpy(currentChar,mapaInvertido + index,1);
 	}
 	free(bloque);
 	free(mapaInvertido);
