@@ -772,7 +772,8 @@ bool esBloqueOcupado(int numeroNodo, int numeroBloque){
 }
 
 int* arrayBloquesOcupados(informacionNodo nodo){
-	int* arrayBloquesOcupados = malloc(sizeof(int)*nodo.bloquesOcupados);
+	//int* arrayBloquesOcupados = malloc(sizeof(int)*nodo.bloquesOcupados);
+	int arrayBloquesOcupados[nodo.bloquesOcupados];
 	int tamanioNodo = nodo.sizeNodo;
 	int numeroNodo = nodo.numeroNodo;
 	int i;
@@ -1152,37 +1153,31 @@ int borrarArchivosEnMetadata(){
 
 int liberarNodosConectados(){
 	int cantNodosConectados = list_size(nodosConectados);
-	int i, k;
-	int cantBloquesOcupados, numeroNodo;
+	int i;
+	int numeroNodo, sizeNodo;
 	informacionNodo nodo;
-	int* bloquesOcupados;
 	int respuesta = 1;
 
+	char* rmComando = string_from_format("rm -r %s", rutaMetadataBitmaps);
+
+	respuesta = system(rmComando);
+
+	char* mkdirComando = string_from_format("mkdir %s", rutaMetadataBitmaps);
+
+	respuesta = system(mkdirComando);
 	if (cantNodosConectados > 0){
 		for (i = 0; i < cantNodosConectados; ++i){
 			nodo = *(informacionNodo*) list_get(nodosConectados, i);
-			cantBloquesOcupados = nodo.bloquesOcupados;
 			numeroNodo = nodo.numeroNodo;
-			bloquesOcupados = arrayBloquesOcupados(nodo);
-
-			for (k = 0; k < cantBloquesOcupados; ++k){
-				setearBloqueLibreEnBitmap(numeroNodo, bloquesOcupados[k]);
-			}
-
+			sizeNodo = nodo.sizeNodo;
+			levantarBitmapNodo(numeroNodo, sizeNodo);
+			respuesta++;
 		}
-		actualizarBitmapNodos();
 	}
-	else{
-		char* rmComando = string_from_format("rm -r %s", rutaMetadataBitmaps);
+	if (respuesta == cantNodosConectados)
+		return 0;
 
-		respuesta = system(rmComando);
-
-		char* mkdirComando = string_from_format("mkdir %s", rutaMetadataBitmaps);
-
-		respuesta = system(mkdirComando);
-	}
-
-	return respuesta;
+	return 1;
 }
 
 int formatearDataBins(){
