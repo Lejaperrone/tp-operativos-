@@ -369,10 +369,6 @@ char* leerArchivo(char* rutaArchivo){
 	}
 	char* respuestas[cantBloquesArchivo];
 	parametrosLecturaBloque params[cantBloquesArchivo];
-	for (j = 0; j < cantBloquesArchivo; ++j){
-		respuestas[j] = malloc(mb+1);
-		memset(respuestas[j], 0, mb + 1);
-	}
 	pthread_t nuevoHilo[cantBloquesArchivo];
 
 	for (j = 0; j < cantidadNodos; ++j){
@@ -476,6 +472,7 @@ void* leerDeDataNode(void* parametros){
 	 memcpy(params->contenidoBloque, respuesta.envio, params->sizeBloque);
 	 sem_post(semaforo);
 	 sem_post(&pedidoTerminado);
+	 free(respuesta.envio);
 	 pthread_exit(params->contenidoBloque);//(void*)params->contenidoBloque;
 }
 
