@@ -127,8 +127,15 @@ void crearScript(char* bufferScript, int etapa) {
 	fclose(script);
 }
 
+int conectarseConFS() {
+	int socket = crearSocket();
+	struct sockaddr_in direccion = cargarDireccion(config.IP_FILESYSTEM,config.PUERTO_FILESYSTEM);
+	conectarCon(direccion, socket, idWorker);
+	return socket;
+}
+
 void handlerMaster(int clientSocket) {
-	respuesta paquete;
+	respuesta paquete, confirmacionFS;
 	parametrosAlmacenamiento* almacenamiwnto;
 	parametrosTransformacion* transformacion;
 	parametrosReduccionLocal* reduccionLocal;
@@ -210,11 +217,20 @@ void handlerMaster(int clientSocket) {
 		almacenamiwnto = (parametrosAlmacenamiento*)paquete.envio;
 
 		printf("TEMPORAL: %s || ALMACENAMIENTO %s \n\n",almacenamiwnto->archivoTemporal.cadena,almacenamiwnto->rutaAlmacenamiento.cadena);
-		empaquetar(clientSocket,mensajeAlmacenamientoCompleto,0,0);
+		empaquetar(clientSocket,mensajeAlmacenamientoCompleto, 0, 0);
+		/*int socketFS = conectarseConFS();
+
+		empaquetar(socketFS, mensajeProcesarAlmacenamiento, 0, almacenamiwnto);
+
+		confirmacionFS = desempaquetar(socketFS);
+		if(confirmacionFS.idMensaje == mensajeAlmacenamientoCompleto){
+			empaquetar(clientSocket,mensajeAlmacenamientoCompleto, 0, 0);
+		}else {
+			empaquetar(clientSocket,mensajeFalloAlmacenamiento, 0, 0);
+		}
+		 */
 		exit(0);
 		break;
-
-
 
 	default:
 		break;

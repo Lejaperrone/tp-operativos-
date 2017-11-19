@@ -337,6 +337,7 @@ int mostrarArchivo(char* comando){
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	printf("%s\n", contenido);
 	respuesta = 0;
+	free(contenido);
 
 	return respuesta;
 }
@@ -396,14 +397,17 @@ int copiarArchivo(char* comando){
 	int indice = 0, indiceNom = 0;
 	char* tipo = malloc(5); //.bin o .txt
 	memset(tipo,0,5);
-	char* rutaNormal = devolverRuta(comando, 1);
-	char* rutaFS = devolverRuta(comando, 2);
+	char** parametros = string_split(comando, " ");
+	char* rutaNormal = parametros[1];
+	char* rutaFS = parametros[2];
+	char* tipoArchivo = "t";
+
+	if (parametros[3] != NULL)
+		tipoArchivo = parametros[3];
+
 	char* nombre = malloc(strlen(comando)-4); //El peor caso seria que el parametro sea el nombre sin ruta, tomo ese valor
 	memset(nombre,0,strlen(comando)-4);
 	char* rutaInvertida = string_reverse(rutaNormal);
-	char* slash = "/";
-	char* dot = ".";
-	char* caracterActual = string_substring(rutaInvertida, indice, 1);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaFS);
 	if (strcmp(rutaMetadata, "-1") == 0)
@@ -419,32 +423,6 @@ int copiarArchivo(char* comando){
 		return 0;
 	}
 
-	while(strcmp(caracterActual,dot)){
-		memcpy(tipo + indice, caracterActual, 1);
-		++indice;
-		caracterActual = string_substring(rutaInvertida, indice, 1);
-		if (strcmp(caracterActual,slash) == 0){
-			printf("ruta invalida, no es un archivo");
-			return 0;
-		}
-
-	}
-
-	memcpy(tipo + indice, caracterActual, 1);
-	++indice;
-	caracterActual = string_substring(rutaInvertida, indice, 1);
-
-	tipo = string_reverse(tipo);
-
-	while(strcmp(caracterActual,slash)){
-		memcpy(nombre + indiceNom, caracterActual, 1);
-		++indice;
-		++indiceNom;
-		caracterActual = string_substring(rutaInvertida, indice, 1);
-	}
-
-	nombre = string_reverse(nombre);
-
 
 	struct stat fileStat;
 	if(stat(rutaNormal,&fileStat) < 0){
@@ -453,9 +431,15 @@ int copiarArchivo(char* comando){
 		free(nombre);
 		return 0;
 	}
-
 	int fd = open(rutaNormal,O_RDWR);
 	int size = fileStat.st_size;
+
+	if (!S_ISREG(fileStat.st_mode)){
+		printf("La ruta no pertenece a un archivo\n");
+		return 0;
+	}
+
+	nombre = ultimaParteDeRuta(rutaNormal);
 
 	string* mapeoArchivo;
 
@@ -463,7 +447,7 @@ int copiarArchivo(char* comando){
 	mapeoArchivo->cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
 	mapeoArchivo->longitud = size;
 
-	int resultado = guardarEnNodos(rutaFS, nombre, tipo, mapeoArchivo);
+	int resultado = guardarEnNodos(rutaFS, nombre, tipoArchivo, mapeoArchivo);
 
 	if (munmap(mapeoArchivo->cadena, mapeoArchivo->longitud) == -1)
 	{
@@ -582,10 +566,11 @@ int generarArchivoMD5(char* comando){
 	char* ubicacionArchivoTemporal = string_from_format("%s", nombreArchivo);
 	FILE* file = fopen(ubicacionArchivoTemporal, "w");
 	fwrite(contenido, strlen(contenido), 1, file);
+	fclose(file);
+	free(contenido);
 
 	char* MD5 = string_from_format("md5sum %s", nombreArchivo);
 	char* RM = string_from_format("rm %s", nombreArchivo);
-	fclose(file);
 
 	respuesta = system(MD5);
 	printf("\n");
@@ -593,7 +578,6 @@ int generarArchivoMD5(char* comando){
 	free(MD5);
 	free(RM);
 	free(ubicacionArchivoTemporal);
-	free(contenido);
 	free(rutaArchivoMetadata);
 
 	return respuesta;
