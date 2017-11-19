@@ -62,6 +62,7 @@
 #define mensajeAlmacenamientoCompleto 44
 #define mensajeFalloAlmacenamiento 45
 #define mensajeProcesarAlmacenamiento 46
+#define mensajeAlmacenar 47
 
 typedef struct{
 	int idMensaje;
@@ -124,5 +125,8 @@ respuestaAlmacenamiento* deserializarRespuestaAlmacenamiento(int socket, int tam
 
 void* serializarProcesarAlmacenamiento(void* paquete, int* tamanio);
 parametrosAlmacenamiento* deserializarProcesarAlmacenamiento(int socket, int tamanio);
+
+void* serializarAlmacenar(void* paquete, int* tamanio);
+almacenamientoFinal* deserializarAlmacenar(int socket, int tamanio);
 
 #endif /* SERIALIZACION_H_ */

@@ -21,7 +21,9 @@ infoNodo* inicializarWorker(){
 	return worker;
 }
 void planificar(job* job){
+	pthread_mutex_lock(&mutexJobs);
 	infoNodo* worker = inicializarWorker();
+	pthread_mutex_unlock(&mutexJobs);
 	t_list* listaNodos = list_create();
 	int nodos,bloques;
 
@@ -175,10 +177,10 @@ bool mayorDisponibilidad(infoNodo* workerMasDisp, infoNodo* worker){
 
 	int maxDisponibilidad = obtenerDisponibilidadWorker(workerMasDisp);
 	int disponibilidad =  obtenerDisponibilidadWorker(worker);
-	//if(maxDisponibilidad == disponibilidad){
-	//	return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
-		//FIXME FALLA VALGRIND ACA PORQUE NUNCA SE INICIALIZA
-	//}
+	if(maxDisponibilidad == disponibilidad){
+		return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
+
+	}
 
 	return maxDisponibilidad > disponibilidad;
 
@@ -243,6 +245,7 @@ void agregarNodo(t_list* lista, infoNodo* nodo){
 void modificarCargayDisponibilidad(infoNodo* worker){
 	worker->disponibilidad--;
 	worker->carga++;
+	worker->cantTareasHistoricas++;
 }
 
 infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWorkerActual){
@@ -552,7 +555,7 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 	int numNodo;
 
 	while(redLocalIncompleta){
-		respuesta respuestaPlanificacionMaster=  desempaquetar(job->socketFd);
+		respuesta respuestaPlanificacionMaster = desempaquetar(job->socketFd);
 
 		if(respuestaPlanificacionMaster.idMensaje == mensajeTransformacionCompleta){
 			bloqueNodo = (bloqueYNodo*) respuestaPlanificacionMaster.envio;

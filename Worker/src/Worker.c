@@ -10,8 +10,11 @@ int main(int argc, char *argv[]) {
 	cargarConfiguracionNodo(&config,argv[1]);
 	levantarServidorWorker(config.IP_NODO, config.PUERTO_WORKER);
 
-
-	/*
+	/*t_list* listaArchivosTemporales = list_create();
+	list_add(listaArchivosTemporales, "/home/utnso/tp-2017-2c-PEQL/Worker/a.txt");
+	list_add(listaArchivosTemporales, "/home/utnso/tp-2017-2c-PEQL/Worker/b.txt");
+	list_add(listaArchivosTemporales, "/home/utnso/tp-2017-2c-PEQL/Worker/c.txt");
+	apareoArchivosLocales(listaArchivosTemporales,"/home/utnso/tp-2017-2c-PEQL/Worker/resultado.txt");
 	//Para probar reduccion
 	t_list* listaArchivosTemporales = list_create();
 	list_add(listaArchivosTemporales, "/home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/j1n1b0e0");
@@ -28,8 +31,8 @@ int main(int argc, char *argv[]) {
 	apareoArchivosLocales(listaArchivosTemporales, aux);
 	char* command = string_from_format("cat %s | perl %s > %s", aux, string_from_format("../scripts/reductorLocal.pl"), string_from_format("%s/tmp/%s", path, destino));
 	ejecutarComando(command, clientSocket);
-	log_trace(logger, "Reduccion local realizada correctamente");
-	*/
+	log_trace(logger, "Reduccion local realizada correctamente");*/
+
 
 	return EXIT_SUCCESS;
 }

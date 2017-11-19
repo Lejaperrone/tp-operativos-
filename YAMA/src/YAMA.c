@@ -7,13 +7,9 @@ int main(int argc, char *argv[]) {
 
 	nodosConectados = list_create();
 	tablaDeEstados = list_create();
-	pthread_mutex_init(&mutexTablaEstados, NULL);
-	pthread_mutex_init(&mutexLog, NULL);
-	pthread_mutex_init(&mutexConfiguracion, NULL);
-	pthread_mutex_init(&mutexLog, NULL);
 
-	cargarConfiguracionYama(&config,argv[1]);
 	inicializarEstructuras();
+	cargarConfiguracionYama(&config,argv[1]);
 
 	socketFs = conectarseConFs();
 

@@ -135,11 +135,11 @@ int conectarseConFS() {
 }
 
 void handlerMaster(int clientSocket) {
-	respuesta paquete, confirmacionFS;
-	parametrosAlmacenamiento* almacenamiwnto;
+	respuesta paquete, confirmacionFS,conexion;
 	parametrosTransformacion* transformacion;
 	parametrosReduccionLocal* reduccionLocal;
-	parametrosReduccionGlobal* reduccionGlobal ;
+	parametrosReduccionGlobal* reduccionGlobal;
+	parametrosAlmacenamiento* almacenamiento;
 
 	char* destino, *contenidoScript, *command, *rutaArchivoFinal, *archivoPreReduccion = "preReduccion";
 	t_list* listaArchivosTemporales, *listAux, *listaWorkers;
@@ -214,21 +214,56 @@ void handlerMaster(int clientSocket) {
 
 	case mensajeProcesarAlmacenamiento:
 		log_trace(logger, "Soy el Worker Encargado de almacenar");
-		almacenamiwnto = (parametrosAlmacenamiento*)paquete.envio;
 
-		printf("TEMPORAL: %s || ALMACENAMIENTO %s \n\n",almacenamiwnto->archivoTemporal.cadena,almacenamiwnto->rutaAlmacenamiento.cadena);
-		empaquetar(clientSocket,mensajeAlmacenamientoCompleto, 0, 0);
-		/*int socketFS = conectarseConFS();
+		almacenamiento = (parametrosAlmacenamiento*)paquete.envio;
 
-		empaquetar(socketFS, mensajeProcesarAlmacenamiento, 0, almacenamiwnto);
+		int socketFS = conectarseConFS();
+		conexion = desempaquetar(socketFS);
+
+		if(conexion.idMensaje != mensajeOk){
+			log_trace(logger, "Fallo en conexion con FS");
+			empaquetar(clientSocket,mensajeFalloAlmacenamiento, 0, 0);
+			exit(0);
+			break;
+		}
+
+		log_trace(logger, "Conexion con FS");
+
+		almacenamientoFinal* almacenar = malloc(sizeof(almacenamientoFinal));
+		almacenar->nombre.longitud = almacenamiento->rutaAlmacenamiento.longitud;
+		almacenar->nombre.cadena = strdup(almacenamiento->rutaAlmacenamiento.cadena);
+
+		char* rutaArchivo = string_new();
+		rutaArchivo = string_from_format("%s/tmp/%s", path, almacenamiento->archivoTemporal.cadena);
+
+		struct stat fileStat;
+		if(stat(rutaArchivo,&fileStat) < 0){
+			printf("No se pudo abrir el archivo\n");
+			exit(0);
+		}
+
+		int fd = open(rutaArchivo,O_RDWR);
+		int size = fileStat.st_size;
+
+		almacenar->contenido.cadena = mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
+		almacenar->contenido.longitud = size;
+
+		empaquetar(socketFS, mensajeAlmacenar, 0, almacenar);
+
+		if (munmap(almacenar->contenido.cadena, almacenar->contenido.longitud) == -1){
+			perror("Error un-mmapping the file");
+			exit(EXIT_FAILURE);
+		}
+		close(fd);
 
 		confirmacionFS = desempaquetar(socketFS);
+
 		if(confirmacionFS.idMensaje == mensajeAlmacenamientoCompleto){
 			empaquetar(clientSocket,mensajeAlmacenamientoCompleto, 0, 0);
 		}else {
 			empaquetar(clientSocket,mensajeFalloAlmacenamiento, 0, 0);
 		}
-		 */
+
 		exit(0);
 		break;
 

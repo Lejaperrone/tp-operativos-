@@ -21,6 +21,8 @@ void* levantarServidorFS(){
 	int nuevoCliente;
 	int cantidadNodos;
 	informacionNodo info;
+	respuesta respuestaWorker;
+	almacenamientoFinal* almacenar;
 
 	int i = 0, l = 0;
 	int addrlen;
@@ -49,7 +51,7 @@ void* levantarServidorFS(){
 		// explorar conexiones existentes en busca de datos que leer
 		for(i = 0; i <= maxDatanodes; i++) {
 			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
-				if (i == servidorFS && noSeConectoYama) {
+				if (i == servidorFS) {
 					// gestionar nuevas conexiones
 					addrlen = sizeof(direccionCliente);
 					if ((nuevoCliente = accept(servidorFS, (struct sockaddr *)&direccionCliente,
@@ -102,6 +104,48 @@ void* levantarServidorFS(){
 							empaquetar(nuevoCliente,mensajeOk,0,0);
 							noSeConectoYama=false;
 						}
+						else if (*(int*)conexionNueva.envio == idWorker){
+							empaquetar(nuevoCliente,mensajeOk,0,0);
+							log_trace(loggerFS, "Nueva Conexion de Worker");
+							respuestaWorker=desempaquetar(nuevoCliente);
+							almacenar= respuestaWorker.envio;
+
+							char* directorio = rutaSinArchivo(almacenar->nombre.cadena);
+							char* nombreArchivo = ultimaParteDeRuta(almacenar->nombre.cadena);
+
+							string* mmap = malloc(sizeof(string));
+							mmap->cadena = strdup(almacenar->contenido.cadena);
+							mmap->longitud = almacenar->contenido.longitud;
+
+							int resultado = guardarEnNodos(directorio, nombreArchivo, "t", mmap);
+
+							if (resultado == 1){
+								pthread_mutex_lock(&logger_mutex);
+								log_trace(loggerFS, "Archivo copiado a yamafs");
+								pthread_mutex_unlock(&logger_mutex);
+								empaquetar(nuevoCliente,mensajeAlmacenamientoCompleto,0,0);
+							}
+							else if(resultado == 0){
+								pthread_mutex_lock(&logger_mutex);
+								log_error(loggerFS, "No se pudo copiar el archivo");
+								pthread_mutex_unlock(&logger_mutex);
+								empaquetar(nuevoCliente,mensajeFalloAlmacenamiento,0,0);
+							}
+							else if(resultado == 2){
+								pthread_mutex_lock(&logger_mutex);
+								log_error(loggerFS, "No se pudo copiar el archivo, espacio insuficiente");
+								pthread_mutex_unlock(&logger_mutex);
+								empaquetar(nuevoCliente,mensajeFalloAlmacenamiento,0,0);
+							}
+							else if(resultado == 3){
+								pthread_mutex_lock(&logger_mutex);
+								log_error(loggerFS, "No se pudo copiar el archivo, ya existe");
+								pthread_mutex_unlock(&logger_mutex);
+								empaquetar(nuevoCliente,mensajeFalloAlmacenamiento,0,0);
+							}
+							free(mmap);
+							free(almacenar);
+						}
 
 					}
 				}
@@ -117,6 +161,7 @@ void* levantarServidorFS(){
 							break;
 						}
 					}
+
 
 
 				}

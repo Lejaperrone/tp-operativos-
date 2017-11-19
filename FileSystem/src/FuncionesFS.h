@@ -21,6 +21,7 @@
 #include <sys/types.h>
 
 #define idDataNodes 3
+#define idWorker 100
 #define cantDataNodes 10
 #define mb 1048576
 

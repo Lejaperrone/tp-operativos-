@@ -241,9 +241,9 @@ void recibirContenidoMaster(int nuevoMaster) {
 
 	pthread_mutex_lock(&cantJobs_mutex);
 	cantJobs++;
-	pthread_mutex_unlock(&cantJobs_mutex);
 	jobAPlanificar->id = cantJobs;
 	jobAPlanificar->socketFd = nuevoMaster;
+	pthread_mutex_unlock(&cantJobs_mutex);
 	log_trace(logger, "Job recibido para pre-planificacion %i",jobAPlanificar->id);
 
 	empaquetar(nuevoMaster, mensajeOk, 0,0);
@@ -295,6 +295,10 @@ char* dameUnNombreArchivoTemporal(int jobId,int numBloque,int etapa,int nodo){
 }
 void inicializarEstructuras(){
 	pthread_mutex_init(&cantJobs_mutex, NULL);
+	pthread_mutex_init(&mutexTablaEstados, NULL);
+	pthread_mutex_init(&mutexLog, NULL);
+	pthread_mutex_init(&mutexConfiguracion, NULL);
+	pthread_mutex_init(&mutexJobs, NULL);
 }
 
 bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques){
@@ -405,9 +409,8 @@ void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,Etapa etapa){
 
 	pthread_mutex_lock(&mutexTablaEstados);
 	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
-	pthread_mutex_unlock(&mutexTablaEstados);
-
 	reg->estado=FINALIZADO_OK;
+	pthread_mutex_unlock(&mutexTablaEstados);
 }
 void agregarBloqueTerminadoATablaEstadosRedLocal(int nodo,int jobId,Etapa etapa){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg ) {
@@ -575,6 +578,7 @@ void mostrarTablaDeEstados(){
 	void iterar(registroTablaEstados* reg){
 		printf("numero %d, bloque %d, etapa %d estado %d, ruta %s \n\n",reg->nodo,reg->bloque,reg->etapa,reg->estado,reg->rutaArchivoTemp);
 	}
-
+	pthread_mutex_lock(&mutexTablaEstados);
 	list_iterate(tablaDeEstados,(void*)iterar);
+	pthread_mutex_unlock(&mutexTablaEstados);
 }
