@@ -240,6 +240,11 @@ typedef struct{
 	int workerId;
 }bloqueYNodo;
 
+typedef struct{
+	string nombre;
+	string contenido;
+}almacenamientoFinal;
+
 int redondearHaciaArriba(int num,int num2);
 
 bool validarArchivo(char* path);

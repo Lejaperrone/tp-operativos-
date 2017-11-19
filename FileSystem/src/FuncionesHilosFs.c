@@ -21,6 +21,8 @@ void* levantarServidorFS(){
 	int nuevoCliente;
 	int cantidadNodos;
 	informacionNodo info;
+	respuesta respuestaWorker;
+	almacenamientoFinal* almacenar;
 
 	int i = 0, l = 0;
 	int addrlen;
@@ -49,7 +51,7 @@ void* levantarServidorFS(){
 		// explorar conexiones existentes en busca de datos que leer
 		for(i = 0; i <= maxDatanodes; i++) {
 			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
-				if (i == servidorFS && noSeConectoYama) {
+				if (i == servidorFS) {
 					// gestionar nuevas conexiones
 					addrlen = sizeof(direccionCliente);
 					if ((nuevoCliente = accept(servidorFS, (struct sockaddr *)&direccionCliente,
@@ -102,6 +104,23 @@ void* levantarServidorFS(){
 							empaquetar(nuevoCliente,mensajeOk,0,0);
 							noSeConectoYama=false;
 						}
+						else if (*(int*)conexionNueva.envio == idWorker){
+							empaquetar(nuevoCliente,mensajeOk,0,0);
+							log_trace(loggerFS, "Nueva Conexion de Worker");
+							respuestaWorker=desempaquetar(nuevoCliente);
+							almacenar= respuestaWorker.envio;
+
+							printf("NOMBRE  %s \n\n",almacenar->contenido.cadena);
+
+							/*
+							 *
+							 * TODO TUYO ALEJO
+							 *
+							 *
+							 */
+							empaquetar(nuevoCliente,mensajeAlmacenamientoCompleto,0,0);
+							free(almacenar);
+						}
 
 					}
 				}
@@ -117,6 +136,7 @@ void* levantarServidorFS(){
 							break;
 						}
 					}
+
 
 
 				}
