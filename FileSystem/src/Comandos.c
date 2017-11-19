@@ -337,6 +337,7 @@ int mostrarArchivo(char* comando){
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	printf("%s\n", contenido);
 	respuesta = 0;
+	free(contenido);
 
 	return respuesta;
 }
@@ -407,9 +408,6 @@ int copiarArchivo(char* comando){
 	char* nombre = malloc(strlen(comando)-4); //El peor caso seria que el parametro sea el nombre sin ruta, tomo ese valor
 	memset(nombre,0,strlen(comando)-4);
 	char* rutaInvertida = string_reverse(rutaNormal);
-	char* slash = "/";
-	char* dot = ".";
-	char* caracterActual = string_substring(rutaInvertida, indice, 1);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaFS);
 	if (strcmp(rutaMetadata, "-1") == 0)
@@ -568,10 +566,11 @@ int generarArchivoMD5(char* comando){
 	char* ubicacionArchivoTemporal = string_from_format("%s", nombreArchivo);
 	FILE* file = fopen(ubicacionArchivoTemporal, "w");
 	fwrite(contenido, strlen(contenido), 1, file);
+	fclose(file);
+	free(contenido);
 
 	char* MD5 = string_from_format("md5sum %s", nombreArchivo);
 	char* RM = string_from_format("rm %s", nombreArchivo);
-	fclose(file);
 
 	respuesta = system(MD5);
 	printf("\n");
@@ -579,7 +578,6 @@ int generarArchivoMD5(char* comando){
 	free(MD5);
 	free(RM);
 	free(ubicacionArchivoTemporal);
-	free(contenido);
 	free(rutaArchivoMetadata);
 
 	return respuesta;
