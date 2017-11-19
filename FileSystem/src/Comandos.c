@@ -32,14 +32,15 @@ int eliminarArchivo(char* comando){
 	int sizeArchivo, sizeAux, cantBloquesArchivo = 0, i, j, numeroNodo, bloqueNodo, respuesta;
 	char** arrayInfoBloque;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
+
+	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
+		return 2;
+
 	char* rutaDirectorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
 	if (strcmp(rutaMetadata, "-1") == 0)
 		return 1;
-
-	if (!string_starts_with(rutaArchivoYamafs,"yamafs:/"))
-		return 2;
 
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 
@@ -96,6 +97,10 @@ int eliminarArchivo(char* comando){
 
 int eliminarDirectorio(char* comando){
 	char* rutaDirectorioYamfs = devolverRuta(comando,2);
+
+	if (validarArchivoYamaFS(rutaDirectorioYamfs) == 0)
+		return 1;
+
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamfs);
 	if (strcmp(rutaDirectorioMetadata, "-1") == 0)
 		return 2;
@@ -124,6 +129,10 @@ int eliminarBloque(char* comando){
 	int respuesta = 1, otraCopia, numeroNodo, bloqueNodo;
 	char** arrayInfoBloque;
 	char* rutaArchivoYamafs = devolverRuta(comando,2);
+
+	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
+		return 3;
+
 	int numeroBloque = atoi(devolverRuta(comando,3));
 	int numeroCopia = atoi(devolverRuta(comando,4));
 
@@ -314,7 +323,14 @@ int mostrarArchivo(char* comando){
 
 	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
-	if (buscarRutaArchivo(rutaSinArchivo(rutaArchivoYamafs)) == string_itoa(-1)){
+
+	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
+		return 1;
+
+	char* rutaYamafs = rutaSinArchivo(rutaArchivoYamafs);
+	char* rutaMetadata = buscarRutaArchivo(rutaYamafs);
+
+	if (strcmp(rutaMetadata, "-1") == 0){
 		printf("No existe el directorio");
 		return respuesta;
 	}
@@ -469,6 +485,10 @@ int copiarArchivo(char* comando){
 int copiarArchivoAFs(char* comando){
 	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
+
+	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
+		return 1;
+
 	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
 	char* rutaMetadata = buscarRutaArchivo(directorioYamafs);
 	if (strcmp(rutaMetadata, "-1") == -0)
@@ -499,6 +519,10 @@ int copiarBloqueANodo(char* comando){
 	int respuesta = 1, bloqueNuevo, numeroCopiaBloqueNuevo;
 
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
+
+	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
+		return 1;
+
 	int bloqueACopiar = atoi(devolverRuta(comando,2));
 	int nodoACopiar = atoi(devolverRuta(comando,3));
 
@@ -536,14 +560,24 @@ int copiarBloqueANodo(char* comando){
 
 int generarArchivoMD5(char* comando){
 	int respuesta = 1;
+
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
+
+	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
+		return 1;
+
 	char* directorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
-	if (strcmp(buscarRutaArchivo(directorioYamafs), "-1") == 0){
+	char* rutaMetadata = buscarRutaArchivo(directorioYamafs);
+	if (strcmp(rutaMetadata, "-1") == 0){
 		return respuesta;
 	}
-	char* contenido = leerArchivo(rutaArchivoYamafs);
-	//printf("%d\n", strlen(contenido));
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
+	char* rutaArchivoMetadata = string_from_format("%s/%s", rutaMetadata, nombreArchivo);
+
+	if (!validarArchivo(rutaArchivoMetadata))
+		return respuesta;
+
+	char* contenido = leerArchivo(rutaArchivoYamafs);
 
 	char* ubicacionArchivoTemporal = string_from_format("%s", nombreArchivo);
 	FILE* file = fopen(ubicacionArchivoTemporal, "w");
@@ -555,11 +589,12 @@ int generarArchivoMD5(char* comando){
 
 	respuesta = system(MD5);
 	printf("\n");
-	//respuesta = system(RM);
+	respuesta = system(RM);
 	free(MD5);
 	free(RM);
 	free(ubicacionArchivoTemporal);
 	free(contenido);
+	free(rutaArchivoMetadata);
 
 	return respuesta;
 }
@@ -568,6 +603,10 @@ int generarArchivoMD5(char* comando){
 int listarArchivos(char* comando){
 	int respuesta = 1;
 	char* rutaYamafs = devolverRuta(comando, 1);
+
+	if (validarArchivoYamaFS(rutaYamafs) == 0)
+		return 1;
+
 	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
 	if (rutaFsLocal == string_itoa(-1))
 		return respuesta;
@@ -585,6 +624,10 @@ int listarArchivos(char* comando){
 int informacion(char* comando){
 	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando, 1);
+
+	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
+		return 1;
+
 	char* rutaDirectorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
