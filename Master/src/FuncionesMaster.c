@@ -384,8 +384,6 @@ void* conectarseConWorkerRedGlobal(void* params){
 
 	confirmacionWorker = desempaquetar(socketWorker);
 
-	printf("\n%d\n\n",confirmacionWorker.idMensaje);
-
 	if (munmap(parametrosConexion->contenidoScript.cadena, parametrosConexion->contenidoScript.longitud) == -1){
 		perror("Error un-mmapping the file");
 		exit(EXIT_FAILURE);
@@ -454,7 +452,7 @@ void* conectarseConWorkerAlmacenamiento(void* params){
 			log_trace(loggerMaster, "Informo YAMA fin de Almacenamiento Final en nodo.",almacenamiento->nodo);
 			empaquetar(socketYama, mensajeAlmacenamientoCompleto, 0 , 0);
 			break;
-
+		case mensajeFalloAlmacenamiento:
 		case mensajeDesconexion:
 			log_trace(loggerMaster, "Informo a  YAMA fallo en Almacenamiento Final del nodo %d.",almacenamiento->nodo);
 			estadisticas->cantFallos++;

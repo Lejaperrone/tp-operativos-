@@ -39,5 +39,6 @@ void traverse_nodes(t_list* list, void funcion(void*));
 char *get_line(FILE *fp);
 char* crearRutaArchivoAReducir(t_list* listaWorkers);
 char* obtenerPathActual();
+int conectarseConFS();
 
 #endif /* FUNCIONESWORKER_H_ */
