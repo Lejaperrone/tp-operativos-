@@ -73,6 +73,8 @@ char* generarArrayBloque(int numeroNodo, int numeroBloque);
 
 int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo);
 
+char* obtenerLinea(char* archivo, int offset);
+
 void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
 
 void setearBloqueLibreEnBitmap(int numeroNodo, int bloqueOcupado);
@@ -117,4 +119,4 @@ bool isDirectoryEmpty(char *dirname);
 
 int esRutaDeYama(char* ruta);
 
-void borrarDeArchivoMetadata(char* ruta, int bloque, int copia);
+int borrarDeArchivoMetadata(char* ruta, int bloque, int copia);

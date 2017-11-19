@@ -748,19 +748,28 @@ int bytesACortar(char* mapa, int offset, int sizeRestante){
 	return index;
 }
 
-char* lineaDeArchivo(char* archivo, int offset){
-	char* linea;
-	char caracter;
-	int index;
+//for(i = 0, );
 
-	memcpy(&caracter, archivo+offset, 1);
+char* obtenerLinea(char* archivo, int offset){
+	int index = 0;
+	char* linea = malloc(50);
 
-	while(caracter != 'n'){
+	memset(linea, 0, 50);
+
+	char* caracter = malloc(2);
+
+	memset(caracter, 0, 2);
+
+	caracter = string_substring(archivo, offset + index, 1);
+
+	while(strcmp(caracter, "\n") != 0){
+		memcpy(linea + index, caracter, 1);
+		//linea = realloc(linea, strlen(linea)+1);
 		++index;
-		memcpy(linea, caracter, 1);
-		memcpy(&caracter, archivo+offset+index, 1);
+		caracter = string_substring(archivo, offset + index, 1);
 	}
 
+	free(caracter);
 	return linea;
 }
 
@@ -1238,36 +1247,56 @@ int esRutaDeYama(char* ruta){
 	return string_starts_with(ruta, "yamafs:/");
 }
 
-void borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
-	char* rutaNueva = string_from_format("%s/%s", rutaSinArchivo(ruta), "copia.txt");
-	printf("%s\n", rutaNueva);
-	FILE* replica = fopen(rutaNueva, "w+");
-	FILE* archivo = fopen(ruta, "r");
+int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
 
-	char* contenido = string_new();
+	struct stat fileStat;
+	if(stat(ruta,&fileStat) < 0){
+		printf("no se pudo abrir\n");
+		return 1;
+	}
+	int fd = open(ruta,O_RDWR);
+
+	char* contenido = malloc(sizeof(char));
+
+	contenido = mmap(NULL,fileStat.st_size,PROT_READ,MAP_SHARED,fd,0);
+
+	//printf("%s\n", contenido);
 	char* texto;
+	char* archivo = string_new();
+	int offset = 0;
+
+	texto = obtenerLinea(contenido, offset);
 
 	char* keyBloque = string_from_format("BLOQUE%dCOPIA%d", bloque, copia);
 
-	printf("%s\n", keyBloque);
+	while(!string_is_empty(texto)){
+		//printf("-->%s\n", texto);
+		if (!string_starts_with(texto, keyBloque)){
+			strcat(archivo, texto);
+			strcat(archivo, "\n");
+			offset += strlen(texto) + 1;
+			texto = obtenerLinea(contenido, offset);
+		}else{
+			offset += strlen(texto) + 1;
+			texto = obtenerLinea(contenido, offset);
+		}
+	}
 
-	while (lineaACortar())
+	FILE* file = fopen(ruta, "w");
+	fwrite(archivo, strlen(archivo), 1, file);
+	fclose(file);
 
+	if (munmap(contenido, fileStat.st_size) == -1)
+	{
+		close(fd);
+		free(keyBloque);
+		perror("Error un-mmapping the file");
+		exit(EXIT_FAILURE);
+	}
 
-//	while (fgets(contenido, 30, archivo) != NULL){
-//		if (!string_starts_with(contenido, keyBloque)){
-//			string_append_with_format(&texto, "%s", contenido);
-//		}
-//		//contenido = string_new();
-//	}
+	close(fd);
+	free(keyBloque);
+	//free(texto);
 
-	printf("por fin sali\n");
-
-	fwrite(texto, strlen(texto), 1, replica);
-
-	fclose(replica);
-	fclose(archivo);
-
-	rename(rutaNueva, ruta);
-
+	return 0;
 }

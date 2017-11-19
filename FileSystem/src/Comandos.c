@@ -136,14 +136,12 @@ int eliminarBloque(char* comando){
 	int numeroBloque = atoi(devolverRuta(comando,3));
 	int numeroCopia = atoi(devolverRuta(comando,4));
 
-	char* rutaDirectorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
-	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
-	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
 
-	if (strcmp(rutaDirectorioMetadata, "-1") == 0)
+	if (strcmp(buscarRutaArchivo(rutaSinArchivo(rutaArchivoYamafs)), "-1") == 0)
 		return 3;
 
-	char* rutaArchivoEnMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
+	char* rutaArchivoEnMetadata = string_from_format("%s/%s", buscarRutaArchivo(rutaSinArchivo(rutaArchivoYamafs)),
+																				ultimaParteDeRuta(rutaArchivoYamafs));
 
 	if (!validarArchivo(rutaArchivoEnMetadata))
 		return 3;
@@ -164,10 +162,9 @@ int eliminarBloque(char* comando){
 	arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,numeroCopia));
 	numeroNodo = atoi(string_substring_from(arrayInfoBloque[0], 4));
 	bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
-	setearBloqueLibreEnBitmap(numeroNodo, bloqueNodo);
+	setearBloqueLibreEnBitmap(numeroNodo - 1, bloqueNodo);
 	actualizarBitmapNodos();
-	borrarDeArchivoMetadata(rutaArchivoEnMetadata, numeroBloque, numeroCopia);
-	respuesta = 0;
+	respuesta = borrarDeArchivoMetadata(rutaArchivoEnMetadata, numeroBloque, numeroCopia);
 
 	free(rutaArchivoEnMetadata);
 
