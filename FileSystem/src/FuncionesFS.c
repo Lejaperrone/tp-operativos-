@@ -746,6 +746,22 @@ int bytesACortar(char* mapa, int offset, int sizeRestante){
 	return index;
 }
 
+char* lineaDeArchivo(char* archivo, int offset){
+	char* linea;
+	char caracter;
+	int index;
+
+	memcpy(&caracter, archivo+offset, 1);
+
+	while(caracter != 'n'){
+		++index;
+		memcpy(linea, caracter, 1);
+		memcpy(&caracter, archivo+offset+index, 1);
+	}
+
+	return linea;
+}
+
 void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
 	informacionNodo* infoAux;
 	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo);
@@ -769,24 +785,6 @@ bool esBloqueOcupado(int numeroNodo, int numeroBloque){
 	t_bitarray* bitarrayNodo = list_get(bitmapsNodos,numeroNodo - 1);
 
 	return bitarray_test_bit(bitarrayNodo,numeroBloque) == 1;
-}
-
-int* arrayBloquesOcupados(informacionNodo nodo){
-	//int* arrayBloquesOcupados = malloc(sizeof(int)*nodo.bloquesOcupados);
-	int arrayBloquesOcupados[nodo.bloquesOcupados];
-	int tamanioNodo = nodo.sizeNodo;
-	int numeroNodo = nodo.numeroNodo;
-	int i;
-	int offset = 0;
-
-	for (i = 0; i < tamanioNodo; ++i){
-		if (esBloqueOcupado(numeroNodo,i)){
-			arrayBloquesOcupados[offset] = i;
-			offset += 1;
-		}
-	}
-
-	return arrayBloquesOcupados;
 }
 
 void actualizarBitmapNodos(){
@@ -1175,9 +1173,9 @@ int liberarNodosConectados(){
 		}
 	}
 	if (respuesta == cantNodosConectados)
-		return 0;
+		return 1;
 
-	return 1;
+	return 0;
 }
 
 int formatearDataBins(){
@@ -1245,21 +1243,25 @@ void borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
 	FILE* archivo = fopen(ruta, "r");
 
 	char* contenido = string_new();
-	char* texto = string_new();
+	char* texto;
 
 	char* keyBloque = string_from_format("BLOQUE%dCOPIA%d", bloque, copia);
 
 	printf("%s\n", keyBloque);
 
+	while (lineaACortar())
 
-	while (fgets(contenido, 30, archivo) != NULL){
-		if (!string_starts_with(contenido, keyBloque)){
-			string_append_with_format(&texto, "%s", contenido);
-		}
-		contenido = string_new();
-	}
 
-	fwrite(texto, sizeof(texto), strlen(texto), replica);
+//	while (fgets(contenido, 30, archivo) != NULL){
+//		if (!string_starts_with(contenido, keyBloque)){
+//			string_append_with_format(&texto, "%s", contenido);
+//		}
+//		//contenido = string_new();
+//	}
+
+	printf("por fin sali\n");
+
+	fwrite(texto, strlen(texto), 1, replica);
 
 	fclose(replica);
 	fclose(archivo);

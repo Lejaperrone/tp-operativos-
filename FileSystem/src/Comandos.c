@@ -21,7 +21,7 @@ int formatearFS(){
 
 	resultado += formatearDataBins();
 
-	if (resultado == 1)
+	if (resultado == 4)
 		return 0;
 
 	return 1;
