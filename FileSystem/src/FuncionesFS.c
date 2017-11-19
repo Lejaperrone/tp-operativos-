@@ -389,6 +389,7 @@ char* leerArchivo(char* rutaArchivo){
 			for (k = 0; k < cantidadNodos; ++k)
 				if (indexNodos[k] == numeroNodoDelBloque[l])
 					++cargaNodos[k];
+			free(arrayInfoBloque);
 		}
 	}
 
@@ -401,6 +402,7 @@ char* leerArchivo(char* rutaArchivo){
 				if (indexNodos[k] == numeroNodoDelBloque[l]){
 					posicionCopiaEnIndexNodo[l] = k;
 				}
+			free(arrayInfoBloque);
 		}
 		posicionNodoAPedir = posicionCopiaEnIndexNodo[0];
 		copiaUsada = copia[0];
@@ -422,7 +424,7 @@ char* leerArchivo(char* rutaArchivo){
 
 		if (config_has_property(infoArchivo, string_from_format("BLOQUE%dBYTES",i))){
 			params[i].sizeBloque = config_get_int_value(infoArchivo,string_from_format("BLOQUE%dBYTES",i));
-			printf("size %d \n",params[i].sizeBloque);
+			//printf("size %d \n",params[i].sizeBloque);
 		}
 
 
@@ -480,13 +482,14 @@ void* leerDeDataNode(void* parametros){
 int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	respuesta respuestaPedidoAlmacenar;
-	int totalRestante = 0;
+
+	int binario = strcmp(tipo, "b") == 0;
 
 	char* ruta = buscarRutaArchivo(path);
-	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + strlen(tipo) + 2);
-	memset(rutaFinal, 0, strlen(ruta) + strlen(nombre) +  strlen(tipo) + 2);
+	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + 2);
+	memset(rutaFinal, 0, strlen(ruta) + strlen(nombre) + 2);
 
-	if(validarArchivo(string_from_format("%s/%s%s", ruta, nombre, tipo))){
+	if(validarArchivo(string_from_format("%s/%s", ruta, nombre))){
 		return 3;
 	}
 
@@ -496,7 +499,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	memcpy(rutaFinal, ruta, strlen(ruta));
 	memcpy(rutaFinal + strlen(ruta), "/", 1);
 	memcpy(rutaFinal + strlen(ruta) + 1, nombre, strlen(nombre));
-	memcpy(rutaFinal + strlen(ruta) + 1 + strlen(nombre), tipo, strlen(tipo));
 
 	int sizeAux = strlen(mapeoArchivo->cadena);
 	int cantBloquesArchivo = 0;
@@ -516,33 +518,38 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	int sizeUltimoNodo = sizeAux+mb;
 	int resTotal = 0;
-	for (i = 0; i < cantBloquesArchivo-1; ++i){
-		bytesACortarAux[i] = bytesACortar(mapeoArchivo->cadena,off,0);
-		off += mb - bytesACortarAux[i];
-		resTotal += bytesACortarAux[i];
-	}
 
-	resTotal += sizeUltimoNodo;
-	if (resTotal > mb){
-		realTotal += redondearHaciaArriba(resTotal,mb);
-		--realTotal;
-		printf("blaaa %d\n", realTotal);
+	if (!binario){
+		for (i = 0; i < cantBloquesArchivo-1; ++i){
+			bytesACortarAux[i] = bytesACortar(mapeoArchivo->cadena,off,0);
+			off += mb - bytesACortarAux[i];
+			resTotal += bytesACortarAux[i];
+		}
+
+		resTotal += sizeUltimoNodo;
+		if (resTotal > mb){
+			realTotal += redondearHaciaArriba(resTotal,mb);
+			--realTotal;
+		}
 	}
 
 	int bytesACortarArray[realTotal];
-	for(i = 0; i < cantBloquesArchivo-1; ++i){
-		bytesACortarArray[i] = bytesACortarAux[i];
-		printf("iiiilal %d %d\n",i, bytesACortarArray[i]);
+
+	if (!binario){
+		for(i = 0; i < cantBloquesArchivo-1; ++i){
+			bytesACortarArray[i] = bytesACortarAux[i];
+		}
+		while (resTotal > mb){
+			bytesACortarArray[i] = bytesACortar(mapeoArchivo->cadena,off,0);
+			off += mb - bytesACortarArray[i];
+			resTotal -= mb;
+			resTotal += bytesACortarArray[i];
+			++i;
+		}
 	}
-	printf("iiii %d\n",i);
-	while (resTotal > mb){
-		printf("jeje\n");
-		bytesACortarArray[i] = bytesACortar(mapeoArchivo->cadena,off,0);
-		off += mb - bytesACortarArray[i];
-		resTotal -= mb;
-		resTotal += bytesACortarArray[i];
-		printf("iiii %d %d\n",i, bytesACortarArray[i]);
-		++i;
+	else
+	{
+		resTotal = sizeUltimoNodo;
 	}
 
 	FILE* archivos = fopen(rutaFinal, "wb+");
@@ -584,7 +591,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 	int contador = 0;
 
-	printf("cant nod %d\n", strlen(mapeoArchivo->cadena));
+	printf("size archivo %d\n", strlen(mapeoArchivo->cadena));
 
 	for (i = 0; i < realTotal; ++i){
 		for (j = 0; j < cantidadNodos; ++j){
@@ -652,22 +659,20 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			params[i+realTotal*j].bloque = bloqueLibre;
 
 			if (i < realTotal-1){
-				if (j == 0){
-					printf("bytes a %d %d\n", i, bytesACortarArray[i]);
-				 sizeRestante = bytesACortarArray[i];
+				if (!binario)
+				{
+					if (j == 0){
+						sizeRestante = bytesACortarArray[i];
+					}
 				}
+				else
+					sizeRestante = 0;
+
 				 params[i+realTotal*j].sizeBloque = mb -sizeRestante;
-				 //printf("lala %d \n", params[i+realTotal*j].sizeBloque);
+				 printf("size bloque %s %d\n", tipo, params[i+realTotal*j].sizeBloque);
 			 }
 			 else{
 				params[i+realTotal*j].sizeBloque = resTotal;
-				/*if (params[i+cantBloquesArchivo*j].sizeBloque > mb){
-					++cantBloquesArchivo;
-					params[i+cantBloquesArchivo*j].sizeBloque -= mb;
-				}*/
-				printf("laaaaaaaaaaaaaaaaaaaaaaaaa %d\n", params[i].sizeBloque);
-				//sizeUltimoNodo = params[i+cantBloquesArchivo*j].sizeBloque;
-				//totalAsignado = 1;
 			 }
 			if(j==0)
 				sizeTotal += params[i+realTotal*j].sizeBloque;
@@ -687,7 +692,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
-		config_set_value(infoArchivo, "RUTA", string_from_format("%s%s%s", path, nombre, tipo));
+		config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombre));
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
 	printf("size total %d\n", sizeTotal);
