@@ -138,8 +138,8 @@ void handlerMaster(int clientSocket) {
 	respuesta paquete, confirmacionFS,conexion;
 	parametrosTransformacion* transformacion;
 	parametrosReduccionLocal* reduccionLocal;
-	parametrosReduccionGlobal* reduccionGlobal ;
-	parametrosAlmacenamiento* almacenamiwnto;
+	parametrosReduccionGlobal* reduccionGlobal;
+	parametrosAlmacenamiento* almacenamiento;
 
 	char* destino, *contenidoScript, *command, *rutaArchivoFinal, *archivoPreReduccion = "preReduccion";
 	t_list* listaArchivosTemporales, *listAux, *listaWorkers;
@@ -214,7 +214,8 @@ void handlerMaster(int clientSocket) {
 
 	case mensajeProcesarAlmacenamiento:
 		log_trace(logger, "Soy el Worker Encargado de almacenar");
-		almacenamiwnto = (parametrosAlmacenamiento*)paquete.envio;
+
+		almacenamiento = (parametrosAlmacenamiento*)paquete.envio;
 
 		int socketFS = conectarseConFS();
 		conexion = desempaquetar(socketFS);
@@ -229,12 +230,11 @@ void handlerMaster(int clientSocket) {
 		log_trace(logger, "Conexion con FS");
 
 		almacenamientoFinal* almacenar = malloc(sizeof(almacenamientoFinal));
-		almacenar->nombre.longitud = almacenamiwnto->rutaAlmacenamiento.longitud;
-		almacenar->nombre.cadena = strdup(almacenamiwnto->rutaAlmacenamiento.cadena);
+		almacenar->nombre.longitud = almacenamiento->rutaAlmacenamiento.longitud;
+		almacenar->nombre.cadena = strdup(almacenamiento->rutaAlmacenamiento.cadena);
 
 		char* rutaArchivo = string_new();
-		rutaArchivo = string_from_format("%s/tmp/%s", path, almacenamiwnto->archivoTemporal.cadena);
-
+		rutaArchivo = string_from_format("%s/tmp/%s", path, almacenamiento->archivoTemporal.cadena);
 
 		struct stat fileStat;
 		if(stat(rutaArchivo,&fileStat) < 0){

@@ -394,6 +394,7 @@ int crearDirectorio(char* comando){
 
 
 int copiarArchivo(char* comando){
+
 	int indice = 0, indiceNom = 0;
 	char* tipo = malloc(5); //.bin o .txt
 	memset(tipo,0,5);
