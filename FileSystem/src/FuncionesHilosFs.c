@@ -143,6 +143,7 @@ void* levantarServidorFS(){
 								pthread_mutex_unlock(&logger_mutex);
 								empaquetar(nuevoCliente,mensajeFalloAlmacenamiento,0,0);
 							}
+							free(mmap);
 							free(almacenar);
 						}
 
