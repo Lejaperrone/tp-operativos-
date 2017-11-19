@@ -174,7 +174,7 @@ void* conectarseConWorkersTransformacion(void* params) {
 	switch(confirmacionWorker.idMensaje){
 
 		case mensajeTransformacionCompleta:
-			log_trace(loggerMaster, "Informo a  YAMA fin Transformacion para bloque %d en nodo %d.",infoTransformacion->bloquesConSusArchivos.numBloque,infoTransformacion->numero);
+			log_trace(loggerMaster, "Informo a YAMA fin Transformacion para bloque %d en nodo %d.",infoTransformacion->bloquesConSusArchivos.numBloque,infoTransformacion->numero);
 			bloqueOK = malloc(sizeof(bloqueYNodo));
 			bloqueOK->workerId = infoTransformacion->numero;
 			bloqueOK->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
@@ -454,7 +454,7 @@ void* conectarseConWorkerAlmacenamiento(void* params){
 			break;
 		case mensajeFalloAlmacenamiento:
 		case mensajeDesconexion:
-			log_trace(loggerMaster, "Informo a  YAMA fallo en Almacenamiento Final del nodo %d.",almacenamiento->nodo);
+			log_trace(loggerMaster, "Informo a YAMA fallo en Almacenamiento Final del nodo %d.",almacenamiento->nodo);
 			estadisticas->cantFallos++;
 			empaquetar(socketYama, mensajeFalloAlmacenamiento, 0 , 0);
 			break;

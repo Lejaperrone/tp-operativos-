@@ -35,6 +35,7 @@ pthread_mutex_t mutex_NodosConectados;
 pthread_mutex_t mutexLog;
 pthread_mutex_t mutexConfiguracion;
 pthread_mutex_t mutexTablaEstados;
+pthread_mutex_t mutexJobs;
 t_list* tablaDeEstados;
 t_list* nodosConectados;
 

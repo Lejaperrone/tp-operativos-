@@ -136,10 +136,10 @@ int conectarseConFS() {
 
 void handlerMaster(int clientSocket) {
 	respuesta paquete, confirmacionFS,conexion;
-	parametrosAlmacenamiento* almacenamiwnto;
 	parametrosTransformacion* transformacion;
 	parametrosReduccionLocal* reduccionLocal;
 	parametrosReduccionGlobal* reduccionGlobal ;
+	parametrosAlmacenamiento* almacenamiwnto;
 
 	char* destino, *contenidoScript, *command, *rutaArchivoFinal, *archivoPreReduccion = "preReduccion";
 	t_list* listaArchivosTemporales, *listAux, *listaWorkers;
@@ -215,8 +215,6 @@ void handlerMaster(int clientSocket) {
 	case mensajeProcesarAlmacenamiento:
 		log_trace(logger, "Soy el Worker Encargado de almacenar");
 		almacenamiwnto = (parametrosAlmacenamiento*)paquete.envio;
-
-
 
 		int socketFS = conectarseConFS();
 		conexion = desempaquetar(socketFS);

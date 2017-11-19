@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
 	pthread_mutex_init(&mutexTablaEstados, NULL);
 	pthread_mutex_init(&mutexLog, NULL);
 	pthread_mutex_init(&mutexConfiguracion, NULL);
-	pthread_mutex_init(&mutexLog, NULL);
+	pthread_mutex_init(&mutexJobs, NULL);
 
 	cargarConfiguracionYama(&config,argv[1]);
 	inicializarEstructuras();
