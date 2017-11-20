@@ -1248,6 +1248,10 @@ int esRutaDeYama(char* ruta){
 }
 
 int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
+	char* camino = "/home/utnso/test.txt";
+
+	FILE* file = fopen(camino, "wb+");
+	fclose(file);
 
 	struct stat fileStat;
 	if(stat(ruta,&fileStat) < 0){
@@ -1260,31 +1264,44 @@ int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
 
 	contenido = mmap(NULL,fileStat.st_size,PROT_READ,MAP_SHARED,fd,0);
 
-	//printf("%s\n", contenido);
-	char* texto;
-	char* archivo = string_new();
-	int offset = 0;
+	t_config* configArchivo = config_create(ruta);
+	t_config* configAux = config_create(camino);
 
-	texto = obtenerLinea(contenido, offset);
+	char* linea;
+	int offset = 0;
+	int longitud;
+	int numCopia;
+
+	linea = obtenerLinea(contenido, offset);
 
 	char* keyBloque = string_from_format("BLOQUE%dCOPIA%d", bloque, copia);
 
-	while(!string_is_empty(texto)){
-		//printf("-->%s\n", texto);
-		if (!string_starts_with(texto, keyBloque)){
-			strcat(archivo, texto);
-			strcat(archivo, "\n");
-			offset += strlen(texto) + 1;
-			texto = obtenerLinea(contenido, offset);
+	while(!string_is_empty(linea)){
+		if (!string_starts_with(linea, keyBloque)){
+			if (!string_starts_with(linea, string_from_format("BLOQUE%dCOPIA", bloque))){
+				longitud = longitudAntesDelIgual(linea);
+				config_set_value(configAux, string_substring_until(linea, longitud), string_substring_from(linea, longitud+1));
+			}else{
+				longitud = longitudAntesDelIgual(linea);
+				numCopia = atoi(string_substring(linea, longitud-1, longitud));
+				if (numCopia < copia){
+					config_set_value(configAux, string_substring_until(linea, longitud), string_substring_from(linea, longitud+1));
+				}else{
+					config_set_value(configAux, string_from_format("BLOQUE%dCOPIA%d", bloque, numCopia-1),
+							config_get_string_value(configArchivo, string_from_format("BLOQUE%dCOPIA%d", bloque, numCopia)));
+				}
+
+			}
+
+			offset += strlen(linea) + 1;
+			linea = obtenerLinea(contenido, offset);
 		}else{
-			offset += strlen(texto) + 1;
-			texto = obtenerLinea(contenido, offset);
+			offset += strlen(linea) + 1;
+			linea = obtenerLinea(contenido, offset);
 		}
 	}
 
-	FILE* file = fopen(ruta, "w");
-	fwrite(archivo, strlen(archivo), 1, file);
-	fclose(file);
+	config_save_in_file(configAux, ruta);
 
 	if (munmap(contenido, fileStat.st_size) == -1)
 	{
@@ -1296,7 +1313,24 @@ int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
 
 	close(fd);
 	free(keyBloque);
-	//free(texto);
 
 	return 0;
+}
+
+int longitudAntesDelIgual(char* cadena){
+	int longitud = 0;
+
+	char* caracter = malloc(2);
+
+	memset(caracter, 0, 2);
+
+	caracter = string_substring(cadena, longitud, 1);
+
+	while(strcmp(caracter, "=") != 0){
+		longitud++;
+		caracter = string_substring(cadena, longitud, 1);
+	}
+
+	return longitud;
+
 }

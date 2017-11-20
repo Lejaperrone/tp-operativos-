@@ -164,6 +164,8 @@ int eliminarBloque(char* comando){
 	bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
 	setearBloqueLibreEnBitmap(numeroNodo - 1, bloqueNodo);
 	actualizarBitmapNodos();
+	config_save(infoArchivo);
+
 	respuesta = borrarDeArchivoMetadata(rutaArchivoEnMetadata, numeroBloque, numeroCopia);
 
 	free(rutaArchivoEnMetadata);

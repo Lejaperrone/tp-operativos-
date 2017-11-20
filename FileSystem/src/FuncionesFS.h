@@ -121,3 +121,5 @@ bool isDirectoryEmpty(char *dirname);
 int esRutaDeYama(char* ruta);
 
 int borrarDeArchivoMetadata(char* ruta, int bloque, int copia);
+
+int longitudAntesDelIgual(char* cadena);
