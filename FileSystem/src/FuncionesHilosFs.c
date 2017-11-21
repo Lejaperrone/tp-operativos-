@@ -13,6 +13,7 @@ struct sockaddr_in direccionCliente;
 extern t_list* pedidosFS;
 extern t_log* loggerFS;
 extern int bloquesLibresTotales;
+extern bool recuperarEstado;
 
 void* levantarServidorFS(){
 	solicitudInfoNodos* solicitud;
@@ -39,6 +40,8 @@ void* levantarServidorFS(){
 	// seguir la pista del descriptor de fichero mayor
 	maxDatanodes = servidorFS; // por ahora es éste
 	// bucle principal
+
+	signal(SIGPIPE, SIG_IGN);
 
 	while(1){
 		read_fds_datanodes = datanodes; // cópialo
@@ -68,7 +71,7 @@ void* levantarServidorFS(){
 						if (*(int*)conexionNueva.envio == idDataNodes){
 							paqueteInfoNodo = desempaquetar(nuevoCliente);
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
-							if (nodoRepetido(info) == 0){
+							if (nodoRepetido(info) == 0 && nodoDeEstadoAnterior(info)){
 								pthread_mutex_lock(&logger_mutex);
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
 								pthread_mutex_unlock(&logger_mutex);
@@ -88,8 +91,10 @@ void* levantarServidorFS(){
 							}
 							else{
 								pthread_mutex_lock(&logger_mutex);
-								log_trace(loggerFS, "DataNode repetido\n");
+								log_trace(loggerFS, "DataNode invalido\n");
 								pthread_mutex_unlock(&logger_mutex);
+								close(nuevoCliente);
+								FD_CLR(nuevoCliente, &datanodes);
 							}
 						}
 						else if(*(int*)conexionNueva.envio == 1){//yama
@@ -173,6 +178,56 @@ void* levantarServidorFS(){
 
 }
 
+int nodoDeEstadoAnterior(informacionNodo info){
+
+	if (!recuperarEstado)
+		return 1;
+
+	int i = 0;
+	char* pathArchivo = "../metadata/Nodos.bin";
+	t_config* nodos = config_create(pathArchivo);
+	char** arrayNodos = config_get_array_value(nodos,"NODOS");
+	while(arrayNodos[i] != NULL){
+		if(atoi(string_substring_from(arrayNodos[i], 4)) == info.numeroNodo)
+			return 1;
+		++i;
+	}
+
+	return 0;
+}
+
+void revisarNodos(){
+	int cantidadNodos = list_size(nodosConectados);
+	int i, j;
+	int desconexion = 0;
+	informacionNodo info;
+	respuesta res;
+	t_list* listAux;
+	for (i = 0; i < cantidadNodos; ++i){
+		info = *(informacionNodo*)list_get(nodosConectados,i);
+		empaquetar(info.socket, mensajeConectado, sizeof(char), "a");
+		res = desempaquetar(info.socket);
+		if (res.idMensaje == mensajeDesconexion){
+			listAux = list_create();
+			for (j = 0; j < cantidadNodos; ++j){
+				if (j != i){
+					list_add(listAux, list_get(nodosConectados, j));
+				}
+			}
+			list_destroy(nodosConectados);
+			nodosConectados = list_create();
+			for (j = 0; j < list_size(listAux); ++j){
+				list_add(nodosConectados, list_get(listAux, j));
+			}
+			list_destroy(listAux);
+			desconexion = 1;
+			break;
+		}
+	}
+	if (desconexion)
+		revisarNodos();
+}
+
 void* consolaFS(){
 
 	int sizeComando = 256;
@@ -185,6 +240,8 @@ void* consolaFS(){
 		comando = readline(">");
 
 		char** arguments = string_split(comando, " ");
+
+		revisarNodos();
 
 		if(validarParametros(arguments, 1)){
 			continue;

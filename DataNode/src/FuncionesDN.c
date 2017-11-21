@@ -154,6 +154,10 @@ void recibirMensajesFileSystem(int socketFs) {
 		empaquetar(socketFs, mensajeRespuestaBorraDataBin, sizeof(int), &success);
 		break;
 
+	case mensajeConectado:
+		empaquetar(socketFs, mensajeOk, sizeof(char), "a");
+		break;
+
 
 	default:
 		//printf("mal %d\n",numeroBloque.idMensaje);

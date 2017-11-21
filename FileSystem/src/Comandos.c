@@ -29,9 +29,11 @@ int formatearFS(){
 
 
 int eliminarArchivo(char* comando){
-	int sizeArchivo, sizeAux, cantBloquesArchivo = 0, i, j, numeroNodo, bloqueNodo, respuesta;
+	int sizeArchivo, sizeAux, cantBloquesArchivo = 0, i, j, k, numeroNodo, bloqueNodo, respuesta;
 	char** arrayInfoBloque;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
+	int nodoAUsar = -1;
+	informacionNodo info;
 
 	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
 		return 2;
@@ -73,8 +75,13 @@ int eliminarArchivo(char* comando){
 			if (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,j))){
 				arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,j));
 				numeroNodo = atoi(string_substring_from(arrayInfoBloque[0], 4));
+				for (k = 0; k < list_size(nodosConectados); ++k){
+					info = *(informacionNodo*)list_get(nodosConectados, k);
+					if (numeroNodo == info.numeroNodo)
+						nodoAUsar = k;
+				}
 				bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
-				setearBloqueLibreEnBitmap(numeroNodo, bloqueNodo);
+				setearBloqueLibreEnBitmap(nodoAUsar, bloqueNodo);
 			}
 		}
 	}

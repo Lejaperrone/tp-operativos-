@@ -756,11 +756,7 @@ char* obtenerLinea(char* archivo, int offset){
 
 	memset(linea, 0, 50);
 
-	char* caracter = malloc(2);
-
-	memset(caracter, 0, 2);
-
-	caracter = string_substring(archivo, offset + index, 1);
+	char* caracter = string_substring(archivo, offset + index, 1);
 
 	while(strcmp(caracter, "\n") != 0){
 		memcpy(linea + index, caracter, 1);
