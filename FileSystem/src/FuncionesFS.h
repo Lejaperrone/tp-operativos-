@@ -40,6 +40,10 @@ extern int EstadoFS;
 
 void verificarEstadoAnterior();
 
+char* nombreArchivoSinExtension(char* nombre);
+
+char* rutaArchivoMetadataSinExtension(char* ruta);
+
 int validarArchivoYamaFS(char* ruta);
 
 void inicializarTablaDirectorios();
