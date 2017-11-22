@@ -447,6 +447,9 @@ int copiarArchivo(char* comando){
 	int fd = open(rutaNormal,O_RDWR);
 	int size = fileStat.st_size;
 
+	if (size == 0)
+		return 0;
+
 	if (!S_ISREG(fileStat.st_mode)){
 		printf("La ruta no pertenece a un archivo\n");
 		return 0;

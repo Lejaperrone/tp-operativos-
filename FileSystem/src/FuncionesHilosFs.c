@@ -98,6 +98,7 @@ void* levantarServidorFS(){
 							}
 						}
 						else if(*(int*)conexionNueva.envio == 1){//yama
+
 							if(!EstadoFS){
 								empaquetar(nuevoCliente,mensajeNoEstable,0,0);
 								close(nuevoCliente);

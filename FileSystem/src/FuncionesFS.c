@@ -494,14 +494,12 @@ char* nombreArchivoSinExtension(char* nombre){
 		}
 		free(currentChar);
 		free(reverse);
-		nombreSinExtension = string_substring(nombre,0,strlen(nombre)-indexNombre);
+		nombreSinExtension = string_substring(nombre,0,indexNombre);
 	}
 	return nombreSinExtension;
 }
 
 int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
-
-	respuesta respuestaPedidoAlmacenar;
 
 	int binario = strcmp(tipo, "b") == 0;
 
@@ -519,7 +517,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	int sizeAux = strlen(mapeoArchivo->cadena);
 	int cantBloquesArchivo = 0;
-	int ultimoSize = 0, sizeEnvio = 0;
 
 	int i, j, k, bloqueLibre = -1;
 	while(sizeAux > 0){
@@ -530,7 +527,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	int bytesACortarAux[cantBloquesArchivo];
 	int off = 0;
-	int auxSizeBytes = 0;
 	int realTotal = cantBloquesArchivo;
 
 	int sizeUltimoNodo = sizeAux+mb;
@@ -576,7 +572,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int nodoAUtilizar = -1;
 	int offset = 0;
 	int sizeRestante = 0;
-	int totalAsignado = 0;
 	successArchivoCopiado = 1;
 
 	printf("bloques necesarios %d\n",realTotal);
@@ -709,7 +704,11 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
-		config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombre));
+		if (string_equals_ignore_case(path, "yamafs:/"))
+			config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombreArchivoSinExtension(nombre)));
+		else
+			config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombreArchivoSinExtension(nombre)));
+
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
 	printf("size total %d\n", sizeTotal);
@@ -919,12 +918,6 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 		fread(currentChar, 1, 1, bitmapFile);
 	}
 	printf("ocupados %d\n", BloquesOcupados);
-
-	/*int contador = 0;
-	while(contador < posicion){
-		printf("bit %d\n", bitarray_test_bit(bitmap,contador));
-		++contador;
-	} /*para verificar que lo lee bien */
 
 	free(pathParticular);
 	fclose(bitmapFile);
