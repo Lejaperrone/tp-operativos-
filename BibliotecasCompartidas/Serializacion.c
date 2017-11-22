@@ -1704,7 +1704,7 @@ void* serializarAlmacenar(void* paquete, int* tamanio){
 almacenamientoFinal* deserializarAlmacenar(int socket, int tamanio){
 	int desplazamiento = 0;
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 	almacenamientoFinal* respuesta = malloc(sizeof(almacenamientoFinal));
 
 	memcpy(&respuesta->nombre.longitud, buffer + desplazamiento, sizeof(int) );
