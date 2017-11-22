@@ -14,6 +14,7 @@ extern t_list* pedidosFS;
 extern t_log* loggerFS;
 extern int bloquesLibresTotales;
 extern bool recuperarEstado;
+extern int EstadoFS;
 
 void* levantarServidorFS(){
 	solicitudInfoNodos* solicitud;
