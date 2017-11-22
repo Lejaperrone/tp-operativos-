@@ -74,7 +74,6 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 	infoBloque* bloque = malloc(sizeof(infoBloque));
 	respuestaSolicitudTransformacion* respuestaAMaster = malloc(sizeof(respuestaSolicitudTransformacion));
 	respuestaAMaster->workers = list_create();
-
 	for(i=0;i<cantidadBloques;i++){
 		bloque = (infoBloque*)list_get(infoBloques, i);
 
@@ -485,9 +484,7 @@ void enviarReduccionGlobalAMaster(job* job){
 	list_add(tablaDeEstados,registro);
 	pthread_mutex_unlock(&mutexTablaEstados);
 }
-void modificarWorkerEncargado(infoNodo* nodo){
 
-}
 int calcularNodoEncargado(t_list* registrosRedGlobal){
 	int menorCarga,numeroNodo;
 
