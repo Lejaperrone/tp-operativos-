@@ -9,7 +9,6 @@ int main(int argc, char *argv[]) {
 	logger = log_create("logWorker", "Worker.c", 1, LOG_LEVEL_TRACE);
 	cargarConfiguracionNodo(&config,argv[1]);
 	levantarServidorWorker(config.IP_NODO, config.PUERTO_WORKER);
-
 	/*t_list* listaArchivosTemporales = list_create();
 	list_add(listaArchivosTemporales, "/home/utnso/tp-2017-2c-PEQL/Worker/a.txt");
 	list_add(listaArchivosTemporales, "/home/utnso/tp-2017-2c-PEQL/Worker/b.txt");

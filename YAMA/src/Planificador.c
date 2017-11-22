@@ -22,7 +22,7 @@ infoNodo* inicializarWorker(){
 }
 void planificar(job* job){
 	pthread_mutex_lock(&mutexJobs);
-	infoNodo* worker = inicializarWorker();
+	infoNodo* worker = malloc(sizeof(infoNodo));
 	pthread_mutex_unlock(&mutexJobs);
 	t_list* listaNodos = list_create();
 	int nodos,bloques;
@@ -179,9 +179,7 @@ bool mayorDisponibilidad(infoNodo* workerMasDisp, infoNodo* worker){
 	int disponibilidad =  obtenerDisponibilidadWorker(worker);
 	if(maxDisponibilidad == disponibilidad){
 		return workerMasDisp->cantTareasHistoricas < worker->cantTareasHistoricas;
-
 	}
-
 	return maxDisponibilidad > disponibilidad;
 
 }
@@ -372,7 +370,6 @@ void enviarReduccionLocalAMaster(job* job,int nodo){
 	registroTablaEstados* registro = malloc(sizeof(registroTablaEstados));
 
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-
 		return reg->job == job->id && reg->etapa == TRANSFORMACION && reg->nodo==nodo;
 	}
 
@@ -413,18 +410,19 @@ void enviarReduccionLocalAMaster(job* job,int nodo){
 	registro->nodo= nodo;
 	registro->rutaArchivoTemp = strdup(archivo);
 
-	//pthread_mutex_lock(&mutexTablaEstados);
-	list_add(tablaDeEstados,registro);
-	//pthread_mutex_unlock(&mutexTablaEstados);
-
 	pthread_mutex_lock(&mutexTablaEstados);
-	list_iterate(registrosRedLocal,(void*)meterEnRespuestaRedLocal);
+	list_add(tablaDeEstados,registro);
 	pthread_mutex_unlock(&mutexTablaEstados);
+
+	//pthread_mutex_lock(&mutexTablaEstados);
+	list_iterate(registrosRedLocal,(void*)meterEnRespuestaRedLocal);
+	//pthread_mutex_unlock(&mutexTablaEstados);
 
 	empaquetar(job->socketFd,mensajeRespuestaRedLocal,0,respuestaTodos);
 }
 
 void enviarReduccionGlobalAMaster(job* job){
+	int cantArchivosTemp =0;
 	respuestaReduccionGlobal* respuesta = malloc(sizeof(respuestaReduccionGlobal));
 	respuesta->parametros = malloc(sizeof(parametrosReduccionGlobal));
 	respuesta->parametros->infoWorkers = list_create();
@@ -446,6 +444,7 @@ void enviarReduccionGlobalAMaster(job* job){
 		info->ip.cadena = strdup(infoNod->ip.cadena);
 		info->nombreArchivoReducido.longitud = string_length(reg->rutaArchivoTemp);
 		info->nombreArchivoReducido.cadena = strdup(reg->rutaArchivoTemp);
+		cantArchivosTemp++;
 		list_add(respuesta->parametros->infoWorkers,info);
 
 	}
@@ -454,7 +453,6 @@ void enviarReduccionGlobalAMaster(job* job){
 	t_list* registrosRedGlobal = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
 	pthread_mutex_unlock(&mutexTablaEstados);
 
-	//pthread_mutex_lock(&mutex_NodosConectados);
 	infoNodo* nodoEncargado = obtenerNodo(calcularNodoEncargado(registrosRedGlobal));
 
 	char* archivoReduccionGlobal = dameUnNombreArchivoTemporal(job->id,0,RED_GLOBAL,nodoEncargado->numero);
@@ -471,6 +469,7 @@ void enviarReduccionGlobalAMaster(job* job){
 	respuesta->job = job->id;
 
 	list_iterate(registrosRedGlobal,(void*)meterEnRespuestaRedGlobal);
+
 	empaquetar(job->socketFd,mensajeRespuestaRedGlobal,0,respuesta);
 
 	registroTablaEstados* registro = malloc(sizeof(registroTablaEstados));
@@ -481,13 +480,14 @@ void enviarReduccionGlobalAMaster(job* job){
 	registro->nodo= nodoEncargado->numero;
 	registro->rutaArchivoTemp = strdup(respuesta->archivoTemporal.cadena);
 
-	//pthread_mutex_unlock(&mutex_NodosConectados);
 
 	pthread_mutex_lock(&mutexTablaEstados);
 	list_add(tablaDeEstados,registro);
 	pthread_mutex_unlock(&mutexTablaEstados);
 }
+void modificarWorkerEncargado(infoNodo* nodo){
 
+}
 int calcularNodoEncargado(t_list* registrosRedGlobal){
 	int menorCarga,numeroNodo;
 
@@ -497,6 +497,7 @@ int calcularNodoEncargado(t_list* registrosRedGlobal){
 	infoNodo* nodo = obtenerNodo(reg->nodo);
 	numeroNodo = reg->nodo;
 	menorCarga=nodo->carga;
+	pthread_mutex_unlock(&mutex_NodosConectados);
 
 	int i;
 	for(i=1;i<list_size(registrosRedGlobal);i++){
@@ -508,7 +509,6 @@ int calcularNodoEncargado(t_list* registrosRedGlobal){
 			menorCarga=nodo->carga;
 		}
 	}
-	pthread_mutex_unlock(&mutex_NodosConectados);
 
 	return numeroNodo;
 

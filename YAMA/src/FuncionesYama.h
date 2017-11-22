@@ -112,4 +112,6 @@ void actualizarCargasNodosRedLocal(int jobid,int numNodo);
 
 void agregarBloqueTerminadoATablaEstadosRedLocal(int nodo,int jobId,Etapa etapa);
 
+void reducirCargaJob(job* unJob);
+
 #endif /* FUNCIONESYAMA_H_ */
