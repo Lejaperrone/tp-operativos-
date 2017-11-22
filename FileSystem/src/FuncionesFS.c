@@ -604,11 +604,11 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	for (i = 0; i < realTotal; ++i){
 		for (j = 0; j < cantidadNodos; ++j){
+			if (contador > cantidadNodos -1)
+				contador = 0;
 			if(pruebaEspacioDisponible[contador] > 0){
 				++contador;
 				if (contadorPrueba < 2){
-					if (contador >= cantidadNodos -1)
-						contador = 0;
 					++contadorPrueba;
 					--pruebaEspacioDisponible[contador];
 				}
