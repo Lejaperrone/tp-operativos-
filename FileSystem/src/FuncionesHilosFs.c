@@ -98,6 +98,8 @@ void* levantarServidorFS(){
 							}
 						}
 						else if(*(int*)conexionNueva.envio == 1){//yama
+							if (!recuperarEstado)
+								formatearDataBins();
 
 							if(!EstadoFS){
 								empaquetar(nuevoCliente,mensajeNoEstable,0,0);
@@ -181,8 +183,9 @@ void* levantarServidorFS(){
 
 int nodoDeEstadoAnterior(informacionNodo info){
 
-	if (!recuperarEstado)
+	if (!recuperarEstado){
 		return 1;
+	}
 
 	int i = 0;
 	char* pathArchivo = "../metadata/Nodos.bin";
