@@ -750,10 +750,10 @@ int bytesACortar(char* mapa, int offset, int sizeRestante){
 
 //for(i = 0, );
 
-char* obtenerLinea(char* archivo, int offset){
+void obtenerLinea(char* resultado, char* archivo, int offset){
 	int index = 0;
-	char* linea = malloc(50);
 
+	char* linea = malloc(50);
 	memset(linea, 0, 50);
 
 	char* caracter = string_substring(archivo, offset + index, 1);
@@ -764,9 +764,11 @@ char* obtenerLinea(char* archivo, int offset){
 		++index;
 		caracter = string_substring(archivo, offset + index, 1);
 	}
+	memset(resultado, 0, 50);
+	memcpy(resultado, linea, strlen(linea));
 
+	free(linea);
 	free(caracter);
-	return linea;
 }
 
 void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
@@ -1244,7 +1246,7 @@ int esRutaDeYama(char* ruta){
 }
 
 int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
-	char* camino = "/home/utnso/test.txt";
+	char* camino = "archivoTemporario.txt";
 
 	FILE* file = fopen(camino, "wb+");
 	fclose(file);
@@ -1263,16 +1265,20 @@ int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
 	t_config* configArchivo = config_create(ruta);
 	t_config* configAux = config_create(camino);
 
-	char* linea;
+	char* linea = malloc(50);
 	int offset = 0;
 	int longitud;
 	int numCopia;
-
-	linea = obtenerLinea(contenido, offset);
+	int contador = config_keys_amount(configArchivo);
+	int i;
 
 	char* keyBloque = string_from_format("BLOQUE%dCOPIA%d", bloque, copia);
 
-	while(!string_is_empty(linea)){
+	for(i = 0; i < contador; i++){
+
+		obtenerLinea(&*linea, contenido, offset);
+		offset += strlen(linea) + 1;
+
 		if (!string_starts_with(linea, keyBloque)){
 			if (!string_starts_with(linea, string_from_format("BLOQUE%dCOPIA", bloque))){
 				longitud = longitudAntesDelIgual(linea);
@@ -1288,14 +1294,10 @@ int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
 				}
 
 			}
-
-			offset += strlen(linea) + 1;
-			linea = obtenerLinea(contenido, offset);
-		}else{
-			offset += strlen(linea) + 1;
-			linea = obtenerLinea(contenido, offset);
 		}
 	}
+
+	free(linea);
 
 	config_save_in_file(configAux, ruta);
 
@@ -1306,6 +1308,8 @@ int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
 		perror("Error un-mmapping the file");
 		exit(EXIT_FAILURE);
 	}
+	char* rmCommand = string_from_format("rm %s", camino);
+	system(rmCommand);
 
 	close(fd);
 	free(keyBloque);

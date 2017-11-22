@@ -74,7 +74,7 @@ char* generarArrayBloque(int numeroNodo, int numeroBloque);
 
 int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo);
 
-char* obtenerLinea(char* archivo, int offset);
+void obtenerLinea(char* resultado, char* archivo, int offset);
 
 void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre);
 
