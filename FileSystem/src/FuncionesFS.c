@@ -146,10 +146,14 @@ void inicializarTablaDirectorios(){
 	int i;
 	struct stat fileStat;
 	FILE* archivoDirectorios;
+	char* root = "../metadata/Archivos/0";
 
 	tablaDeDirectorios[0].index = 0;
 	tablaDeDirectorios[0].padre = -1;
 	memcpy(tablaDeDirectorios[0].nombre,"/",1);
+
+	if (!validarDirectorio(root))
+		mkdir(root,0777);
 
 	for (i = 1; i < 100; ++i){
 		tablaDeDirectorios[i].index = -1;
@@ -307,6 +311,11 @@ char* ultimaParteDeRuta(char* rutaArchivo){
 	return nombre;
 }
 
+char* rutaArchivoMetadataSinExtension(char* ruta){
+	char* path = buscarRutaArchivo(rutaSinArchivo(rutaSinPrefijoYama(ruta)));
+	return string_from_format("%s/%s", path, nombreArchivoSinExtension(ultimaParteDeRuta(ruta)));
+}
+
 char* leerArchivo(char* rutaArchivo){
 	int index = 0, sizeArchivo, cantBloquesArchivo = 0, sizeAux = 0, i, j, k, l;
 	int cantidadNodos = list_size(nodosConectados);
@@ -345,14 +354,10 @@ char* leerArchivo(char* rutaArchivo){
 	memcpy(rutaFinal, rutaArchivo, strlen(rutaArchivo)-index);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaFinal);
-	char* rutaArchivoEnMetadata = malloc(strlen(rutaMetadata) + strlen(nombre) + 2);
-	memset(rutaArchivoEnMetadata,0,strlen(rutaMetadata) + strlen(nombre) + 2);
-	memcpy(rutaArchivoEnMetadata, rutaMetadata, strlen(rutaMetadata));
-	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata), "/", 1);
-	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata) + 1, nombre, strlen(nombre));
+	char* rutaArchivoEnMetadata = string_from_format("%s/%s",rutaMetadata,nombre);
 
-	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
-	FILE* informacionArchivo = fopen(rutaArchivoEnMetadata,"r");
+	t_config* infoArchivo = config_create(rutaArchivo);
+	FILE* informacionArchivo = fopen(rutaArchivo,"r");
 
 	if (config_has_property(infoArchivo, "TAMANIO")){
 		sizeArchivo = config_get_int_value(infoArchivo,"TAMANIO");
@@ -476,6 +481,24 @@ void* leerDeDataNode(void* parametros){
 	 pthread_exit(params->contenidoBloque);//(void*)params->contenidoBloque;
 }
 
+char* nombreArchivoSinExtension(char* nombre){
+	char* nombreSinExtension = nombre;
+	int indexNombre = 0;
+	if (string_contains(nombreSinExtension,".")){
+		char* reverse = string_reverse(nombre);
+		char* currentChar = string_substring(nombre,indexNombre,1);
+		while (strcmp(currentChar,".")){
+			++indexNombre;
+			free(currentChar);
+			currentChar = string_substring(nombre,indexNombre,1);
+		}
+		free(currentChar);
+		free(reverse);
+		nombreSinExtension = string_substring(nombre,0,strlen(nombre)-indexNombre);
+	}
+	return nombreSinExtension;
+}
+
 int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	respuesta respuestaPedidoAlmacenar;
@@ -483,8 +506,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int binario = strcmp(tipo, "b") == 0;
 
 	char* ruta = buscarRutaArchivo(path);
-	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + 2);
-	memset(rutaFinal, 0, strlen(ruta) + strlen(nombre) + 2);
 
 	if(validarArchivo(string_from_format("%s/%s", ruta, nombre))){
 		return 3;
@@ -493,9 +514,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	if (!validarDirectorio(ruta))
 		mkdir(ruta,0777);
 
-	memcpy(rutaFinal, ruta, strlen(ruta));
-	memcpy(rutaFinal + strlen(ruta), "/", 1);
-	memcpy(rutaFinal + strlen(ruta) + 1, nombre, strlen(nombre));
+	char* nombreSinExtension = nombreArchivoSinExtension(nombre);
+	char* rutaFinal = string_from_format("%s/%s", ruta, nombreSinExtension);
 
 	int sizeAux = strlen(mapeoArchivo->cadena);
 	int cantBloquesArchivo = 0;
@@ -549,10 +569,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		resTotal = sizeUltimoNodo;
 	}
 
-	FILE* archivos = fopen(rutaFinal, "wb+");
-	fclose(archivos); //para dejarlo vacio
 
-	t_config* infoArchivo = config_create(rutaFinal);
 
 	//Busco la ruta donde tengo que guardar el archivo y lo dejo en blanco
 
@@ -609,6 +626,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	pthread_t nuevoHilo[realTotal*2];
+	FILE* archivos = fopen(rutaFinal, "wb+");
+	fclose(archivos); //para dejarlo vacio
+	t_config* infoArchivo = config_create(rutaFinal);
 
 	for (i = 0; i < realTotal; ++i){	//Primer for: itera por cada bloque que ocupa el archivo //Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
 		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
@@ -750,10 +770,10 @@ int bytesACortar(char* mapa, int offset, int sizeRestante){
 
 //for(i = 0, );
 
-char* obtenerLinea(char* archivo, int offset){
+void obtenerLinea(char* resultado, char* archivo, int offset){
 	int index = 0;
-	char* linea = malloc(50);
 
+	char* linea = malloc(50);
 	memset(linea, 0, 50);
 
 	char* caracter = string_substring(archivo, offset + index, 1);
@@ -764,9 +784,11 @@ char* obtenerLinea(char* archivo, int offset){
 		++index;
 		caracter = string_substring(archivo, offset + index, 1);
 	}
+	memset(resultado, 0, 50);
+	memcpy(resultado, linea, strlen(linea));
 
+	free(linea);
 	free(caracter);
-	return linea;
 }
 
 void setearBloqueOcupadoEnBitmap(int numeroNodo, int bloqueLibre){
@@ -1244,7 +1266,7 @@ int esRutaDeYama(char* ruta){
 }
 
 int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
-	char* camino = "/home/utnso/test.txt";
+	char* camino = "archivoTemporario.txt";
 
 	FILE* file = fopen(camino, "wb+");
 	fclose(file);
@@ -1263,16 +1285,20 @@ int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
 	t_config* configArchivo = config_create(ruta);
 	t_config* configAux = config_create(camino);
 
-	char* linea;
+	char* linea = malloc(50);
 	int offset = 0;
 	int longitud;
 	int numCopia;
-
-	linea = obtenerLinea(contenido, offset);
+	int contador = config_keys_amount(configArchivo);
+	int i;
 
 	char* keyBloque = string_from_format("BLOQUE%dCOPIA%d", bloque, copia);
 
-	while(!string_is_empty(linea)){
+	for(i = 0; i < contador; i++){
+
+		obtenerLinea(&*linea, contenido, offset);
+		offset += strlen(linea) + 1;
+
 		if (!string_starts_with(linea, keyBloque)){
 			if (!string_starts_with(linea, string_from_format("BLOQUE%dCOPIA", bloque))){
 				longitud = longitudAntesDelIgual(linea);
@@ -1288,14 +1314,10 @@ int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
 				}
 
 			}
-
-			offset += strlen(linea) + 1;
-			linea = obtenerLinea(contenido, offset);
-		}else{
-			offset += strlen(linea) + 1;
-			linea = obtenerLinea(contenido, offset);
 		}
 	}
+
+	free(linea);
 
 	config_save_in_file(configAux, ruta);
 
@@ -1306,6 +1328,8 @@ int borrarDeArchivoMetadata(char* ruta, int bloque, int copia){
 		perror("Error un-mmapping the file");
 		exit(EXIT_FAILURE);
 	}
+	char* rmCommand = string_from_format("rm %s", camino);
+	system(rmCommand);
 
 	close(fd);
 	free(keyBloque);

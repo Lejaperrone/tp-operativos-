@@ -12,6 +12,7 @@
 
 int formatearFS(){
 	int resultado = 0;
+	char* root = "../metadata/Archivos/0";
 
 	resultado += borrarDirectorios();
 
@@ -20,6 +21,9 @@ int formatearFS(){
 	resultado += liberarNodosConectados();
 
 	resultado += formatearDataBins();
+
+	if (!validarDirectorio(root))
+		mkdir(root,0777);
 
 	if (resultado == 4)
 		return 0;
@@ -122,6 +126,7 @@ int eliminarDirectorio(char* comando){
 		tablaDeDirectorios[numeroTablaDirectorio].index = -1;
 		tablaDeDirectorios[numeroTablaDirectorio].padre = -1;
 		memcpy(tablaDeDirectorios[numeroTablaDirectorio].nombre," ",1);
+		system(string_from_format("rm %s", buscarRutaArchivo(rutaDirectorioYamfs)));
 
 		return 0;
 	}else{
@@ -389,6 +394,7 @@ int crearDirectorio(char* comando){
 			nombre = ultimaParteDeRuta(path);
 			memcpy(tablaDeDirectorios[i].nombre, nombre, strlen(nombre));
 			guardarTablaDirectorios();
+			mkdir(string_from_format("../metadata/Archivos/%d", i),0777);
 		}
 
 	}
@@ -476,6 +482,7 @@ int copiarArchivo(char* comando){
 int copiarArchivoAFs(char* comando){
 	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
+	char* rutaEnMetadata = rutaArchivoMetadataSinExtension(rutaArchivoYamafs);
 
 	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
 		return 1;
@@ -485,10 +492,10 @@ int copiarArchivoAFs(char* comando){
 	if (strcmp(rutaMetadata, "-1") == -0)
 		return respuesta;
 
-	if(!validarArchivo(string_from_format("%s/%s", rutaMetadata,ultimaParteDeRuta(rutaArchivoYamafs))))
+	if(!validarArchivo(string_from_format("%s/%s", rutaMetadata, nombreArchivoSinExtension(ultimaParteDeRuta(rutaArchivoYamafs)))))
 		return 1;
 
-	char* contenido = leerArchivo(rutaArchivoYamafs);
+	char* contenido = leerArchivo(rutaEnMetadata);
 	char* nombre = ultimaParteDeRuta(rutaArchivoYamafs);
 	char* rutaDirFs = devolverRuta(comando,2);
 
@@ -522,7 +529,7 @@ int copiarBloqueANodo(char* comando){
 	if (atoi(rutaDirectorioMetadata) == -1)
 		return respuesta;
 
-	char* rutaArchivoMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
+	char* rutaArchivoMetadata = string_from_format("%s/%s", rutaDirectorioMetadata,  nombreArchivoSinExtension(nombreArchivo));
 	if (!validarArchivo(rutaArchivoMetadata))
 		return respuesta;
 
@@ -553,6 +560,7 @@ int generarArchivoMD5(char* comando){
 	int respuesta = 1;
 
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
+	char* rutaEnMetadata = rutaArchivoMetadataSinExtension(rutaArchivoYamafs);
 
 	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
 		return 1;
@@ -563,12 +571,11 @@ int generarArchivoMD5(char* comando){
 		return respuesta;
 	}
 	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
-	char* rutaArchivoMetadata = string_from_format("%s/%s", rutaMetadata, nombreArchivo);
 
-	if (!validarArchivo(rutaArchivoMetadata))
+	if (!validarArchivo(rutaEnMetadata))
 		return respuesta;
 
-	char* contenido = leerArchivo(rutaArchivoYamafs);
+	char* contenido = leerArchivo(rutaEnMetadata);
 
 	char* ubicacionArchivoTemporal = string_from_format("%s", nombreArchivo);
 	FILE* file = fopen(ubicacionArchivoTemporal, "w");
@@ -585,7 +592,7 @@ int generarArchivoMD5(char* comando){
 	free(MD5);
 	free(RM);
 	free(ubicacionArchivoTemporal);
-	free(rutaArchivoMetadata);
+	free(rutaEnMetadata);
 
 	return respuesta;
 }
@@ -615,28 +622,26 @@ int listarArchivos(char* comando){
 int informacion(char* comando){
 	int respuesta = 1;
 	char* rutaArchivoYamafs = devolverRuta(comando, 1);
-
-	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
-		return 1;
+	char* rutaEnMetadata = rutaArchivoMetadataSinExtension(rutaArchivoYamafs);
 
 	char* rutaDirectorioYamafs = rutaSinArchivo(rutaArchivoYamafs);
-	char* nombreArchivo = ultimaParteDeRuta(rutaArchivoYamafs);
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamafs);
 
 	if (atoi(rutaDirectorioMetadata) == -1)
 		return respuesta;
 
-	char* rutaArchivoMetadata = string_from_format("%s/%s", rutaDirectorioMetadata, nombreArchivo);
+	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
+		return 1;
 
-	if (!validarArchivo(rutaArchivoMetadata))
+	if (!validarArchivo(rutaEnMetadata))
 		return respuesta;
 
-	char* command = string_from_format("cat %s", rutaArchivoMetadata);
+	char* command = string_from_format("cat %s", rutaEnMetadata);
 
 	respuesta = system(command);
 
 	free(command);
-	free(rutaArchivoMetadata);
+	free(rutaEnMetadata);
 
 	return respuesta;
 }
