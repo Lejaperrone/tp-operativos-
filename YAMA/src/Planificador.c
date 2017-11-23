@@ -334,9 +334,6 @@ void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacio
 		nodoBloque->bloque= bloque->numBloque;
 		nodoBloque->workerId = paraReplanificar;
 
-		printf("bloque %d nodo %d \n",nodoBloque->bloque,nodoBloque->workerId);
-
-
 		int nodoNuevo = nodoConOtraCopia(nodoBloque,matrix,bloques);
 
 		if(nodoNuevo == -1){

@@ -1,26 +1,34 @@
-#! /usr/bin/python2
-import sys
+#!/usr/bin/perl
+# This script takes data with the folowing format ordered by DATE;WBAN and returns the day, the WBAN, the greater temperature and what time that measure was sampled
+# Input (ordered!) DATE;WBAN;TEMP;TIME
+# Output: DATE;WBAN;MAX_DAILY_TEMP_IN_WBAN;TIME_OF_MEASUREMENT
 
-acumulator = 0
-old_key = None
+$old_key = '';
+$wban_max = '';
+$key_max = '';
+$max_hour = '';
+while(<stdin>) {
 
-for token in sys.stdin.readlines():
+	@chunks = split(';', $_);
+	
 
-    if(len(token.split(',')[0]) > 0):
-        word = token.split(',')[0]
-        try:
-            repetitions = int(token.split(',')[1])
-        except Exception:
-            repetitions = 0
+	if (($old_key eq $chunks[0]) && ($wban_max eq $chunks[1])){
+		if($chunks[2] > $key_max) {
+			$key_max = $chunks[2];
+			$max_hour = $chunks[3];
+		}
+	} else {
+		if ($old_key ne '') {
+			print $old_key . ";" . $wban_max . ";" . $key_max . ";" . $max_hour;
+		}
+		$old_key = $chunks[0];
+		$wban_max = $chunks[1];
+		$key_max = $chunks[2];		
+		$max_hour = $chunks[3];
+	}
+}
 
-        if old_key is None:
-             old_key = word
+if ($old_key ne "Date") {
+	print $old_key . ";" . $wban_max . ";" . $key_max . ";" . $max_hour;
+}
 
-        if old_key != word:
-            sys.stdout.write(old_key + " " + str(acumulator) + "\n")
-            acumulator = 0
-            old_key = word
-
-        acumulator += repetitions
-
-sys.stdout.write(old_key + " " + str(acumulator) + "\n")

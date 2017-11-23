@@ -323,13 +323,14 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 }
 
 int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos){
-	matriz[replanificar->workerId][replanificar->bloque]=false;
-
-
-
 	int i=0;
+
 	for(i=0;i<=nodos;i++){
-		if(matriz[i][replanificar->bloque]){
+		matriz[i][replanificar->bloque]=false;
+	}
+
+	for(i=0;i<=nodos;i++){
+		if(matriz[i][replanificar->bloque] && (i != replanificar->workerId)){
 			return i;
 		}
 	}
