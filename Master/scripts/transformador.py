@@ -1,18 +1,15 @@
 #! /usr/bin/python2
 import sys
 
-def clean(word):
-    for symbol in ['\n', '\t', ',', '.', ',', '?', '-', '"', "'", '(', ')', "!", ";", ":"]:
-        word = word.replace(symbol, '')
-    return word.lower()
+def getRegistro(linea):
+	if len(linea) > 0:
+         if(len(linea.split(',')[0]) > 0 and len(linea.split(',')[1]) > 0):
+         	 try:
+         	     registro = linea.split(',')[0].strip().lstrip() + "," + linea.split(',')[1] + "\n"
+         	     sys.stdout.write(registro)
+         	 except Exception:
+         	     pass
 
-
-def print_words(words):
-    for word in words:
-    	if len(word) > 0:
-        	sys.stdout.write(word+" 1\n")
-
-content = sys.stdin.read()
-words = content.split()
-words = map(clean, words)
-print_words(words)
+contenido = sys.stdin.read()
+data = contenido.split('\n')
+map(getRegistro, data)
