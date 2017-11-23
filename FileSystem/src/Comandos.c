@@ -126,7 +126,8 @@ int eliminarDirectorio(char* comando){
 		tablaDeDirectorios[numeroTablaDirectorio].index = -1;
 		tablaDeDirectorios[numeroTablaDirectorio].padre = -1;
 		memcpy(tablaDeDirectorios[numeroTablaDirectorio].nombre," ",1);
-		system(string_from_format("rm %s", buscarRutaArchivo(rutaDirectorioYamfs)));
+		if (strcmp(buscarRutaArchivo(rutaDirectorioYamfs), "-1") != 0)
+			system(string_from_format("rm -d %s", buscarRutaArchivo(rutaDirectorioYamfs)));
 
 		return 0;
 	}else{
@@ -407,9 +408,6 @@ int crearDirectorio(char* comando){
 
 int copiarArchivo(char* comando){
 
-	int indice = 0, indiceNom = 0;
-	char* tipo = malloc(5); //.bin o .txt
-	memset(tipo,0,5);
 	char** parametros = string_split(comando, " ");
 	char* rutaNormal = parametros[1];
 	char* rutaFS = parametros[2];
@@ -420,13 +418,12 @@ int copiarArchivo(char* comando){
 
 	char* nombre = malloc(strlen(comando)-4); //El peor caso seria que el parametro sea el nombre sin ruta, tomo ese valor
 	memset(nombre,0,strlen(comando)-4);
-	char* rutaInvertida = string_reverse(rutaNormal);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaFS);
 	if (strcmp(rutaMetadata, "-1") == 0)
 		return 0;
 
-	printf("%s\n", rutaFS);
+	//printf("%s\n", rutaFS);
 	if (!string_starts_with(rutaFS,"yamafs:/"))
 		return 0;
 
@@ -440,7 +437,6 @@ int copiarArchivo(char* comando){
 	struct stat fileStat;
 	if(stat(rutaNormal,&fileStat) < 0){
 		printf("no se pudo abrir\n");
-		free(tipo);
 		free(nombre);
 		return 0;
 	}
@@ -474,7 +470,6 @@ int copiarArchivo(char* comando){
 
 	actualizarBitmapNodos();
 
-	free(tipo);
 	free(nombre);
 	free(mapeoArchivo);
 

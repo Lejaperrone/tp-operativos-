@@ -245,10 +245,12 @@ int getIndexDirectorio(char* ruta){
 
 char* buscarRutaArchivo(char* ruta){
 	ruta = rutaSinPrefijoYama(ruta);
+	//printf("-->%s\n", ruta);
 	int indexDirectorio = getIndexDirectorio(ruta);
+	//printf("-->%d\n", indexDirectorio);
 	if (indexDirectorio == -1)
 		return "-1";
-	printf("%s\n", ruta);
+	//printf("%s\n", ruta);
 	char* numeroIndexString = string_itoa(indexDirectorio);
 	char* rutaGenerada = calloc(1,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memset(rutaGenerada,0,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
@@ -271,10 +273,10 @@ int nodoRepetido(informacionNodo info){
 
 int validarArchivoYamaFS(char* ruta){
 	if (string_starts_with(ruta,"yamafs:/")){
-		printf("ruta valida\n");
+		//printf("ruta valida\n");
 		return 1;
 	}
-	printf("ruta invalida\n");
+	//printf("ruta invalida\n");
 	return 0;
 }
 
@@ -513,7 +515,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		mkdir(ruta,0777);
 
 	char* nombreSinExtension = nombreArchivoSinExtension(nombre);
-	char* rutaFinal = string_from_format("%s/%s", ruta, nombreSinExtension);
+	char* rutaFinal = string_from_format("%s/%s%s", ruta, nombreSinExtension, ".txt");
 
 	int sizeAux = strlen(mapeoArchivo->cadena);
 	int cantBloquesArchivo = 0;
@@ -704,9 +706,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
 		if (string_equals_ignore_case(path, "yamafs:/"))
-			config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombreArchivoSinExtension(nombre)));
+			config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombre));
 		else
-			config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombreArchivoSinExtension(nombre)));
+			config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombre));
 
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
