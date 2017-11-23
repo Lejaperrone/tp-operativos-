@@ -1052,7 +1052,9 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	informacionArchivoFsYama info;
 	info.informacionBloques = list_create();
 
-	char* rutaMetadata = rutaArchivoMetadataSinExtension(rutaDatos.cadena);
+	char* directorio = rutaSinArchivo(rutaDatos.cadena);
+	char* rutaArchivo = buscarRutaArchivo(directorio);
+	char* rutaMetadata = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivo), ultimaParteDeRuta(rutaDatos.cadena));
 
 	t_config* archivo = config_create(rutaMetadata);
 
