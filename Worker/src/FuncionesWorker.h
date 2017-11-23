@@ -26,7 +26,6 @@ struct configuracionNodo config;
 int clientSocket;
 t_log* logger;
 
-
 /*----PROTOTIPOS--------------------*/
 void handlerMaster(int clientSocket);
 void handlerWorker(int clientSocket);

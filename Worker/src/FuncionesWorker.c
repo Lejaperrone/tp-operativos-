@@ -100,7 +100,7 @@ void crearScript(char* bufferScript, int etapa) {
 	FILE* script;
 	int aux = string_length(bufferScript);
 	int auxChmod = strtol(mode, 0, 8);
-	char* nombreArchivo = string_new();
+	char* nombreArchivo;
 
 	if (etapa == mensajeProcesarTransformacion)
 		nombreArchivo = strdup("transformador.py");
@@ -157,7 +157,7 @@ void handlerMaster(int clientSocket) {
 		command =
 				string_from_format(
 						"head -c %d < %s | tail -c %d | ./transformador.py | sort > %s/%s",
-						offset, config.RUTA_DATABIN, bytesRestantes, path , destino);
+						offset, config.RUTA_DATABIN, bytesRestantes,path , destino);
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
 		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);
@@ -181,7 +181,7 @@ void handlerMaster(int clientSocket) {
 		crearScript(contenidoScript, mensajeProcesarRedLocal);
 		archivoPreReduccionLocal = string_from_format("%s/tmp/%s", path, "preReduccionLocal");
 		apareoArchivosLocales(listaArchivosTemporales, archivoPreReduccionLocal);
-		command = string_from_format("cat %s | ./reductorLocal.py > %s", archivoPreReduccionLocal, string_from_format("%s/tmp/%s", path, destino));
+		command = string_from_format("cat %s | sort | uniq | ./reductorLocal.py > %s", archivoPreReduccionLocal,string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(clientSocket, mensajeRedLocalCompleta, 0, &numeroNodo);
@@ -197,7 +197,7 @@ void handlerMaster(int clientSocket) {
 		contenidoScript = strdup(reduccionGlobal->contenidoScript.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedGlobal);
 		rutaArchivoFinal = crearRutaArchivoAReducir(listaWorkers);
-		command = string_from_format("cat %s | ./reductorGlobal.py > %s", rutaArchivoFinal, string_from_format("%s/tmp/%s", path, destino));
+		command = string_from_format("cat %s | sort | uniq | ./reductorGlobal.py > %s", rutaArchivoFinal, string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion global realizada correctamente");
 		empaquetar(clientSocket, mensajeRedGlobalCompleta, 0, 0);
