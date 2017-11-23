@@ -100,14 +100,14 @@ void crearScript(char* bufferScript, int etapa) {
 	FILE* script;
 	int aux = string_length(bufferScript);
 	int auxChmod = strtol(mode, 0, 8);
-	char* nombreArchivo;
+	char* nombreArchivo = string_new();
 
 	if (etapa == mensajeProcesarTransformacion)
-		nombreArchivo = "transformador.py";
+		nombreArchivo = strdup("transformador.py");
 	else if (etapa == mensajeProcesarRedLocal)
-		nombreArchivo = "reductorLocal.py";
+		nombreArchivo = strdup("reductorLocal.py");
 	else if (etapa == mensajeProcesarRedGlobal)
-		nombreArchivo = "reductorGlobal.py";
+		nombreArchivo = strdup("reductorGlobal.py");
 
 	char* ruta = string_from_format("./%s", nombreArchivo);
 	script = fopen(ruta, "w+");
@@ -144,7 +144,7 @@ void handlerMaster(int clientSocket) {
 	case mensajeProcesarTransformacion:
 		transformacion = (parametrosTransformacion*)paquete.envio;
 		log_trace(logger, "Iniciando Transformacion");
-		contenidoScript = transformacion->contenidoScript.cadena;
+		contenidoScript = strdup(transformacion->contenidoScript.cadena);
 		int numeroBloqueTransformado = transformacion->bloquesConSusArchivos.numBloque;
 		int bloqueId = transformacion->bloquesConSusArchivos.numBloqueEnNodo;
 		int bytesRestantes = transformacion->bloquesConSusArchivos.bytesOcupados;
