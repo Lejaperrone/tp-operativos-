@@ -110,14 +110,16 @@ int verificarEstado(){
 				for (j = 0; j < cantBloques; ++j){
 					for (l = 0; l < numeroCopiasBloque; ++l){
 						bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
-						arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
-						charNumeroNodo = string_substring_from(arrayInfoBloque[i], 4);
-						numeroNodo = atoi(charNumeroNodo);
+						if (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,l))){
+							arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
+							charNumeroNodo = string_substring_from(arrayInfoBloque[0], 4);
+							numeroNodo = atoi(charNumeroNodo);
 
-						for (k = 0; k < cantidadNodosConectados; ++k)
-							if (nodos[k] == numeroNodo){
-								++valido;
-							}
+							for (k = 0; k < cantidadNodosConectados; ++k)
+								if (nodos[k] == numeroNodo){
+									++valido;
+								}
+						}
 
 					}
 					if (valido < numeroCopiasBloque){
@@ -140,6 +142,34 @@ int verificarEstado(){
 		}
 	//actualizarArchivoNodos();
 	return 1;
+}
+
+char* buscarNombreEnMetadata(char* ruta){
+	t_config* config = config_create(ruta);
+	char* nombre;
+	char* path;
+	int indexNombre = 0;
+	if (config_has_property(config,"RUTA")){
+		path = config_get_string_value(config, "RUTA");
+		path = string_substring_from(path,7);
+		char* reverse = string_reverse(path);
+		char* currentChar = string_substring(path,indexNombre,1);
+		while (strcmp(currentChar,"/")){
+			++indexNombre;
+			free(currentChar);
+			currentChar = string_substring(path,indexNombre,1);
+		}
+		nombre = string_substring_until(path,indexNombre);
+		free(reverse);
+		free(currentChar);
+		printf("nombre %s", string_reverse(nombre));
+		config_destroy(config);
+		return string_reverse(nombre);
+
+	}
+	else
+		return "-1";
+
 }
 
 void inicializarTablaDirectorios(){
@@ -356,10 +386,14 @@ char* leerArchivo(char* rutaArchivo){
 	memcpy(rutaFinal, rutaArchivo, strlen(rutaArchivo)-index);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaFinal);
-	char* rutaArchivoEnMetadata = string_from_format("%s/%s",rutaMetadata,nombre);
+	char* rutaArchivoEnMetadata = malloc(strlen(rutaMetadata) + strlen(nombre) + 2);
+	memset(rutaArchivoEnMetadata,0,strlen(rutaMetadata) + strlen(nombre) + 2);
+	memcpy(rutaArchivoEnMetadata, rutaMetadata, strlen(rutaMetadata));
+	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata), "/", 1);
+	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata) + 1, nombre, strlen(nombre));
 
-	t_config* infoArchivo = config_create(rutaArchivo);
-	FILE* informacionArchivo = fopen(rutaArchivo,"r");
+	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
+	FILE* informacionArchivo = fopen(rutaArchivoEnMetadata,"r");
 
 	if (config_has_property(infoArchivo, "TAMANIO")){
 		sizeArchivo = config_get_int_value(infoArchivo,"TAMANIO");
@@ -506,6 +540,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int binario = strcmp(tipo, "b") == 0;
 
 	char* ruta = buscarRutaArchivo(path);
+	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + 2);
+	memset(rutaFinal, 0, strlen(ruta) + strlen(nombre) + 2);
 
 	if(validarArchivo(string_from_format("%s/%s", ruta, nombre))){
 		return 3;
@@ -514,8 +550,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	if (!validarDirectorio(ruta))
 		mkdir(ruta,0777);
 
-	char* nombreSinExtension = nombreArchivoSinExtension(nombre);
-	char* rutaFinal = string_from_format("%s/%s%s", ruta, nombreSinExtension, ".txt");
+	memcpy(rutaFinal, ruta, strlen(ruta));
+	memcpy(rutaFinal + strlen(ruta), "/", 1);
+	memcpy(rutaFinal + strlen(ruta) + 1, nombre, strlen(nombre));
 
 	int sizeAux = strlen(mapeoArchivo->cadena);
 	int cantBloquesArchivo = 0;
@@ -705,10 +742,14 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
+<<<<<<< HEAD
 		if (string_equals_ignore_case(path, "yamafs:/"))
 			config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombre));
 		else
 			config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombre));
+=======
+		config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombre));
+>>>>>>> 23fd4c48f2578477315be569f632c80650fe6a86
 
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
@@ -1020,7 +1061,9 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	informacionArchivoFsYama info;
 	info.informacionBloques = list_create();
 
-	char* rutaMetadata = rutaArchivoMetadataSinExtension(rutaDatos.cadena);
+	char* directorio = rutaSinArchivo(rutaDatos.cadena);
+	char* rutaArchivo = buscarRutaArchivo(directorio);
+	char* rutaMetadata = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivo), ultimaParteDeRuta(rutaDatos.cadena));
 
 	t_config* archivo = config_create(rutaMetadata);
 

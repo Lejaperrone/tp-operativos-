@@ -1,10 +1,15 @@
-#!/bin/bash
-# Uses awk to parse comma-separated-value and keeps Date;WBAN;DryBulbCelsius;Time
-# All the fields in the file header
-# $1 - WBAN
-# $2 - DATE
-# $3 - Time
-# $13 - DryBulbCelsius - https://en.wikipedia.org/wiki/Dry-bulb_temperature
+#! /usr/bin/python2
+import sys
 
-cat - | awk -F ',' '{print $2 ";" $1  ";" $13 ";" $3}'
-	
+def getRegistro(linea):
+	if len(linea) > 0:
+         if(len(linea.split(',')[0]) > 0 and len(linea.split(',')[1]) > 0):
+         	 try:
+         	     registro = linea.split(',')[0].strip().lstrip() + "," + linea.split(',')[1] + "\n"
+         	     sys.stdout.write(registro)
+         	 except Exception:
+         	     pass
+
+contenido = sys.stdin.read()
+data = contenido.split('\n')
+map(getRegistro, data)

@@ -48,6 +48,8 @@ int validarArchivoYamaFS(char* ruta);
 
 void inicializarTablaDirectorios();
 
+char* buscarNombreEnMetadata(char* ruta);
+
 char* rutaSinPrefijoYama(char* ruta);
 
 int verificarEstado();
