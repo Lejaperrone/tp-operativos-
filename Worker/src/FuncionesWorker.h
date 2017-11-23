@@ -28,7 +28,7 @@ t_log* logger;
 
 
 /*----PROTOTIPOS--------------------*/
-void handlerMaster(int clientSocket);
+void handlerMaster(int clientSocket, int contador);
 void handlerWorker(int clientSocket);
 void levantarServidorWorker(char* ip, int port);
 void ejecutarTransformacion();
