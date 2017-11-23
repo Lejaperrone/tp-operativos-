@@ -28,11 +28,11 @@ t_log* logger;
 
 
 /*----PROTOTIPOS--------------------*/
-void handlerMaster(int clientSocket, int contador);
+void handlerMaster(int clientSocket);
 void handlerWorker(int clientSocket);
 void levantarServidorWorker(char* ip, int port);
 void ejecutarTransformacion();
-void crearScript(char* bufferScript, int etapa,int numero);
+void crearScript(char* bufferScript, int etapa);
 void apareoArchivosLocales();
 t_list* crearListaParaReducir();
 void ejecutarComando(char* command, int socketMaster);
