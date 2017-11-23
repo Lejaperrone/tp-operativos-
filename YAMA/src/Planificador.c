@@ -318,50 +318,74 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 
 }
 
-void replanificar(bloqueYNodo* paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques){
-	workerDesdeYama* respuestaAMaster = malloc(sizeof(workerDesdeYama));
-	respuestaAMaster->bloquesConSusArchivos= list_create();
-
-	int nodoNuevo = nodoConOtraCopia(paraReplanificar,matrix,bloques);
-
-	if(nodoNuevo == -1){
-		log_trace(logger,"Fallo en replanificar bloque  %d", paraReplanificar->bloque);
-		finalizarJob(jobi,TRANSFORMACION);
-	}
+void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques){
+	respuestaSolicitudTransformacion* respuestaTransfromacion = malloc(sizeof(respuestaSolicitudTransformacion));
+	respuestaTransfromacion->workers = list_create();
 
 	bool nodoConNumero(workerDesdeYama* worker){
-		return worker->numeroWorker == paraReplanificar->workerId ;
+		return worker->numeroWorker == paraReplanificar;
 	}
 
 	workerDesdeYama* worker = list_find(respuestaArchivo->workers, (void*) nodoConNumero);
 
-	bool bloqueConNumero(bloquesConSusArchivosTransformacion* bloque){
-		return bloque->numBloque== paraReplanificar->bloque ;
+	void agregarBloque(bloquesConSusArchivosTransformacion* bloque){
+		bloquesConSusArchivosTransformacion* bloqueNuevo = malloc(sizeof(bloquesConSusArchivosTransformacion));
+
+		bloqueYNodo* nodoBloque = malloc(sizeof(bloqueYNodo));
+		nodoBloque->bloque= bloque->numBloque;
+		nodoBloque->workerId = paraReplanificar;
+
+		printf("bloque %d nodo %d \n",nodoBloque->bloque,nodoBloque->workerId);
+
+
+		int nodoNuevo = nodoConOtraCopia(nodoBloque,matrix,bloques);
+
+		if(nodoNuevo == -1){
+			log_trace(logger,"Fallo en replanificar nodo %d", paraReplanificar);
+			finalizarJob(jobi,TRANSFORMACION);
+		}
+
+		bool nodoYaCargado(workerDesdeYama* workerCargado){
+			return workerCargado->numeroWorker == nodoNuevo;
+		}
+
+		workerDesdeYama* nuevoWorker;
+		if(list_any_satisfy(respuestaTransfromacion->workers,(void*)nodoYaCargado)){
+			nuevoWorker=list_find(respuestaTransfromacion->workers,(void*)nodoYaCargado);
+		}
+		else{
+			nuevoWorker = malloc(sizeof(workerDesdeYama));
+			nuevoWorker->numeroWorker = nodoNuevo;
+
+			pthread_mutex_lock(&mutex_NodosConectados);
+			infoNodo* infoNod = obtenerNodo(nodoNuevo);
+
+			nuevoWorker->puerto= infoNod->puerto;
+			nuevoWorker->ip.cadena = strdup(infoNod->ip.cadena);
+			nuevoWorker->ip.longitud = infoNod->ip.longitud;
+
+			pthread_mutex_unlock(&mutex_NodosConectados);
+			list_add(respuestaTransfromacion->workers,nuevoWorker);
+			nuevoWorker->bloquesConSusArchivos =list_create();
+		}
+
+		bloqueNuevo->archivoTemporal.cadena = dameUnNombreArchivoTemporal(jobi->id,bloque->numBloque,TRANSFORMACION,paraReplanificar);
+		bloqueNuevo->archivoTemporal.longitud = string_length(bloqueNuevo->archivoTemporal.cadena);
+
+		bloqueNuevo->bytesOcupados = bloque->bytesOcupados;
+		bloqueNuevo->numBloque = bloque->numBloque;
+		bloqueNuevo->numBloqueEnNodo = bloque->numBloqueEnNodo;
+
+		list_add(nuevoWorker->bloquesConSusArchivos,bloqueNuevo);
+
+		log_trace(logger, "Replanifico bloque %i asignado al worker %i ",bloque->numBloque, nodoNuevo);
 	}
 
-	bloquesConSusArchivosTransformacion* bloque= list_find(worker->bloquesConSusArchivos, (void*) bloqueConNumero);
+	list_iterate(worker->bloquesConSusArchivos,(void*)agregarBloque);
 
-	bloque->archivoTemporal.cadena = dameUnNombreArchivoTemporal(jobi->id,bloque->numBloque,TRANSFORMACION,nodoNuevo);
-	bloque->archivoTemporal.longitud = string_length(bloque->archivoTemporal.cadena);
+	empaquetar(jobi->socketFd,mensajeRespuestaTransformacion,0,respuestaTransfromacion);
 
-	list_add(respuestaAMaster->bloquesConSusArchivos,bloque);
-
-	respuestaAMaster->numeroWorker= nodoNuevo;
-
-	pthread_mutex_lock(&mutex_NodosConectados);
-	infoNodo* infoNod = obtenerNodo(nodoNuevo);
-
-	respuestaAMaster->puerto= infoNod->puerto;
-	respuestaAMaster->ip.cadena = strdup(infoNod->ip.cadena);
-	respuestaAMaster->ip.longitud = infoNod->ip.longitud;
-
-	pthread_mutex_unlock(&mutex_NodosConectados);
-
-	empaquetar(jobi->socketFd,mensajeReplanificacion,0,respuestaAMaster);
-
-	actualizarCargasNodosReplanificacion(jobi->id,TRANSFORMACION,bloque->numBloque);
-
-	log_trace(logger, "Replanifico bloque %i asignado al worker %i ",bloque->numBloque, respuestaAMaster->numeroWorker);
+	//actualizarCargasNodosReplanificacion(jobi->id,TRANSFORMACION,bloque->numBloque);
 
 }
 
@@ -551,6 +575,12 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 	bool redLocalIncompleta= true;
 	bloqueYNodo* bloqueNodo;
 	int numNodo;
+	bool* nodosReplanificados = malloc(nodos * sizeof(bool));
+
+	int i;
+	for(i=0;i<nodos;i++){
+		nodosReplanificados[i] = true;
+	}
 
 	while(redLocalIncompleta){
 		respuesta respuestaPlanificacionMaster = desempaquetar(job->socketFd);
@@ -571,7 +601,12 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloTransformacion){
 			bloqueNodo = (bloqueYNodo*) respuestaPlanificacionMaster.envio;
 			log_trace(logger,"Entro a replanificar se desconecto un worker %d", bloqueNodo->workerId);
-			replanificar(bloqueNodo,job,respuestaMaster,matrix,nodos);
+
+			if(nodosReplanificados[bloqueNodo->workerId]){
+				replanificar(bloqueNodo->workerId,job,respuestaMaster,matrix,nodos);
+				nodosReplanificados[bloqueNodo->workerId] = false;
+			}
+
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeRedLocalCompleta){
 			numNodo = *(int*) respuestaPlanificacionMaster.envio;
