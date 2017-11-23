@@ -76,7 +76,7 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 	respuestaAMaster->workers = list_create();
 	for(i=0;i<cantidadBloques;i++){
 		bloque = (infoBloque*)list_get(infoBloques, i);
-
+		usleep(config.RETARDO_PLANIFICACION);
 		if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
 			if(workerDesignado->disponibilidad > 0){
 				modificarCargayDisponibilidad(workerDesignado);
@@ -96,13 +96,13 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 				if(workerDesignado->disponibilidad <= 0){
 					workerDesignado->disponibilidad += getDisponibilidadBase();
 					workerDesignado = avanzarClock(workerDesignado, listaNodos);
-				}
-				modificarCargayDisponibilidad(workerDesignado);
+				}else{
 
+				modificarCargayDisponibilidad(workerDesignado);
 				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
 				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
-
+				}
 				if(workerDesignado->disponibilidad <= 0){
 					workerDesignado->disponibilidad += getDisponibilidadBase();
 					workerDesignado = avanzarClock(workerDesignado, listaNodos);
@@ -581,6 +581,10 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloReduccion){
 			log_trace(logger,"Fallo en reduccion local del job %d", job->id);
 			finalizarJob(job,RED_LOCAL);
+		}
+		else if(respuestaPlanificacionMaster.idMensaje == mensajeDesconexion){
+			log_error(logger, "Error en Proceso Master.");
+			reestablecerEstadoYama(job);
 		}
 	}
 }

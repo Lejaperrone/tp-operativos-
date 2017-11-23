@@ -16,10 +16,8 @@
 
 t_list* jobsAPlanificar;
 
-
 pthread_mutex_t cantTareasHistoricas_mutex;
 uint32_t wlMax;
-
 
 void planificar(job* job);
 infoNodo* inicializarWorker();

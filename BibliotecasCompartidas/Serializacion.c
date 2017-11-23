@@ -1598,7 +1598,7 @@ void* serializarRespuestaAlmacenamiento(void* paquete, int* tamanio){
 respuestaAlmacenamiento* deserializarRespuestaAlmacenamiento(int socket, int tamanio){
 	int desplazamiento = 0;
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 	respuestaAlmacenamiento* respuesta = malloc(sizeof(respuestaAlmacenamiento));
 
 	memcpy(&respuesta->nodo, buffer + desplazamiento, sizeof(int) );
@@ -1654,7 +1654,7 @@ void* serializarProcesarAlmacenamiento(void* paquete, int* tamanio){
 parametrosAlmacenamiento* deserializarProcesarAlmacenamiento(int socket, int tamanio){
 	int desplazamiento = 0;
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 	parametrosAlmacenamiento* respuesta = malloc(sizeof(parametrosAlmacenamiento));
 
 	memcpy(&respuesta->archivoTemporal.longitud, buffer + desplazamiento, sizeof(int) );
