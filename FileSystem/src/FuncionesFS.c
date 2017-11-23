@@ -760,6 +760,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		printf("%d bloques fueron enviados a %d\n", envios[i], indexNodos[i]);
 	}
 
+	actualizarBitmapNodos();
+
 	return successArchivoCopiado;
 
 }

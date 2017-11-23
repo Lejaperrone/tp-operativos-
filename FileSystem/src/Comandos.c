@@ -470,8 +470,6 @@ int copiarArchivo(char* comando){
 		exit(EXIT_FAILURE);
 	}
 
-	actualizarBitmapNodos();
-
 	free(nombre);
 	free(mapeoArchivo);
 
