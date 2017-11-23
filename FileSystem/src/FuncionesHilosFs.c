@@ -14,6 +14,7 @@ extern t_list* pedidosFS;
 extern t_log* loggerFS;
 extern int bloquesLibresTotales;
 extern bool recuperarEstado;
+extern int EstadoFS;
 
 void* levantarServidorFS(){
 	solicitudInfoNodos* solicitud;
@@ -71,7 +72,7 @@ void* levantarServidorFS(){
 						if (*(int*)conexionNueva.envio == idDataNodes){
 							paqueteInfoNodo = desempaquetar(nuevoCliente);
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
-							if (nodoRepetido(info) == 0 && nodoDeEstadoAnterior(info)){
+							if (nodoRepetido(info) == 0 && nodoDeEstadoAnterior(info) && noSeConectoYama){
 								pthread_mutex_lock(&logger_mutex);
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
 								pthread_mutex_unlock(&logger_mutex);

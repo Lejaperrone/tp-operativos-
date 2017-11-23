@@ -460,30 +460,25 @@ void finalizarJob(job* job,int etapa){
 }
 void reducirCargaJob(job* unJob){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-		return reg->job == unJob->id && reg->estado==FINALIZADO_OK && reg->etapa == RED_LOCAL;
+		return reg->job == unJob->id && reg->estado==FINALIZADO_OK;
 	}
+
 	void actualizarCarga(registroTablaEstados* reg){
 		if(encontrarEnTablaEstados(reg)){
 			infoNodo* nodo = obtenerNodo(reg->nodo);
-			nodo->carga -= nodo->carga;
+			if(reg->nodo == nodo->numero){
+				nodo->carga -= 1;
+			}
 		}
 	}
 	pthread_mutex_lock(&mutexTablaEstados);
 	list_iterate(tablaDeEstados, (void*)actualizarCarga);
 	pthread_mutex_unlock(&mutexTablaEstados);
-	void mostrar(infoNodo* nodo){
-		printf("NUMERO NODO %d CANT TAREAS %d CARGA %d\n",nodo->numero, nodo->cantTareasHistoricas, nodo->carga);
-	}
-	list_iterate(nodosConectados, (void*)mostrar);
 }
-void actualizarCargasNodos(int jobid,int etapa){
+void actualizarCargasNodos(int jobid,Etapa etapa){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
 		return reg->job == jobid && reg->etapa == etapa;
 	}
-
-	/*pthread_mutex_lock(&mutexTablaEstados);
-	t_list* registros = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
-	pthread_mutex_unlock(&mutexTablaEstados);*/
 
 	void actualizarCarga(registroTablaEstados* reg ){
 		if(encontrarEnTablaEstados(reg)){
@@ -500,18 +495,18 @@ void actualizarCargasNodos(int jobid,int etapa){
 
 void actualizarCargasNodosRedLocal(int jobid,int numNodo){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-		return reg->job == jobid && reg->etapa== RED_LOCAL && reg->nodo==numNodo;
+		return reg->job == jobid && reg->etapa == RED_LOCAL && reg->nodo==numNodo;
 	}
-
+	void actualizarCarga(registroTablaEstados* reg ){
+		if(encontrarEnTablaEstados(reg)){
+			infoNodo* nodo = obtenerNodo(reg->nodo);
+			nodo->carga++;
+			nodo->cantTareasHistoricas++;
+		}
+	}
 	pthread_mutex_lock(&mutexTablaEstados);
-	registroTablaEstados* reg= list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
+	list_iterate(tablaDeEstados,(void*)actualizarCarga);
 	pthread_mutex_unlock(&mutexTablaEstados);
-
-	pthread_mutex_lock(&mutex_NodosConectados);
-	infoNodo* nodo = obtenerNodo(reg->nodo);
-	nodo->carga++;
-	nodo->cantTareasHistoricas ++;
-	pthread_mutex_unlock(&mutex_NodosConectados);
 
 }
 
@@ -527,7 +522,7 @@ void actualizarCargasNodosReplanificacion(int jobid,int etapa,int bloque){
 
 	pthread_mutex_lock(&mutex_NodosConectados);
 	infoNodo* nodo = obtenerNodo(reg->nodo);
-	nodo->carga=nodo->carga-1;
+	nodo->carga = nodo->carga-1;
 	pthread_mutex_unlock(&mutex_NodosConectados);
 
 }

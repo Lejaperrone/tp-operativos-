@@ -110,14 +110,16 @@ int verificarEstado(){
 				for (j = 0; j < cantBloques; ++j){
 					for (l = 0; l < numeroCopiasBloque; ++l){
 						bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
-						arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
-						charNumeroNodo = string_substring_from(arrayInfoBloque[i], 4);
-						numeroNodo = atoi(charNumeroNodo);
+						if (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,l))){
+							arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
+							charNumeroNodo = string_substring_from(arrayInfoBloque[0], 4);
+							numeroNodo = atoi(charNumeroNodo);
 
-						for (k = 0; k < cantidadNodosConectados; ++k)
-							if (nodos[k] == numeroNodo){
-								++valido;
-							}
+							for (k = 0; k < cantidadNodosConectados; ++k)
+								if (nodos[k] == numeroNodo){
+									++valido;
+								}
+						}
 
 					}
 					if (valido < numeroCopiasBloque){
@@ -138,8 +140,36 @@ int verificarEstado(){
 			}
 			free(pathDir);
 		}
-	actualizarArchivoNodos();
+	//actualizarArchivoNodos();
 	return 1;
+}
+
+char* buscarNombreEnMetadata(char* ruta){
+	t_config* config = config_create(ruta);
+	char* nombre;
+	char* path;
+	int indexNombre = 0;
+	if (config_has_property(config,"RUTA")){
+		path = config_get_string_value(config, "RUTA");
+		path = string_substring_from(path,7);
+		char* reverse = string_reverse(path);
+		char* currentChar = string_substring(path,indexNombre,1);
+		while (strcmp(currentChar,"/")){
+			++indexNombre;
+			free(currentChar);
+			currentChar = string_substring(path,indexNombre,1);
+		}
+		nombre = string_substring_until(path,indexNombre);
+		free(reverse);
+		free(currentChar);
+		printf("nombre %s", string_reverse(nombre));
+		config_destroy(config);
+		return string_reverse(nombre);
+
+	}
+	else
+		return "-1";
+
 }
 
 void inicializarTablaDirectorios(){
@@ -245,10 +275,12 @@ int getIndexDirectorio(char* ruta){
 
 char* buscarRutaArchivo(char* ruta){
 	ruta = rutaSinPrefijoYama(ruta);
+	//printf("-->%s\n", ruta);
 	int indexDirectorio = getIndexDirectorio(ruta);
+	//printf("-->%d\n", indexDirectorio);
 	if (indexDirectorio == -1)
 		return "-1";
-	printf("%s\n", ruta);
+	//printf("%s\n", ruta);
 	char* numeroIndexString = string_itoa(indexDirectorio);
 	char* rutaGenerada = calloc(1,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
 	memset(rutaGenerada,0,strlen(rutaArchivos) + strlen(numeroIndexString) + 1);
@@ -271,10 +303,10 @@ int nodoRepetido(informacionNodo info){
 
 int validarArchivoYamaFS(char* ruta){
 	if (string_starts_with(ruta,"yamafs:/")){
-		printf("ruta valida\n");
+		//printf("ruta valida\n");
 		return 1;
 	}
-	printf("ruta invalida\n");
+	//printf("ruta invalida\n");
 	return 0;
 }
 
@@ -354,10 +386,14 @@ char* leerArchivo(char* rutaArchivo){
 	memcpy(rutaFinal, rutaArchivo, strlen(rutaArchivo)-index);
 
 	char* rutaMetadata = buscarRutaArchivo(rutaFinal);
-	char* rutaArchivoEnMetadata = string_from_format("%s/%s",rutaMetadata,nombre);
+	char* rutaArchivoEnMetadata = malloc(strlen(rutaMetadata) + strlen(nombre) + 2);
+	memset(rutaArchivoEnMetadata,0,strlen(rutaMetadata) + strlen(nombre) + 2);
+	memcpy(rutaArchivoEnMetadata, rutaMetadata, strlen(rutaMetadata));
+	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata), "/", 1);
+	memcpy(rutaArchivoEnMetadata + strlen(rutaMetadata) + 1, nombre, strlen(nombre));
 
-	t_config* infoArchivo = config_create(rutaArchivo);
-	FILE* informacionArchivo = fopen(rutaArchivo,"r");
+	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
+	FILE* informacionArchivo = fopen(rutaArchivoEnMetadata,"r");
 
 	if (config_has_property(infoArchivo, "TAMANIO")){
 		sizeArchivo = config_get_int_value(infoArchivo,"TAMANIO");
@@ -504,6 +540,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int binario = strcmp(tipo, "b") == 0;
 
 	char* ruta = buscarRutaArchivo(path);
+	char* rutaFinal = malloc(strlen(ruta) + strlen(nombre) + 2);
+	memset(rutaFinal, 0, strlen(ruta) + strlen(nombre) + 2);
 
 	if(validarArchivo(string_from_format("%s/%s", ruta, nombre))){
 		return 3;
@@ -512,8 +550,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	if (!validarDirectorio(ruta))
 		mkdir(ruta,0777);
 
-	char* nombreSinExtension = nombreArchivoSinExtension(nombre);
-	char* rutaFinal = string_from_format("%s/%s", ruta, nombreSinExtension);
+	memcpy(rutaFinal, ruta, strlen(ruta));
+	memcpy(rutaFinal + strlen(ruta), "/", 1);
+	memcpy(rutaFinal + strlen(ruta) + 1, nombre, strlen(nombre));
 
 	int sizeAux = strlen(mapeoArchivo->cadena);
 	int cantBloquesArchivo = 0;
@@ -569,10 +608,12 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	//Busco la ruta donde tengo que guardar el archivo y lo dejo en blanco
 
-	int nodoAUtilizar = -1;
 	int offset = 0;
 	int sizeRestante = 0;
 	successArchivoCopiado = 1;
+	int nodoAMandar = 0, nodoElegido[numeroCopiasBloque];
+	nodoElegido[0] = -1;
+	nodoElegido[1] = -1;
 
 	printf("bloques necesarios %d\n",realTotal);
 	printf("%d %d bytes \n", realTotal, cantBloquesArchivo);
@@ -580,13 +621,14 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int cantidadNodos = list_size(nodosConectados);
 	int bloquesLibreNodo[cantidadNodos];
 	int indexNodos[cantidadNodos];
-	int masBloquesLibres[numeroCopiasBloque];
-	int nodosEnUso[cantidadNodos];
-	int indexNodoEnListaConectados[numeroCopiasBloque];
 	parametrosEnvioBloque params[realTotal*2];
 	int sizeTotal = 0, ultimoUtilizado = 0;
 	int pruebaEspacioDisponible[cantidadNodos];
 	int contadorPrueba = 0;
+	int pruebaElegido[2];
+	pruebaElegido[0] = -1;
+	pruebaElegido[1] = -1;
+	int envios[cantidadNodos];
 
 	params[0].restanteAnterior = 0;
 	params[realTotal].restanteAnterior = 0;
@@ -595,29 +637,35 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		bloquesLibreNodo[i] = infoAux.sizeNodo-infoAux.bloquesOcupados;
 		pruebaEspacioDisponible[i] = bloquesLibreNodo[i];
 		indexNodos[i] = infoAux.numeroNodo;
-		indexNodoEnListaConectados[i] = i;
 		printf("bloques libres %d\n", bloquesLibreNodo[i]);
 	}
 	int contador = 0;
 
 	printf("size archivo %d\n", strlen(mapeoArchivo->cadena));
 
+	for (i= 0; i < cantidadNodos; ++i)
+		envios[i] = 0;
+
 	for (i = 0; i < realTotal; ++i){
 		for (j = 0; j < cantidadNodos; ++j){
-			if(pruebaEspacioDisponible[contador] > 0){
-				++contador;
+			if (contador > cantidadNodos -1)
+				contador = 0;
+			if(pruebaEspacioDisponible[contador] > 0 && pruebaElegido[0] != contador){
 				if (contadorPrueba < 2){
-					if (contador >= cantidadNodos -1)
-						contador = 0;
+					pruebaElegido[contadorPrueba] = contador;
 					++contadorPrueba;
 					--pruebaEspacioDisponible[contador];
 				}
 			}
+			++contador;
 		}
 		if (contadorPrueba < 2)
 			return 2;
-		else
+		else{
 			contadorPrueba = 0;
+			pruebaElegido[0] = -1;
+		    pruebaElegido[1] = -1;
+		}
 	}
 
 	pthread_t nuevoHilo[realTotal*2];
@@ -625,48 +673,35 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	fclose(archivos); //para dejarlo vacio
 	t_config* infoArchivo = config_create(rutaFinal);
 
-	for (i = 0; i < realTotal; ++i){	//Primer for: itera por cada bloque que ocupa el archivo //Segundo y tercer for: itera para ver cuales nodos tienen menos bloques
-		for (j = 0; j < numeroCopiasBloque; ++j)	// y se queda con la cantidad de nodos por copia que cumplan con ese
-			masBloquesLibres[j] = -1;				//criterio
-
-		for (j = 0; j < cantidadNodos; ++j)
-			nodosEnUso[j] = 0;
+	for (i = 0; i < realTotal; ++i){
 
 		for (k = 0; k < numeroCopiasBloque; ++k){
 			for (j = 0; j < cantidadNodos; ++j){
-				if (nodosEnUso[j] != 1){
-					if (masBloquesLibres[k] == -1){
-						masBloquesLibres[k] = indexNodos[j];
-						ultimoUtilizado = j;
-						nodosEnUso[j] = 1;
-						bloquesLibreNodo[j] -= 1;
-					}
-					else if(bloquesLibreNodo[ultimoUtilizado] < bloquesLibreNodo[j]){
-						nodosEnUso[ultimoUtilizado] = 0;
-						++bloquesLibreNodo[ultimoUtilizado];
-						masBloquesLibres[k] = indexNodos[j];
-						nodosEnUso[j] = 1;
-						bloquesLibreNodo[j] -= 1;
-					}
+				if (nodoAMandar > cantidadNodos-1)
+					nodoAMandar = 0;
+				if(bloquesLibreNodo[nodoAMandar] > 0 && nodoElegido[0] != nodoAMandar){
+					nodoElegido[k] = nodoAMandar;
+					--bloquesLibreNodo[nodoAMandar];
+					++envios[nodoAMandar];
+					++nodoAMandar;
+					break;
 				}
+				++nodoAMandar;
+
 			}
 		}
 
 		for (j = 0; j < numeroCopiasBloque; ++j){
-			for (k = 0; k < cantidadNodos; ++k)
-				if(masBloquesLibres[j] ==  indexNodos[k]){
-					nodoAUtilizar = k;
-				}
 
 			params[i+realTotal*j].mapa = mapeoArchivo->cadena;
 			params[i+realTotal*j].offset = offset;
-			infoAux = *(informacionNodo*)list_get(nodosConectados,indexNodoEnListaConectados[nodoAUtilizar]);
+			infoAux = *(informacionNodo*)list_get(nodosConectados,nodoElegido[j]);
 
 			if ( i > 0)
 				params[i+realTotal*j].restanteAnterior = mb - params[i+realTotal*j-1].sizeBloque;
 			else
 				params[i+realTotal*j].restanteAnterior = 0;
-			bloqueLibre = buscarPrimerBloqueLibre(indexNodoEnListaConectados[nodoAUtilizar], infoAux.sizeNodo);
+			bloqueLibre = buscarPrimerBloqueLibre(nodoElegido[j], infoAux.sizeNodo);
 			params[i+realTotal*j].socket = infoAux.socket;
 			params[i+realTotal*j].bloque = bloqueLibre;
 
@@ -689,25 +724,25 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			if(j==0)
 				sizeTotal += params[i+realTotal*j].sizeBloque;
 
-			params[i+realTotal*j].sem = indexNodoEnListaConectados[nodoAUtilizar];
+			params[i+realTotal*j].sem = nodoElegido[j];
 			pthread_create(&nuevoHilo[i+realTotal*j], NULL, &enviarADataNode,(void*) &params[i+realTotal*j]);
 
 			if (successArchivoCopiado == 1){
-				setearBloqueOcupadoEnBitmap(indexNodoEnListaConectados[nodoAUtilizar], bloqueLibre);
+				setearBloqueOcupadoEnBitmap(nodoElegido[j], bloqueLibre);
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dBYTES",i), string_itoa(params[i+realTotal*j].sizeBloque));
-				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(masBloquesLibres[j], bloqueLibre));
+				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(indexNodos[nodoElegido[j]], bloqueLibre));
 			}
+
 		}
 		//printf("size res %d\n", i);
+		nodoElegido[0] = -1;
+		nodoElegido[1] = -1;
 		if (i < realTotal-1)
 			offset += params[i].sizeBloque;
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
-		if (string_equals_ignore_case(path, "yamafs:/"))
-			config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombreArchivoSinExtension(nombre)));
-		else
-			config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombreArchivoSinExtension(nombre)));
+		config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombre));
 
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
@@ -717,6 +752,10 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	for (i = 0; i < realTotal * 2; ++i)
 		sem_wait(&pedidoTerminado);
+
+	for (i = 0; i< cantidadNodos; ++i){
+		printf("%d bloques fueron enviados a %d\n", envios[i], indexNodos[i]);
+	}
 
 	return successArchivoCopiado;
 
@@ -763,7 +802,6 @@ int bytesACortar(char* mapa, int offset, int sizeRestante){
 	}
 	free(bloque);
 	free(mapaInvertido);
-	printf("index %d\n", index);
 	return index;
 }
 
@@ -1016,7 +1054,9 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	informacionArchivoFsYama info;
 	info.informacionBloques = list_create();
 
-	char* rutaMetadata = rutaArchivoMetadataSinExtension(rutaDatos.cadena);
+	char* directorio = rutaSinArchivo(rutaDatos.cadena);
+	char* rutaArchivo = buscarRutaArchivo(directorio);
+	char* rutaMetadata = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivo), ultimaParteDeRuta(rutaDatos.cadena));
 
 	t_config* archivo = config_create(rutaMetadata);
 

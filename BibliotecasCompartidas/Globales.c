@@ -110,7 +110,7 @@ char* rutaSinArchivo(char* rutaArchivo){
 
 	memcpy(rutaFinal, rutaArchivo, string_length(rutaArchivo)-index-1);
 
-	printf("ruta sin archivo %s\n", rutaFinal);
+	//printf("ruta sin archivo %s\n", rutaFinal);
 	if(strcmp(rutaFinal, "yamafs:") == 0)
 		return "yamafs:/";
 

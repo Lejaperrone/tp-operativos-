@@ -86,7 +86,7 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 
 char* dameUnNombreArchivoTemporal(int jobId,int numBloque,int etapa,int nodo);
 
-void actualizarCargasNodos(int jobid,int etapa);
+void actualizarCargasNodos(int jobid,Etapa etapa);
 
 void actualizarCargasNodosReplanificacion(int jobid,int etapa,int bloque);
 
