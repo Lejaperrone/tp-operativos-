@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "Globales.h"
+#include <commons/process.h>
 
 #define mb 1048576
 #define idWorker 100

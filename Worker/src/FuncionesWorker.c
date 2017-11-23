@@ -102,12 +102,17 @@ void crearScript(char* bufferScript, int etapa,int numero) {
 	int auxChmod = strtol(mode, 0, 8);
 	char* nombreArchivo = string_new();
 
+	int pid = process_getpid();
+
 	if (etapa == mensajeProcesarTransformacion)
-		nombreArchivo = strdup("transformador.py");
+		string_from_format("transformador%d.py",pid );
+
 	else if (etapa == mensajeProcesarRedLocal)
-		nombreArchivo = strdup("reductorLocal.py");
+		string_from_format("reductorLocal%d.py",pid );
 	else if (etapa == mensajeProcesarRedGlobal)
-		nombreArchivo = strdup("reductorGlobal.py");
+		string_from_format("reductorGlobal%d.py",pid );
+
+
 
 	char* ruta = string_from_format("./%s", nombreArchivo);
 	script = fopen(ruta, "w+");

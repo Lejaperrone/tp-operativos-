@@ -88,29 +88,42 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
 				if(workerDesignado->disponibilidad <= 0){
 					workerDesignado->disponibilidad += getDisponibilidadBase();
-					workerDesignado = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero);
+					workerDesignado = avanzarClock(workerDesignado, listaNodos);
 				}
 
-			}else{
-				workerDesignado = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero);
+			}
+			else{
+				restaurarDisponibilidad(workerDesignado);
+				workerDesignado = avanzarClock(workerDesignado, listaNodos);
+				if(workerDesignado->disponibilidad <= 0){
+					workerDesignado->disponibilidad += getDisponibilidadBase();
+					while(workerDesignado->disponibilidad < 0 && bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
+						workerDesignado = avanzarClock(workerDesignado, listaNodos);
+					}
+				}
 
 				modificarCargayDisponibilidad(workerDesignado);
 
 				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
 				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
+
+				if(workerDesignado->disponibilidad <= 0){
+					workerDesignado->disponibilidad += getDisponibilidadBase();
+					workerDesignado = avanzarClock(workerDesignado, listaNodos);
+				}
 			}
 		}
-			else {
-				printf("El worker %d no tiene el bloque %d \n",workerDesignado->numero,bloque->numeroBloque);
-				infoNodo* proximoWorker = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero);
-				modificarCargayDisponibilidad(proximoWorker);
+		else {
+			printf("El worker %d no tiene el bloque %d \n",workerDesignado->numero,bloque->numeroBloque);
+			infoNodo* proximoWorker = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero);
+			modificarCargayDisponibilidad(proximoWorker);
 
-				agregarBloqueANodoParaEnviar(bloque,proximoWorker,respuestaAMaster,job);
-				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, proximoWorker->numero, proximoWorker->disponibilidad);
-			}
-
+			agregarBloqueANodoParaEnviar(bloque,proximoWorker,respuestaAMaster,job);
+			log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, proximoWorker->numero, proximoWorker->disponibilidad);
 		}
+
+	}
 
 
 	return respuestaAMaster;
