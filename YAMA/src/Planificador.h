@@ -16,13 +16,12 @@
 
 t_list* jobsAPlanificar;
 
-
 pthread_mutex_t cantTareasHistoricas_mutex;
 uint32_t wlMax;
 
-
 void planificar(job* job);
 infoNodo* inicializarWorker();
+void verificarDisponibilidades(t_list* listaNodos);
 void iniciarListasPlanificacion();
 void seleccionarWorker(infoNodo* worker, infoBloque bloque);
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);

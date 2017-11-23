@@ -36,10 +36,9 @@ pthread_mutex_t mutexLog;
 pthread_mutex_t mutexConfiguracion;
 pthread_mutex_t mutexTablaEstados;
 pthread_mutex_t mutexJobs;
-t_list* tablaDeEstados;
-t_list* nodosConectados;
-
 pthread_mutex_t cantJobs_mutex;
+t_list* nodosConectados;
+t_list* tablaDeEstados;
 
 int servidor,socketFs;
 
@@ -113,5 +112,7 @@ void actualizarCargasNodosRedLocal(int jobid,int numNodo);
 void agregarBloqueTerminadoATablaEstadosRedLocal(int nodo,int jobId,Etapa etapa);
 
 void reducirCargaJob(job* unJob);
+
+void reestablecerEstadoYama(job* job);
 
 #endif /* FUNCIONESYAMA_H_ */

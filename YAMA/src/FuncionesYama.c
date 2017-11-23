@@ -550,8 +550,16 @@ void esperarRespuestaReduccionDeMaster(job* job){
 	else if(respuestaMaster.idMensaje == mensajeFalloRedGlobal){
 		finalizarJob(job,RED_GLOBAL);
 	}
+	else if(respuestaMaster.idMensaje == mensajeDesconexion){
+		log_error(logger, "Error en Proceso Master.");
+		reestablecerEstadoYama(job);
+	}
 }
-
+void reestablecerEstadoYama(job* job){
+	close(job->socketFd);
+	free(job);
+	pthread_exit(0);
+}
 infoNodo* obtenerNodo(int numero){
 	bool encontrarNodo(void *nodo){
 		return ((infoNodo*)nodo)->numero == numero;
