@@ -97,7 +97,7 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
 				if(workerDesignado->disponibilidad <= 0){
 					workerDesignado->disponibilidad += getDisponibilidadBase();
-					while(workerDesignado->disponibilidad < 0 && bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
+					while(workerDesignado->disponibilidad > 0 && bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
 						workerDesignado = avanzarClock(workerDesignado, listaNodos);
 					}
 				}
