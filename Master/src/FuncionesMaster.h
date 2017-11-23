@@ -92,4 +92,6 @@ void enviarAlmacenamientoFinal(respuestaAlmacenamiento* almacenamiento);
 
 void* conectarseConWorkerAlmacenamiento(void* params);
 
+char* obtenerEstadoFinalizacion(Finalizacion tipoFin);
+
 #endif /* FUNCIONESMASTER_H_ */

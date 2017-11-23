@@ -116,7 +116,7 @@ void crearScript(char* bufferScript, int etapa) {
 	else if (etapa == mensajeProcesarRedGlobal)
 		nombreArchivo = strdup("reductorGlobal.py");
 
-	char* ruta = string_from_format("../scripts/%s", nombreArchivo);
+	char* ruta = string_from_format("./%s", nombreArchivo);
 	script = fopen(ruta, "w+");
 	fwrite(bufferScript, sizeof(char), aux, script);
 	auxChmod = strtol(mode, 0, 8);

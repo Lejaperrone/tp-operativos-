@@ -51,6 +51,7 @@ void esperarInstruccionesDeYama() {
 	respuestaReduccionGlobal* infoRedGlobal;
 	workerDesdeYama* worker;
 	respuestaAlmacenamiento* almacenamiento;
+	int fallo;
 
 	while (1) {
 		instruccionesYama = desempaquetar(socketYama);
@@ -81,8 +82,9 @@ void esperarInstruccionesDeYama() {
 				break;
 
 			case mensajeFinJob:
+				//fallo = instruccionesYama.envio;
 				log_trace(loggerMaster, "Finaliza job.");
-				finalizarJob();
+				finalizarJob(FALLO_RED_LOCAL);
 				break;
 
 			case mensajeRespuestaRedGlobal:
@@ -522,7 +524,7 @@ void finalizarTiempo(t_list* tiempos,int numero){
 	tiempo->tiempo=time(NULL);
 }
 
-void finalizarJob(){
+void finalizarJob(Finalizacion final){
 	//mostrarListasEstadisticas();
 
 	time_t fin= time(NULL);
@@ -530,14 +532,17 @@ void finalizarJob(){
 	double promTransformacion = calcularDuracionPromedio(estadisticas->tiempoInicioTrans,estadisticas->tiempoFinTrans);
 	double promLocal = calcularDuracionPromedio(estadisticas->tiempoInicioRedLocal,estadisticas->tiempoFinRedLocal);
 	double promGlobal= calcularDuracionPromedio(estadisticas->tiempoInicioRedGlobal,estadisticas->tiempoFinRedGlobal);
+	char* finalizacion = obtenerEstadoFinalizacion(final);
 
-	printf("\nDuracion total: %d\n",duracion);
+
+	printf("\nEstado de Finalizacion: %s\n",finalizacion);
+	printf("Duracion total: %d\n",duracion);
 	printf("Cantidad tareas transformacion %d\n",estadisticas->cantTareas[TRANSFORMACION]);
-	printf("Duracion promedio transformacion: %f\n",promTransformacion);
+	printf("Duracion promedio transformacion: %.2f\n",promTransformacion);
 	printf("Cantidad tareas reduccion local: %d\n",estadisticas->cantTareas[RED_LOCAL]);
-	printf("Duracion promedio reduccion local: %f\n",promLocal);
+	printf("Duracion promedio reduccion local: %.2f\n",promLocal);
 	printf("Cantidad tareas reduccion global: %d\n",estadisticas->cantTareas[RED_GLOBAL]);
-	printf("Duracion promedio reduccion global: %f\n",promGlobal);
+	printf("Duracion promedio reduccion global: %.2f\n",promGlobal);
 	printf("Cantidad de fallos obtenidos: %d\n",estadisticas->cantFallos);
 
 	exit(0);
@@ -560,6 +565,10 @@ double calcularDuracionPromedio(t_list* tiemposInicio,t_list* tiemposFin){
 
 	}
 
+	if(cont==0){
+		return 0.1;
+	}
+
 	return cont / list_size(tiemposInicio);
 
 }
@@ -580,4 +589,42 @@ void mostrarListasEstadisticas(){
 	//list_iterate(estadisticas->tiempoFinRedLocal,(void*)mostrar);
 	//list_iterate(estadisticas->tiempoInicioRedGlobal,(void*)mostrar);
 	//list_iterate(estadisticas->tiempoFinRedGlobal,(void*)mostrar);
+}
+
+char* obtenerEstadoFinalizacion(Finalizacion tipoFin){
+	char* nombre;
+
+	switch(tipoFin){
+	case OK:
+		nombre =malloc(3);
+		nombre = strdup("OK");
+		break;
+
+	case FALLO_ALMACENAMIENTO:
+		nombre =malloc(21);
+		nombre = strdup("FALLO ALMACENAMIENTO");
+		break;
+
+	case FALLO_RED_GLOBAL:
+		nombre =malloc(16);
+		nombre = strdup("FALLO RED GLOBAL");
+		break;
+
+	case FALLO_RED_LOCAL:
+		nombre =malloc(15);
+		nombre = strdup("FALLO RED LOCAL");
+		break;
+
+	case FALLO_TRANSFORMACION:
+		nombre =malloc(3);
+		nombre = strdup("FALLO TRANSFORMACION");
+		break;
+
+	case PEDIDO_FS:
+		nombre =malloc(3);
+		nombre = strdup("PEDIDO FS");
+		break;
+	}
+
+	return nombre;
 }
