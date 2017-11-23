@@ -742,7 +742,10 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	if(successArchivoCopiado == 1){ //Por cada bloque agrego sus valores para la tabla
-		config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombre));
+		if (strcmp(path, "yamafs:/") == 0)
+			config_set_value(infoArchivo, "RUTA", string_from_format("%s%s", path, nombre));
+		else
+			config_set_value(infoArchivo, "RUTA", string_from_format("%s/%s", path, nombre));
 
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
