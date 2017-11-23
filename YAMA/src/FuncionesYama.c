@@ -322,11 +322,11 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 	return matriz;
 }
 
-int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos){
+int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos,int bloques){
 	int i=0;
 
-	for(i=0;i<=nodos;i++){
-		matriz[i][replanificar->bloque]=false;
+	for(i=0;i<=bloques;i++){
+		matriz[replanificar->workerId][i]=false;
 	}
 
 	for(i=0;i<=nodos;i++){
@@ -432,7 +432,7 @@ void agregarBloqueTerminadoATablaEstadosRedLocal(int nodo,int jobId,Etapa etapa)
 }
 bool faltanMasTareas(int jobid,Etapa etapa){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-		return reg->job == jobid && reg->etapa == etapa && reg->estado != FINALIZADO_OK;
+		return reg->job == jobid && reg->etapa == etapa && reg->estado == EN_EJECUCION;
 	}
 
 	pthread_mutex_lock(&mutexTablaEstados);
@@ -587,7 +587,7 @@ void eliminarWorker(int id, t_list* listaNodos){
 
 bool faltanBloquesTransformacionParaNodo(int jobid,int nodo){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-		return reg->job == jobid && reg->etapa == TRANSFORMACION && reg->estado != FINALIZADO_OK && reg->nodo==nodo;
+		return reg->job == jobid && reg->etapa == TRANSFORMACION && reg->estado == EN_EJECUCION && reg->nodo==nodo;
 	}
 
 	pthread_mutex_lock(&mutexTablaEstados);

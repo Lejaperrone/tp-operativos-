@@ -31,7 +31,7 @@ void handlerMaster(int clientSocket);
 void handlerWorker(int clientSocket);
 void levantarServidorWorker(char* ip, int port);
 void ejecutarTransformacion();
-void crearScript(char* bufferScript, int etapa);
+void crearScript(char* bufferScript, int etapa,int numero);
 void apareoArchivosLocales();
 t_list* crearListaParaReducir();
 void ejecutarComando(char* command, int socketMaster);

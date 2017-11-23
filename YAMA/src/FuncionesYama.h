@@ -75,7 +75,7 @@ void inicializarEstructuras();
 
 bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques);
 
-int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos);
+int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos,int bloques);
 
 void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques);
 

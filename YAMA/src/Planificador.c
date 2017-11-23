@@ -49,7 +49,7 @@ void planificar(job* job){
 
 	actualizarCargasNodos(job->id,TRANSFORMACION);
 
-	planificarReduccionesLocales(job,matrix,respuestaMaster,nodos);
+	planificarReduccionesLocales(job,matrix,respuestaMaster,nodos,bloques);
 
 	enviarReduccionGlobalAMaster(job);
 
@@ -318,7 +318,7 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 
 }
 
-void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques){
+void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques,int nodos){
 	respuestaSolicitudTransformacion* respuestaTransfromacion = malloc(sizeof(respuestaSolicitudTransformacion));
 	respuestaTransfromacion->workers = list_create();
 
@@ -335,7 +335,7 @@ void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacio
 		nodoBloque->bloque= bloque->numBloque;
 		nodoBloque->workerId = paraReplanificar;
 
-		int nodoNuevo = nodoConOtraCopia(nodoBloque,matrix,bloques);
+		int nodoNuevo = nodoConOtraCopia(nodoBloque,matrix,nodos,bloques);
 
 		if(nodoNuevo == -1){
 			log_trace(logger,"Fallo en replanificar nodo %d", paraReplanificar);
@@ -366,7 +366,7 @@ void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacio
 			nuevoWorker->bloquesConSusArchivos =list_create();
 		}
 
-		bloqueNuevo->archivoTemporal.cadena = dameUnNombreArchivoTemporal(jobi->id,bloque->numBloque,TRANSFORMACION,paraReplanificar);
+		bloqueNuevo->archivoTemporal.cadena = dameUnNombreArchivoTemporal(jobi->id,bloque->numBloque,TRANSFORMACION,nodoNuevo);
 		bloqueNuevo->archivoTemporal.longitud = string_length(bloqueNuevo->archivoTemporal.cadena);
 
 		bloqueNuevo->bytesOcupados = bloque->bytesOcupados;
@@ -376,6 +376,28 @@ void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacio
 		list_add(nuevoWorker->bloquesConSusArchivos,bloqueNuevo);
 
 		log_trace(logger, "Replanifico bloque %i asignado al worker %i ",bloque->numBloque, nodoNuevo);
+
+
+		pthread_mutex_lock(&mutexTablaEstados);
+
+		bool regEnTabla(registroTablaEstados* reg){
+			return reg->job == jobi->id && reg->etapa == TRANSFORMACION && reg->bloque==bloque->numBloque;
+		}
+
+		registroTablaEstados* registroViejo =list_find(tablaDeEstados,(void*)regEnTabla);
+		registroViejo->estado = ERROR;
+
+		registroTablaEstados* registro = malloc(sizeof(registroTablaEstados));
+		registro->bloque= bloque->numBloque;
+		registro->estado=EN_EJECUCION;
+		registro->etapa= TRANSFORMACION;
+		registro->job = jobi->id;
+		registro->nodo= nodoNuevo;
+		registro->rutaArchivoTemp = strdup(bloqueNuevo->archivoTemporal.cadena);
+
+
+		list_add(tablaDeEstados,registro);
+		pthread_mutex_unlock(&mutexTablaEstados);
 	}
 
 	list_iterate(worker->bloquesConSusArchivos,(void*)agregarBloque);
@@ -568,7 +590,7 @@ void realizarAlmacenamientoFinal(job* job){
 	desempaquetar(job->socketFd);
 }
 
-void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTransformacion* respuestaMaster,int nodos){
+void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTransformacion* respuestaMaster,int nodos,int bloques){
 	bool redLocalIncompleta= true;
 	bloqueYNodo* bloqueNodo;
 	int numNodo;
@@ -600,7 +622,7 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 			log_trace(logger,"Entro a replanificar se desconecto un worker %d", bloqueNodo->workerId);
 
 			if(nodosReplanificados[bloqueNodo->workerId]){
-				replanificar(bloqueNodo->workerId,job,respuestaMaster,matrix,nodos);
+				replanificar(bloqueNodo->workerId,job,respuestaMaster,matrix,bloques,nodos);
 				nodosReplanificados[bloqueNodo->workerId] = false;
 			}
 

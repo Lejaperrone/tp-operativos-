@@ -54,10 +54,10 @@ void verificarValorDisponibilidad(infoNodo* nodo);
 void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArchivo,int jobid);
 void enviarReduccionLocalAMaster(job* job,int nodo);
 void enviarReduccionGlobalAMaster(job* job);
-void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques);
+void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques,int nodos);
 int calcularNodoEncargado(t_list* registrosRedGlobal);
 t_list* buscarCopiasBloques(t_list* listaBloques,t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
 void realizarAlmacenamientoFinal(job* job);
-void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTransformacion* respuestaMaster,int nodos);
+void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTransformacion* respuestaMaster,int nodos,int bloques);
 
 #endif /* PLANIFICADOR_H_ */

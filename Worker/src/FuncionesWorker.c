@@ -94,7 +94,7 @@ void apareoArchivosLocales(t_list *sources, const char *target) {
 	fclose(resultado);
 }
 
-void crearScript(char* bufferScript, int etapa) {
+void crearScript(char* bufferScript, int etapa,int numero) {
 	log_trace(logger, "Iniciando creacion de script");
 	char mode[] = "0777";
 	FILE* script;
@@ -103,7 +103,7 @@ void crearScript(char* bufferScript, int etapa) {
 	char* nombreArchivo;
 
 	if (etapa == mensajeProcesarTransformacion)
-		nombreArchivo = "transformador.py";
+		nombreArchivo = string_from_format("transformador%d.py",numero);
 	else if (etapa == mensajeProcesarRedLocal)
 		nombreArchivo = "reductorLocal.py";
 	else if (etapa == mensajeProcesarRedGlobal)
@@ -150,7 +150,7 @@ void handlerMaster(int clientSocket) {
 		int bytesRestantes = transformacion->bloquesConSusArchivos.bytesOcupados;
 		destino = transformacion->bloquesConSusArchivos.archivoTemporal.cadena;
 		int offset = bloqueId * mb + bytesRestantes;
-		crearScript(contenidoScript, mensajeProcesarTransformacion);
+		crearScript(contenidoScript, mensajeProcesarTransformacion,numeroBloqueTransformado);
 		log_trace(logger, "Aplicar transformacion en %i bytes del bloque %i",
 				bytesRestantes, numeroBloqueTransformado);
 		string_append(&path, "/tmp");
@@ -159,7 +159,7 @@ void handlerMaster(int clientSocket) {
 						"head -c %d < %s | tail -c %d | ./transformador.py | sort > %s/%s",
 						offset, config.RUTA_DATABIN, bytesRestantes, path , destino);
 		ejecutarComando(command, clientSocket);
-		log_trace(logger, "Transformacion realizada correctamente");
+		log_trace(logger, "Transformacion realizada correctamente %d",numeroBloqueTransformado);
 		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);
 		free(transformacion);
 		exit(0);
@@ -178,7 +178,7 @@ void handlerMaster(int clientSocket) {
 		}
 		list_iterate(listAux, (void*) agregarPathAElemento);
 		destino = strdup(reduccionLocal->rutaDestino.cadena);
-		crearScript(contenidoScript, mensajeProcesarRedLocal);
+		crearScript(contenidoScript, mensajeProcesarRedLocal,numeroNodo);
 		archivoPreReduccionLocal = string_from_format("%s/tmp/%s", path, "preReduccionLocal");
 		apareoArchivosLocales(listaArchivosTemporales, archivoPreReduccionLocal);
 		command = string_from_format("cat %s | ./reductorLocal.py > %s", archivoPreReduccionLocal, string_from_format("%s/tmp/%s", path, destino));
@@ -195,7 +195,7 @@ void handlerMaster(int clientSocket) {
 		listaWorkers = list_create();
 		list_add_all(listaWorkers, reduccionGlobal->infoWorkers);
 		contenidoScript = strdup(reduccionGlobal->contenidoScript.cadena);
-		crearScript(contenidoScript, mensajeProcesarRedGlobal);
+		crearScript(contenidoScript, mensajeProcesarRedGlobal,0);
 		rutaArchivoFinal = crearRutaArchivoAReducir(listaWorkers);
 		command = string_from_format("cat %s | ./reductorGlobal.py > %s", rutaArchivoFinal, string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
