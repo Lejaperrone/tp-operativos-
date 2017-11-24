@@ -89,14 +89,14 @@ void* levantarServidorFS(){
 								list_add(pedidosFS, &semaforo);
 								EstadoFS = verificarEstado();
 								printf("estado fs %d\n", EstadoFS);
-								if (!recuperarEstado){
+								/*if (!recuperarEstado){
 									informacionNodo* nodo = (informacionNodo*) paqueteInfoNodo.envio;
 							 		empaquetar(nodo->socket, mensajeBorraDataBin, 0, 0);
 							 		respuesta res = desempaquetar(nodo->socket);
 							 		int resultado = *(int*) res.envio;
 							 		if (resultado == 1)
 							 			printf("Nodo%d formateado\n", nodo->numeroNodo);
-								}
+								}*/
 							}
 							else{
 								pthread_mutex_lock(&logger_mutex);

@@ -506,7 +506,6 @@ void* leerDeDataNode(void* parametros){
 	 sem_wait(semaforo);
 	 respuesta respuesta;
 	 empaquetar(params->socket, mensajeNumeroLecturaBloqueANodo, sizeof(int),&params->bloque);
-	 empaquetar(params->socket, mensajeSizeLecturaBloqueANodo, sizeof(int),&params->sizeBloque);
 	 respuesta = desempaquetar(params->socket);
 	 params->contenidoBloque = malloc(params->sizeBloque + 1);
 	 memset(params->contenidoBloque, 0, params->sizeBloque + 1);

@@ -46,13 +46,13 @@ int setBloque(int numeroBloque, char* datos) {
 	return success;
 }
 
-char* getBloque(int numeroBloque, int sizeBloque) {
+char* getBloque(int numeroBloque) {
 	int fd = open(config.RUTA_DATABIN, O_RDWR);
 	char* mapaDataBin = mmap(0, mb, PROT_READ, MAP_SHARED, fd, mb*numeroBloque);
 	//printf("%d %d\n", numeroBloque, sizeBloque);
 	char* datos = malloc(mb+1);
 	memset(datos,0,mb+1);
-	memcpy(datos, mapaDataBin, sizeBloque);
+	memcpy(datos, mapaDataBin, strlen(mapaDataBin));
 	if (munmap(mapaDataBin,mb) == -1)
 	{
 		close(fd);
@@ -134,10 +134,8 @@ void recibirMensajesFileSystem(int socketFs) {
 		break;
 
 	case mensajeNumeroLecturaBloqueANodo:
-		bloqueArchivo = desempaquetar(socketFs);
-		memcpy(&sizeBloque, bloqueArchivo.envio, sizeof(int));
 		memcpy(&bloqueId, numeroBloque.envio, sizeof(int));
-		data = getBloque(bloqueId, sizeBloque);
+		data = getBloque(bloqueId);
 		//printf("envioooo %d\n", strlen(data));
 		empaquetar(socketFs, mensajeRespuestaGetBloque, strlen(data),data);
 		free(data);
