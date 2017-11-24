@@ -10,9 +10,10 @@
 
 #define mb 1048576
 
+extern bool fsFormateado;
+
 int formatearFS(){
 	int resultado = 0;
-	char* root = "../metadata/Archivos/0";
 
 	resultado += borrarDirectorios();
 
@@ -22,10 +23,8 @@ int formatearFS(){
 
 	//resultado += formatearDataBins(); NO VA
 
-	if (!validarDirectorio(root))
-		mkdir(root,0777);
-
 	if (resultado == 3){
+		fsFormateado = true;
 		printf("FileSystem formateado correctamente.\n");
 		return 0;
 	}

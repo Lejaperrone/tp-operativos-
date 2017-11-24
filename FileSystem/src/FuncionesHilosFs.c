@@ -72,10 +72,11 @@ void* levantarServidorFS(){
 						if (*(int*)conexionNueva.envio == idDataNodes){
 							paqueteInfoNodo = desempaquetar(nuevoCliente);
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
-							if (nodoRepetido(info) == 0 && nodoDeEstadoAnterior(info) && noSeConectoYama){
+							if (nodoRepetido(info) == 0 && nodoDeEstadoAnterior(info) && !fsFormateado){
 								pthread_mutex_lock(&logger_mutex);
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
 								pthread_mutex_unlock(&logger_mutex);
+								printf("Conexión de DataNode %d.\n", info.numeroNodo);
 								info.bloquesOcupados = levantarBitmapNodo(info.numeroNodo, info.sizeNodo);
 								bloquesLibresTotales += info.sizeNodo - info.bloquesOcupados;
 								info.socket = nuevoCliente;
@@ -102,6 +103,12 @@ void* levantarServidorFS(){
 								pthread_mutex_lock(&logger_mutex);
 								log_trace(loggerFS, "DataNode invalido\n");
 								pthread_mutex_unlock(&logger_mutex);
+								if (fsFormateado)
+									printf("No se puede conectar el DataNode, fileSystem formateado.\n");
+								if (nodoRepetido(info))
+									printf("El nodo ya esta conectado.\n");
+								if (!nodoDeEstadoAnterior(info))
+									printf("El nodo no pertenece al estado anterior.\n");
 								close(nuevoCliente);
 								FD_CLR(nuevoCliente, &datanodes);
 							}
@@ -187,6 +194,7 @@ void* levantarServidorFS(){
 	return 0;
 
 }
+
 
 int nodoDeEstadoAnterior(informacionNodo info){
 

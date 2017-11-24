@@ -35,6 +35,7 @@ int mostrarLoggerPorPantalla = 1;
 
 char* rutaBitmaps = "../metadata/Bitmaps/";
 char* rutaArchivos = "../metadata/Archivos/";
+char* root = "../metadata/Archivos/0";
 
 int cantidadDirectorios = 100;
 int numeroCopiasBloque = 2;
@@ -54,6 +55,7 @@ pthread_mutex_t listSemMutex;
 int EstadoFS = 0;
 int bloquesLibresTotales = 0;
 bool recuperarEstado = 0;
+bool fsFormateado = false;
 
 struct configuracionFileSystem config;
 
@@ -86,8 +88,13 @@ int main(int argc, char *argv[]) {
 
 	if (recuperarEstado == 1)
 		inicializarTablaDirectorios();
-	else
-		formatearFS();
+	else{
+		borrarDirectorios();
+
+		borrarArchivosEnMetadata();
+
+		liberarNodosConectados();
+	}
 
 	servidorFS = crearSocket();
 

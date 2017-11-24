@@ -1224,6 +1224,7 @@ int obtenerNumeroCopia(t_config* infoArchivo,int bloqueACopiar){
 
 int borrarDirectorios(){
 	int i, respuesta = 1;
+	char* root = "../metadata/Archivos/0";
 
 	tablaDeDirectorios[0].index = 0;
 	tablaDeDirectorios[0].padre = -1;
@@ -1248,6 +1249,9 @@ int borrarDirectorios(){
 		if (respuesta == 0)
 			respuesta = 1;
 	}
+
+	if (!validarDirectorio(root))
+		mkdir(root,0777);
 
 	return respuesta;
 }
