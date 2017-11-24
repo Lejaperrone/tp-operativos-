@@ -59,14 +59,6 @@ struct configuracionFileSystem config;
 
 int main(int argc, char *argv[]) {
 
-	printf("Ronan deja de robar aditions\n\n\n\n\n");
-
-	printf("Santi, el capo arreglo  todo .");
-	printf("Atte.");
-	printf("Ronan");
-	printf("PD: Le regale aditions a nacho");
-
-
 	limpiarPantalla();
 	cargarConfiguracionFileSystem(&config,argv[1]);
 

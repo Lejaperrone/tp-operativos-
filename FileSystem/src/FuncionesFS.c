@@ -1112,6 +1112,12 @@ void obtenerInfoNodo(ubicacionBloque* ubicacion){
 
 int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
 	int respuesta = 1, respuestaEnvio = -1;
+	int i;
+	int socketPedido = -1;
+	int bloquePedido = -1;
+	char** nodoPedido;
+	int numeroNodoPedido = -1;
+	int nodoElegido = -1;
 	char* respuestaLectura;
 	informacionNodo info;
 	parametrosLecturaBloque paramLectura;
@@ -1121,23 +1127,54 @@ int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
 	if (config_has_property(infoArchivo, string_from_format("BLOQUE%dBYTES",bloque))){
 		paramLectura.sizeBloque = config_get_int_value(infoArchivo,string_from_format("BLOQUE%dBYTES",bloque));
 	}else{
-		printf("No existe el bloque");
-		return respuesta;
+		return -1;
 	}
-	info = *(informacionNodo*)list_get(nodosConectados,nodo - 1);
-	paramLectura.socket = info.socket;
-	paramLectura.bloque = bloque;
-	paramLectura.sem = nodo;
+	for (i = 0; i < list_size(nodosConectados); ++i){
+		info = *(informacionNodo*)list_get(nodosConectados,i);
+		if (info.numeroNodo == nodo){
+			nodoElegido = i;
+			break;
+		}
+	}
+	int contador = 0;
+	while (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",bloque, contador)) && socketPedido == -1){
+		nodoPedido = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",bloque, contador));
+		numeroNodoPedido = atoi(string_substring_from(nodoPedido[0],4));
+		for (i = 0; i < list_size(nodosConectados); ++i){
+			info = *(informacionNodo*)list_get(nodosConectados,i);
+			if (info.numeroNodo == numeroNodoPedido){
+				socketPedido = info.socket;
+				bloquePedido = atoi(nodoPedido[1]);
+				break;
+			}
+		}
+		free(nodoPedido);
+		++contador;
+	}
+
+	if (socketPedido == -1){
+		printf("Ningun nodo conectado tiene el bloque necesario\n");
+		return -3;
+	}
+
+
+	if (nodoElegido == -1){
+		return -2;
+	}
+
+	paramLectura.socket = socketPedido;
+	paramLectura.bloque = bloquePedido;
+	paramLectura.sem = nodoElegido;
 
 	pthread_create(&nuevoHilo, NULL, &leerDeDataNode,(void*) &paramLectura);
 	pthread_join(nuevoHilo, (void**) &respuestaLectura);
 
 	//printf("sali de leer\n");
 
-	paramEnvio.bloque = buscarPrimerBloqueLibre(nodo - 1, info.sizeNodo);
+	paramEnvio.bloque = buscarPrimerBloqueLibre(nodoElegido, info.sizeNodo);
 	paramEnvio.offset = 0;
 	paramEnvio.restanteAnterior = 0;
-	paramEnvio.sem = nodo;
+	paramEnvio.sem = nodoElegido;
 	paramEnvio.sizeBloque = paramLectura.sizeBloque;
 	paramEnvio.socket = info.socket;
 	paramEnvio.mapa = paramLectura.contenidoBloque;
@@ -1147,7 +1184,9 @@ int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
 
 	//printf("sali de enviar\n");
 
-	setearBloqueOcupadoEnBitmap(nodo - 1, paramEnvio.bloque);
+	setearBloqueOcupadoEnBitmap(nodoElegido, paramEnvio.bloque);
+
+	free(paramEnvio.mapa);
 
 	return paramEnvio.bloque;
 }

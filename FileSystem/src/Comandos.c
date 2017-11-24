@@ -20,12 +20,12 @@ int formatearFS(){
 
 	resultado += liberarNodosConectados();
 
-	resultado += formatearDataBins();
+	//resultado += formatearDataBins(); NO VA
 
 	if (!validarDirectorio(root))
 		mkdir(root,0777);
 
-	if (resultado == 4)
+	if (resultado == 3)
 		return 0;
 
 	return 1;
@@ -142,9 +142,10 @@ int eliminarDirectorio(char* comando){
 
 
 int eliminarBloque(char* comando){
-	int respuesta = 1, otraCopia, numeroNodo, bloqueNodo;
+	int respuesta = 1, otraCopia, numeroNodo, bloqueNodo, i, nodoElegido = -1;
 	char** arrayInfoBloque;
 	char* rutaArchivoYamafs = devolverRuta(comando,2);
+	informacionNodo info;
 
 	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0)
 		return 3;
@@ -178,7 +179,22 @@ int eliminarBloque(char* comando){
 	arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",numeroBloque,numeroCopia));
 	numeroNodo = atoi(string_substring_from(arrayInfoBloque[0], 4));
 	bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
-	setearBloqueLibreEnBitmap(numeroNodo - 1, bloqueNodo);
+
+	for (i = 0; i < list_size(nodosConectados); ++i){
+		info = *(informacionNodo*)list_get(nodosConectados,i);
+		if (info.numeroNodo == numeroNodo){
+			nodoElegido = i;
+			break;
+		}
+	}
+	if (nodoElegido == -1){
+		printf("No existe el nodo\n");
+		return 0;
+	}
+
+
+
+	setearBloqueLibreEnBitmap(nodoElegido, bloqueNodo);
 	actualizarBitmapNodos();
 	config_save(infoArchivo);
 
@@ -392,6 +408,11 @@ int crearDirectorio(char* comando){
 			while(tablaDeDirectorios[i].index != -1){
 				++i;
 			}
+			if (i == 100){
+				printf("Se alcanzo el limite de directorios\n");
+				return 2;
+			}
+
 			success = 0;
 			tablaDeDirectorios[i].index = i;
 			tablaDeDirectorios[i].padre = indexPadre;
@@ -537,9 +558,14 @@ int copiarBloqueANodo(char* comando){
 	bloqueNuevo = guardarBloqueEnNodo(bloqueACopiar, nodoACopiar, infoArchivo);
 
 	if (bloqueNuevo == -1){
-		printf("No existe el bloque");
+		printf("No existe el bloque\n");
 		return respuesta;
 	}
+	if (bloqueNuevo == -2){
+		printf("No existe el nodo\n");
+		return respuesta;
+	}
+
 
 	numeroCopiaBloqueNuevo = obtenerNumeroCopia(infoArchivo, bloqueACopiar);
 
@@ -550,6 +576,8 @@ int copiarBloqueANodo(char* comando){
 
 	actualizarBitmapNodos();
 	respuesta = 0;
+
+	config_destroy(infoArchivo);
 
 	return respuesta;
 }
