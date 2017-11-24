@@ -408,6 +408,17 @@ char* leerArchivo(char* rutaArchivo){
 		sizeAux -= mb;
 		++cantBloquesArchivo;
 	}
+
+	int cantidadCopiasBloque[cantBloquesArchivo];
+
+	for (j = 0; j < cantBloquesArchivo; ++j)
+		cantidadCopiasBloque[j] = 0;
+
+	for (j = 0; j < cantBloquesArchivo; ++j)
+		for (i = 0; config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,i)); ++i){
+			++cantidadCopiasBloque[j];
+		}
+
 	char* respuestas[cantBloquesArchivo];
 	parametrosLecturaBloque params[cantBloquesArchivo];
 	pthread_t nuevoHilo[cantBloquesArchivo];
@@ -420,7 +431,7 @@ char* leerArchivo(char* rutaArchivo){
 	}
 
 	for (i = 0; i < cantBloquesArchivo; ++i){
-		for (l = 0; l < numeroCopiasBloque; ++l){
+		for (l = 0; l < cantidadCopiasBloque[i]; ++l){
 			arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,l));
 			numeroNodoDelBloque[l] = atoi(string_substring_from(arrayInfoBloque[0], 4));
 			for (k = 0; k < cantidadNodos; ++k)
@@ -431,7 +442,7 @@ char* leerArchivo(char* rutaArchivo){
 	}
 
 	for (i = 0; i < cantBloquesArchivo; ++i){
-		for (l = 0; l < numeroCopiasBloque; ++l){
+		for (l = 0; l < cantidadCopiasBloque[i]; ++l){
 			arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,l));
 			copia[l] = atoi(arrayInfoBloque[1]);
 			numeroNodoDelBloque[l] = atoi(string_substring_from(arrayInfoBloque[0], 4));
@@ -490,6 +501,9 @@ char* leerArchivo(char* rutaArchivo){
 	for (i = 0; i < cantBloquesArchivo; ++i)
 		sem_wait(&pedidoTerminado);
 
+	for (i = 0; i< cantidadNodos; ++i){
+		printf("%d bloques fueron pedidos a %d\n", peticiones[i], indexNodos[i]);
+	}
 
 	free(currentChar);
 	free(rutaArchivoEnMetadata);
