@@ -125,10 +125,12 @@ int eliminarDirectorio(char* comando){
 	if (isDirectoryEmpty(rutaDirectorioMetadata)){
 		tablaDeDirectorios[numeroTablaDirectorio].index = -1;
 		tablaDeDirectorios[numeroTablaDirectorio].padre = -1;
-		memcpy(tablaDeDirectorios[numeroTablaDirectorio].nombre," ",1);
+		memcpy(tablaDeDirectorios[numeroTablaDirectorio].nombre," ",255);
 
 		if (strcmp(buscarRutaArchivo(rutaDirectorioYamfs), "-1") != 0)
 			system(string_from_format("rm -d %s", buscarRutaArchivo(rutaDirectorioYamfs)));
+
+		printf("%s\n",tablaDeDirectorios[numeroTablaDirectorio].nombre );
 
 		return 0;
 	}else{
