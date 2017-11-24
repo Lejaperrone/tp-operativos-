@@ -236,7 +236,14 @@ void recibirContenidoMaster(int nuevoMaster) {
 
 	iniciarListasPlanificacion();
 
+
 	nuevoJob = desempaquetar(nuevoMaster);
+
+	if(nuevoJob.idMensaje == mensajeDesconexion){
+		log_trace(logger, "Fallo al recibir job");
+		pthread_exit(0);
+	}
+
 	job* jobAPlanificar =(job*) nuevoJob.envio;
 
 	pthread_mutex_lock(&cantJobs_mutex);
@@ -442,11 +449,12 @@ bool faltanMasTareas(int jobid,Etapa etapa){
 	return faltanTareas;
 }
 
-void finalizarJob(job* job,int etapa){
+void finalizarJob(job* job,int etapa,int error){
 	//actualizarCargasNodos(job->id,etapa);
 	reducirCargaJob(job);
 	borrarEntradasDeJob(job->id);
-	empaquetar(job->socketFd,mensajeFinJob,0,0);
+	int err = error;
+	empaquetar(job->socketFd,mensajeFinJob,0,&err);
 	respuesta respuestaFin;
 	respuestaFin = desempaquetar(job->socketFd);
 
@@ -548,7 +556,7 @@ void esperarRespuestaReduccionDeMaster(job* job){
 		return;
 	}
 	else if(respuestaMaster.idMensaje == mensajeFalloRedGlobal){
-		finalizarJob(job,RED_GLOBAL);
+		finalizarJob(job,RED_GLOBAL,FALLO_RED_GLOBAL);
 	}
 	else if(respuestaMaster.idMensaje == mensajeDesconexion){
 		log_error(logger, "Error en Proceso Master.");

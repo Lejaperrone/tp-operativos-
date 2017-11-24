@@ -89,7 +89,7 @@ void actualizarCargasNodos(int jobid,Etapa etapa);
 
 void actualizarCargasNodosReplanificacion(int jobid,int etapa,int bloque);
 
-void finalizarJob(job* job, int etapa);
+void finalizarJob(job* job, int etapa,int error);
 
 void borrarEntradasDeJob(int jobid);
 

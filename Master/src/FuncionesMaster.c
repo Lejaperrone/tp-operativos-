@@ -28,6 +28,14 @@ job* crearJob(char* argv[]){
 	nuevo->id = 0;
 	nuevo->socketFd = 0;
 
+	if( access( argv[2], F_OK ) == -1 ) {
+	  finalizarJob(FALLO_INGRESO);
+	}
+
+	if( access( argv[3], F_OK ) == -1 ) {
+		finalizarJob(FALLO_INGRESO);
+	}
+
 	nuevo->rutaTransformador.cadena = string_duplicate(argv[2]);
 	nuevo->rutaTransformador.longitud = string_length(nuevo->rutaTransformador.cadena);
 
@@ -82,9 +90,9 @@ void esperarInstruccionesDeYama() {
 				break;
 
 			case mensajeFinJob:
-				//fallo = instruccionesYama.envio;
+				fallo = *(int*)instruccionesYama.envio;
 				log_trace(loggerMaster, "Finaliza job.");
-				finalizarJob(FALLO_RED_LOCAL);
+				finalizarJob(fallo);
 				break;
 
 			case mensajeRespuestaRedGlobal:
@@ -528,22 +536,44 @@ void finalizarJob(Finalizacion final){
 	//mostrarListasEstadisticas();
 
 	time_t fin= time(NULL);
-	int duracion = difftime(fin,estadisticas->tiempoInicio);
-	double promTransformacion = calcularDuracionPromedio(estadisticas->tiempoInicioTrans,estadisticas->tiempoFinTrans);
-	double promLocal = calcularDuracionPromedio(estadisticas->tiempoInicioRedLocal,estadisticas->tiempoFinRedLocal);
-	double promGlobal= calcularDuracionPromedio(estadisticas->tiempoInicioRedGlobal,estadisticas->tiempoFinRedGlobal);
-	char* finalizacion = obtenerEstadoFinalizacion(final);
+	int duracion,cantTrans,cantLocal,cantGlobal,cantFallos;
+	double promTransformacion;
+	double promLocal;
+	double promGlobal;
 
+
+	if(final == FALLO_INGRESO){
+		duracion =0;
+		promGlobal=0;
+		promLocal=0;
+		promTransformacion=0;
+		cantGlobal=0;
+		cantLocal=0;
+		cantTrans=0;
+		cantFallos=0;
+	}
+	else{
+		duracion = difftime(fin,estadisticas->tiempoInicio);
+		promTransformacion = calcularDuracionPromedio(estadisticas->tiempoInicioTrans,estadisticas->tiempoFinTrans);
+		promLocal = calcularDuracionPromedio(estadisticas->tiempoInicioRedLocal,estadisticas->tiempoFinRedLocal);
+		promGlobal= calcularDuracionPromedio(estadisticas->tiempoInicioRedGlobal,estadisticas->tiempoFinRedGlobal);
+		cantTrans = estadisticas->cantTareas[TRANSFORMACION];
+		cantLocal = estadisticas->cantTareas[RED_LOCAL];
+		cantGlobal = estadisticas->cantTareas[RED_GLOBAL];
+		cantFallos = estadisticas->cantFallos;
+	}
+
+	char* finalizacion = obtenerEstadoFinalizacion(final);
 
 	printf("\nEstado de Finalizacion: %s\n",finalizacion);
 	printf("Duracion total: %d\n",duracion);
-	printf("Cantidad tareas transformacion %d\n",estadisticas->cantTareas[TRANSFORMACION]);
+	printf("Cantidad tareas transformacion %d\n",cantTrans);
 	printf("Duracion promedio transformacion: %.2f\n",promTransformacion);
-	printf("Cantidad tareas reduccion local: %d\n",estadisticas->cantTareas[RED_LOCAL]);
+	printf("Cantidad tareas reduccion local: %d\n",cantLocal);
 	printf("Duracion promedio reduccion local: %.2f\n",promLocal);
-	printf("Cantidad tareas reduccion global: %d\n",estadisticas->cantTareas[RED_GLOBAL]);
+	printf("Cantidad tareas reduccion global: %d\n",cantGlobal);
 	printf("Duracion promedio reduccion global: %.2f\n",promGlobal);
-	printf("Cantidad de fallos obtenidos: %d\n",estadisticas->cantFallos);
+	printf("Cantidad de fallos obtenidos: %d\n",cantFallos);
 
 	exit(0);
 }
@@ -616,13 +646,13 @@ char* obtenerEstadoFinalizacion(Finalizacion tipoFin){
 		break;
 
 	case FALLO_TRANSFORMACION:
-		nombre =malloc(3);
+		nombre =malloc(23);
 		nombre = strdup("FALLO TRANSFORMACION");
 		break;
 
-	case PEDIDO_FS:
-		nombre =malloc(3);
-		nombre = strdup("PEDIDO FS");
+	case FALLO_INGRESO:
+		nombre =malloc(14);
+		nombre = strdup("FALLO INGRESO");
 		break;
 	}
 

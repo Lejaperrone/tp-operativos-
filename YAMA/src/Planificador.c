@@ -32,7 +32,7 @@ void planificar(job* job){
 	llenarListaNodos(listaNodos,infoArchivo);
 
 	if(list_is_empty(listaNodos)){
-		finalizarJob(job,TRANSFORMACION);
+		finalizarJob(job,TRANSFORMACION,FALLO_INGRESO);
 	}
 
 	calcularDisponibilidadWorkers(listaNodos);
@@ -64,7 +64,7 @@ void planificar(job* job){
 	free(listaNodos);
 	free(worker);
 
-	finalizarJob(job,4);
+	finalizarJob(job,4,OK);
 }
 
 
@@ -352,7 +352,7 @@ void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacio
 
 		if(nodoNuevo == -1){
 			log_trace(logger,"Fallo en replanificar nodo %d", paraReplanificar);
-			finalizarJob(jobi,TRANSFORMACION);
+			finalizarJob(jobi,TRANSFORMACION,FALLO_TRANSFORMACION);
 		}
 
 		bool nodoYaCargado(workerDesdeYama* workerCargado){
@@ -648,7 +648,7 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloReduccion){
 			log_trace(logger,"Fallo en reduccion local del job %d", job->id);
-			finalizarJob(job,RED_LOCAL);
+			finalizarJob(job,RED_LOCAL,FALLO_RED_LOCAL);
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeDesconexion){
 			log_error(logger, "Error en Proceso Master.");
