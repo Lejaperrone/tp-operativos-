@@ -110,7 +110,7 @@ int eliminarDirectorio(char* comando){
 	char* rutaDirectorioYamfs = devolverRuta(comando,2);
 
 	if (validarArchivoYamaFS(rutaDirectorioYamfs) == 0)
-		return 1;
+		return 2;
 
 	char* rutaDirectorioMetadata = buscarRutaArchivo(rutaDirectorioYamfs);
 	if (strcmp(rutaDirectorioMetadata, "-1") == 0)
@@ -118,7 +118,7 @@ int eliminarDirectorio(char* comando){
 	int numeroTablaDirectorio = atoi(ultimaParteDeRuta(rutaDirectorioMetadata));
 
 	if(numeroTablaDirectorio == 0){
-		printf("no se puede eliminar root\n");
+		//printf("no se puede eliminar root\n");
 		return 3;
 	}
 
@@ -130,7 +130,7 @@ int eliminarDirectorio(char* comando){
 		if (strcmp(buscarRutaArchivo(rutaDirectorioYamfs), "-1") != 0)
 			system(string_from_format("rm -d %s", buscarRutaArchivo(rutaDirectorioYamfs)));
 
-		printf("%s\n",tablaDeDirectorios[numeroTablaDirectorio].nombre );
+		//printf("%s\n",tablaDeDirectorios[numeroTablaDirectorio].nombre );
 
 		return 0;
 	}else{
@@ -279,7 +279,9 @@ int mover(char* comando){
 	char* slash = "/";
 	char* dot = ".";
 
-	char** arguments = string_split(comando, " ");
+
+	char** arguments = malloc(strlen(comando));
+	arguments = string_split(comando, " ");
 
 	if(strcmp(arguments[1], "yamafs:/") == 0)
 		return 3;
@@ -345,6 +347,7 @@ int mover(char* comando){
 		config_destroy(c);
 		success = system(string_from_format("mv %s %s", rutaFinalAnterior, rutaNueva));
 	}
+	free(arguments);
 
 	return success;
 }
@@ -365,6 +368,10 @@ int mostrarArchivo(char* comando){
 		printf("No existe el directorio");
 		return respuesta;
 	}
+
+	if (!validarArchivo(string_from_format("%s/%s", rutaMetadata, ultimaParteDeRuta(rutaArchivoYamafs))))
+		return 1;
+
 	char* contenido = leerArchivo(rutaArchivoYamafs);
 	printf("%s\n", contenido);
 	respuesta = 0;
@@ -432,7 +439,9 @@ int crearDirectorio(char* comando){
 
 int copiarArchivo(char* comando){
 
-	char** parametros = string_split(comando, " ");
+	char** parametros = malloc(strlen(comando));
+
+	parametros = string_split(comando, " ");
 	char* rutaNormal = parametros[1];
 	char* rutaFS = parametros[2];
 	char* tipoArchivo = "t";
@@ -495,6 +504,7 @@ int copiarArchivo(char* comando){
 
 	free(nombre);
 	free(mapeoArchivo);
+	free(parametros);
 
 	return resultado;
 }

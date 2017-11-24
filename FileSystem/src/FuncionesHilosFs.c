@@ -300,6 +300,11 @@ void* consolaFS(){
 					log_error(loggerFS, "El directorio no existe");
 					pthread_mutex_unlock(&logger_mutex);
 				}
+				else if (resultado == 3){
+					pthread_mutex_lock(&logger_mutex);
+					log_error(loggerFS, "No se pudo eliminar directorio root");
+					pthread_mutex_unlock(&logger_mutex);
+				}
 				else{
 					pthread_mutex_lock(&logger_mutex);
 					log_error(loggerFS, "No se pudo eliminar el directorio, no esta vacio");
@@ -346,12 +351,12 @@ void* consolaFS(){
 				}
 				else if (resultado == 2){
 					pthread_mutex_lock(&logger_mutex);
-					log_trace(loggerFS, "la ruta ingresada no pertence a yamafs");
+					log_error(loggerFS, "la ruta ingresada no pertence a yamafs");
 					pthread_mutex_unlock(&logger_mutex);
 				}
 				else if (resultado == 3){
 					pthread_mutex_lock(&logger_mutex);
-					log_trace(loggerFS, "la ruta ingresada no pertenece a un archivo");
+					log_error(loggerFS, "la ruta ingresada no pertenece a un archivo");
 					pthread_mutex_unlock(&logger_mutex);
 				}
 				else{
