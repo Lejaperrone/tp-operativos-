@@ -557,6 +557,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	memset(rutaFinal, 0, strlen(ruta) + strlen(nombre) + 2);
 
 	if(validarArchivo(string_from_format("%s/%s", ruta, nombre))){
+		printf("El archivo ingresado no existe.\n");
 		return 3;
 	}
 
@@ -628,8 +629,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	nodoElegido[0] = -1;
 	nodoElegido[1] = -1;
 
-	printf("bloques necesarios %d\n",realTotal);
-	printf("%d %d bytes \n", realTotal, cantBloquesArchivo);
+	printf("Bloques necesarios %d.\n",realTotal);
+	//printf("%d %d bytes \n", realTotal, cantBloquesArchivo);
 	informacionNodo infoAux;
 	int cantidadNodos = list_size(nodosConectados);
 	int bloquesLibreNodo[cantidadNodos];
@@ -650,11 +651,11 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		bloquesLibreNodo[i] = infoAux.sizeNodo-infoAux.bloquesOcupados;
 		pruebaEspacioDisponible[i] = bloquesLibreNodo[i];
 		indexNodos[i] = infoAux.numeroNodo;
-		printf("bloques libres %d\n", bloquesLibreNodo[i]);
+		//printf("bloques libres %d\n", bloquesLibreNodo[i]);
 	}
 	int contador = 0;
 
-	printf("size archivo %d\n", strlen(mapeoArchivo->cadena));
+	//printf("Size archivo %d.\n", strlen(mapeoArchivo->cadena));
 
 	for (i= 0; i < cantidadNodos; ++i)
 		envios[i] = 0;
@@ -672,8 +673,10 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			}
 			++contador;
 		}
-		if (contadorPrueba < 2)
+		if (contadorPrueba < 2){
+			printf("No hay espacio suficiente.\n");
 			return 2;
+		}
 		else{
 			contadorPrueba = 0;
 			pruebaElegido[0] = -1;
@@ -729,7 +732,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 					sizeRestante = 0;
 
 				 params[i+realTotal*j].sizeBloque = mb -sizeRestante;
-				 printf("size bloque %s %d\n", tipo, params[i+realTotal*j].sizeBloque);
+				// printf("size bloque %s %d\n", tipo, params[i+realTotal*j].sizeBloque);
 			 }
 			 else{
 				params[i+realTotal*j].sizeBloque = resTotal;
@@ -762,7 +765,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 		config_set_value(infoArchivo, "TAMANIO", string_itoa(sizeTotal));
 	}
-	printf("size total %d\n", sizeTotal);
+	printf("Size total: %d.\n", sizeTotal);
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
 	free(rutaFinal);
 
@@ -770,7 +773,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 		sem_wait(&pedidoTerminado);
 
 	for (i = 0; i< cantidadNodos; ++i){
-		printf("%d bloques fueron enviados a %d\n", envios[i], indexNodos[i]);
+		printf("%d bloques fueron enviados a %d.\n", envios[i], indexNodos[i]);
 	}
 
 	actualizarBitmapNodos();
@@ -1239,7 +1242,7 @@ int borrarDirectorios(){
 		char* rmDirectorios = string_from_format("rm %s", pathArchivoDirectorios);
 
 		respuesta = system(rmDirectorios);
-
+		printf("\n");
 		free(rmDirectorios);
 
 		if (respuesta == 0)
@@ -1256,9 +1259,13 @@ int borrarArchivosEnMetadata(){
 
 	respuesta = system(rmComando);
 
+	printf("\n");
+
 	char* mkdirComando = string_from_format("mkdir %s", rutaArchivos);
 
 	respuesta = system(mkdirComando);
+
+	printf("\n");
 
 	if (respuesta == 0)
 		return 1;
@@ -1287,6 +1294,7 @@ int liberarNodosConectados(){
 			sizeNodo = nodo.sizeNodo;
 			levantarBitmapNodo(numeroNodo, sizeNodo);
 			respuesta++;
+			printf("Nodo%d formateado.\n", nodo.numeroNodo);
 		}
 	}
 	if (respuesta == cantNodosConectados)
