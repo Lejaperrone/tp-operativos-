@@ -123,7 +123,7 @@ void handlerMaster(int clientSocket, int pid) {
 		contenidoScript = strdup(reduccionGlobal->contenidoScript.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedGlobal, pid);
 		rutaArchivoFinal = crearRutaArchivoAReducir(listaWorkers);
-		command = string_from_format("cat %s | ./reductorGlobal%d > %s", rutaArchivoFinal, pid, string_from_format("%s/tmp/%s", path, destino));
+		command = string_from_format("cat %s | sort -u |./reductorGlobal%d > %s", rutaArchivoFinal, pid, string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion global realizada correctamente");
 		empaquetar(clientSocket, mensajeRedGlobalCompleta, 0, 0);
@@ -327,7 +327,7 @@ char* crearRutaArchivoAReducir(t_list* listaWorkers) {
 			list_add(archivosAReducir, rutaArchivo);
 		}
 	}
-	//apareoArchivosLocales(archivosAReducir, rutaArchivoAReducir);
+	apareoArchivosLocales(archivosAReducir, rutaArchivoAReducir);
 	return rutaArchivoAReducir;
 }
 
