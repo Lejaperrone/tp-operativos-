@@ -12,7 +12,7 @@
 
 extern bool fsFormateado;
 
-int formatearFS(){
+int formatearFS(int flag){
 	int resultado = 0;
 
 	resultado += borrarDirectorios();
@@ -23,7 +23,7 @@ int formatearFS(){
 
 	//resultado += formatearDataBins(); NO VA
 
-	if (resultado == 3){
+	if (resultado == 3 && !flag){
 		fsFormateado = true;
 		printf("FileSystem formateado correctamente.\n");
 		return 0;

@@ -352,7 +352,7 @@ char* leerArchivo(char* rutaArchivo){
 	int index = 0, sizeArchivo, cantBloquesArchivo = 0, sizeAux = 0, i, j, k, l;
 	int cantidadNodos = list_size(nodosConectados);
 	int cargaNodos[cantidadNodos], indexNodos[cantidadNodos], peticiones[cantidadNodos];
-	int numeroNodoDelBloque[numeroCopiasBloque], posicionCopiaEnIndexNodo[numeroCopiasBloque];
+	int numeroNodoDelBloque[numeroCopiasBloque];
 	informacionNodo info;
 	char* rutaInvertida = string_reverse(rutaArchivo);
 	char* rutaFinal = malloc(strlen(rutaArchivo)+1);
@@ -362,7 +362,6 @@ char* leerArchivo(char* rutaArchivo){
 	int posicionNodoAPedir = -1;
 	int numeroBloqueDataBin = -1;
 
-	int copia[2];
 	int copiaUsada;
 
 	//sem_init(&sem,1,0);
@@ -414,10 +413,18 @@ char* leerArchivo(char* rutaArchivo){
 	for (j = 0; j < cantBloquesArchivo; ++j)
 		cantidadCopiasBloque[j] = 0;
 
-	for (j = 0; j < cantBloquesArchivo; ++j)
+	int maxCopias = 0;
+
+	for (j = 0; j < cantBloquesArchivo; ++j){
 		for (i = 0; config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,i)); ++i){
 			++cantidadCopiasBloque[j];
 		}
+		if (cantidadCopiasBloque[j] > maxCopias)
+			maxCopias = cantidadCopiasBloque[j];
+	}
+
+	int posicionCopiaEnIndexNodo[maxCopias];
+	int copia[maxCopias];
 
 	char* respuestas[cantBloquesArchivo];
 	parametrosLecturaBloque params[cantBloquesArchivo];
@@ -454,7 +461,7 @@ char* leerArchivo(char* rutaArchivo){
 		}
 		posicionNodoAPedir = posicionCopiaEnIndexNodo[0];
 		copiaUsada = copia[0];
-		for (l = 0; l < numeroCopiasBloque; ++l){
+		for (l = 0; l < cantidadCopiasBloque[i]; ++l){
 			if (peticiones[posicionCopiaEnIndexNodo[l]] < peticiones[posicionNodoAPedir]){
 				posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
 				copiaUsada = copia[l];
@@ -989,8 +996,10 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 void actualizarArchivoNodos(){
 
 	char* pathArchivo = "../metadata/Nodos.bin";
-	FILE* archivoNodes = fopen(pathArchivo, "wb+");
-	fclose(archivoNodes); //para dejarlo vacio
+	if (!recuperarEstado){
+		FILE* archivoNodes = fopen(pathArchivo, "wb+");
+		fclose(archivoNodes); //para dejarlo vacio
+	}
 	int cantidadNodos = list_size(nodosConectados), i = 0;
 	int bloquesLibresNodo = 0;
 	informacionNodo info;
@@ -1008,18 +1017,18 @@ void actualizarArchivoNodos(){
 		config_set_value(nodos, string_from_format("NODO%dLIBRE",info.numeroNodo), string_itoa(bloquesLibresNodo));
 	}
 
-	char* arrayNodos = generarArrayNodos();
-
-
 	config_set_value(nodos, "TAMANIO", string_itoa(sizeTotalNodos));
 
 	config_set_value(nodos, "LIBRE", string_itoa(nodosLibres));
 
-	config_set_value(nodos, "NODOS", arrayNodos);
+	if (!recuperarEstado){
+		char* arrayNodos = generarArrayNodos();
+		config_set_value(nodos, "NODOS", arrayNodos);
+		free(arrayNodos);
+	}
 
 	config_save_in_file(nodos, pathArchivo);
 
-	free(arrayNodos);
 }
 
 char* generarArrayNodos(){

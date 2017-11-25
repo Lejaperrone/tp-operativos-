@@ -27,7 +27,7 @@
 #include <sys/mman.h>
 #include <ctype.h>
 
-int formatearFS();//format
+int formatearFS(int flag);//format
 
 int eliminarArchivo(char* comando);//rm
 
