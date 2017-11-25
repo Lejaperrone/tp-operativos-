@@ -208,6 +208,8 @@ void apareo(t_list* lista, char* archivoFinal){
 		fgets(str1, 1024,arch1);
 	}
 
+	fclose(arch2);
+
 	void aparear(char* file1) {
 
 		FILE* arch1 = fopen(file1, "r");

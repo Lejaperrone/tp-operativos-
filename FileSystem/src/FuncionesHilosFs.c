@@ -201,6 +201,10 @@ int nodoDeEstadoAnterior(informacionNodo info){
 
 	int i = 0;
 	char* pathArchivo = "../metadata/Nodos.bin";
+
+	if(!recuperarEstado)
+		return 1;
+
 	t_config* nodos = config_create(pathArchivo);
 	char** arrayNodos = config_get_array_value(nodos,"NODOS");
 	while(arrayNodos[i] != NULL){
