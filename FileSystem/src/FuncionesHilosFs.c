@@ -72,6 +72,7 @@ void* levantarServidorFS(){
 						if (*(int*)conexionNueva.envio == idDataNodes){
 							paqueteInfoNodo = desempaquetar(nuevoCliente);
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
+							revisarNodos();
 							if (nodoRepetido(info) == 0 && nodoDeEstadoAnterior(info) && !fsFormateado){
 								pthread_mutex_lock(&logger_mutex);
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
@@ -198,10 +199,6 @@ void* levantarServidorFS(){
 
 int nodoDeEstadoAnterior(informacionNodo info){
 
-	if (!recuperarEstado){
-		return 1;
-	}
-
 	int i = 0;
 	char* pathArchivo = "../metadata/Nodos.bin";
 	t_config* nodos = config_create(pathArchivo);
@@ -276,7 +273,7 @@ void* consolaFS(){
 		pthread_mutex_unlock(&logger_mutex);
 
 		if (strcmp(arguments[0], "format") == 0) {
-			if (formatearFS() == 0){
+			if (formatearFS(0) == 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "File system formateado");
 				pthread_mutex_unlock(&logger_mutex);
