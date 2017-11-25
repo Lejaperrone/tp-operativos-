@@ -77,7 +77,7 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 	for(i=0;i<cantidadBloques;i++){
 		bloque = (infoBloque*)list_get(infoBloques, i);
 
-		usleep(config.RETARDO_PLANIFICACION);
+		usleep(config.RETARDO_PLANIFICACION*1000);
 
 		if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
 			if(workerDesignado->disponibilidad > 0){

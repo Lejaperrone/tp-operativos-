@@ -280,7 +280,6 @@ void* conectarseConWorkersRedLocal(void* params){
 	case mensajeDesconexion:
 	case mensajeFalloRedLocal:
 		log_trace(loggerMaster, "Informo a  YAMA fallo en Reduccion Local en nodo %d.",infoRedLocal->numero);
-		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
 		estadisticas->cantFallos++;
 		mandarFalloEnReduccion();
 		break;
@@ -412,7 +411,6 @@ void* conectarseConWorkerRedGlobal(void* params){
 		case mensajeDesconexion:
 		case mensajeFalloRedGlobal:
 			log_trace(loggerMaster, "Informo a  YAMA fallo en Reduccion Global del nodo %d.",infoRedGlobal->numero);
-			finalizarTiempo(estadisticas->tiempoFinRedGlobal,infoRedGlobal->numero);
 			estadisticas->cantFallos++;
 			mandarFalloEnReduccion();
 			break;
