@@ -105,7 +105,8 @@ void handlerMaster(int clientSocket, int pid) {
 		destino = strdup(reduccionLocal->rutaDestino.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedLocal, pid);
 		char* aux = string_from_format("%s/tmp/%s%i", path, archivoPreReduccion);
-		apareo(listAux,aux);
+		apareoArchivosLocales(listaArchivosTemporales, aux);
+		//apareo(listAux,aux);
 		command = string_from_format("cat %s | ./reductorLocal%d > %s", aux, pid, string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
@@ -357,6 +358,83 @@ void handlerWorker(int clientSocket) {
 		}
 	}
 }
+
+ void traverse_nodes(t_list* list, void funcion(void*)) {
+
+ 	t_link_element* next, *t_link_element = list->head;
+
+ 	while (t_link_element != NULL) {
+ 		next = t_link_element->next;
+ 		funcion(t_link_element->data);
+ 		t_link_element = next;
+ 	}
+ }
+
+ void apareoArchivosLocales(t_list *sources, const char *target) {
+
+ 	typedef struct {
+ 		FILE *file;
+ 		char *line;
+ 	} t_cont;
+
+ 	t_cont *map_cont(const char *source) {
+ 		t_cont *cont = malloc(sizeof(cont));
+ 		cont->file = fopen(source, "r");
+ 		cont->line = NULL;
+ 		return cont;
+ 	}
+
+ 	bool line_set(t_cont *cont) {
+ 		return cont->line != NULL;
+ 	}
+
+ 	//TODO Corregir que pasa con el fin de archivo
+ 	void read_file(t_cont *cont) {
+ 		if (!line_set(cont)) {
+ 			char *aux = get_line(cont->file);
+ 			free(cont->line);
+ 			cont->line = aux;
+ 		}
+ 	}
+
+ 	bool compare_lines(t_cont *cont1, t_cont *cont2) {
+ 		return strcmp(cont1->line, cont2->line) <= 0;
+ 	}
+
+ 	t_list* listaArchivos = list_map(sources, (void*) map_cont);
+ 	FILE* resultado = fopen(target, "w+");
+
+ 	t_list* list = list_create();
+ 	list_add_all(list, listaArchivos);
+
+ 	traverse_nodes(list, (void*) read_file);
+
+ 	while (true) {
+
+ 		traverse_nodes(list, (void*) read_file);
+ 		t_list* aux = list_filter(list, (void*) line_set);
+
+ 		list = aux;
+ 		if (list_is_empty(list))
+ 			break;
+ 		list_sort(list, (void*) compare_lines);
+
+ 		t_cont* cont = list_get(list, 0);
+
+ 		fputs(cont->line, resultado);
+ 		free(cont->line);
+ 		cont->line = NULL;
+ 	}
+
+ 	void free_cont(t_cont *cont) {
+ 		fclose(cont->file);
+ 		free(cont);
+ 	}
+
+ 	list_map(listaArchivos, (void*) free_cont);
+ 	fclose(resultado);
+ }
+
 
 void levantarServidorWorker(char* ip, int port) {
 	int sock;
