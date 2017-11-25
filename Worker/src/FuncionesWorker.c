@@ -105,8 +105,8 @@ void handlerMaster(int clientSocket, int pid) {
 		destino = strdup(reduccionLocal->rutaDestino.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedLocal, pid);
 		char* aux = string_from_format("%s/tmp/%s%i", path, archivoPreReduccion);
-		apareoArchivosLocales(listaArchivosTemporales, aux);
-		//apareo(listAux,aux);
+		//apareoArchivosLocales(listaArchivosTemporales, aux);
+		apareo(listaArchivosTemporales,aux);
 		command = string_from_format("cat %s | ./reductorLocal%d > %s", aux, pid, string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
@@ -199,13 +199,15 @@ void apareo(t_list* lista, char* archivoFinal){
 	FILE* arch2 = fopen(archivoFinal, "w");
 
 
+	printf("nom2 %s\n", archivoFinal);
+
 	char* str1 = malloc(1024);
 
 
 	fgets(str1, 1024, arch1);
 	while(!feof(arch1)){
 		fputs(str1, arch2);
-		fgets(str1, 1024,arch1);
+		fgets(str1, 1024, arch1);
 	}
 
 	fclose(arch2);

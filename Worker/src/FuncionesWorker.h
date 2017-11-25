@@ -40,5 +40,6 @@ char *get_line(FILE *fp);
 char* crearRutaArchivoAReducir(t_list* listaWorkers);
 char* obtenerPathActual();
 int conectarseConFS();
+void apareo(t_list* lista, char* archivoFinal);
 
 #endif /* FUNCIONESWORKER_H_ */
