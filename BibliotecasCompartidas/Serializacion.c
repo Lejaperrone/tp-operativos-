@@ -337,7 +337,7 @@ string* deserializarSolicitudArchivo(int socket,int tamanio){
 	string* nombreArchivo = malloc(sizeof(string));
 
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 
 	memcpy(&nombreArchivo->longitud, buffer + desplazamiento, sizeof(int));
 	desplazamiento += sizeof(int);

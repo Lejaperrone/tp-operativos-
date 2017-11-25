@@ -12,95 +12,6 @@ void ejecutarComando(char * command, int socketAceptado) {
 	}
 }
 
-t_list* crearListaParaReducir() {
-	//Aca hay que conectarse al worker capitan, mandar el contenido del archivo reducido y que ese lo aparee
-	t_list* archivosAReducir = list_create();
-	return archivosAReducir;
-}
-
-char *get_line(FILE *fp) {
-	char *line = NULL;
-	size_t len = 0;
-	int r = getline(&line, &len, fp);
-	return r != -1 ? line : NULL;
-}
-
-void traverse_nodes(t_list* list, void funcion(void*)) {
-
-	t_link_element* next, *t_link_element = list->head;
-
-	while (t_link_element != NULL) {
-		next = t_link_element->next;
-		funcion(t_link_element->data);
-		t_link_element = next;
-	}
-}
-
-void apareoArchivosLocales(t_list *sources, const char *target) {
-
-	typedef struct {
-		FILE *file;
-		char *line;
-	} t_cont;
-
-	t_cont *map_cont(const char *source) {
-		t_cont *cont = malloc(sizeof(cont));
-		cont->file = fopen(source, "r");
-		cont->line = NULL;
-		return cont;
-	}
-
-	bool line_set(t_cont *cont) {
-		return cont->line != NULL;
-	}
-
-	//TODO Corregir que pasa con el fin de archivo
-	void read_file(t_cont *cont) {
-		if (!line_set(cont)) {
-			char *aux = get_line(cont->file);
-			free(cont->line);
-			cont->line = aux;
-		}
-	}
-
-	bool compare_lines(t_cont *cont1, t_cont *cont2) {
-		return strcmp(cont1->line, cont2->line) <= 0;
-	}
-
-	t_list* listaArchivos = list_map(sources, (void*) map_cont);
-	FILE* resultado = fopen(target, "w+");
-
-	t_list* list = list_create();
-	list_add_all(list, listaArchivos);
-
-	traverse_nodes(list, (void*) read_file);
-
-	while (true) {
-
-		traverse_nodes(list, (void*) read_file);
-		t_list* aux = list_filter(list, (void*) line_set);
-
-		list = aux;
-		if (list_is_empty(list))
-			break;
-		list_sort(list, (void*) compare_lines);
-
-		t_cont* cont = list_get(list, 0);
-
-		fputs(cont->line, resultado);
-		free(cont->line);
-		cont->line = NULL;
-	}
-
-	void free_cont(t_cont *cont) {
-		fclose(cont->file);
-		free(cont);
-	}
-
-	list_map(listaArchivos, (void*) free_cont);
-	fclose(resultado);
-}
-
 void crearScript(char* bufferScript, int etapa, int pid) {
 	log_trace(logger, "Iniciando creacion de script");
 	char mode[] = "0777";
@@ -132,6 +43,13 @@ int conectarseConFS() {
 	struct sockaddr_in direccion = cargarDireccion(config.IP_FILESYSTEM,config.PUERTO_FILESYSTEM);
 	conectarCon(direccion, socket, idWorker);
 	return socket;
+}
+
+char *get_line(FILE *fp) {
+char *line = NULL;
+size_t len = 0;
+int r = getline(&line, &len, fp);
+return r != -1 ? line : NULL;
 }
 
 void handlerMaster(int clientSocket, int pid) {
@@ -186,8 +104,8 @@ void handlerMaster(int clientSocket, int pid) {
 		list_iterate(listAux, (void*) agregarPathAElemento);
 		destino = strdup(reduccionLocal->rutaDestino.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedLocal, pid);
-		char* aux = string_from_format("%s/tmp/%s%i", path, archivoPreReduccion); // /home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/preReduccion
-		apareoArchivosLocales(listaArchivosTemporales, aux);
+		char* aux = string_from_format("%s/tmp/%s%i", path, archivoPreReduccion);
+		apareo(listAux,aux);
 		command = string_from_format("cat %s | ./reductorLocal%d > %s", aux, pid, string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
@@ -272,6 +190,74 @@ void handlerMaster(int clientSocket, int pid) {
 	}
 }
 
+
+void apareo(t_list* lista, char* archivoFinal){
+
+	char* nombreArchivo = list_remove(lista, 0);
+	FILE* arch1 = fopen(nombreArchivo, "r");
+	FILE* arch2 = fopen(archivoFinal, "w");
+
+
+	char* str1 = malloc(1024);
+
+
+	fgets(str1, 1024, arch1);
+	while(!feof(arch1)){
+		fputs(str1, arch2);
+		fgets(str1, 1024,arch1);
+	}
+
+	void aparear(char* file1) {
+
+		FILE* arch1 = fopen(file1, "r");
+		FILE* arch2 = fopen(archivoFinal, "r");
+		FILE* resul = fopen("temporal","w");
+		char* str1 = malloc(1024);
+		char* str2 = malloc(1024);
+		fgets(str1, 1024, arch1);
+		fgets(str2, 1024, arch2);
+
+		while ((!feof(arch1)) && (!feof(arch2))) {
+			if ((strcmp(str1, str2) < 0)) {
+				fputs(str1, resul);
+				fgets(str1, 1024, arch1);
+			} else {
+				fputs(str2, resul);
+				fgets(str2, 1024, arch2);
+			}
+		}
+		if ((feof(arch1)) && (feof(arch2))) {
+			fclose(arch1);
+			fclose(arch2);
+			fclose(resul);
+			return;
+		} else {
+			if (feof(arch1)) {
+				fputs(str2, resul);
+				while (!feof(arch2)) {
+					fgets(str2, 1024, arch2);
+					fputs(str2, resul);
+				}
+			} else {
+				fputs(str1, resul);
+				while (!feof(arch1)) {
+					fgets(str1, 1024, arch1);
+					fputs(str1, resul);
+				}
+			}
+			fclose(arch1);
+			fclose(arch2);
+			fclose(resul);
+			rename(archivoFinal,"temp");
+			system("rm temp");
+			rename("temporal",archivoFinal);
+		}
+		return;
+	}
+
+	list_iterate(lista,(void*)aparear);
+}
+
 char* obtenerPathActual(){
 	char *path = string_new();
 	char cwd[1024];
@@ -328,7 +314,7 @@ char* crearRutaArchivoAReducir(t_list* listaWorkers) {
 			list_add(archivosAReducir, rutaArchivo);
 		}
 	}
-	apareoArchivosLocales(archivosAReducir, rutaArchivoAReducir);
+	//apareoArchivosLocales(archivosAReducir, rutaArchivoAReducir);
 	return rutaArchivoAReducir;
 }
 

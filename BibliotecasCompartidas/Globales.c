@@ -35,29 +35,13 @@ bool validarArchivo(char* path) {
 }
 
 void obtenerNumeroNodo(t_config* archivo,char* claveCopia,ubicacionBloque* ubi){
-	char* copia = config_get_string_value(archivo,claveCopia);
-	char* numeroNodo = calloc(1,3);
-	char* numeroBloque= calloc(1,3);
-	int i =5;
 
-	while(copia[i]!= ','){
-		char cop[2];
-		cop[0] = copia[i];
-		cop[1] = '\0';
-		string_append(&numeroNodo,cop);
-		i++;
-	}
-	i++;
-	while(copia[i]!=']'){
-		char cop[2];
-		cop[0] = copia[i];
-		cop[1] = '\0';
-		string_append(&numeroBloque,cop);
-		i++;
-	}
+	char **arrayInfoBloque = config_get_array_value(archivo, claveCopia);
+	int	numeroNodo = atoi(string_substring_from(arrayInfoBloque[0], 4));
+	int bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
 
-	ubi->numeroBloqueEnNodo = atoi(numeroBloque);
-	ubi->numeroNodo = atoi(numeroNodo);
+	ubi->numeroBloqueEnNodo = bloqueNodo;
+	ubi->numeroNodo = numeroNodo;
 }
 
 void limpiarPantalla(){

@@ -1077,6 +1077,12 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 
 	char* directorio = rutaSinArchivo(rutaDatos.cadena);
 	char* rutaArchivo = buscarRutaArchivo(directorio);
+
+	if(!strcmp(rutaArchivo, "-1")) {
+		info.tamanioTotal = 0;
+		return info;
+	}
+
 	char* rutaMetadata = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivo), ultimaParteDeRuta(rutaDatos.cadena));
 
 	t_config* archivo = config_create(rutaMetadata);
