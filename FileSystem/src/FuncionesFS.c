@@ -664,6 +664,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 	//printf("Size archivo %d.\n", strlen(mapeoArchivo->cadena));
 
+	bla = realTotal*2;
+
 	for (i= 0; i < cantidadNodos; ++i)
 		envios[i] = 0;
 
@@ -676,6 +678,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 					pruebaElegido[contadorPrueba] = contador;
 					++contadorPrueba;
 					--pruebaEspacioDisponible[contador];
+					if (contadorPrueba >= 2)
+						break;
 				}
 			}
 			++contador;
@@ -696,8 +700,11 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	fclose(archivos); //para dejarlo vacio
 	t_config* infoArchivo = config_create(rutaFinal);
 
+	printf("Copiando\n");
+
 	for (i = 0; i < realTotal; ++i){
 
+		//printf("bl %d %d %d %d\n", bloquesLibreNodo[0],bloquesLibreNodo[1],bloquesLibreNodo[2],bloquesLibreNodo[3]);
 		for (k = 0; k < numeroCopiasBloque; ++k){
 			for (j = 0; j < cantidadNodos; ++j){
 				if (nodoAMandar > cantidadNodos-1)
@@ -719,6 +726,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 			params[i+realTotal*j].mapa = mapeoArchivo->cadena;
 			params[i+realTotal*j].offset = offset;
 			infoAux = *(informacionNodo*)list_get(nodosConectados,nodoElegido[j]);
+			//printf("%d\n", nodoElegido[j]);
 
 			if ( i > 0)
 				params[i+realTotal*j].restanteAnterior = mb - params[i+realTotal*j-1].sizeBloque;
@@ -749,6 +757,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 
 			params[i+realTotal*j].sem = nodoElegido[j];
 			pthread_create(&nuevoHilo[i+realTotal*j], NULL, &enviarADataNode,(void*) &params[i+realTotal*j]);
+			pthread_join(nuevoHilo[i],NULL);
 
 			if (successArchivoCopiado == 1){
 				setearBloqueOcupadoEnBitmap(nodoElegido[j], bloqueLibre);
@@ -756,8 +765,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 				config_set_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i ,j), generarArrayBloque(indexNodos[nodoElegido[j]], bloqueLibre));
 			}
 
+
+			//printf("size res %d %d\n", infoAux.numeroNodo, bloqueLibre);
 		}
-		//printf("size res %d\n", i);
 		nodoElegido[0] = -1;
 		nodoElegido[1] = -1;
 		if (i < realTotal-1)
@@ -776,8 +786,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	config_save_in_file(infoArchivo, rutaFinal); //guarda la tabla de archivos
 	free(rutaFinal);
 
-	for (i = 0; i < realTotal * 2; ++i)
+	for (i = 0; i < realTotal * 2; ++i){
 		sem_wait(&pedidoTerminado);
+	}
 
 	for (i = 0; i< cantidadNodos; ++i){
 		printf("%d bloques fueron enviados a %d.\n", envios[i], indexNodos[i]);
@@ -793,6 +804,8 @@ void* enviarADataNode(void* parametros){
 	 struct parametrosEnvioBloque* params;
 	 params = (struct parametrosEnvioBloque*) parametros;
 	 int success;
+	 //--bla;
+	 //printf("bla %d %d\n", bla, params->sizeBloque);
 	 pthread_mutex_lock(&listSemMutex);
 	 sem_t* semaforo = (sem_t*)list_get(pedidosFS,params->sem);
 	 pthread_mutex_unlock(&listSemMutex);
@@ -804,14 +817,14 @@ void* enviarADataNode(void* parametros){
 	 empaquetar(params->socket, mensajeEnvioBloqueANodo, params->sizeBloque,buff);
 	 respuesta res = desempaquetar(params->socket);
 	 memcpy(&success, res.envio, sizeof(int));
-	 //printf("params %d %d %d\n", params->sizeBloque, params->restanteAnterior, res.idMensaje);
+	 //printf("params %d %d %d\n", params->sizeBloque, params->bloque, res.idMensaje);
 	 if (success == 0){
 		 successArchivoCopiado = 0;
 	 }
 	 free(buff);
 	 sem_post(semaforo);
 	 sem_post(&pedidoTerminado);
-	 pthread_exit(NULL);
+	 return 0;
 }
 
 int bytesACortar(char* mapa, int offset, int sizeRestante){

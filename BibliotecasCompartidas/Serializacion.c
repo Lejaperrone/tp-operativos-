@@ -171,7 +171,7 @@ respuesta desempaquetar(int socket){
 			case mensajeFinJob:
 			case mensajeNumeroCopiaBloqueANodo:
 				bufferOk = malloc(sizeof(int));
-				recv(socket, bufferOk, sizeof(int), 0);
+				recv(socket, bufferOk, sizeof(int), MSG_WAITALL);
 				miRespuesta.envio = malloc(sizeof(int));
 				memcpy(miRespuesta.envio, bufferOk, sizeof(int));
 				free(bufferOk);

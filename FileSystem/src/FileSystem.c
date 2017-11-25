@@ -94,6 +94,8 @@ int main(int argc, char *argv[]) {
 		borrarArchivosEnMetadata();
 
 		liberarNodosConectados();
+
+		mkdir("../metadata/Archivos/0",0777);
 	}
 
 	servidorFS = crearSocket();

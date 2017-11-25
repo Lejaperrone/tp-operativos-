@@ -105,9 +105,9 @@ void handlerMaster(int clientSocket, int pid) {
 		destino = strdup(reduccionLocal->rutaDestino.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedLocal, pid);
 		char* aux = string_from_format("%s/tmp/%s%i", path, archivoPreReduccion);
-		//apareoArchivosLocales(listaArchivosTemporales, aux);
-		apareo(listaArchivosTemporales,aux);
-		command = string_from_format("cat %s | ./reductorLocal%d > %s", aux, pid, string_from_format("%s/tmp/%s", path, destino));
+		apareoArchivosLocales(listaArchivosTemporales, aux);
+		//apareo(listaArchivosTemporales,aux);
+		command = string_from_format("cat %s | sort -u | ./reductorLocal%d > %s", aux, pid, string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(clientSocket, mensajeRedLocalCompleta, 0, &numeroNodo);
@@ -216,11 +216,16 @@ void apareo(t_list* lista, char* archivoFinal){
 
 		FILE* arch1 = fopen(file1, "r");
 		FILE* arch2 = fopen(archivoFinal, "r");
-		FILE* resul = fopen("temporal","w");
+		FILE* resul = fopen("tmp/temporal","w");
 		char* str1 = malloc(1024);
 		char* str2 = malloc(1024);
+		rewind(arch1);
+		rewind(arch2);
+		rewind(resul);
 		fgets(str1, 1024, arch1);
 		fgets(str2, 1024, arch2);
+		printf("nom2 %s\n", archivoFinal);
+		printf("nom1 %s\n", file1);
 
 		while ((!feof(arch1)) && (!feof(arch2))) {
 			if ((strcmp(str1, str2) < 0)) {
@@ -231,6 +236,7 @@ void apareo(t_list* lista, char* archivoFinal){
 				fgets(str2, 1024, arch2);
 			}
 		}
+
 		if ((feof(arch1)) && (feof(arch2))) {
 			fclose(arch1);
 			fclose(arch2);
@@ -242,20 +248,22 @@ void apareo(t_list* lista, char* archivoFinal){
 				while (!feof(arch2)) {
 					fgets(str2, 1024, arch2);
 					fputs(str2, resul);
+					printf("a-----\n");
 				}
 			} else {
 				fputs(str1, resul);
 				while (!feof(arch1)) {
 					fgets(str1, 1024, arch1);
 					fputs(str1, resul);
+					printf("b-----\n");
 				}
 			}
 			fclose(arch1);
 			fclose(arch2);
 			fclose(resul);
-			rename(archivoFinal,"temp");
-			system("rm temp");
-			rename("temporal",archivoFinal);
+			rename(archivoFinal,"tmp/temp");
+			//system("rm tmp/temp");
+			rename("tmp/temporal",archivoFinal);
 		}
 		return;
 	}
