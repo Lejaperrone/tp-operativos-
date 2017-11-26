@@ -23,7 +23,7 @@
 
 /*------VARIABLES-------------*/
 struct configuracionNodo config;
-int clientSocket;
+//int clientSocket;
 t_log* logger;
 
 /*----PROTOTIPOS--------------------*/

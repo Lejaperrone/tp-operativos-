@@ -60,7 +60,8 @@ void handlerMaster(int clientSocket, int pid) {
 	parametrosReduccionGlobal* reduccionGlobal;
 	parametrosAlmacenamiento* almacenamiento;
 
-	char* destino, *contenidoScript, *command, *rutaArchivoFinal, *archivoPreReduccion = "preReduccion";
+	char* destino, *contenidoScript, *command, *rutaArchivoFinal;
+	char*archivoPreReduccion = "preReduccion";
 	t_list* listaArchivosTemporales, *listAux, *listaWorkers;
 	char* path = obtenerPathActual();
 
@@ -105,7 +106,7 @@ void handlerMaster(int clientSocket, int pid) {
 		list_iterate(listAux, (void*) agregarPathAElemento);
 		destino = strdup(reduccionLocal->rutaDestino.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedLocal, pid);
-		char* aux = string_from_format("%s/tmp/%s%i", path, archivoPreReduccion);
+		char* aux = string_from_format("%s/tmp/%s", path, archivoPreReduccion);
 		//apareoArchivosLocales(listaArchivosTemporales, aux);
 		apareo(listaArchivosTemporales,aux);
 		command = string_from_format("cat %s | ./reductorLocal%d > %s", aux, pid, string_from_format("%s/tmp/%s", path, destino));
@@ -458,19 +459,20 @@ void handlerWorker(int clientSocket) {
 void levantarServidorWorker(char* ip, int port) {
 	int sock;
 	sock = crearServidorAsociado(ip, port);
+	respuesta conexionNueva;
 
+	struct sockaddr_in their_addr;
+	socklen_t size = sizeof(struct sockaddr_in);
+	int clientSocket;
+	int pid;
 	while (1) {
-		struct sockaddr_in their_addr;
-		socklen_t size = sizeof(struct sockaddr_in);
 		clientSocket = accept(sock, (struct sockaddr*) &their_addr, &size);
-		int pid;
 
 		if (clientSocket == -1) {
 			close(clientSocket);
 			perror("accept");
 		}
 
-		respuesta conexionNueva;
 		conexionNueva = desempaquetar(clientSocket);
 
 		if (conexionNueva.idMensaje == 1) {
