@@ -46,7 +46,8 @@ int conectarseConFS() {
 }
 
 char *get_line(FILE *fp) {
-char *line = NULL;
+char *line = malloc(1024);
+memset(line,0,1024);
 size_t len = 0;
 int r = getline(&line, &len, fp);
 return r != -1 ? line : NULL;
@@ -105,9 +106,9 @@ void handlerMaster(int clientSocket, int pid) {
 		destino = strdup(reduccionLocal->rutaDestino.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedLocal, pid);
 		char* aux = string_from_format("%s/tmp/%s%i", path, archivoPreReduccion);
-		apareoArchivosLocales(listaArchivosTemporales, aux);
-		//apareo(listaArchivosTemporales,aux);
-		command = string_from_format("cat %s | sort -u | ./reductorLocal%d > %s", aux, pid, string_from_format("%s/tmp/%s", path, destino));
+		//apareoArchivosLocales(listaArchivosTemporales, aux);
+		apareo(listaArchivosTemporales,aux);
+		command = string_from_format("cat %s | ./reductorLocal%d > %s", aux, pid, string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(clientSocket, mensajeRedLocalCompleta, 0, &numeroNodo);
@@ -123,7 +124,7 @@ void handlerMaster(int clientSocket, int pid) {
 		contenidoScript = strdup(reduccionGlobal->contenidoScript.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedGlobal, pid);
 		rutaArchivoFinal = crearRutaArchivoAReducir(listaWorkers);
-		command = string_from_format("cat %s | sort -u |./reductorGlobal%d > %s", rutaArchivoFinal, pid, string_from_format("%s/tmp/%s", path, destino));
+		command = string_from_format("cat %s |./reductorGlobal%d > %s", rutaArchivoFinal, pid, string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion global realizada correctamente");
 		empaquetar(clientSocket, mensajeRedGlobalCompleta, 0, 0);
@@ -202,11 +203,13 @@ void apareo(t_list* lista, char* archivoFinal){
 	printf("nom2 %s\n", archivoFinal);
 
 	char* str1 = malloc(1024);
+	memset(str1,0,1024);
 
 
 	fgets(str1, 1024, arch1);
 	while(!feof(arch1)){
 		fputs(str1, arch2);
+		memset(str1,0,1024);
 		fgets(str1, 1024, arch1);
 	}
 
@@ -219,6 +222,8 @@ void apareo(t_list* lista, char* archivoFinal){
 		FILE* resul = fopen("tmp/temporal","w");
 		char* str1 = malloc(1024);
 		char* str2 = malloc(1024);
+		memset(str1,0,1024);
+		memset(str2,0,1024);
 		rewind(arch1);
 		rewind(arch2);
 		rewind(resul);
@@ -230,9 +235,11 @@ void apareo(t_list* lista, char* archivoFinal){
 		while ((!feof(arch1)) && (!feof(arch2))) {
 			if ((strcmp(str1, str2) < 0)) {
 				fputs(str1, resul);
+				memset(str1,0,1024);
 				fgets(str1, 1024, arch1);
 			} else {
 				fputs(str2, resul);
+				memset(str2,0,1024);
 				fgets(str2, 1024, arch2);
 			}
 		}
@@ -248,21 +255,21 @@ void apareo(t_list* lista, char* archivoFinal){
 				while (!feof(arch2)) {
 					fgets(str2, 1024, arch2);
 					fputs(str2, resul);
-					printf("a-----\n");
+					memset(str2,0,1024);
 				}
 			} else {
 				fputs(str1, resul);
 				while (!feof(arch1)) {
 					fgets(str1, 1024, arch1);
 					fputs(str1, resul);
-					printf("b-----\n");
+					memset(str1,0,1024);
 				}
 			}
 			fclose(arch1);
 			fclose(arch2);
 			fclose(resul);
 			rename(archivoFinal,"tmp/temp");
-			//system("rm tmp/temp");
+			system("rm tmp/temp");
 			rename("tmp/temporal",archivoFinal);
 		}
 		return;
@@ -327,7 +334,7 @@ char* crearRutaArchivoAReducir(t_list* listaWorkers) {
 			list_add(archivosAReducir, rutaArchivo);
 		}
 	}
-	apareoArchivosLocales(archivosAReducir, rutaArchivoAReducir);
+	apareo(archivosAReducir, rutaArchivoAReducir);
 	return rutaArchivoAReducir;
 }
 
