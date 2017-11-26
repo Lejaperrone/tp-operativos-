@@ -183,7 +183,7 @@ void* conectarseConWorkersTransformacion(void* params) {
 
 	switch(confirmacionWorker.idMensaje){
 
-		case mensajeTransformacionCompleta:
+		case mensajeFinTransformacion:
 			log_trace(loggerMaster, "Informo a YAMA fin Transformacion para bloque %d en nodo %d.",infoTransformacion->bloquesConSusArchivos.numBloque,infoTransformacion->numero);
 			bloqueOK = malloc(sizeof(bloqueYNodo));
 			bloqueOK->workerId = infoTransformacion->numero;

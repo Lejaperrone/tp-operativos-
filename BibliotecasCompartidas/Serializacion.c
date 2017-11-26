@@ -18,7 +18,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeRedLocalCompleta:
 		case mensajeFinJob:
 		case mensajeHandshake:
-		case mensajeTransformacionCompleta:
+		case mensajeFinTransformacion:
 			tamanio = sizeof(int);
 			bloque = malloc(sizeof(int));
 			memcpy(bloque,paquete,sizeof(int));
@@ -57,6 +57,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeFalloTransformacion:
+		case mensajeTransformacionCompleta:
 			bloque = serializarBloqueYNodo(paquete, &tamanio);
 			break;
 
@@ -170,7 +171,7 @@ respuesta desempaquetar(int socket){
 			case mensajeRespuestaBorraDataBin:
 			case mensajeFinJob:
 			case mensajeNumeroCopiaBloqueANodo:
-			case mensajeTransformacionCompleta:
+			case mensajeFinTransformacion:
 				bufferOk = malloc(sizeof(int));
 				recv(socket, bufferOk, sizeof(int), MSG_WAITALL);
 				miRespuesta.envio = malloc(sizeof(int));
@@ -210,6 +211,7 @@ respuesta desempaquetar(int socket){
 				break;
 
 			case mensajeFalloTransformacion:
+			case mensajeTransformacionCompleta:
 				miRespuesta.envio = deserializarBloqueYNodo(socket, cabecera->tamanio);
 				break;
 

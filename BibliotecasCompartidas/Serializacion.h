@@ -64,6 +64,7 @@
 #define mensajeProcesarAlmacenamiento 46
 #define mensajeAlmacenar 47
 #define mensajeConectado 48
+#define mensajeFinTransformacion 49
 
 typedef struct{
 	int idMensaje;

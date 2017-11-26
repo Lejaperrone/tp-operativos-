@@ -87,7 +87,7 @@ void handlerMaster(int clientSocket, int pid) {
 						offset, config.RUTA_DATABIN, bytesRestantes, pid, path , destino);
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Transformacion realizada correctamente");
-		empaquetar(clientSocket, mensajeTransformacionCompleta, 0, &numeroBloqueTransformado);
+		empaquetar(clientSocket, mensajeFinTransformacion, 0, &numeroBloqueTransformado);
 		free(transformacion);
 		exit(0);
 		break;
