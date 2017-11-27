@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 
 	pthread_mutex_init(&logger_mutex, NULL);
 	pthread_mutex_init(&listSemMutex, NULL);
-	pthread_t hiloServidorFS, hiloConsolaFS, hiloConexionYama;
+	pthread_t hiloServidorFS, hiloConsolaFS, hiloConexionYama, hiloEstadoYama;
 	parametrosServidorHilo parametrosServidorFS;
 	loggerFS = log_create("logFileSystem", "FileSystem.c", mostrarLoggerPorPantalla, LOG_LEVEL_TRACE);
 
@@ -106,9 +106,11 @@ int main(int argc, char *argv[]) {
 
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);
+	pthread_create(&hiloEstadoYama, NULL, estadoYama, NULL);
 
 	pthread_join(hiloServidorFS, NULL);
 	pthread_join(hiloConsolaFS, NULL);
+	pthread_join(hiloEstadoYama, NULL);
 
 	return 0;
 

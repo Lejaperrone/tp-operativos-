@@ -18,3 +18,5 @@ int nodoDeEstadoAnterior(informacionNodo info);
 int validarParametros(char** arguments, int cantidadParametros);
 
 void revisarNodos();
+
+void* estadoYama();
