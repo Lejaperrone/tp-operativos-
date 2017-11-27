@@ -8,7 +8,20 @@ int main(int argc, char *argv[]) {
 	limpiarPantalla();
 	logger = log_create("logWorker", "Worker.c", 1, LOG_LEVEL_TRACE);
 	cargarConfiguracionNodo(&config,argv[1]);
+
+	char* path = obtenerPathActual();
+	char* pathTmp = string_from_format("%s/tmp",path);
+
+	struct stat st = {0};
+
+	if (stat(pathTmp, &st) == -1) {
+		mkdir(pathTmp, 0700);
+	}
+
+	system("export LC_ALL=C");
+
 	levantarServidorWorker(config.IP_NODO, config.PUERTO_WORKER);
+
 
 
 	//aparear("/home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/j1n4b13e0","/home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/j1n4b17e0","/home/utnso/pruebafeliz.txt");

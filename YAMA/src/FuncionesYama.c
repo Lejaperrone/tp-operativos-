@@ -555,7 +555,7 @@ void esperarRespuestaReduccionDeMaster(job* job){
 		agregarBloqueTerminadoATablaEstados(0,job->id,RED_GLOBAL);
 		return;
 	}
-	else if(respuestaMaster.idMensaje == mensajeFalloRedGlobal){
+	else if(respuestaMaster.idMensaje == mensajeFalloReduccion){
 		finalizarJob(job,RED_GLOBAL,FALLO_RED_GLOBAL);
 	}
 	else if(respuestaMaster.idMensaje == mensajeDesconexion){

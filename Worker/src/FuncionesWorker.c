@@ -64,6 +64,7 @@ void handlerMaster(int clientSocket, int pid) {
 	char*archivoPreReduccion = "preReduccion";
 	t_list* listaArchivosTemporales, *listAux, *listaWorkers;
 	char* path = obtenerPathActual();
+	char* script = string_new();
 
 	paquete = desempaquetar(clientSocket);
 
@@ -89,6 +90,9 @@ void handlerMaster(int clientSocket, int pid) {
 		log_trace(logger, "Transformacion realizada correctamente");
 		empaquetar(clientSocket, mensajeFinTransformacion, 0, &numeroBloqueTransformado);
 		free(transformacion);
+		script = string_from_format("%s/transformador%d",obtenerPathActual(),pid);
+		remove(script);
+		free(script);
 		exit(0);
 		break;
 	case mensajeProcesarRedLocal:
@@ -114,6 +118,9 @@ void handlerMaster(int clientSocket, int pid) {
 		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(clientSocket, mensajeRedLocalCompleta, 0, &numeroNodo);
 		free(reduccionLocal);
+		script = string_from_format("%s/reductorLocal%d",path,pid);
+		remove(script);
+		free(script);
 		exit(0);
 		break;
 	case mensajeProcesarRedGlobal:
@@ -130,6 +137,9 @@ void handlerMaster(int clientSocket, int pid) {
 		log_trace(logger, "Reduccion global realizada correctamente");
 		empaquetar(clientSocket, mensajeRedGlobalCompleta, 0, 0);
 		free(reduccionGlobal);
+		script = string_from_format("%s/reductorGlobal%d",obtenerPathActual(),pid);
+		remove(script);
+		free(script);
 		exit(0);
 		break;
 
