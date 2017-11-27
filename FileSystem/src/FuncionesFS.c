@@ -589,6 +589,7 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	int off = 0;
 	int realTotal = cantBloquesArchivo;
 
+
 	int sizeUltimoNodo = sizeAux+mb;
 	int resTotal = 0;
 
@@ -651,6 +652,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	pruebaElegido[1] = -1;
 	int envios[cantidadNodos];
 
+	for (i = 0; i < cantidadNodos; ++i)
+		sem_post(&pedidoFS);
+
 	params[0].restanteAnterior = 0;
 	params[realTotal].restanteAnterior = 0;
 	for (i = 0; i < cantidadNodos; ++i){
@@ -696,6 +700,13 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	pthread_t nuevoHilo[realTotal*2];
+	pthread_attr_t attr[realTotal*2];
+
+	for(i = 0; i< realTotal * 2; ++i){
+		pthread_attr_init(&attr[i]);
+		pthread_attr_setdetachstate(&attr[i], PTHREAD_CREATE_DETACHED);
+	}
+
 	FILE* archivos = fopen(rutaFinal, "wb+");
 	fclose(archivos); //para dejarlo vacio
 	t_config* infoArchivo = config_create(rutaFinal);
@@ -756,8 +767,11 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 				sizeTotal += params[i+realTotal*j].sizeBloque;
 
 			params[i+realTotal*j].sem = nodoElegido[j];
-			pthread_create(&nuevoHilo[i+realTotal*j], NULL, &enviarADataNode,(void*) &params[i+realTotal*j]);
-			pthread_join(nuevoHilo[i],NULL);
+			pthread_create(&nuevoHilo[i+realTotal*j], &attr[i+realTotal*j], &enviarADataNode,(void*) &params[i+realTotal*j]);
+
+			sem_wait(&pedidoFS);
+
+			//pthread_join(nuevoHilo[i],NULL);
 
 			if (successArchivoCopiado == 1){
 				setearBloqueOcupadoEnBitmap(nodoElegido[j], bloqueLibre);
@@ -823,6 +837,7 @@ void* enviarADataNode(void* parametros){
 	 }
 	 free(buff);
 	 sem_post(semaforo);
+	 sem_post(&pedidoFS);
 	 sem_post(&pedidoTerminado);
 	 return 0;
 }
