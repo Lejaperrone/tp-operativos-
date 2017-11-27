@@ -61,7 +61,6 @@ void handlerMaster(int clientSocket, int pid) {
 	parametrosAlmacenamiento* almacenamiento;
 
 	char* destino, *contenidoScript, *command, *rutaArchivoFinal;
-	char*archivoPreReduccion = "preReduccion";
 	t_list* listaArchivosTemporales, *listAux, *listaWorkers;
 	char* path = obtenerPathActual();
 	char* script = string_new();
@@ -110,15 +109,15 @@ void handlerMaster(int clientSocket, int pid) {
 		list_iterate(listAux, (void*) agregarPathAElemento);
 		destino = strdup(reduccionLocal->rutaDestino.cadena);
 		crearScript(contenidoScript, mensajeProcesarRedLocal, pid);
-		char* aux = string_from_format("%s/tmp/%s", path, archivoPreReduccion);
-		//apareoArchivosLocales(listaArchivosTemporales, aux);
-		apareo(listaArchivosTemporales,aux);
+		char* aux = string_from_format("%s/tmp/preReduccion%d", path, pid);
+		apareo(listaArchivosTemporales, aux);
 		command = string_from_format("cat %s | ./reductorLocal%d > %s", aux, pid, string_from_format("%s/tmp/%s", path, destino));
 		ejecutarComando(command, clientSocket);
 		log_trace(logger, "Reduccion local realizada correctamente");
 		empaquetar(clientSocket, mensajeRedLocalCompleta, 0, &numeroNodo);
 		free(reduccionLocal);
-		script = string_from_format("%s/reductorLocal%d",path,pid);
+		script = string_from_format("%s/reductorLocal%d", path, pid);
+		remove(aux);
 		remove(script);
 		free(script);
 		exit(0);
@@ -231,8 +230,8 @@ void apareo(t_list* lista, char* archivoFinal){
 
 		FILE* arch1 = fopen(file1, "r");
 		FILE* arch2 = fopen(archivoFinal, "r");
-		char* s = string_from_format("tmp/temporal%d",config.PUERTO_WORKER);
-		char* s2 = string_from_format("tmp/temp%d",config.PUERTO_WORKER);
+		char* s = string_from_format("tmp/temporal%d", process_getpid());
+		char* s2 = string_from_format("tmp/temp%d", process_getpid());
 		FILE* resul = fopen(s,"w");
 		char* str1 = malloc(1024);
 		char* str2 = malloc(1024);
