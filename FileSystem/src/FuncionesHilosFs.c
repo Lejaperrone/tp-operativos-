@@ -203,7 +203,7 @@ void* estadoYama(){
 
 		while (1){
 			if (!noSeConectoYama){
-				if (recv(clienteYama, 0, 0, 0) == 0){
+				if (recv(clienteYama, 0, 1, MSG_PEEK) == 0){
 					printf("Se desconecto Yama\n");
 					noSeConectoYama = true;
 				}
