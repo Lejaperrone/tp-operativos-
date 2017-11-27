@@ -22,9 +22,12 @@ int main(int argc, char *argv[]) {
 
 	levantarServidorWorker(config.IP_NODO, config.PUERTO_WORKER);
 
+	//t_list* a = list_create();
+	//list_add(a,"j1n1b0e0");
+	//list_add(a,"j1n1b18e0");
+	//list_add(a,"j1n1b22e0");
 
-
-	//aparear("/home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/j1n4b13e0","/home/utnso/tp-2017-2c-PEQL/Worker/Debug/tmp/j1n4b17e0","/home/utnso/pruebafeliz.txt");
+	//apareo(a,"final");
 
 	/*t_list* listaArchivosTemporales = list_create();
 	list_add(listaArchivosTemporales, "/home/utnso/tp-2017-2c-PEQL/Worker/a.txt");

@@ -224,13 +224,16 @@ void apareo(t_list* lista, char* archivoFinal){
 		fgets(str1, 1024, arch1);
 	}
 
+	fclose(arch1);
 	fclose(arch2);
 
 	void aparear(char* file1) {
 
 		FILE* arch1 = fopen(file1, "r");
 		FILE* arch2 = fopen(archivoFinal, "r");
-		FILE* resul = fopen("tmp/temporal","w");
+		char* s = string_from_format("tmp/temporal%d",config.PUERTO_WORKER);
+		char* s2 = string_from_format("tmp/temp%d",config.PUERTO_WORKER);
+		FILE* resul = fopen(s,"w");
 		char* str1 = malloc(1024);
 		char* str2 = malloc(1024);
 		memset(str1,0,1024);
@@ -244,14 +247,16 @@ void apareo(t_list* lista, char* archivoFinal){
 		printf("nom1 %s\n", file1);
 
 		while ((!feof(arch1)) && (!feof(arch2))) {
-			if ((strcmp(str1, str2) < 0)) {
+			if (strcmp(str1, str2) < 0) {
 				fputs(str1, resul);
 				memset(str1,0,1024);
 				fgets(str1, 1024, arch1);
+				usleep(100);
 			} else {
 				fputs(str2, resul);
 				memset(str2,0,1024);
 				fgets(str2, 1024, arch2);
+				usleep(100);
 			}
 		}
 
@@ -259,29 +264,32 @@ void apareo(t_list* lista, char* archivoFinal){
 			fclose(arch1);
 			fclose(arch2);
 			fclose(resul);
+			rename(archivoFinal,s2);
+			system(string_from_format("rm %s", s2));
+			rename(s,archivoFinal);
 			return;
 		} else {
 			if (feof(arch1)) {
 				fputs(str2, resul);
 				while (!feof(arch2)) {
+					memset(str2,0,1024);
 					fgets(str2, 1024, arch2);
 					fputs(str2, resul);
-					memset(str2,0,1024);
 				}
 			} else {
 				fputs(str1, resul);
 				while (!feof(arch1)) {
+					memset(str1,0,1024);
 					fgets(str1, 1024, arch1);
 					fputs(str1, resul);
-					memset(str1,0,1024);
 				}
 			}
 			fclose(arch1);
 			fclose(arch2);
 			fclose(resul);
-			rename(archivoFinal,"tmp/temp");
-			system("rm tmp/temp");
-			rename("tmp/temporal",archivoFinal);
+			rename(archivoFinal,s2);
+			system(string_from_format("rm %s", s2));
+			rename(s,archivoFinal);
 		}
 		return;
 	}
@@ -382,6 +390,7 @@ void handlerWorker(int clientSocket) {
 				perror("Error un-mmapping the file");
 				exit(EXIT_FAILURE);
 			}
+			//exit(1);
 			break;
 		default:
 			break;
