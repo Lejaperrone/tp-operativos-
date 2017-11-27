@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	loggerMaster = log_create("logMaster", "Master.c", 1, LOG_LEVEL_TRACE);
+	loggerMaster = log_create("logMaster", "Master.c", 0, LOG_LEVEL_TRACE);
 	pthread_mutex_init(&mutexReplanificar,NULL);
 
 	cargarConfiguracionMaster(&config,argv[1]);

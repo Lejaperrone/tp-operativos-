@@ -19,6 +19,7 @@ void conectarseConYama(char* ip, int port) {
 		exit(1);
 	}
 	log_trace(loggerMaster, "Conexion con Yama establecida");
+	printf("Conexion con Yama establecida\n");
 }
 
 
@@ -29,10 +30,14 @@ job* crearJob(char* argv[]){
 	nuevo->socketFd = 0;
 
 	if( access( argv[2], F_OK ) == -1 ) {
-	  finalizarJob(FALLO_INGRESO);
+		log_trace(loggerMaster, "Ruta de programa transformador invalida");
+		printf("Ruta de programa transformador invalida\n");
+		finalizarJob(FALLO_INGRESO);
 	}
 
 	if( access( argv[3], F_OK ) == -1 ) {
+		log_trace(loggerMaster, "Ruta de programa reductor invalida");
+		printf("Ruta de programa reductor invalida\n");
 		finalizarJob(FALLO_INGRESO);
 	}
 
@@ -48,6 +53,8 @@ job* crearJob(char* argv[]){
 	nuevo->rutaResultado.cadena = string_duplicate(argv[5]);
 	nuevo->rutaResultado.longitud = string_length(nuevo->rutaResultado.cadena);
 
+	log_trace(loggerMaster, "Job creado correctamente");
+
 	estadisticas = crearEstadisticasProceso();
 	return nuevo;
 }
@@ -61,6 +68,9 @@ void esperarInstruccionesDeYama() {
 	respuestaAlmacenamiento* almacenamiento;
 	int fallo;
 
+	log_trace(loggerMaster, "Espero instrucciones de YAMA.");
+	printf("\nEspero instrucciones de YAMA.\n");
+
 	while (1) {
 		instruccionesYama = desempaquetar(socketYama);
 		switch (instruccionesYama.idMensaje) {
@@ -68,6 +78,7 @@ void esperarInstruccionesDeYama() {
 			case mensajeRespuestaTransformacion:
 				infoTransformacion = (respuestaSolicitudTransformacion*)instruccionesYama.envio;
 				log_trace(loggerMaster, "Recibo Transformacion de YAMA.");
+				printf("\nRecibo Transformacion de YAMA.\n");
 				inicializarTiemposTransformacion(infoTransformacion);
 				crearHilosConexionTransformacion(infoTransformacion);
 				break;
@@ -75,35 +86,42 @@ void esperarInstruccionesDeYama() {
 			case mensajeRespuestaRedLocal:
 				infoRedLocal = (nodosRedLocal*)instruccionesYama.envio;
 				log_trace(loggerMaster, "Recibo Reduccion Local en nodo %d de YAMA.",infoRedLocal->numeroNodo);
+				printf("\nRecibo Reduccion Local en nodo %d de YAMA.\n",infoRedLocal->numeroNodo);
 				crearHilosConexionRedLocal(infoRedLocal);
 				break;
 
 			case mensajeDesconexion:
 				log_error(loggerMaster, "Error inesperado al recibir instrucciones de YAMA.");
-				exit(1);
+				printf("\nError inesperado al recibir instrucciones de YAMA.\n");
+				finalizarJob(DESCONEXION_YAMA);
 				break;
 
 			case mensajeReplanificacion:
-				worker= instruccionesYama.envio;
-				log_trace(loggerMaster, "Recibo Replanificacion para bloque en nodo %d de YAMA.",worker->numeroWorker);
-				crearHilosPorBloqueTransformacion(worker);
+				infoTransformacion= instruccionesYama.envio;
+				log_trace(loggerMaster, "Recibo Replanificacion de YAMA.");
+				printf("\nRecibo Replanificacion de YAMA.\n");
+				inicializarTiemposTransformacion(infoTransformacion);
+				crearHilosConexionTransformacion(infoTransformacion);
 				break;
 
 			case mensajeFinJob:
 				fallo = *(int*)instruccionesYama.envio;
-				log_trace(loggerMaster, "Finaliza job.");
+				log_trace(loggerMaster, "Recibo finalizacion de Job de Yama.");
+				printf("\nRecibo finalizacion de Job de Yama.\n");
 				finalizarJob(fallo);
 				break;
 
 			case mensajeRespuestaRedGlobal:
 				infoRedGlobal = (respuestaReduccionGlobal*)instruccionesYama.envio;
 				log_trace(loggerMaster, "Recibo Reduccion Global en nodo %d de YAMA.",infoRedGlobal->numero);
+				printf("\nRecibo Reduccion Global en nodo %d de YAMA.\n",infoRedGlobal->numero);
 				enviarAEncargadoRedGlobal(infoRedGlobal);
 				break;
 
 			case mensajeRespuestaAlmacenamiento:
 				almacenamiento = (respuestaAlmacenamiento*)instruccionesYama.envio;
 				log_trace(loggerMaster, "Recibo Almacenamiento Final en nodo %d de YAMA.",almacenamiento->nodo);
+				printf("\nRecibo Almacenamiento Final en nodo %d de YAMA.\n",almacenamiento->nodo);
 				enviarAlmacenamientoFinal(almacenamiento);
 				break;
 		}
@@ -157,7 +175,8 @@ void* conectarseConWorkersTransformacion(void* params) {
 
 	}
 
-	log_trace(loggerMaster, "Conexion con Worker %d para bloque %d", infoTransformacion->numero, infoTransformacion->bloquesConSusArchivos.numBloque);
+	log_trace(loggerMaster, "Conexion con Worker %d para bloque %d en Transformacion", infoTransformacion->numero, infoTransformacion->bloquesConSusArchivos.numBloque);
+	printf("\nConexion con Worker %d para bloque %d en Transformacion\n", infoTransformacion->numero, infoTransformacion->bloquesConSusArchivos.numBloque);
 
 	struct stat fileStat;
 	if(stat(miJob->rutaTransformador.cadena,&fileStat) < 0){
@@ -185,6 +204,7 @@ void* conectarseConWorkersTransformacion(void* params) {
 
 		case mensajeFinTransformacion:
 			log_trace(loggerMaster, "Informo a YAMA fin Transformacion para bloque %d en nodo %d.",infoTransformacion->bloquesConSusArchivos.numBloque,infoTransformacion->numero);
+			printf("\nInformo a YAMA fin Transformacion para bloque %d en nodo %d.\n",infoTransformacion->bloquesConSusArchivos.numBloque,infoTransformacion->numero);
 			bloqueOK = malloc(sizeof(bloqueYNodo));
 			bloqueOK->workerId = infoTransformacion->numero;
 			bloqueOK->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
@@ -195,6 +215,7 @@ void* conectarseConWorkersTransformacion(void* params) {
 			break;
 
 		case mensajeDesconexion:
+		case mensajeFalloTransformacion:
 			mandarAReplanificar(infoTransformacion);
 			break;
 
@@ -243,7 +264,9 @@ void* conectarseConWorkersRedLocal(void* params){
 
 	}
 
-	log_trace(loggerMaster, "Conexion con Worker %d para estos tmp %d", infoRedLocal->numero, list_size(infoRedLocal->archivosTemporales));
+	log_trace(loggerMaster, "Conexion con Worker %d para Reduccion Local", infoRedLocal->numero);
+	printf("\nConexion con Worker %d para Reduccion Local \n",infoRedLocal->numero);
+
 
 	struct stat fileStat;
 	if(stat(miJob->rutaReductor.cadena,&fileStat) < 0){
@@ -271,6 +294,7 @@ void* conectarseConWorkersRedLocal(void* params){
 
 	case mensajeRedLocalCompleta:
 		log_trace(loggerMaster, "Informo a  YAMA fin Reduccion Local en nodo %d.",infoRedLocal->numero);
+		printf("\nInformo a  YAMA fin Reduccion Local en nodo %d.\n",infoRedLocal->numero);
 		numeroNodo = *(int*)confirmacionWorker.envio;
 		empaquetar(socketYama, mensajeRedLocalCompleta, 0 , &numeroNodo);
 		finalizarTiempo(estadisticas->tiempoFinRedLocal,numeroNodo);
@@ -280,6 +304,7 @@ void* conectarseConWorkersRedLocal(void* params){
 	case mensajeDesconexion:
 	case mensajeFalloRedLocal:
 		log_trace(loggerMaster, "Informo a  YAMA fallo en Reduccion Local en nodo %d.",infoRedLocal->numero);
+		printf("\nInformo a  YAMA fallo en Reduccion Local en nodo %d.\n",infoRedLocal->numero);
 		estadisticas->cantFallos++;
 		mandarFalloEnReduccion();
 		break;
@@ -293,7 +318,8 @@ void mandarFalloEnReduccion(){
 }
 
 void mandarAReplanificar(parametrosTransformacion* infoTransformacion){
-	log_trace(loggerMaster, "Informo a  YAMA replanificacion nodo %d.",infoTransformacion->numero);
+	log_trace(loggerMaster, "Fallo Transformacion nodo %d para bloque %d.",infoTransformacion->numero,infoTransformacion->bloquesConSusArchivos.numBloque);
+	printf("\nFallo Transformacion nodo %d para bloque %d.\n",infoTransformacion->numero,infoTransformacion->bloquesConSusArchivos.numBloque);
 	bloqueYNodo* bloqueReplanificar=malloc(sizeof(bloqueYNodo));
 	bloqueReplanificar->workerId = infoTransformacion->numero;
 	bloqueReplanificar->bloque = infoTransformacion->bloquesConSusArchivos.numBloque;
@@ -304,7 +330,8 @@ void mandarAReplanificar(parametrosTransformacion* infoTransformacion){
 
 void enviarJobAYama(job* miJob) {
 	empaquetar(socketYama,mensajeSolicitudTransformacion, 0 ,miJob);
-	log_trace(loggerMaster,"Enviando solicitud de etapa Transformacion a YAMA");
+	log_trace(loggerMaster,"Envio a YAMA solicitud para inicio de Job");
+	printf("\nEnvio a YAMA solicitud para inicio de Job\n");
 
 	respuesta respuestaYama = desempaquetar(socketYama);
 
@@ -371,7 +398,8 @@ void* conectarseConWorkerRedGlobal(void* params){
 		return 0;
 	}
 
-	log_trace(loggerMaster, "Inicio Red. Global con Worker %d para Job %d", infoRedGlobal->numero, infoRedGlobal->job);
+	log_trace(loggerMaster, "Conexion con Worker %d para Reduccion Global", infoRedGlobal->numero);
+	printf("\nConexion con Worker %d para Reduccion Global\n",infoRedGlobal->numero);
 
 	struct stat fileStat;
 	if(stat(miJob->rutaReductor.cadena,&fileStat) < 0){
@@ -403,6 +431,7 @@ void* conectarseConWorkerRedGlobal(void* params){
 		case mensajeOk:
 		case mensajeRedGlobalCompleta:
 			log_trace(loggerMaster, "Informo YAMA fin de Reduccion Global en nodo %i",infoRedGlobal->numero);
+			printf("\nInformo YAMA fin de Reduccion Global en nodo %i\n",infoRedGlobal->numero);
 			empaquetar(socketYama, mensajeRedGlobalCompleta, 0 , 0);
 			estadisticas->cantTareas[RED_GLOBAL]++;
 			finalizarTiempo(estadisticas->tiempoFinRedGlobal,infoRedGlobal->numero);
@@ -411,6 +440,7 @@ void* conectarseConWorkerRedGlobal(void* params){
 		case mensajeDesconexion:
 		case mensajeFalloRedGlobal:
 			log_trace(loggerMaster, "Informo a  YAMA fallo en Reduccion Global del nodo %d.",infoRedGlobal->numero);
+			printf("\nInformo a  YAMA fallo en Reduccion Global del nodo %d.\n",infoRedGlobal->numero);
 			estadisticas->cantFallos++;
 			mandarFalloEnReduccion();
 			break;
@@ -445,6 +475,7 @@ void* conectarseConWorkerAlmacenamiento(void* params){
 	}
 
 	log_trace(loggerMaster, "Inicio Almacenamiento Final con Worker %d", almacenamiento->nodo);
+	printf("\nInicio Almacenamiento Final con Worker %d\n",almacenamiento->nodo);
 
 	parametrosConexion->rutaAlmacenamiento.longitud = miJob->rutaResultado.longitud;
 	parametrosConexion->rutaAlmacenamiento.cadena= strdup(miJob->rutaResultado.cadena);
@@ -457,12 +488,14 @@ void* conectarseConWorkerAlmacenamiento(void* params){
 
 	switch(confirmacionWorker.idMensaje){
 		case mensajeAlmacenamientoCompleto:
-			log_trace(loggerMaster, "Informo YAMA fin de Almacenamiento Final en nodo.",almacenamiento->nodo);
+			log_trace(loggerMaster, "Informo YAMA fin de Almacenamiento Final en nodo %d.",almacenamiento->nodo);
+			printf("\nInformo YAMA fin de Almacenamiento Final en nodo %d.\n",almacenamiento->nodo);
 			empaquetar(socketYama, mensajeAlmacenamientoCompleto, 0 , 0);
 			break;
 		case mensajeFalloAlmacenamiento:
 		case mensajeDesconexion:
 			log_trace(loggerMaster, "Informo a YAMA fallo en Almacenamiento Final del nodo %d.",almacenamiento->nodo);
+			printf("\nInformo a YAMA fallo en Almacenamiento Final del nodo %d.\n",almacenamiento->nodo);
 			estadisticas->cantFallos++;
 			empaquetar(socketYama, mensajeFalloAlmacenamiento, 0 , 0);
 			break;
@@ -484,6 +517,9 @@ estadisticaProceso* crearEstadisticasProceso(){
 	estadisticas->cantTareas[TRANSFORMACION]=0;
 	estadisticas->cantTareas[RED_LOCAL]=0;
 	estadisticas->cantTareas[RED_GLOBAL]=0;
+
+	log_trace(loggerMaster, "Estadisticas creadas correctamente");
+
 	return estadisticas;
 }
 
@@ -620,37 +656,35 @@ void mostrarListasEstadisticas(){
 }
 
 char* obtenerEstadoFinalizacion(Finalizacion tipoFin){
-	char* nombre;
+	char* nombre= string_new();
 
 	switch(tipoFin){
 	case OK:
-		nombre =malloc(3);
 		nombre = strdup("OK");
 		break;
 
 	case FALLO_ALMACENAMIENTO:
-		nombre =malloc(21);
 		nombre = strdup("FALLO ALMACENAMIENTO");
 		break;
 
 	case FALLO_RED_GLOBAL:
-		nombre =malloc(16);
 		nombre = strdup("FALLO RED GLOBAL");
 		break;
 
 	case FALLO_RED_LOCAL:
-		nombre =malloc(15);
 		nombre = strdup("FALLO RED LOCAL");
 		break;
 
 	case FALLO_TRANSFORMACION:
-		nombre =malloc(23);
 		nombre = strdup("FALLO TRANSFORMACION");
 		break;
 
 	case FALLO_INGRESO:
-		nombre =malloc(14);
 		nombre = strdup("FALLO INGRESO");
+		break;
+
+	case DESCONEXION_YAMA:
+		nombre = strdup("DESCONEXION YAMA");
 		break;
 	}
 
