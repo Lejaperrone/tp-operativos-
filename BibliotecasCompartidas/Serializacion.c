@@ -116,6 +116,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			break;
 
 		case mensajeRespuestaTransformacion:
+		case mensajeReplanificacion:
 			bloque = serializarRespuestaTransformacion(paquete,&tamanio);
 			break;
 
@@ -131,9 +132,6 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 			bloque = serializarRespuestaAlmacenamiento(paquete,&tamanio);
 			break;
 
-		case mensajeReplanificacion:
-			bloque = serializarReplanificacion(paquete,&tamanio);
-			break;
 	}
 
 	cabecera.tamanio = tamanio;
@@ -236,7 +234,7 @@ respuesta desempaquetar(int socket){
 				break;
 
 			case mensajeSolicitudTransformacion:
-				miRespuesta.envio = deserializarJob(socket, cabecera->tamanio);//FIXME
+				miRespuesta.envio = deserializarJob(socket, cabecera->tamanio);
 				break;
 
 			case mensajeInformacionNodo:
@@ -263,6 +261,7 @@ respuesta desempaquetar(int socket){
 				break;
 
 			case mensajeRespuestaTransformacion:
+			case mensajeReplanificacion:
 				miRespuesta.envio = deserializarRespuestaTransformacion(socket,cabecera->tamanio);
 				break;
 
@@ -276,10 +275,6 @@ respuesta desempaquetar(int socket){
 
 			case mensajeRespuestaAlmacenamiento:
 				miRespuesta.envio = deserializarRespuestaAlmacenamiento(socket,cabecera->tamanio);
-				break;
-
-			case mensajeReplanificacion:
-				miRespuesta.envio = deserializarReplanificacion(socket,cabecera->tamanio);
 				break;
 
 		}

@@ -415,7 +415,7 @@ void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacio
 
 	list_iterate(worker->bloquesConSusArchivos,(void*)agregarBloque);
 
-	empaquetar(jobi->socketFd,mensajeRespuestaTransformacion,0,respuestaTransfromacion);
+	empaquetar(jobi->socketFd,mensajeReplanificacion,0,respuestaTransfromacion);
 
 	//actualizarCargasNodosReplanificacion(jobi->id,TRANSFORMACION,bloque->numBloque);
 
