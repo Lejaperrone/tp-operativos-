@@ -106,11 +106,11 @@ int main(int argc, char *argv[]) {
 
 	pthread_create(&hiloServidorFS,NULL,levantarServidorFS ,(void*)&parametrosServidorFS);
 	pthread_create(&hiloConsolaFS,NULL,consolaFS ,NULL);
-	pthread_create(&hiloConexionYama, NULL, estadoYama, NULL);
+	//pthread_create(&hiloConexionYama, NULL, estadoYama, NULL);
 
 	pthread_join(hiloServidorFS, NULL);
 	pthread_join(hiloConsolaFS, NULL);
-	pthread_join(hiloConexionYama, NULL);
+	//pthread_join(hiloConexionYama, NULL);
 
 	return 0;
 

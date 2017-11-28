@@ -183,6 +183,11 @@ void* levantarServidorFS(){
 								informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
 								empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
 								break;
+
+							case mensajeDesconexion:
+								printf("Se deconecto Yama\n");
+								noSeConectoYama = true;
+								break;
 							}
 						}
 					}

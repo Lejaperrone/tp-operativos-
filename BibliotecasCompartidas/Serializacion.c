@@ -155,6 +155,7 @@ respuesta desempaquetar(int socket){
 	int bytesRecibidos;
 
 	if ((bytesRecibidos = recv(socket, cabecera, sizeof(header), 0)) == 0) {
+		printf("Desconexion recibida\n");
 		miRespuesta.idMensaje = mensajeDesconexion;
 	}
 	else {
