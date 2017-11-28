@@ -45,9 +45,16 @@ void planificar(job* job){
 
 	respuestaSolicitudTransformacion* respuestaMaster = moverClock(worker, listaNodos, matrix, infoArchivo->informacionBloques,job->id,nodos);
 
+
 	log_trace(logger,"Envio pre planificacion a Master para job %d",job->id);
 
 	empaquetar(job->socketFd,mensajeRespuestaTransformacion,0,respuestaMaster);
+
+	void reparticion(workerDesdeYama* worker){
+		printf("Worker %d, tareas %d \n",worker->numeroWorker,list_size(worker->bloquesConSusArchivos));
+	}
+
+	list_iterate(respuestaMaster->workers,(void*)reparticion);
 
 	actualizarCargasNodos(job->id,TRANSFORMACION);
 
@@ -81,7 +88,7 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 
 		usleep(config.RETARDO_PLANIFICACION*1000);
 
-		if(bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
+		if(bloqueEstaEn(workerDesignado,nodosPorBloque,bloque->numeroBloque)){
 			if(workerDesignado->disponibilidad > 0){
 				modificarCargayDisponibilidad(workerDesignado);
 				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
@@ -97,11 +104,14 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 
 			}
 			else{
-				restaurarDisponibilidad(workerDesignado);
-				workerDesignado = avanzarClock(workerDesignado, listaNodos);
-				if(workerDesignado->disponibilidad <= 0){
-					workerDesignado->disponibilidad += getDisponibilidadBase();
-					workerDesignado = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero,nodosPorBloque,nodos);
+				while(workerDesignado->disponibilidad <= 0){
+					restaurarDisponibilidad(workerDesignado);
+					avanzarClock(workerDesignado, listaNodos);
+				}
+
+
+				if(bloqueEstaEn(workerDesignado,nodosPorBloque,bloque->numeroBloque)){
+					workerDesignado = obtenerProximoWorkerConBloque(listaNodos,bloque->numeroBloque,workerDesignado->numero,nodosPorBloque,nodos);
 				}
 				modificarCargayDisponibilidad(workerDesignado);
 
@@ -130,6 +140,7 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 	}
 
 
+
 	return respuestaAMaster;
 
 }
@@ -140,7 +151,7 @@ void verificarValorDisponibilidad(infoNodo* nodo){
 	}
 }
 void restaurarDisponibilidad(infoNodo* worker){
-	worker->disponibilidad += getDisponibilidadBase();
+	worker->disponibilidad = getDisponibilidadBase();
 }
 
 infoNodo* avanzarClock(infoNodo* worker, t_list* listaNodos){
@@ -267,25 +278,46 @@ void modificarCargayDisponibilidad(infoNodo* worker){
 infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWorkerActual,bool** matrix,int nodos){
 
 	void restaurarDisp(infoNodo* nodo){
-		nodo->disponibilidad += getDisponibilidadBase();
+		nodo->disponibilidad = getDisponibilidadBase();
 	}
 
 	infoNodo* info;
 	int i;
 
-	bool nodoEnLista(infoNodo* nodo){
-		return nodo->numero == i;
+
+
+	int inicio;
+	if(numWorkerActual==nodos){
+		inicio=0;
+	}
+	else{
+		inicio=numWorkerActual+1;
 	}
 
-	for(i=numWorkerActual+1;i<=nodos;i++){
+	for(i=inicio;i<=nodos;i++){
+		bool nodoEnLista(infoNodo* nodo){
+			return nodo->numero == i;
+		}
+
 		info = list_find(listaNodos,(void*)nodoEnLista);
-		if(matrix[i][bloque] && i != numWorkerActual && (info->disponibilidad > 0)){
+
+		if(matrix[i][bloque] &&(info->disponibilidad > 0)){
+			if(bloque==40){
+				printf("soy un hdmp\n");
+			}
+
 			return info;
 		}
-		else if(i==nodos){
-			i=0;
+
+		if(i==numWorkerActual){
 			list_iterate(listaNodos,(void*)restaurarDisp);
 		}
+
+		if(i==nodos){
+			i=0;
+		}
+
+
 	}
 	return info;
 }
@@ -612,7 +644,7 @@ void realizarAlmacenamientoFinal(job* job){
 	respuestaAlm->archivo.longitud = string_length(reg->rutaArchivoTemp);
 	respuestaAlm->archivo.cadena = strdup(reg->rutaArchivoTemp);
 
-	empaquetar(job->socketFd,mensajeRespuestaAlmacenamiento,0,respuesta);
+	empaquetar(job->socketFd,mensajeRespuestaAlmacenamiento,0,respuestaAlm);
 	respuesta almac = desempaquetar(job->socketFd);
 
 	if(almac.idMensaje == mensajeAlmacenamientoCompleto){

@@ -194,6 +194,7 @@ void handlerMaster(int clientSocket, int pid) {
 			empaquetar(clientSocket,mensajeFalloAlmacenamiento, 0, 0);
 		}
 
+		close(socketFS);
 		exit(0);
 		break;
 

@@ -174,22 +174,27 @@ void* levantarServidorFS(){
 					}
 				}
 				else{
-					if (!noSeConectoYama){
-						if (i == clienteYama){
-							conexionNueva= desempaquetar(clienteYama);
-							switch(conexionNueva.idMensaje){
+					if (!noSeConectoYama && i == clienteYama){
+						conexionNueva= desempaquetar(clienteYama);
+						switch(conexionNueva.idMensaje){
 
-							case mensajeSolicitudInfoNodos:
-								solicitud = (solicitudInfoNodos*)conexionNueva.envio;
-								informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
-								empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
-								break;
+						case mensajeSolicitudInfoNodos:
+							solicitud = (solicitudInfoNodos*)conexionNueva.envio;
+							informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
+							empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
+							break;
 
-							case mensajeDesconexion:
-								printf("Se deconecto Yama\n");
-								noSeConectoYama = true;
-								break;
-							}
+						case mensajeDesconexion:
+							printf("Se deconecto Yama\n");
+							noSeConectoYama = true;
+							break;
+						}
+
+					}
+					else{
+						conexionNueva= desempaquetar(i);
+						if(conexionNueva.idMensaje== mensajeDesconexion){
+							close(i);
 						}
 					}
 
