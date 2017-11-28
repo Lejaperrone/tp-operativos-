@@ -167,6 +167,7 @@ void* levantarServidorFS(){
 								empaquetar(nuevoCliente,mensajeFalloAlmacenamiento,0,0);
 							}
 							free(mmap);
+							free(mmap->cadena);
 							free(almacenar);
 						}
 
