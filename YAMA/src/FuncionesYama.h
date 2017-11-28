@@ -63,7 +63,7 @@ void validarCambiosConfig();
 
 void recibirContenidoMaster();
 
-informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud);
+informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud,int job);
 
 int getDisponibilidadBase();
 
@@ -73,13 +73,13 @@ int esClock();
 
 void inicializarEstructuras();
 
-bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques);
+bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques,int job);
 
 int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos,int bloques);
 
-void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques);
+void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques,int job);
 
-void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo);
+void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo,int job);
 
 void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque);
 

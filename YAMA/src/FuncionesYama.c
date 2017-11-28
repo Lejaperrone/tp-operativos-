@@ -21,14 +21,26 @@ int conectarseConFs() {
 	respuesta respuesta;
 	int socketFs = crearSocket();
 	struct sockaddr_in direccion = cargarDireccion(config.FS_IP, config.FS_PUERTO);
-	conectarCon(direccion, socketFs, 1);
+	if(conectarCon(direccion, socketFs, 1)){
+		log_trace(logger, "Conexion exitosa con File System");
+		printf("\nConexion exitosa con File System\n");
+
+	}
+	else{
+		log_error(logger, "Conexion fallida con File System");
+		printf("\nConexion fallida con File System\n");
+		exit(1);
+	}
+
 	respuesta = desempaquetar(socketFs);
 	if (respuesta.idMensaje == mensajeNoEstable){
-		printf("File system en estado inestable, no se puede conectar\n");
+		log_error(logger, "File system en estado inestable, no se puede conectar");
+		printf("\nFile system en estado inestable, no se puede conectar\n");
 		exit(1);
 	}
 
 	log_trace(logger, "Conexion exitosa con File System");
+	printf("\nConexion exitosa con File System\n");
 	return socketFs;
 }
 
@@ -69,6 +81,7 @@ void levantarServidorYama(char* ip, int port){
 			if(id == idMaster){
 				pthread_mutex_lock(&mutexLog);
 				log_trace(logger, "Nueva conexion de un Master\n");
+				printf("\nNueva conexion de un Master\n");
 				pthread_mutex_unlock(&mutexLog);
 
 				empaquetar(nuevoCliente,mensajeOk,0,0);
@@ -241,6 +254,7 @@ void recibirContenidoMaster(int nuevoMaster) {
 
 	if(nuevoJob.idMensaje == mensajeDesconexion){
 		log_trace(logger, "Fallo al recibir job");
+		printf("\nFallo al recibir job\n");
 		pthread_exit(0);
 	}
 
@@ -251,15 +265,17 @@ void recibirContenidoMaster(int nuevoMaster) {
 	jobAPlanificar->id = cantJobs;
 	jobAPlanificar->socketFd = nuevoMaster;
 	pthread_mutex_unlock(&cantJobs_mutex);
-	log_trace(logger, "Job recibido para pre-planificacion %i",jobAPlanificar->id);
 
 	empaquetar(nuevoMaster, mensajeOk, 0,0);
+
+	log_trace(logger, "Job recibido para pre-planificacion %i",jobAPlanificar->id);
+	printf("\nJob recibido para pre-planificacion %i\n",jobAPlanificar->id);
 
 	planificar(jobAPlanificar);
 
 }
 
-informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud){
+informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud,int job){
 	informacionArchivoFsYama* rtaFs = malloc(sizeof(informacionArchivoFsYama));
 	respuesta respuestaFs;
 
@@ -269,10 +285,12 @@ informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud)
 
 	if(respuestaFs.idMensaje == mensajeRespuestaInfoNodos){
 		rtaFs = (informacionArchivoFsYama*)respuestaFs.envio;
-		log_trace(logger, "Me llego la informacion desde Fs correctamente");
+		log_trace(logger, "Me llego la informacion desde Fs correctamente para job %d",job);
+		printf("\nMe llego la informacion desde Fs correctamente %d\n",job);
 	}
 	else{
-		log_error(logger, "Error al recibir la informacion del archivo desde FS");
+		log_error(logger, "Error al recibir la informacion del archivo del job %d desde FS",job);
+		printf("\nError al recibir la informacion del archivo del job %d desde FS\n",job);
 		exit(1);
 	}
 	return rtaFs;
@@ -306,9 +324,10 @@ void inicializarEstructuras(){
 	pthread_mutex_init(&mutexLog, NULL);
 	pthread_mutex_init(&mutexConfiguracion, NULL);
 	pthread_mutex_init(&mutexJobs, NULL);
+
 }
 
-bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques){
+bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,int bloques,int job){
 	bool** matriz = (bool**)malloc((nodos+1)*sizeof(bool*));
 
 	int j,k;
@@ -325,6 +344,8 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 		matriz[info->ubicacionCopia0.numeroNodo][info->numeroBloque] = true;
 		matriz[info->ubicacionCopia1.numeroNodo][info->numeroBloque] = true;
 	}
+
+	log_trace(logger,"Matriz de job %d llenada correctamente",job);
 
 	return matriz;
 }
@@ -344,7 +365,7 @@ int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos,int bloqu
 	return -1;
 }
 
-void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques){
+void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques,int job){
 	*bloques = list_size(info->informacionBloques);
 
 	int max =0;
@@ -359,15 +380,18 @@ void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques
 		}
 	}
 	*nodos = max;
+
+	log_trace(logger,"Se planificara sobre %d nodos y %d bloques para job %d",*nodos,*bloques,job);
 }
 
-void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo){
+void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo,int job){
 	int i;
 	for(i=0;i<list_size(infoArchivo->informacionBloques);i++){
 		infoBloque* infoBlo = list_get(infoArchivo->informacionBloques,i);
 		agregarBloqueANodo(listaNodos,infoBlo->ubicacionCopia0,infoBlo->numeroBloque);
 		agregarBloqueANodo(listaNodos,infoBlo->ubicacionCopia1,infoBlo->numeroBloque);
 	}
+	log_trace(logger,"Cargo lista de nodos correctamente para job %d",job);
 }
 
 void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque){
@@ -405,7 +429,6 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 		memcpy(nodoAPlanificar,nuevoNodo,sizeof(infoNodo));
 		nodoAPlanificar->bloques = list_create();
 		list_add(nodoAPlanificar->bloques,&bloque);
-		printf("%d");
 		list_add(listaNodos,nodoAPlanificar);
 
 	}
@@ -501,6 +524,7 @@ void actualizarCargasNodos(int jobid,Etapa etapa){
 	pthread_mutex_lock(&mutex_NodosConectados);
 	list_iterate(tablaDeEstados,(void*)actualizarCarga);
 	pthread_mutex_unlock(&mutex_NodosConectados);
+	log_trace(logger,"Actualizo cargas en workers para job %d",jobid);
 }
 
 void actualizarCargasNodosRedLocal(int jobid,int numNodo){
@@ -560,7 +584,8 @@ void esperarRespuestaReduccionDeMaster(job* job){
 		finalizarJob(job,RED_GLOBAL,FALLO_RED_GLOBAL);
 	}
 	else if(respuestaMaster.idMensaje == mensajeDesconexion){
-		log_error(logger, "Error en Proceso Master.");
+		log_error(logger, "Error en Proceso Master de job %d",job->id);
+		printf("Error en Proceso Master de job %d",job->id);
 		reestablecerEstadoYama(job);
 	}
 }

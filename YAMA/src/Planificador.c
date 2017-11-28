@@ -27,23 +27,25 @@ void planificar(job* job){
 	t_list* listaNodos = list_create();
 	int nodos,bloques;
 
-	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);//RECIBE BLOQUES Y TAMAÑO DE FS SOBRE EL ARCHIVO DEL JOB
+	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);
 
-	llenarListaNodos(listaNodos,infoArchivo);
+	llenarListaNodos(listaNodos,infoArchivo,job->id);
 
 	if(list_is_empty(listaNodos)){
 		finalizarJob(job,TRANSFORMACION,FALLO_INGRESO);
 	}
 
-	calcularDisponibilidadWorkers(listaNodos);
+	calcularDisponibilidadWorkers(listaNodos,job->id);
 
-	worker = posicionarClock(listaNodos);//POSICIONA EL CLOCK EN EL WORKER DE MAYOR DISPONIBILIDAD
+	worker = posicionarClock(listaNodos,job->id);
 
-	calcularNodosYBloques(infoArchivo,&nodos,&bloques);
+	calcularNodosYBloques(infoArchivo,&nodos,&bloques,job->id);
 
-	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques);
+	bool** matrix = llenarMatrizNodosBloques(infoArchivo,nodos,bloques,job->id);
 
 	respuestaSolicitudTransformacion* respuestaMaster = moverClock(worker, listaNodos, matrix, infoArchivo->informacionBloques,job->id,nodos);
+
+	log_trace(logger,"Envio pre planificacion a Master para job %d",job->id);
 
 	empaquetar(job->socketFd,mensajeRespuestaTransformacion,0,respuestaMaster);
 
@@ -54,7 +56,7 @@ void planificar(job* job){
 	enviarReduccionGlobalAMaster(job);
 
 	actualizarCargasNodos(job->id,RED_GLOBAL);
-	mostrarTablaDeEstados();
+
 	esperarRespuestaReduccionDeMaster(job);
 
 	realizarAlmacenamientoFinal(job);
@@ -64,7 +66,7 @@ void planificar(job* job){
 	free(listaNodos);
 	free(worker);
 
-	finalizarJob(job,4,OK);
+	finalizarJob(job,ALM_FINAL,OK);
 }
 
 
@@ -83,7 +85,9 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 			if(workerDesignado->disponibilidad > 0){
 				modificarCargayDisponibilidad(workerDesignado);
 				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
-				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
+				log_trace(logger, "Bloque %i asignado al worker %i para job %d | Disp %i",bloque->numeroBloque, workerDesignado->numero,job, workerDesignado->disponibilidad);
+				printf("Bloque %i asignado al worker %i para job %d\n",bloque->numeroBloque, workerDesignado->numero,job);
+
 
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
 				if(workerDesignado->disponibilidad <= 0){
@@ -97,15 +101,14 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
 				if(workerDesignado->disponibilidad <= 0){
 					workerDesignado->disponibilidad += getDisponibilidadBase();
-					//while(workerDesignado->disponibilidad <= 0 && bloqueEstaEn(workerDesignado,nodosPorBloque,i)){
-						workerDesignado = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero,nodosPorBloque,nodos);
-					//}
+					workerDesignado = obtenerProximoWorkerConBloque(listaNodos,i,workerDesignado->numero,nodosPorBloque,nodos);
 				}
-				printf("%d \n\n",workerDesignado->numero);
 				modificarCargayDisponibilidad(workerDesignado);
 
 				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
-				log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, workerDesignado->numero, workerDesignado->disponibilidad);
+				log_trace(logger, "Bloque %i asignado al worker %i para job %d| Disp %i",bloque->numeroBloque, workerDesignado->numero,job, workerDesignado->disponibilidad);
+				printf("Bloque %i asignado al worker %i para job %d\n",bloque->numeroBloque, workerDesignado->numero,job);
+
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
 
 				if(workerDesignado->disponibilidad <= 0){
@@ -115,28 +118,22 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 			}
 		}
 		else {
-			printf("El worker %d no tiene el bloque %d \n",workerDesignado->numero,bloque->numeroBloque);
+			log_trace(logger,"El worker %d no tiene el bloque %d para job %d\n",workerDesignado->numero,bloque->numeroBloque,job);
 			infoNodo* proximoWorker = obtenerProximoWorkerConBloque(listaNodos,bloque->numeroBloque,workerDesignado->numero,nodosPorBloque,nodos);
 			modificarCargayDisponibilidad(proximoWorker);
 
 			agregarBloqueANodoParaEnviar(bloque,proximoWorker,respuestaAMaster,job);
-			log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque->numeroBloque, proximoWorker->numero, proximoWorker->disponibilidad);
+			printf("Bloque %i asignado al worker %i para job %d\n",bloque->numeroBloque, proximoWorker->numero,job);
+			log_trace(logger, "Bloque %i asignado al worker %i para job %d | Disp %i",bloque->numeroBloque, proximoWorker->numero,job ,proximoWorker->disponibilidad);
 		}
 
 	}
-	exit(0);
 
 
 	return respuestaAMaster;
 
 }
-/*void verificarCasoParticular(infoNodo* worker, t_list* listaNodos, bool** matriz, int bloque, respuestaSolicitudTransformacion respuestaAMaster){
-	if(worker->disponibilidad > 0){
-		modificarCargayDisponibilidad(worker);
-		agregarBloqueANodoParaEnviar(bloque,worker,respuestaAMaster,job);
-		log_trace(logger, "Bloque %i asignado al worker %i | Disp %i",bloque, worker->numero, worker->disponibilidad);
 
-}*/
 void verificarValorDisponibilidad(infoNodo* nodo){
 	if(nodo->disponibilidad == 0){
 		restaurarDisponibilidad(nodo);
@@ -175,15 +172,20 @@ informacionArchivoFsYama* recibirInfoArchivo(job* job) {
 	solTransf->rutaResultado.cadena = strdup(job->rutaResultado.cadena);
 	solTransf->rutaResultado.longitud = job->rutaResultado.longitud;
 
-	infoArchivo = solicitarInformacionAFS(solTransf);
+	log_trace(logger,"Envio de job %d a FS",job->id);
+
+	infoArchivo = solicitarInformacionAFS(solTransf,job->id);
 	return infoArchivo;
 }
 
-infoNodo* posicionarClock(t_list* listaWorkers){
+infoNodo* posicionarClock(t_list* listaWorkers,int job){
 	infoNodo* workerDesignado = malloc(sizeof(infoNodo));
 	list_sort(listaWorkers, (void*)mayorDisponibilidad);
 
-	workerDesignado = list_get(listaWorkers, 0);//Ya desempata por cantidad de tareas historicas (PROBAR)
+	workerDesignado = list_get(listaWorkers, 0);
+
+	log_trace(logger,"Posiciono clock en worker %d para job %d",workerDesignado->numero,job);
+
 	return workerDesignado;
 }
 
@@ -210,13 +212,15 @@ bool estaActivo(infoNodo* worker){
 	return worker->conectado == true;
 }
 
-void calcularDisponibilidadWorkers(t_list* nodos){
+void calcularDisponibilidadWorkers(t_list* nodos,int job){
+	void calcularDisponibilidadWorker(infoNodo* worker){
+		worker->disponibilidad = getDisponibilidadBase() + calcularPWL(worker);
+		log_trace(logger,"Disponibilidad %d para %d worker job %d",worker->disponibilidad,worker->numero,job);
+	}
+
 	calcularWorkLoadMaxima(nodos);
 	list_iterate(nodos, (void*)calcularDisponibilidadWorker);
-}
-
-void calcularDisponibilidadWorker(infoNodo* worker){
-	worker->disponibilidad = getDisponibilidadBase() + calcularPWL(worker);
+	log_trace(logger,"Disponibilidad calculada para job %d",job);
 }
 
 int obtenerDisponibilidadWorker(infoNodo* worker){//getter
@@ -273,7 +277,7 @@ infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWor
 		return nodo->numero == i;
 	}
 
-	for(i=0;i<=nodos;i++){
+	for(i=numWorkerActual+1;i<=nodos;i++){
 		info = list_find(listaNodos,(void*)nodoEnLista);
 		if(matrix[i][bloque] && i != numWorkerActual && (info->disponibilidad > 0)){
 			return info;
@@ -546,6 +550,9 @@ void enviarReduccionGlobalAMaster(job* job){
 	pthread_mutex_lock(&mutexTablaEstados);
 	list_add(tablaDeEstados,registro);
 	pthread_mutex_unlock(&mutexTablaEstados);
+
+	log_trace(logger,"Envio de Reduccion Global de job %d",job->id);
+	printf("\nEnvio de Reduccion Global de job %d\n",job->id);
 }
 
 int calcularNodoEncargado(t_list* registrosRedGlobal){
@@ -594,19 +601,29 @@ void realizarAlmacenamientoFinal(job* job){
 
 	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
 
-	respuestaAlmacenamiento* respuesta = malloc(sizeof(respuestaAlmacenamiento));
+	respuestaAlmacenamiento* respuestaAlm = malloc(sizeof(respuestaAlmacenamiento));
 	infoNodo* infoNod = obtenerNodo(reg->nodo);
 
-	respuesta->ip.longitud = infoNod->ip.longitud;
-	respuesta->ip.cadena = strdup(infoNod->ip.cadena);
+	respuestaAlm->ip.longitud = infoNod->ip.longitud;
+	respuestaAlm->ip.cadena = strdup(infoNod->ip.cadena);
 
-	respuesta->nodo = reg->nodo;
-	respuesta->puerto = infoNod->puerto;
-	respuesta->archivo.longitud = string_length(reg->rutaArchivoTemp);
-	respuesta->archivo.cadena = strdup(reg->rutaArchivoTemp);
+	respuestaAlm->nodo = reg->nodo;
+	respuestaAlm->puerto = infoNod->puerto;
+	respuestaAlm->archivo.longitud = string_length(reg->rutaArchivoTemp);
+	respuestaAlm->archivo.cadena = strdup(reg->rutaArchivoTemp);
 
 	empaquetar(job->socketFd,mensajeRespuestaAlmacenamiento,0,respuesta);
-	desempaquetar(job->socketFd);
+	respuesta almac = desempaquetar(job->socketFd);
+
+	if(almac.idMensaje == mensajeAlmacenamientoCompleto){
+		printf("\nAlmacenamiento correcto de job %d en FS\n",job->id);
+		log_trace(logger, "Almacenamiento correcto de job %d en FS",job->id);
+	}
+	else{
+		printf("\nAlmacenamiento fallido de job %d en FS\n",job->id);
+		log_trace(logger, "Almacenamiento fallido de job %d en FS",job->id);
+		finalizarJob(job,ALM_FINAL,FALLO_ALMACENAMIENTO);
+	}
 }
 
 void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTransformacion* respuestaMaster,int nodos,int bloques){
@@ -620,17 +637,21 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 		nodosReplanificados[i] = true;
 	}
 
+	log_trace(logger,"Espero respuesta de tareas de Master para job %d",job->id);
+
 	while(redLocalIncompleta){
 		respuesta respuestaPlanificacionMaster = desempaquetar(job->socketFd);
 
 		if(respuestaPlanificacionMaster.idMensaje == mensajeTransformacionCompleta){
 			bloqueNodo = (bloqueYNodo*) respuestaPlanificacionMaster.envio;
-			log_trace(logger,"Finalizada tarea transformacion en bloque %d", bloqueNodo->bloque);
+			log_trace(logger,"Finalizada tarea transformacion en bloque %d para job %d", bloqueNodo->bloque,job->id);
+			printf("\nFinalizada tarea transformacion en bloque %d para job %d\n", bloqueNodo->bloque,job->id);
 
 			agregarBloqueTerminadoATablaEstados(bloqueNodo->bloque,job->id,TRANSFORMACION);
 
 			if(!faltanBloquesTransformacionParaNodo(job->id,bloqueNodo->workerId)){
-				log_trace(logger,"Envio reduccion local de nodo %d", bloqueNodo->workerId);
+				log_trace(logger,"Envio reduccion local de nodo %d para job %d", bloqueNodo->workerId,job->id);
+				printf("\nEnvio reduccion local de nodo %d para job %d\n", bloqueNodo->workerId,job->id);
 				enviarReduccionLocalAMaster(job,bloqueNodo->workerId);
 				actualizarCargasNodosRedLocal(job->id,bloqueNodo->workerId);
 			}
@@ -638,8 +659,8 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloTransformacion){
 			bloqueNodo = (bloqueYNodo*) respuestaPlanificacionMaster.envio;
-			log_trace(logger,"Entro a replanificar se desconecto un worker %d", bloqueNodo->workerId);
-
+			log_trace(logger,"Entro a replanificar se desconecto un worker %d para job %d", bloqueNodo->workerId,job->id);
+			printf("\nEntro a replanificar se desconecto un worker %d para job %d\n", bloqueNodo->workerId,job->id);
 			if(nodosReplanificados[bloqueNodo->workerId]){
 				replanificar(bloqueNodo->workerId,job,respuestaMaster,matrix,bloques,nodos);
 				nodosReplanificados[bloqueNodo->workerId] = false;
@@ -648,16 +669,19 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeRedLocalCompleta){
 			numNodo = *(int*) respuestaPlanificacionMaster.envio;
-			log_trace(logger,"Finalizada tarea reduccion nodo %d", numNodo);
+			log_trace(logger,"Finalizada tarea reduccion nodo %d para job %d", numNodo,job->id);
+			printf("Finalizada tarea reduccion nodo %d para job %d", numNodo,job->id);
 			agregarBloqueTerminadoATablaEstadosRedLocal(numNodo,job->id,RED_LOCAL);
 			redLocalIncompleta= faltanMasTareas(job->id,RED_LOCAL) || faltanMasTareas(job->id,TRANSFORMACION);
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloReduccion){
 			log_trace(logger,"Fallo en reduccion local del job %d", job->id);
+			printf("\nFallo en reduccion local del job %d\n", job->id);
 			finalizarJob(job,RED_LOCAL,FALLO_RED_LOCAL);
 		}
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeDesconexion){
 			log_error(logger, "Error en Proceso Master.");
+			printf("\nError en Proceso Master\n");
 			reestablecerEstadoYama(job);
 		}
 	}

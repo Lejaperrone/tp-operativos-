@@ -2,7 +2,7 @@
 
 int main(int argc, char *argv[]) {
 	limpiarPantalla();
-	logger = log_create("logYama", "YAMA.c", 1, LOG_LEVEL_TRACE);
+	logger = log_create("logYama", "YAMA.c", 0, LOG_LEVEL_TRACE);
 	pthread_t hiloConfig;
 
 	nodosConectados = list_create();
@@ -10,6 +10,7 @@ int main(int argc, char *argv[]) {
 
 	inicializarEstructuras();
 	cargarConfiguracionYama(&config,argv[1]);
+	log_trace(logger,"Estructuras cragdaas correctamente");
 
 	socketFs = conectarseConFs();
 
