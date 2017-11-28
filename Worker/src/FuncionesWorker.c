@@ -391,7 +391,8 @@ void handlerWorker(int clientSocket) {
 				perror("Error un-mmapping the file");
 				exit(EXIT_FAILURE);
 			}
-			//exit(1);
+			close(clientSocket);
+			exit(0);
 			break;
 		default:
 			break;

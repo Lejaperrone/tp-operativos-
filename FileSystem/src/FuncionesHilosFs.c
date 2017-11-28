@@ -40,6 +40,9 @@ void* levantarServidorFS(){
 	FD_SET(servidorFS, &datanodes);
 	// seguir la pista del descriptor de fichero mayor
 	maxDatanodes = servidorFS; // por ahora es éste
+
+	char* buff = malloc(2);
+	int desconexion = 0;
 	// bucle principal
 
 	signal(SIGPIPE, SIG_IGN);
@@ -187,19 +190,25 @@ void* levantarServidorFS(){
 						case mensajeDesconexion:
 							printf("Se deconecto Yama\n");
 							noSeConectoYama = true;
+							close(clienteYama);
+							FD_CLR(clienteYama, &datanodes);
+							break;
 							break;
 						}
 
 					}
-					else{
-						conexionNueva= desempaquetar(i);
-						if(conexionNueva.idMensaje== mensajeDesconexion){
+
+					if (noSeConectoYama || i != clienteYama){
+						memset(buff,0,2);
+						if (recv(i, buff, sizeof(int), MSG_PEEK | MSG_WAITALL) == 0){
+							revisarNodos();
 							close(i);
+							FD_CLR(i, &datanodes);
+							printf("desconexion\n");
+							break;
 						}
+
 					}
-
-
-
 
 				}
 
@@ -248,7 +257,6 @@ int nodoDeEstadoAnterior(informacionNodo info){
 void revisarNodos(){
 	int cantidadNodos = list_size(nodosConectados);
 	int i, j;
-	int desconexion = 0;
 	informacionNodo info;
 	respuesta res;
 	t_list* listAux;
@@ -269,12 +277,9 @@ void revisarNodos(){
 				list_add(nodosConectados, list_get(listAux, j));
 			}
 			list_destroy(listAux);
-			desconexion = 1;
 			break;
 		}
 	}
-	if (desconexion)
-		revisarNodos();
 }
 
 void* consolaFS(){
