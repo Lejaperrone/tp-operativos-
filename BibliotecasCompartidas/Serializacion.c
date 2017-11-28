@@ -342,6 +342,7 @@ string* deserializarSolicitudArchivo(int socket,int tamanio){
 	nombreArchivo->cadena = calloc(1,nombreArchivo->longitud+1);
 	memcpy(nombreArchivo->cadena, buffer + desplazamiento, nombreArchivo->longitud);
 
+	free(buffer);
 	return nombreArchivo;
 }
 
@@ -409,6 +410,7 @@ job* deserializarJob(int socket, int tamanio){
 	memcpy(unJob->rutaResultado.cadena, buffer + desplazamiento, unJob->rutaResultado.longitud);
 	desplazamiento += unJob->rutaResultado.longitud;
 
+	free(buffer);
 	return unJob;
 }
 
@@ -461,6 +463,8 @@ solicitudInfoNodos* deserializarSolicitudInfoNodos(int socket,int tamanio){
 	memcpy(unaSolicitud->rutaResultado.cadena, buffer + desplazamiento, unaSolicitud->rutaResultado.longitud);
 	desplazamiento += unaSolicitud->rutaResultado.longitud;
 
+
+	free(buffer);
 	return unaSolicitud;
 }
 
@@ -525,6 +529,8 @@ informacionNodo* deserializarInformacionNodos(int socket,int tamanio){
 	info->ip.cadena = calloc(1,info->ip.longitud+1);
 	memcpy(info->ip.cadena, buffer + desplazamiento, info->ip.longitud);
 	desplazamiento += info->ip.longitud;
+
+	free(buffer);
 
 	return info;
 }
@@ -618,7 +624,7 @@ informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio)
 	informacionArchivoFsYama* info= malloc(sizeof(informacionArchivoFsYama));
 
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 
 	memcpy(&info->tamanioTotal, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
@@ -672,7 +678,7 @@ informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio)
 
 		list_add(info->informacionBloques, infoBloq);
 	}
-
+	free(buffer);
 	return info;
 }
 
@@ -755,7 +761,7 @@ respuestaSolicitudTransformacion* deserializarRespuestaTransformacion(int socket
 	respuestaSolicitudTransformacion* respuesta= malloc(sizeof(respuestaSolicitudTransformacion));
 
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 
 	respuesta->workers= list_create();
 	int longitud = 0;
@@ -808,7 +814,7 @@ respuestaSolicitudTransformacion* deserializarRespuestaTransformacion(int socket
 
 		list_add(respuesta->workers, infoWorker);
 	}
-
+	free(buffer);
 	return respuesta;
 }
 
@@ -876,7 +882,7 @@ nodosRedLocal* deserializarRespuestaRedLocal(int socket,int tamanio){
 	nodosRedLocal* respuesta= malloc(sizeof(nodosRedLocal));
 
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 
 	int j;
 
@@ -917,7 +923,7 @@ nodosRedLocal* deserializarRespuestaRedLocal(int socket,int tamanio){
 
 		list_add(respuesta->archivos, bloqueArchivos);
 	}
-
+	free(buffer);
 	return respuesta;
 }
 
@@ -986,7 +992,7 @@ void* serializarProcesarTransformacion(void* paquete, int* tamanio){
 parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tamanio){
 	int desplazamiento = 0;
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 
 	parametrosTransformacion* infoWorker = malloc(sizeof(parametrosTransformacion));
 
@@ -1026,6 +1032,8 @@ parametrosTransformacion* deserializarProcesarTransformacion(int socket, int tam
 	memcpy(infoWorker->contenidoScript.cadena, buffer + desplazamiento, infoWorker->contenidoScript.longitud);
 	desplazamiento += infoWorker->contenidoScript.longitud;
 
+
+	free(buffer);
 	return infoWorker;
 }
 
@@ -1101,7 +1109,7 @@ void* serializarProcesarRedLocal(void* paquete, int* tamanio){
 parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio){
 	int desplazamiento = 0;
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 
 	parametrosReduccionLocal* reduccionLocal = malloc(sizeof(parametrosReduccionLocal));
 
@@ -1152,6 +1160,7 @@ parametrosReduccionLocal* deserializarProcesarRedLocal(int socket, int tamanio){
 	memcpy(reduccionLocal->contenidoScript.cadena, buffer + desplazamiento, reduccionLocal->contenidoScript.longitud);
 	desplazamiento += reduccionLocal->contenidoScript.longitud;
 
+	free(buffer);
 	return reduccionLocal;
 }
 
@@ -1175,7 +1184,7 @@ void* serializarBloqueYNodo(void* paquete, int* tamanio){
 bloqueYNodo* deserializarBloqueYNodo(int socket, int tamanio){
 	int desplazamiento = 0;
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 	bloqueYNodo* replanif = malloc(sizeof(bloqueYNodo));
 
 	memcpy(&replanif->workerId, buffer + desplazamiento, sizeof(int) );
@@ -1184,6 +1193,7 @@ bloqueYNodo* deserializarBloqueYNodo(int socket, int tamanio){
 	memcpy(&replanif->bloque, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
+	free(buffer);
 	return replanif;
 }
 
@@ -1270,7 +1280,7 @@ respuestaReduccionGlobal* deserializarRespuestaRedGlobal(int socket,int tamanio)
 	respuestaReduccionGlobal* respuesta= malloc(sizeof(respuestaReduccionGlobal));
 
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 
 	memcpy(&respuesta->numero, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
@@ -1325,6 +1335,7 @@ respuestaReduccionGlobal* deserializarRespuestaRedGlobal(int socket,int tamanio)
 		list_add(respuesta->parametros->infoWorkers, info);
 	}
 
+	free(buffer);
 	return respuesta;
 }
 
@@ -1395,7 +1406,7 @@ workerDesdeYama* deserializarReplanificacion(int socket, int tamanio){
 	workerDesdeYama* infoWorker = malloc(sizeof(workerDesdeYama));
 	int desplazamiento = 0;
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 
 	memcpy(&infoWorker->numeroWorker, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
@@ -1437,6 +1448,7 @@ workerDesdeYama* deserializarReplanificacion(int socket, int tamanio){
 
 		list_add(infoWorker->bloquesConSusArchivos, bloqueArchivos);
 	}
+	free(buffer);
 	return infoWorker;
 }
 
@@ -1506,7 +1518,7 @@ void* serializarProcesarRedGlobal(void* paquete, int* tamanio){
 parametrosReduccionGlobal* deserializarProcesarRedGlobal(int socket, int tamanio){
 	int desplazamiento = 0;
 	void* buffer = malloc(tamanio);
-	recv(socket,buffer,tamanio,0);
+	recv(socket,buffer,tamanio,MSG_WAITALL);
 	parametrosReduccionGlobal* respuesta = malloc(sizeof(parametrosReduccionGlobal));
 
 	memcpy(&respuesta->contenidoScript.longitud, buffer + desplazamiento, sizeof(int) );
@@ -1552,6 +1564,7 @@ parametrosReduccionGlobal* deserializarProcesarRedGlobal(int socket, int tamanio
 	memcpy(respuesta->archivoTemporal.cadena, buffer + desplazamiento, respuesta->archivoTemporal.longitud);
 	desplazamiento += respuesta->archivoTemporal.longitud;
 
+	free(buffer);
 	return respuesta;
 }
 
@@ -1618,6 +1631,7 @@ respuestaAlmacenamiento* deserializarRespuestaAlmacenamiento(int socket, int tam
 	memcpy(respuesta->ip.cadena, buffer + desplazamiento, respuesta->ip.longitud);
 	desplazamiento += respuesta->ip.longitud;
 
+	free(buffer);
 	return respuesta;
 }
 
@@ -1668,6 +1682,7 @@ parametrosAlmacenamiento* deserializarProcesarAlmacenamiento(int socket, int tam
 	memcpy(respuesta->rutaAlmacenamiento.cadena, buffer + desplazamiento, respuesta->rutaAlmacenamiento.longitud);
 	desplazamiento += respuesta->rutaAlmacenamiento.longitud;
 
+	free(buffer);
 	return respuesta;
 }
 
@@ -1718,5 +1733,6 @@ almacenamientoFinal* deserializarAlmacenar(int socket, int tamanio){
 	memcpy(respuesta->contenido.cadena, buffer + desplazamiento, respuesta->contenido.longitud);
 	desplazamiento += respuesta->contenido.longitud;
 
+	free(buffer);
 	return respuesta;
 }

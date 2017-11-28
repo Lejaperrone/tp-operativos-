@@ -15,10 +15,10 @@ extern t_log* loggerFS;
 extern int bloquesLibresTotales;
 extern bool recuperarEstado;
 extern int EstadoFS;
+bool noSeConectoYama = true;
 
 void* levantarServidorFS(){
 	solicitudInfoNodos* solicitud;
-	bool noSeConectoYama = true;
 	int maxDatanodes;
 	int nuevoCliente;
 	int cantidadNodos;
@@ -167,23 +167,27 @@ void* levantarServidorFS(){
 								empaquetar(nuevoCliente,mensajeFalloAlmacenamiento,0,0);
 							}
 							free(mmap);
+							free(mmap->cadena);
 							free(almacenar);
 						}
 
 					}
 				}
 				else{
-					if (i == clienteYama){
-						conexionNueva= desempaquetar(clienteYama);
-						switch(conexionNueva.idMensaje){
+					if (!noSeConectoYama){
+						if (i == clienteYama){
+							conexionNueva= desempaquetar(clienteYama);
+							switch(conexionNueva.idMensaje){
 
-						case mensajeSolicitudInfoNodos:
-							solicitud = (solicitudInfoNodos*)conexionNueva.envio;
-							informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
-							empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
-							break;
+							case mensajeSolicitudInfoNodos:
+								solicitud = (solicitudInfoNodos*)conexionNueva.envio;
+								informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
+								empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
+								break;
+							}
 						}
 					}
+
 
 
 
@@ -192,6 +196,21 @@ void* levantarServidorFS(){
 			}
 		}
 	}
+	return 0;
+
+}
+
+void* estadoYama(){
+
+		while (1){
+			if (!noSeConectoYama){
+				if (recv(clienteYama, 0, 1, MSG_PEEK) == 0){
+					printf("Se desconecto Yama\n");
+					noSeConectoYama = true;
+				}
+			}
+		}
+
 	return 0;
 
 }
