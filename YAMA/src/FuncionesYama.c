@@ -405,6 +405,7 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 		memcpy(nodoAPlanificar,nuevoNodo,sizeof(infoNodo));
 		nodoAPlanificar->bloques = list_create();
 		list_add(nodoAPlanificar->bloques,&bloque);
+		printf("%d");
 		list_add(listaNodos,nodoAPlanificar);
 
 	}

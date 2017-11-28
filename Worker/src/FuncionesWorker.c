@@ -237,9 +237,6 @@ void apareo(t_list* lista, char* archivoFinal){
 		char* str2 = malloc(1024);
 		memset(str1,0,1024);
 		memset(str2,0,1024);
-		rewind(arch1);
-		rewind(arch2);
-		rewind(resul);
 		fgets(str1, 1024, arch1);
 		fgets(str2, 1024, arch2);
 		printf("nom2 %s\n", archivoFinal);
@@ -250,12 +247,12 @@ void apareo(t_list* lista, char* archivoFinal){
 				fputs(str1, resul);
 				memset(str1,0,1024);
 				fgets(str1, 1024, arch1);
-				usleep(100);
+				//usleep(100);
 			} else {
 				fputs(str2, resul);
 				memset(str2,0,1024);
 				fgets(str2, 1024, arch2);
-				usleep(100);
+				//usleep(100);
 			}
 		}
 
@@ -263,6 +260,8 @@ void apareo(t_list* lista, char* archivoFinal){
 			fclose(arch1);
 			fclose(arch2);
 			fclose(resul);
+			free(str1);
+			free(str2);
 			rename(archivoFinal,s2);
 			system(string_from_format("rm %s", s2));
 			rename(s,archivoFinal);
@@ -286,6 +285,8 @@ void apareo(t_list* lista, char* archivoFinal){
 			fclose(arch1);
 			fclose(arch2);
 			fclose(resul);
+			free(str1);
+			free(str2);
 			rename(archivoFinal,s2);
 			system(string_from_format("rm %s", s2));
 			rename(s,archivoFinal);
