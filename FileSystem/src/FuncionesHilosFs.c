@@ -7,7 +7,7 @@
 
 #include "FuncionesHilosFs.h"
 
-int clienteYama;
+int clienteYama = -1;
 int servidorFS;
 struct sockaddr_in direccionCliente;
 extern t_list* pedidosFS;
@@ -41,7 +41,7 @@ void* levantarServidorFS(){
 	// seguir la pista del descriptor de fichero mayor
 	maxDatanodes = servidorFS; // por ahora es éste
 
-	char* buff = malloc(2);
+	char* buff = malloc(sizeof(int)*3);
 	int desconexion = 0;
 	// bucle principal
 
@@ -58,7 +58,9 @@ void* levantarServidorFS(){
 		// explorar conexiones existentes en busca de datos que leer
 		for(i = 0; i <= maxDatanodes; i++) {
 			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
+
 				if (i == servidorFS) {
+					fs:
 					// gestionar nuevas conexiones
 					addrlen = sizeof(direccionCliente);
 					if ((nuevoCliente = accept(servidorFS, (struct sockaddr *)&direccionCliente,
@@ -69,7 +71,6 @@ void* levantarServidorFS(){
 						if (nuevoCliente > maxDatanodes) {    // actualizar el máximo
 							maxDatanodes = nuevoCliente;
 						}
-
 						conexionNueva = desempaquetar(nuevoCliente);
 
 						if (*(int*)conexionNueva.envio == idDataNodes){
@@ -118,7 +119,6 @@ void* levantarServidorFS(){
 							}
 						}
 						else if(*(int*)conexionNueva.envio == 1){//yama
-
 							if(!EstadoFS){
 								empaquetar(nuevoCliente,mensajeNoEstable,0,0);
 								close(nuevoCliente);
@@ -190,23 +190,25 @@ void* levantarServidorFS(){
 						case mensajeDesconexion:
 							printf("Se deconecto Yama\n");
 							noSeConectoYama = true;
+							clienteYama = -1;
 							close(clienteYama);
 							FD_CLR(clienteYama, &datanodes);
-							break;
 							break;
 						}
 
 					}
 
-					if (noSeConectoYama || i != clienteYama){
-						memset(buff,0,2);
-						if (recv(i, buff, sizeof(int), MSG_PEEK | MSG_WAITALL) == 0){
+					if (i != clienteYama){
+						memset(buff,0,sizeof(int)*3);
+						if (recv(i, buff, sizeof(int)*3, MSG_PEEK) == 0){
 							revisarNodos();
 							close(i);
 							FD_CLR(i, &datanodes);
 							printf("desconexion\n");
 							break;
 						}
+						else
+							goto fs;
 
 					}
 
