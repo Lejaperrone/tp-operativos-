@@ -26,7 +26,7 @@ void* levantarServidorFS(){
 	respuesta respuestaWorker;
 	almacenamientoFinal* almacenar;
 
-	int i = 0, l = 0;
+	int i = 0, l = 0, m = 0;
 	int addrlen;
 
 	fd_set datanodes;
@@ -41,6 +41,8 @@ void* levantarServidorFS(){
 	// seguir la pista del descriptor de fichero mayor
 	maxDatanodes = servidorFS; // por ahora es éste
 
+
+
 	char* buff = malloc(sizeof(int)*3);
 	int desconexion = 0;
 	// bucle principal
@@ -49,7 +51,6 @@ void* levantarServidorFS(){
 
 	while(1){
 		read_fds_datanodes = datanodes; // cópialo
-
 		if (select(maxDatanodes+1, &read_fds_datanodes, NULL, NULL, NULL) == -1) {
 			perror("select");
 			exit(1);
@@ -60,7 +61,7 @@ void* levantarServidorFS(){
 			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
 
 				if (i == servidorFS) {
-					fs:
+
 					// gestionar nuevas conexiones
 					addrlen = sizeof(direccionCliente);
 					if ((nuevoCliente = accept(servidorFS, (struct sockaddr *)&direccionCliente,
@@ -142,6 +143,7 @@ void* levantarServidorFS(){
 							string* mmap = malloc(sizeof(string));
 							mmap->cadena = strdup(almacenar->contenido.cadena);
 							mmap->longitud = almacenar->contenido.longitud;
+							free(almacenar->contenido.cadena);
 
 							int resultado = guardarEnNodos(directorio, nombreArchivo, "t", mmap);
 
@@ -172,51 +174,62 @@ void* levantarServidorFS(){
 							free(mmap);
 							free(mmap->cadena);
 							free(almacenar);
+							close(nuevoCliente);
+							FD_CLR(nuevoCliente, &datanodes);
 						}
 
 					}
 				}
-				else{
-					if (!noSeConectoYama && i == clienteYama){
-						conexionNueva= desempaquetar(clienteYama);
-						switch(conexionNueva.idMensaje){
+				else if(i == clienteYama){
+					conexionNueva= desempaquetar(clienteYama);
+					switch(conexionNueva.idMensaje){
 
-						case mensajeSolicitudInfoNodos:
-							solicitud = (solicitudInfoNodos*)conexionNueva.envio;
-							informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
-							empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
-							break;
+					case mensajeSolicitudInfoNodos:
+						solicitud = (solicitudInfoNodos*)conexionNueva.envio;
+						informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
+						empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
+						break;
 
-						case mensajeDesconexion:
-							printf("Se deconecto Yama\n");
-							noSeConectoYama = true;
-							clienteYama = -1;
-							close(clienteYama);
-							FD_CLR(clienteYama, &datanodes);
-							break;
-						}
-
+					case mensajeDesconexion:
+						printf("Se deconecto Yama\n");
+						noSeConectoYama = true;
+						FD_CLR(clienteYama, &datanodes);
+						close(clienteYama);
+						clienteYama = -1;
+						break;
 					}
 
-					if (i != clienteYama){
-						memset(buff,0,sizeof(int)*3);
-						if (recv(i, buff, sizeof(int)*3, MSG_PEEK) == 0){
-							revisarNodos();
+				}
+				else if (clienteYama != -1){
+					memset(buff,0,sizeof(int)*3);
+					if (recv(i, buff, sizeof(int)*3, MSG_PEEK) == 0){
+						for (m = 0; m < list_size(nodosConectados); ++m){
+							info = *(informacionNodo*)list_get(nodosConectados,m);
+							if (info.socket == i){
+								desconexion = 1;
+								revisarNodos();
+							}
+						}
+
+						if (desconexion == 1){
 							close(i);
 							FD_CLR(i, &datanodes);
 							printf("desconexion\n");
 							break;
 						}
-						else
-							goto fs;
+
 
 					}
 
+
 				}
 
+
 			}
+
 		}
 	}
+
 	return 0;
 
 }
@@ -288,6 +301,8 @@ void* consolaFS(){
 
 	int sizeComando = 256;
 	int resultado = 0;
+	int i;
+	informacionNodo info;
 
 	while (1) {
 		printf("Introduzca comando: ");
@@ -322,6 +337,22 @@ void* consolaFS(){
 				pthread_mutex_lock(&logger_mutex);
 				log_error(loggerFS, "No se pudo formatear el File system");
 				pthread_mutex_unlock(&logger_mutex);
+			}
+		}
+		else if (strcmp(arguments[0],"status") == 0) {
+			if (list_size(nodosConectados) == 0)
+				printf("No hay nodos conectados\n");
+			else{
+				if (EstadoFS)
+					printf("Estado del File system: Estable\n");
+				else
+					printf("Estado del File system: Inestable\n");
+				for (i = 0; i < list_size(nodosConectados); ++i){
+					info = *(informacionNodo*)list_get(nodosConectados, i);
+					printf("Nodo%d\n", info.numeroNodo);
+					printf("	Tamaño: %d\n", info.sizeNodo);
+					printf("	Bloques ocupados: %d\n", info.bloquesOcupados);
+				}
 			}
 		}
 		else if (strcmp(arguments[0],"rm") == 0) {

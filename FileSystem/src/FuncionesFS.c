@@ -1115,7 +1115,7 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	char* directorio = rutaSinArchivo(rutaDatos.cadena);
 	char* rutaArchivo = buscarRutaArchivo(directorio);
 
-	if(!strcmp(rutaArchivo, "-1")) {
+	if(!strcmp(ultimaParteDeRuta(rutaArchivo), "-1")) {
 		info.tamanioTotal = 0;
 		return info;
 	}

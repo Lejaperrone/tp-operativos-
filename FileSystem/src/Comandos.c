@@ -40,6 +40,11 @@ int eliminarArchivo(char* comando){
 	int nodoAUsar = -1;
 	informacionNodo info;
 
+	if(list_size(nodosConectados) == 0){
+		printf("No hay nodos conectados.\n");
+		return 4;
+	}
+
 	if (validarArchivoYamaFS(rutaArchivoYamafs) == 0){
 		printf("la ruta ingresada no pertence a yamafs.\n");
 		return 2;
