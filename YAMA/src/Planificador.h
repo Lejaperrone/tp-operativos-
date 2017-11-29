@@ -53,7 +53,7 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 void verificarValorDisponibilidad(infoNodo* nodo);
 void agregarInfoTransformacionATablaDeEstadoos(informacionArchivoFsYama* infoArchivo,int jobid);
 void enviarReduccionLocalAMaster(job* job,int nodo);
-void enviarReduccionGlobalAMaster(job* job);
+int enviarReduccionGlobalAMaster(job* job);
 void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques,int nodos);
 int calcularNodoEncargado(t_list* registrosRedGlobal);
 t_list* buscarCopiasBloques(t_list* listaBloques,t_list* listaNodos,informacionArchivoFsYama* infoArchivo);

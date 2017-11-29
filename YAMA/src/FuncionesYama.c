@@ -444,7 +444,14 @@ void agregarBloqueTerminadoATablaEstados(int bloque,int jobId,Etapa etapa){
 	pthread_mutex_lock(&mutexTablaEstados);
 	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
 	reg->estado=FINALIZADO_OK;
+
+	pthread_mutex_lock(&mutex_NodosConectados);
+	infoNodo* nodo = obtenerNodo(reg->nodo);
+	nodo->carga--;
+	pthread_mutex_unlock(&mutex_NodosConectados);
+
 	pthread_mutex_unlock(&mutexTablaEstados);
+
 }
 void agregarBloqueTerminadoATablaEstadosRedLocal(int nodo,int jobId,Etapa etapa){
 	bool encontrarEnTablaEstados(registroTablaEstados* reg ) {
@@ -454,10 +461,18 @@ void agregarBloqueTerminadoATablaEstadosRedLocal(int nodo,int jobId,Etapa etapa)
 		if(encontrarEnTablaEstados(reg)){
 			reg->estado=FINALIZADO_OK;
 		}
+
 	}
 	pthread_mutex_lock(&mutexTablaEstados);
 	list_iterate(tablaDeEstados, (void*)modificarEstado);
 	pthread_mutex_unlock(&mutexTablaEstados);
+
+	pthread_mutex_lock(&mutex_NodosConectados);
+	infoNodo* nodoo = obtenerNodo(nodo);
+
+	nodoo->carga--;
+
+	pthread_mutex_unlock(&mutex_NodosConectados);
 
 
 }
@@ -474,7 +489,6 @@ bool faltanMasTareas(int jobid,Etapa etapa){
 }
 
 void finalizarJob(job* job,int etapa,int error){
-	//actualizarCargasNodos(job->id,etapa);
 	reducirCargaJob(job);
 	borrarEntradasDeJob(job->id);
 	int err = error;
@@ -508,56 +522,21 @@ void reducirCargaJob(job* unJob){
 	list_iterate(tablaDeEstados, (void*)actualizarCarga);
 	pthread_mutex_unlock(&mutexTablaEstados);
 }
-void actualizarCargasNodos(int jobid,Etapa etapa){
-	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-		return reg->job == jobid && reg->etapa == etapa;
-	}
-
-	void actualizarCarga(registroTablaEstados* reg ){
-		if(encontrarEnTablaEstados(reg)){
-			infoNodo* nodo = obtenerNodo(reg->nodo);
-			nodo->carga++;
-			nodo->cantTareasHistoricas++;
-		}
-	}
-
+void actualizarCargasNodos(int nodo){
 	pthread_mutex_lock(&mutex_NodosConectados);
-	list_iterate(tablaDeEstados,(void*)actualizarCarga);
+	infoNodo* nodoo = obtenerNodo(nodo);
+	nodoo->carga++;
+	nodoo->cantTareasHistoricas++;
+
 	pthread_mutex_unlock(&mutex_NodosConectados);
-	log_trace(logger,"Actualizo cargas en workers para job %d",jobid);
 }
 
-void actualizarCargasNodosRedLocal(int jobid,int numNodo){
-	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-		return reg->job == jobid && reg->etapa == RED_LOCAL && reg->nodo==numNodo;
-	}
-	void actualizarCarga(registroTablaEstados* reg ){
-		if(encontrarEnTablaEstados(reg)){
-			infoNodo* nodo = obtenerNodo(reg->nodo);
-			nodo->carga++;
-			nodo->cantTareasHistoricas++;
-		}
-	}
+void actualizarCargasNodosRedLocal(int numNodo){
 	pthread_mutex_lock(&mutexTablaEstados);
-	list_iterate(tablaDeEstados,(void*)actualizarCarga);
+	infoNodo* nodo = obtenerNodo(numNodo);
+	nodo->carga++;
+	nodo->cantTareasHistoricas++;
 	pthread_mutex_unlock(&mutexTablaEstados);
-
-}
-
-void actualizarCargasNodosReplanificacion(int jobid,int etapa,int bloque){
-	bool encontrarEnTablaEstados(void *registro) {
-		registroTablaEstados* reg =(registroTablaEstados*)registro;
-		return reg->job == jobid && reg->etapa== etapa && reg->bloque==bloque;
-	}
-
-	pthread_mutex_lock(&mutexTablaEstados);
-	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
-	pthread_mutex_unlock(&mutexTablaEstados);
-
-	pthread_mutex_lock(&mutex_NodosConectados);
-	infoNodo* nodo = obtenerNodo(reg->nodo);
-	nodo->carga = nodo->carga-1;
-	pthread_mutex_unlock(&mutex_NodosConectados);
 
 }
 
@@ -581,6 +560,7 @@ void esperarRespuestaReduccionDeMaster(job* job){
 		return;
 	}
 	else if(respuestaMaster.idMensaje == mensajeFalloReduccion){
+		marcarFinalizadaRedGlobalFallo(job->id);
 		finalizarJob(job,RED_GLOBAL,FALLO_RED_GLOBAL);
 	}
 	else if(respuestaMaster.idMensaje == mensajeDesconexion){
@@ -589,6 +569,23 @@ void esperarRespuestaReduccionDeMaster(job* job){
 		reestablecerEstadoYama(job);
 	}
 }
+
+void marcarFinalizadaRedGlobalFallo(int job){
+	bool encontrarEnTablaEstados(registroTablaEstados* reg ) {
+		return reg->job == job && reg->etapa == RED_GLOBAL && reg->estado == EN_EJECUCION;
+	}
+
+	pthread_mutex_lock(&mutexTablaEstados);
+	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
+
+	pthread_mutex_lock(&mutex_NodosConectados);
+	infoNodo* nodo = obtenerNodo(reg->nodo);
+	nodo->carga--;
+	pthread_mutex_unlock(&mutex_NodosConectados);
+
+	pthread_mutex_unlock(&mutexTablaEstados);
+}
+
 void reestablecerEstadoYama(job* job){
 	close(job->socketFd);
 	free(job);

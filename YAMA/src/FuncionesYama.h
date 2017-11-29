@@ -85,7 +85,7 @@ void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque)
 
 char* dameUnNombreArchivoTemporal(int jobId,int numBloque,int etapa,int nodo);
 
-void actualizarCargasNodos(int jobid,Etapa etapa);
+void actualizarCargasNodos(int nodo);
 
 void actualizarCargasNodosReplanificacion(int jobid,int etapa,int bloque);
 
@@ -107,7 +107,9 @@ bool faltanBloquesTransformacionParaNodo(int jobid,int nodo);
 
 void mostrarTablaDeEstados();
 
-void actualizarCargasNodosRedLocal(int jobid,int numNodo);
+void actualizarCargasNodosRedLocal(int numNodo);
+
+void marcarFinalizadaRedGlobalFallo(int job);
 
 void agregarBloqueTerminadoATablaEstadosRedLocal(int nodo,int jobId,Etapa etapa);
 

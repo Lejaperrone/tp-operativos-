@@ -45,7 +45,6 @@ void planificar(job* job){
 
 	respuestaSolicitudTransformacion* respuestaMaster = moverClock(worker, listaNodos, matrix, infoArchivo->informacionBloques,job->id,nodos);
 
-
 	log_trace(logger,"Envio pre planificacion a Master para job %d",job->id);
 
 	empaquetar(job->socketFd,mensajeRespuestaTransformacion,0,respuestaMaster);
@@ -56,13 +55,11 @@ void planificar(job* job){
 
 	list_iterate(respuestaMaster->workers,(void*)reparticion);
 
-	actualizarCargasNodos(job->id,TRANSFORMACION);
-
 	planificarReduccionesLocales(job,matrix,respuestaMaster,nodos,bloques);
 
-	enviarReduccionGlobalAMaster(job);
+	int nodoEncargado = enviarReduccionGlobalAMaster(job);
 
-	actualizarCargasNodos(job->id,RED_GLOBAL);
+	actualizarCargasNodos(nodoEncargado);
 
 	esperarRespuestaReduccionDeMaster(job);
 
@@ -74,6 +71,7 @@ void planificar(job* job){
 	free(worker);
 
 	finalizarJob(job,ALM_FINAL,OK);
+
 }
 
 
@@ -87,7 +85,7 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 	for(i=0;i<cantidadBloques;i++){
 		bloque = (infoBloque*)list_get(infoBloques, i);
 
-		//usleep(config.RETARDO_PLANIFICACION*1000);
+		usleep(config.RETARDO_PLANIFICACION*1000);
 
 		if(bloqueEstaEn(workerDesignado,nodosPorBloque,bloque->numeroBloque)){
 			modificarCargayDisponibilidad(workerDesignado);
@@ -116,8 +114,6 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 		}
 
 	}
-
-
 
 	return respuestaAMaster;
 
@@ -259,8 +255,13 @@ void agregarNodo(t_list* lista, infoNodo* nodo){
 
 void modificarCargayDisponibilidad(infoNodo* worker){
 	worker->disponibilidad--;
-	worker->carga++;
-	worker->cantTareasHistoricas++;
+
+	pthread_mutex_lock(&mutex_NodosConectados);
+	infoNodo* nodo = obtenerNodo(worker->numero);
+	nodo->carga++;
+	nodo->cantTareasHistoricas++;
+	pthread_mutex_unlock(&mutex_NodosConectados);
+
 }
 
 infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWorkerActual,bool** matrix,int nodos){
@@ -432,20 +433,27 @@ void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacio
 		registro->bloque= bloque->numBloque;
 		registro->estado=EN_EJECUCION;
 		registro->etapa= TRANSFORMACION;
-		registro->job = jobi->id;
+		registro->job= jobi->id;
 		registro->nodo= nodoNuevo;
 		registro->rutaArchivoTemp = strdup(bloqueNuevo->archivoTemporal.cadena);
 
 
 		list_add(tablaDeEstados,registro);
 		pthread_mutex_unlock(&mutexTablaEstados);
+
+		pthread_mutex_lock(&mutex_NodosConectados);
+		infoNodo* nodo = obtenerNodo(paraReplanificar);
+		nodo->carga--;
+
+		nodo = obtenerNodo(nodoNuevo);
+		nodo->carga++;
+		pthread_mutex_unlock(&mutex_NodosConectados);
 	}
 
 	list_iterate(worker->bloquesConSusArchivos,(void*)agregarBloque);
 
 	empaquetar(jobi->socketFd,mensajeReplanificacion,0,respuestaTransfromacion);
 
-	//actualizarCargasNodosReplanificacion(jobi->id,TRANSFORMACION,bloque->numBloque);
 
 }
 
@@ -505,7 +513,7 @@ void enviarReduccionLocalAMaster(job* job,int nodo){
 	empaquetar(job->socketFd,mensajeRespuestaRedLocal,0,respuestaTodos);
 }
 
-void enviarReduccionGlobalAMaster(job* job){
+int enviarReduccionGlobalAMaster(job* job){
 	int cantArchivosTemp =0;
 	respuestaReduccionGlobal* respuesta = malloc(sizeof(respuestaReduccionGlobal));
 	respuesta->parametros = malloc(sizeof(parametrosReduccionGlobal));
@@ -554,6 +562,13 @@ void enviarReduccionGlobalAMaster(job* job){
 
 	list_iterate(registrosRedGlobal,(void*)meterEnRespuestaRedGlobal);
 
+	pthread_mutex_lock(&mutex_NodosConectados);
+	infoNodo* nodo = obtenerNodo(nodoEncargado->numero);
+
+	nodo->carga++;
+
+	pthread_mutex_unlock(&mutex_NodosConectados);
+
 	empaquetar(job->socketFd,mensajeRespuestaRedGlobal,0,respuesta);
 
 	registroTablaEstados* registro = malloc(sizeof(registroTablaEstados));
@@ -569,8 +584,17 @@ void enviarReduccionGlobalAMaster(job* job){
 	list_add(tablaDeEstados,registro);
 	pthread_mutex_unlock(&mutexTablaEstados);
 
+	pthread_mutex_lock(&mutex_NodosConectados);
+	infoNodo* nodos = obtenerNodo(nodoEncargado->numero);
+
+	nodos->carga--;
+
+	pthread_mutex_unlock(&mutex_NodosConectados);
+
 	log_trace(logger,"Envio de Reduccion Global de job %d",job->id);
 	printf("\nEnvio de Reduccion Global de job %d\n",job->id);
+
+	return nodoEncargado->numero;
 }
 
 int calcularNodoEncargado(t_list* registrosRedGlobal){
@@ -617,10 +641,17 @@ void realizarAlmacenamientoFinal(job* job){
 		return reg->job == job->id && reg->etapa== RED_GLOBAL;
 	}
 
+	pthread_mutex_lock(&mutex_NodosConectados);
+
 	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
+
+	pthread_mutex_unlock(&mutex_NodosConectados);
+
 
 	respuestaAlmacenamiento* respuestaAlm = malloc(sizeof(respuestaAlmacenamiento));
 	infoNodo* infoNod = obtenerNodo(reg->nodo);
+	infoNod->cantTareasHistoricas++;
+	infoNod->carga++;
 
 	respuestaAlm->ip.longitud = infoNod->ip.longitud;
 	respuestaAlm->ip.cadena = strdup(infoNod->ip.cadena);
@@ -636,10 +667,18 @@ void realizarAlmacenamientoFinal(job* job){
 	if(almac.idMensaje == mensajeAlmacenamientoCompleto){
 		printf("\nAlmacenamiento correcto de job %d en FS\n",job->id);
 		log_trace(logger, "Almacenamiento correcto de job %d en FS",job->id);
+		infoNodo* nodo = obtenerNodo(reg->nodo);
+		nodo->carga--;
+
+		pthread_mutex_unlock(&mutex_NodosConectados);
 	}
 	else{
 		printf("\nAlmacenamiento fallido de job %d en FS\n",job->id);
 		log_trace(logger, "Almacenamiento fallido de job %d en FS",job->id);
+
+		infoNodo* nodo = obtenerNodo(reg->nodo);
+		nodo->carga--;
+
 		finalizarJob(job,ALM_FINAL,FALLO_ALMACENAMIENTO);
 	}
 }
@@ -671,7 +710,7 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 				log_trace(logger,"Envio reduccion local de nodo %d para job %d", bloqueNodo->workerId,job->id);
 				printf("\nEnvio reduccion local de nodo %d para job %d\n", bloqueNodo->workerId,job->id);
 				enviarReduccionLocalAMaster(job,bloqueNodo->workerId);
-				actualizarCargasNodosRedLocal(job->id,bloqueNodo->workerId);
+				actualizarCargasNodosRedLocal(bloqueNodo->workerId);
 			}
 
 		}
@@ -692,11 +731,13 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 			agregarBloqueTerminadoATablaEstadosRedLocal(numNodo,job->id,RED_LOCAL);
 			redLocalIncompleta= faltanMasTareas(job->id,RED_LOCAL) || faltanMasTareas(job->id,TRANSFORMACION);
 		}
+
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloReduccion){
 			log_trace(logger,"Fallo en reduccion local del job %d", job->id);
 			printf("\nFallo en reduccion local del job %d\n", job->id);
 			finalizarJob(job,RED_LOCAL,FALLO_RED_LOCAL);
 		}
+
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeDesconexion){
 			log_error(logger, "Error en Proceso Master.");
 			printf("\nError en Proceso Master\n");
