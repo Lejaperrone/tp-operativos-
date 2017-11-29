@@ -447,6 +447,7 @@ void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacio
 
 		nodo = obtenerNodo(nodoNuevo);
 		nodo->carga++;
+		nodo->cantTareasHistoricas++;
 		pthread_mutex_unlock(&mutex_NodosConectados);
 	}
 
@@ -566,6 +567,7 @@ int enviarReduccionGlobalAMaster(job* job){
 	infoNodo* nodo = obtenerNodo(nodoEncargado->numero);
 
 	nodo->carga++;
+	nodo->cantTareasHistoricas++;
 
 	pthread_mutex_unlock(&mutex_NodosConectados);
 
