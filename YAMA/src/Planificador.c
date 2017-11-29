@@ -83,49 +83,27 @@ respuestaSolicitudTransformacion* moverClock(infoNodo* workerDesignado, t_list* 
 	infoBloque* bloque = malloc(sizeof(infoBloque));
 	respuestaSolicitudTransformacion* respuestaAMaster = malloc(sizeof(respuestaSolicitudTransformacion));
 	respuestaAMaster->workers = list_create();
+
 	for(i=0;i<cantidadBloques;i++){
 		bloque = (infoBloque*)list_get(infoBloques, i);
 
-		usleep(config.RETARDO_PLANIFICACION*1000);
+		//usleep(config.RETARDO_PLANIFICACION*1000);
 
 		if(bloqueEstaEn(workerDesignado,nodosPorBloque,bloque->numeroBloque)){
-			if(workerDesignado->disponibilidad > 0){
-				modificarCargayDisponibilidad(workerDesignado);
-				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
-				log_trace(logger, "Bloque %i asignado al worker %i para job %d | Disp %i",bloque->numeroBloque, workerDesignado->numero,job, workerDesignado->disponibilidad);
-				printf("Bloque %i asignado al worker %i para job %d\n",bloque->numeroBloque, workerDesignado->numero,job);
+			modificarCargayDisponibilidad(workerDesignado);
+			agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
+			log_trace(logger, "Bloque %i asignado al worker %i para job %d | Disp %i",bloque->numeroBloque, workerDesignado->numero,job, workerDesignado->disponibilidad);
+			printf("Bloque %i asignado al worker %i para job %d\n",bloque->numeroBloque, workerDesignado->numero,job);
 
 
+			workerDesignado = avanzarClock(workerDesignado, listaNodos);
+
+			while(workerDesignado->disponibilidad <= 0){
+				log_trace(logger, "Worker %i sin disponibilidad para job %d ",workerDesignado->numero,job);
+				workerDesignado->disponibilidad = getDisponibilidadBase();
 				workerDesignado = avanzarClock(workerDesignado, listaNodos);
-				if(workerDesignado->disponibilidad <= 0){
-					workerDesignado->disponibilidad += getDisponibilidadBase();
-					workerDesignado = avanzarClock(workerDesignado, listaNodos);
-				}
-
 			}
-			else{
-				while(workerDesignado->disponibilidad <= 0){
-					restaurarDisponibilidad(workerDesignado);
-					avanzarClock(workerDesignado, listaNodos);
-				}
 
-
-				if(bloqueEstaEn(workerDesignado,nodosPorBloque,bloque->numeroBloque)){
-					workerDesignado = obtenerProximoWorkerConBloque(listaNodos,bloque->numeroBloque,workerDesignado->numero,nodosPorBloque,nodos);
-				}
-				modificarCargayDisponibilidad(workerDesignado);
-
-				agregarBloqueANodoParaEnviar(bloque,workerDesignado,respuestaAMaster,job);
-				log_trace(logger, "Bloque %i asignado al worker %i para job %d| Disp %i",bloque->numeroBloque, workerDesignado->numero,job, workerDesignado->disponibilidad);
-				printf("Bloque %i asignado al worker %i para job %d\n",bloque->numeroBloque, workerDesignado->numero,job);
-
-				workerDesignado = avanzarClock(workerDesignado, listaNodos);
-
-				if(workerDesignado->disponibilidad <= 0){
-					workerDesignado->disponibilidad += getDisponibilidadBase();
-					workerDesignado = avanzarClock(workerDesignado, listaNodos);
-				}
-			}
 		}
 		else {
 			log_trace(logger,"El worker %d no tiene el bloque %d para job %d\n",workerDesignado->numero,bloque->numeroBloque,job);
@@ -196,6 +174,16 @@ infoNodo* posicionarClock(t_list* listaWorkers,int job){
 	workerDesignado = list_get(listaWorkers, 0);
 
 	log_trace(logger,"Posiciono clock en worker %d para job %d",workerDesignado->numero,job);
+
+
+	int i=0;
+
+	void ordenar(infoNodo* worker){
+		i++;
+		log_trace(logger,"Worker %d orden %d",worker->numero,i);
+	}
+
+	list_iterate(listaWorkers,(void*)ordenar);
 
 	return workerDesignado;
 }
@@ -283,8 +271,6 @@ infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWor
 
 	infoNodo* info;
 	int i;
-
-
 
 	int inicio;
 	if(numWorkerActual==nodos){
