@@ -61,10 +61,6 @@ void planificar(job* job){
 
 	actualizarCargasNodos(nodoEncargado);
 
-	usleep(10000000000000);
-
-
-
 	esperarRespuestaReduccionDeMaster(job);
 
 	realizarAlmacenamientoFinal(job);

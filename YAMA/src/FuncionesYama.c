@@ -565,7 +565,7 @@ void esperarRespuestaReduccionDeMaster(job* job){
 	}
 	else if(respuestaMaster.idMensaje == mensajeDesconexion){
 		log_error(logger, "Error en Proceso Master de job %d",job->id);
-		printf("Error en Proceso Master de job %d",job->id);
+		printf("\nError en Proceso Master de job %d\n",job->id);
 		reestablecerEstadoYama(job);
 	}
 }
@@ -588,7 +588,7 @@ void marcarFinalizadaRedGlobalFallo(int job){
 
 void reestablecerEstadoYama(job* job){
 	void actualizarCargaFalla(registroTablaEstados* reg){
-		if(reg->job == job->id){
+		if(reg->job == job->id && reg->estado==EN_EJECUCION){
 			reg->estado=ERROR;
 
 			pthread_mutex_lock(&mutex_NodosConectados);
@@ -601,14 +601,7 @@ void reestablecerEstadoYama(job* job){
 
 	pthread_mutex_lock(&mutexTablaEstados);
 	list_iterate(tablaDeEstados,(void*)actualizarCargaFalla);
-	pthread_mutex_lock(&mutexTablaEstados);
-
-	void cargas(infoNodo* nodo){
-		printf("NODO %d CARGA %d \n",nodo->numero,nodo->carga);
-	}
-
-	list_iterate(nodosConectados,(void*)cargas);
-
+	pthread_mutex_unlock(&mutexTablaEstados);
 
 	close(job->socketFd);
 	free(job);
