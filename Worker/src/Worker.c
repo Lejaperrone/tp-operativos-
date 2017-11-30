@@ -10,15 +10,15 @@ int main(int argc, char *argv[]) {
 	cargarConfiguracionNodo(&config,argv[1]);
 
 	char* path = obtenerPathActual();
-	char* pathTmp = string_from_format("%s/tmp",path);
+	char* pathTmp = string_from_format("%s/tmp", path);
 
 	struct stat st = {0};
 
-	if (stat(pathTmp, &st) == -1) {
-		mkdir(pathTmp, 0700);
+	if (stat(pathTmp, &st) == 0) {
+		system("rm -r tmp");
 	}
 
-	system("export LC_ALL=C");
+	mkdir(pathTmp, 0700);
 
 	levantarServidorWorker(config.IP_NODO, config.PUERTO_WORKER);
 
