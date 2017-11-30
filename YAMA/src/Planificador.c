@@ -61,6 +61,10 @@ void planificar(job* job){
 
 	actualizarCargasNodos(nodoEncargado);
 
+	usleep(10000000000000);
+
+
+
 	esperarRespuestaReduccionDeMaster(job);
 
 	realizarAlmacenamientoFinal(job);
@@ -725,7 +729,7 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeRedLocalCompleta){
 			numNodo = *(int*) respuestaPlanificacionMaster.envio;
 			log_trace(logger,"Finalizada tarea reduccion nodo %d para job %d", numNodo,job->id);
-			printf("Finalizada tarea reduccion nodo %d para job %d", numNodo,job->id);
+			printf("\nFinalizada tarea reduccion nodo %d para job %d\n", numNodo,job->id);
 			agregarBloqueTerminadoATablaEstadosRedLocal(numNodo,job->id,RED_LOCAL);
 			redLocalIncompleta= faltanMasTareas(job->id,RED_LOCAL) || faltanMasTareas(job->id,TRANSFORMACION);
 		}
