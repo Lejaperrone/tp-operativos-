@@ -45,6 +45,7 @@ int sizeTotalNodos = 0, nodosLibres = 0;
 t_list* nodosConectados;
 t_list* bitmapsNodos;
 sem_t pedidoFS;
+sem_t desconexiones;
 t_list* pedidosFS;
 extern sem_t actualizarNodos;
 sem_t pedidoTerminado;
@@ -72,6 +73,7 @@ int main(int argc, char *argv[]) {
 	sem_init(&pedidoFS,0,0);
 	sem_init(&pedidoTerminado,0,0);
 	sem_init(&actualizarNodos,1,0);
+	sem_init(&desconexiones,0,1);
 	nodosConectados = list_create();
 	bitmapsNodos = list_create();
 	pedidosFS = list_create();

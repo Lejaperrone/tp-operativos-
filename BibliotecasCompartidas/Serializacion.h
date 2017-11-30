@@ -65,6 +65,7 @@
 #define mensajeAlmacenar 47
 #define mensajeConectado 48
 #define mensajeFinTransformacion 49
+#define mensajeRespuestaInfoFallida 50
 
 typedef struct{
 	int idMensaje;

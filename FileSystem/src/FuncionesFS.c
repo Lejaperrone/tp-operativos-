@@ -39,6 +39,7 @@ extern sem_t pedidoTerminado;
 extern pthread_mutex_t listSemMutex;
 int bla = 0;
 extern bool recuperarEstado;
+extern sem_t desconexiones;
 
 
 void establecerServidor(char* ip, int port){
@@ -349,6 +350,9 @@ char* rutaArchivoMetadataSinExtension(char* ruta){
 }
 
 char* leerArchivo(char* rutaArchivo){
+
+	sem_wait(&desconexiones);
+
 	int index = 0, sizeArchivo, cantBloquesArchivo = 0, sizeAux = 0, i, j, k, l;
 	int cantidadNodos = list_size(nodosConectados);
 	int cargaNodos[cantidadNodos], indexNodos[cantidadNodos], peticiones[cantidadNodos];
@@ -517,6 +521,8 @@ char* leerArchivo(char* rutaArchivo){
 	free(nombre);
 	free(rutaFinal);
 	fclose(informacionArchivo);
+
+	sem_post(&desconexiones);
 	return lectura;
 }
 
@@ -556,6 +562,8 @@ char* nombreArchivoSinExtension(char* nombre){
 }
 
 int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
+
+	sem_wait(&desconexiones);
 
 	int binario = strcmp(tipo, "b") == 0;
 
@@ -809,6 +817,8 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	actualizarBitmapNodos();
+
+	sem_post(&desconexiones);
 
 	return successArchivoCopiado;
 
@@ -1122,6 +1132,11 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 
 	char* rutaMetadata = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivo), ultimaParteDeRuta(rutaDatos.cadena));
 
+	if (!validarArchivo(rutaMetadata)){
+		info.tamanioTotal = 0;
+		return info;
+	}
+
 	t_config* archivo = config_create(rutaMetadata);
 
 	info.tamanioTotal = config_get_int_value(archivo,"TAMANIO");
@@ -1170,6 +1185,9 @@ void obtenerInfoNodo(ubicacionBloque* ubicacion){
 }
 
 int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
+
+	sem_wait(&desconexiones);
+
 	int respuesta = 1, respuestaEnvio = -1;
 	int i;
 	int socketPedido = -1;
@@ -1246,6 +1264,8 @@ int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
 	setearBloqueOcupadoEnBitmap(nodoElegido, paramEnvio.bloque);
 
 	free(paramEnvio.mapa);
+
+	sem_post(&desconexiones);
 
 	return paramEnvio.bloque;
 }

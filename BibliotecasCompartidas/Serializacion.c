@@ -7,6 +7,7 @@
 #include "Serializacion.h"
 
 void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
+
 	header cabecera;
 	cabecera.idMensaje = idMensaje;
 	int tamanio;
@@ -33,6 +34,7 @@ void empaquetar(int socket, int idMensaje,int tamanioS, void* paquete){
 		case mensajeFalloAlmacenamiento:
 		case mensajeRedGlobalCompleta:
 		case mensajeConectado:
+		case mensajeRespuestaInfoFallida:
 			tamanio =1;
 			bloque = malloc(1);
 			char a = 'a';
@@ -197,6 +199,7 @@ respuesta desempaquetar(int socket){
 			case mensajeAlmacenamientoCompleto:
 			case mensajeFalloAlmacenamiento:
 			case mensajeConectado:
+			case mensajeRespuestaInfoFallida:
 				bufferOk = malloc(sizeof(char));
 				recv(socket,bufferOk,sizeof(char),0);
 				free(bufferOk);

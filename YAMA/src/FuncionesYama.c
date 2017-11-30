@@ -288,6 +288,10 @@ informacionArchivoFsYama* solicitarInformacionAFS(solicitudInfoNodos* solicitud,
 		log_trace(logger, "Me llego la informacion desde Fs correctamente para job %d",job);
 		printf("\nMe llego la informacion desde Fs correctamente %d\n",job);
 	}
+	else if(respuestaFs.idMensaje == mensajeRespuestaInfoFallida){
+		rtaFs->tamanioTotal=-1;
+	}
+
 	else{
 		log_error(logger, "Error al recibir la informacion del archivo del job %d desde FS",job);
 		printf("\nError al recibir la informacion del archivo del job %d desde FS\n",job);

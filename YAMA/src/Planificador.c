@@ -29,11 +29,11 @@ void planificar(job* job){
 
 	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);
 
-	llenarListaNodos(listaNodos,infoArchivo,job->id);
-
-	if(list_is_empty(listaNodos)){
+	if(infoArchivo->tamanioTotal==-1){
 		finalizarJob(job,TRANSFORMACION,FALLO_INGRESO);
 	}
+
+	llenarListaNodos(listaNodos,infoArchivo,job->id);
 
 	calcularDisponibilidadWorkers(listaNodos,job->id);
 

@@ -32,6 +32,55 @@ int formatearFS(int flag){
 	return 1;
 }
 
+int validarComandoEnNodos(char* path){
+	int i = 0, j = 0, k = 0;
+	int numeroNodo;
+	char* charNumeroNodo;
+	int estanTodos = 0;
+	int cantidadNodosConectados = list_size(nodosConectados);
+	char* bloque = string_from_format("BLOQUE%dCOPIAd%",i,j);
+	char** arrayNodos;
+	informacionNodo info;
+	int nodos[cantidadNodosConectados];
+
+
+	for (i = 0; i < cantidadNodosConectados; ++i){
+		info = *(informacionNodo*)list_get(nodosConectados,i);
+		nodos[i] = info.numeroNodo;
+	}
+
+	i = 0;
+	t_config* archivo = config_create(path);
+	while (config_has_property(archivo,bloque)){
+		while (config_has_property(archivo,bloque)){
+			arrayNodos = config_get_array_value(archivo,bloque);
+			charNumeroNodo = string_substring_from(arrayNodos[0], 4);
+			numeroNodo = atoi(charNumeroNodo);
+
+			for (k = 0; k < cantidadNodosConectados; ++k)
+				if (nodos[k] == numeroNodo){
+					++estanTodos;
+				}
+
+			free(bloque);
+			free(charNumeroNodo);
+			++j;
+			bloque = string_from_format("BLOQUE%dCOPIAd%",i,j);
+		}
+		if (estanTodos < j)
+			return 0;
+
+		++i;
+		estanTodos = 0;
+		free(bloque);
+		j = 0;
+		bloque = string_from_format("BLOQUE%dCOPIAd%",i,j);
+	}
+	free(bloque);
+	config_destroy(archivo);
+	return 1;
+}
+
 
 int eliminarArchivo(char* comando){
 	int sizeArchivo, sizeAux, cantBloquesArchivo = 0, i, j, k, numeroNodo, bloqueNodo, respuesta;
@@ -75,6 +124,13 @@ int eliminarArchivo(char* comando){
 		printf("No existe el archivo a eliminar.\n");
 		return 1;
 	}
+
+	int estan = validarComandoEnNodos(rutaArchivoEnMetadata);
+	if (!estan){
+		printf("No se encuentran conectados todos los nodos que contienen al archivo\n.");
+		return 5;
+	}
+
 
 	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
 

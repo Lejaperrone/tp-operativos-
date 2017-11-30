@@ -16,6 +16,7 @@ extern int bloquesLibresTotales;
 extern bool recuperarEstado;
 extern int EstadoFS;
 bool noSeConectoYama = true;
+extern sem_t desconexiones;
 
 void* levantarServidorFS(){
 	solicitudInfoNodos* solicitud;
@@ -44,7 +45,8 @@ void* levantarServidorFS(){
 
 
 	char* buff = malloc(sizeof(int)*3);
-	int desconexion = 0;
+	int desconexion = -1;
+
 	// bucle principal
 
 	signal(SIGPIPE, SIG_IGN);
@@ -59,7 +61,6 @@ void* levantarServidorFS(){
 		// explorar conexiones existentes en busca de datos que leer
 		for(i = 0; i <= maxDatanodes; i++) {
 			if (FD_ISSET(i, &read_fds_datanodes)) { // ¡¡tenemos datos!!
-
 				if (i == servidorFS) {
 
 					// gestionar nuevas conexiones
@@ -187,7 +188,13 @@ void* levantarServidorFS(){
 					case mensajeSolicitudInfoNodos:
 						solicitud = (solicitudInfoNodos*)conexionNueva.envio;
 						informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
-						empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
+						if(infoArchivo.tamanioTotal==0){
+							empaquetar(clienteYama,mensajeRespuestaInfoFallida,0,0);
+						}
+						else{
+							empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
+						}
+
 						break;
 
 					case mensajeDesconexion:
@@ -200,29 +207,17 @@ void* levantarServidorFS(){
 					}
 
 				}
-				else if (clienteYama != -1){
-					memset(buff,0,sizeof(int)*3);
-					if (recv(i, buff, sizeof(int)*3, MSG_PEEK) == 0){
-						for (m = 0; m < list_size(nodosConectados); ++m){
-							info = *(informacionNodo*)list_get(nodosConectados,m);
-							if (info.socket == i){
-								desconexion = 1;
-								revisarNodos();
-							}
-						}
-
-						if (desconexion == 1){
-							close(i);
-							FD_CLR(i, &datanodes);
-							printf("desconexion\n");
-							break;
-						}
-
-
+				if (recv(i,buff,1,MSG_PEEK | MSG_DONTWAIT) == 0){
+					sem_wait(&desconexiones);
+					desconexion = revisarNodos();
+					if (desconexion != -1){
+						close(desconexion);
+						FD_CLR(desconexion, &datanodes);
+						printf("desconexion\n");
 					}
-
-
+					sem_post(&desconexiones);
 				}
+
 
 
 			}
@@ -269,12 +264,13 @@ int nodoDeEstadoAnterior(informacionNodo info){
 	return 0;
 }
 
-void revisarNodos(){
+int revisarNodos(){
 	int cantidadNodos = list_size(nodosConectados);
 	int i, j;
 	informacionNodo info;
 	respuesta res;
 	t_list* listAux;
+	//printf("entre----");
 	for (i = 0; i < cantidadNodos; ++i){
 		info = *(informacionNodo*)list_get(nodosConectados,i);
 		empaquetar(info.socket, mensajeConectado, sizeof(char), "a");
@@ -292,9 +288,10 @@ void revisarNodos(){
 				list_add(nodosConectados, list_get(listAux, j));
 			}
 			list_destroy(listAux);
-			break;
+			return info.socket;
 		}
 	}
+	return -1;
 }
 
 void* consolaFS(){

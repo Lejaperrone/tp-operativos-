@@ -3,3 +3,11 @@ ldd ./Ejecutable      ->   ver bibliotecas que tiene instaladas
 gedit .bashrc
 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~Escritorio/tp-2017-2c-PEQL/BibliotecasCompartidas/Debug
 	reload
+
+
+git clone https://github.com/sisoputnfrba/so-commons-library.git
+cd so-commons-library 
+make
+sudo make install
+
+export LC_ALL=C
