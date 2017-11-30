@@ -289,10 +289,6 @@ infoNodo* obtenerProximoWorkerConBloque(t_list* listaNodos,int bloque,int numWor
 		info = list_find(listaNodos,(void*)nodoEnLista);
 
 		if(matrix[i][bloque] &&(info->disponibilidad > 0)){
-			if(bloque==40){
-				printf("soy un hdmp\n");
-			}
-
 			return info;
 		}
 

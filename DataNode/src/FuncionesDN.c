@@ -18,7 +18,6 @@
 
 int cantBloques = 50;
 extern struct configuracionNodo config;
-extern sem_t pedidoFS;
 
 void enviarBloqueAFS(int numeroBloque) {
 
@@ -102,7 +101,7 @@ void conectarseConFs() {
 	info.sizeNodo = config.SIZE_NODO;
 	info.bloquesOcupados = -1;
 	info.numeroNodo = atoi(string_substring_from(config.NOMBRE_NODO, 4));
-	printf("soy el nodo %d\n", info.numeroNodo);
+	log_trace(logger, "Conexion con File System establecida, soy el Nodo: %d", info.numeroNodo);
 	info.socket = -1;
 	empaquetar(socketFs, mensajeInformacionNodo, sizeof(informacionNodo), &info);
 	escucharAlFS(socketFs);
@@ -113,7 +112,6 @@ void recibirMensajesFileSystem(int socketFs) {
 	respuesta bloqueArchivo;
 	//char* buffer = malloc(mb + 4);
 	int bloqueId;
-	int sizeBloque = 0;
 	char* data;
 	int success;
 
@@ -124,9 +122,10 @@ void recibirMensajesFileSystem(int socketFs) {
 		data = malloc(bloqueArchivo.size + 1);
 		memset(data, 0, bloqueArchivo.size + 1);
 		memcpy(data, bloqueArchivo.envio, bloqueArchivo.size);
+		log_trace(logger, "Solicitud de guardar bloque %d", bloqueId);
 		success = setBloque(bloqueId, data);
 		if(success == 0)
-		printf("success %d\n", success);
+		log_trace(logger, "Success: %d", success);
 		empaquetar(socketFs, mensajeRespuestaEnvioBloqueANodo, sizeof(int),&success);
 		free(data);
 		free(bloqueArchivo.envio);
@@ -135,19 +134,22 @@ void recibirMensajesFileSystem(int socketFs) {
 
 	case mensajeNumeroLecturaBloqueANodo:
 		memcpy(&bloqueId, numeroBloque.envio, sizeof(int));
+		log_trace(logger, "Solicitud lectura de bloque %d", bloqueId);
 		data = getBloque(bloqueId);
-		//printf("envioooo %d\n", strlen(data));
 		empaquetar(socketFs, mensajeRespuestaGetBloque, strlen(data),data);
 		free(data);
 		free(numeroBloque.envio);
 		break;
 
 	case mensajeBorraDataBin:
+		log_trace(logger, "Solicitud de borrado de databin");
 		success = borrarDataBin();
 		if (success == 1){
+			log_trace(logger, "Databin eliminado correctamente");
 			empaquetar(socketFs, mensajeRespuestaBorraDataBin, sizeof(int), &success);
 			break;
 		}
+		log_error(logger, "Error al eliminar databin");
 		success = 0;
 		empaquetar(socketFs, mensajeRespuestaBorraDataBin, sizeof(int), &success);
 		break;
@@ -166,7 +168,6 @@ void recibirMensajesFileSystem(int socketFs) {
 }
 
 void escucharAlFS(int socketFs) {
-	int success = 1;
 	while (1) {
 		//pedido = desempaquetar(socketFs);
 		//memcpy(&bloqueMock, pedido.envio, sizeof(int));
