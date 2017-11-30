@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <commons/log.h>
+
+t_log* logger;
 
 void conectarseConFs();
 
