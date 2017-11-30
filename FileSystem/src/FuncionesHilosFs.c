@@ -352,6 +352,7 @@ void* consolaFS(){
 					printf("Nodo%d\n", info.numeroNodo);
 					printf("	Tamaño: %d\n", info.sizeNodo);
 					printf("	Bloques ocupados: %d\n", info.bloquesOcupados);
+					printf("	Bloques libres: %d\n", info.sizeNodo - info.bloquesOcupados);
 				}
 			}
 		}

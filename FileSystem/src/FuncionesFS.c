@@ -1324,7 +1324,7 @@ int liberarNodosConectados(){
 	int cantNodosConectados = list_size(nodosConectados);
 	int i;
 	int numeroNodo, sizeNodo;
-	informacionNodo nodo;
+	informacionNodo* nodo;
 	int respuesta = 1;
 
 	char* rmComando = string_from_format("rm -r %s", rutaMetadataBitmaps);
@@ -1336,14 +1336,17 @@ int liberarNodosConectados(){
 	respuesta = system(mkdirComando);
 	if (cantNodosConectados > 0){
 		for (i = 0; i < cantNodosConectados; ++i){
-			nodo = *(informacionNodo*) list_get(nodosConectados, i);
-			numeroNodo = nodo.numeroNodo;
-			sizeNodo = nodo.sizeNodo;
-			levantarBitmapNodo(numeroNodo, sizeNodo);
+			nodo = list_get(nodosConectados, i);
+			numeroNodo = nodo->numeroNodo;
+			sizeNodo = nodo->sizeNodo;
+			nodo->bloquesOcupados = levantarBitmapNodo(numeroNodo, sizeNodo);
 			respuesta++;
-			printf("Nodo%d formateado.\n", nodo.numeroNodo);
+			printf("Nodo%d formateado.\n", numeroNodo);
 		}
 	}
+
+	actualizarBitmapNodos();
+
 	if (respuesta == cantNodosConectados)
 		return 1;
 
