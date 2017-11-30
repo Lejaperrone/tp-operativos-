@@ -28,7 +28,7 @@ CFLAGS := -std=c11 $(HEADERS)
 
 # All
 
-all: clean datanode master worker yama fileSystem
+all: clean libobjs datanode master worker yama fileSystem
 
 
 
