@@ -6,7 +6,7 @@ DIR := ${CURDIR}
 H_SRCS=$(shell find . -iname "*.h" | tr '\n' ' ')
 
 HEADERS := -I"/usr/include" -I"$(DIR)/BibliotecasCompartidas" -I"$(DIR)/YAMA" -I"$(DIR)/DataNode" -I"$(DIR)/Worker" -I"$(DIR)/Master" -I"$(DIR)/FileSystem"          
-LIBPATH := -L"$(DIR)/BibliotecasCompartidas/Debug"
+LIBPATH := -L"$(DIR)/BibliotecasCompartidas/Release"
 LIBS := -lcommons -lpthread -lreadline -lm -lBibliotecasCompartidas
 
 CC := gcc -w -g
@@ -37,7 +37,7 @@ all: clean datanode master worker yama fileSystem
 # datanode
 
 datanode: dataNode.o funcionesDN.o
-	$(CC) $(LIBPATH) dataNode.o funcionesDN.o -o datanode $(LIBS)
+	$(CC) $(LIBPATH) dataNode.o funcionesDN.o -o $(DIR)/DataNode/src/datanode $(LIBS)
 
 
 dataNode.o:
@@ -52,7 +52,7 @@ funcionesDN.o:
 # Master
 
 master: master.o funcionesMaster.o
-	$(CC) $(LIBPATH) master.o funcionesMaster.o -o master $(LIBS)
+	$(CC) $(LIBPATH) master.o funcionesMaster.o -o $(DIR)/Master/src/master $(LIBS)
 
 funcionesMaster.o:
 	$(CC) $(CFLAGS) -c $(DIR)/Master/src/FuncionesMaster.c -o funcionesMaster.o
@@ -68,7 +68,7 @@ master.o:
 
 
 worker: worker.o funcionesWorker.o
-	$(CC) $(LIBPATH) worker.o funcionesWorker.o -o worker $(LIBS)
+	$(CC) $(LIBPATH) worker.o funcionesWorker.o -o  $(DIR)/Worker/src/worker $(LIBS)
 
 funcionesWorker.o:
 	$(CC) $(CFLAGS) -c $(DIR)/Worker/src/FuncionesWorker.c -o funcionesWorker.o
@@ -91,7 +91,7 @@ comandos.o:
 	$(CC) $(CFLAGS) -c $(DIR)/FileSystem/src/Comandos.c -o comandos.o
 
 fileSystem: fileSystem.o comandos.o funcionesFS.o funcionesHilosFS.o
-	$(CC) $(LIBPATH) fileSystem.o comandos.o funcionesFS.o funcionesHilosFS.o -o fileSystem $(LIBS)
+	$(CC) $(LIBPATH) fileSystem.o comandos.o funcionesFS.o funcionesHilosFS.o -o $(DIR)/FileSystem/src/fileSystem $(LIBS)
 
 
 fileSystem.o:
@@ -110,7 +110,7 @@ planificador.o:
 	$(CC) $(CFLAGS) -c $(DIR)/YAMA/src/Planificador.c -o planificador.o
 
 yama: yama.o planificador.o funcionesYama.o
-	$(CC) $(LIBPATH) yama.o funcionesYama.o planificador.o -o yama $(LIBS)
+	$(CC) $(LIBPATH) yama.o funcionesYama.o planificador.o -o $(DIR)/YAMA/src/yama $(LIBS)
 
 
 yama.o:
@@ -141,3 +141,22 @@ lib:
 
 clean:
 	rm -f yama worker datanode master fileSystem *.o
+
+#-------------------------------------------------------------------------------------------------------------------------------------
+
+configuracion.o:
+	$(CC) -c $(CFLAGS) $(DIR)/BibliotecasCompartidas/Configuracion.c -o $(DIR)/BibliotecasCompartidas/Release/Configuracion.o
+
+globales.o:
+	$(CC) -c $(CFLAGS) $(DIR)/BibliotecasCompartidas/Globales.c -o $(DIR)/BibliotecasCompartidas/Release/Globales.o
+
+serializacion.o:
+	$(CC) -c $(CFLAGS) $(DIR)/BibliotecasCompartidas/Serializacion.c -o $(DIR)/BibliotecasCompartidas/Release/Serializacion.o
+
+sockets.o:
+	$(CC) -c $(CFLAGS) $(DIR)/BibliotecasCompartidas/Sockets.c -o $(DIR)/BibliotecasCompartidas/Release/Sockets.o
+
+
+libobjs: configuracion.o globales.o serializacion.o sockets.o
+		$(MAKE) -C $(DIR)/BibliotecasCompartidas/Release
+
