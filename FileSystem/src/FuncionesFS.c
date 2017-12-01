@@ -1161,6 +1161,7 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 
 		block = string_from_format("BLOQUE%dCOPIA%d",i, j);
 		infoBloque* infoBloqueActual = malloc(sizeof(infoBloque));
+		infoBloqueActual->ubicaciones = list_create();
 		infoBloqueActual->bytesOcupados = config_get_int_value(archivo,(string_from_format("BLOQUE%dBYTES", i)));
 
 		while(config_has_property(archivo, block)){

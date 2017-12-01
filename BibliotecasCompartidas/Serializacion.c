@@ -549,65 +549,60 @@ void* serializarRespuestaInfoNodos(void* paquete,int* tamanio){
 	desplazamiento += sizeof(int);
 
 	*tamanio += sizeof(int);
-	buffer = realloc(buffer, *tamanio);
+	buffer = realloc(buffer,*tamanio);
 	int longitud = list_size(respuesta->informacionBloques);
 	memcpy(buffer + desplazamiento, &longitud, sizeof(int));
 	desplazamiento += sizeof(int);
 
-	int j;
+	int i,j;
 	for (j = 0; j < list_size(respuesta->informacionBloques); ++j) {
-		infoBloque* infoBloq = (infoBloque*)list_get(respuesta->informacionBloques, j);
+		infoBloque* infoWorker = (infoBloque*)list_get(respuesta->informacionBloques, j);
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->bytesOcupados, sizeof(int));
+		memcpy(buffer + desplazamiento, &infoWorker->bytesOcupados, sizeof(int));
 		desplazamiento += sizeof(int);
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->numeroBloque, sizeof(int));
+		memcpy(buffer + desplazamiento, &infoWorker->numeroBloque, sizeof(int));
 		desplazamiento += sizeof(int);
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		int longitud = list_size(respuesta->informacionBloques);
+		int longitud = list_size(infoWorker->ubicaciones);
 		memcpy(buffer + desplazamiento, &longitud, sizeof(int));
 		desplazamiento += sizeof(int);
 
-		int k;
-		for (k = 0; k < list_size(infoBloq->ubicaciones); ++k) {
-			ubicacionBloque* ubi = (ubicacionBloque*)list_get(infoBloq->ubicaciones, k);
+		for (i = 0; i < list_size(infoWorker->ubicaciones); ++i) {
+			ubicacionBloque* bloquesArchivos = (ubicacionBloque*)list_get(infoWorker->ubicaciones, i);
 
 			*tamanio += sizeof(int);
 			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, &ubi->numeroBloqueEnNodo, sizeof(int));
+			memcpy(buffer + desplazamiento, &bloquesArchivos->numeroBloqueEnNodo, sizeof(int));
 			desplazamiento += sizeof(int);
 
 			*tamanio += sizeof(int);
 			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, &ubi->numeroNodo, sizeof(int));
+			memcpy(buffer + desplazamiento, &bloquesArchivos->numeroNodo, sizeof(int));
 			desplazamiento += sizeof(int);
 
 			*tamanio += sizeof(int);
 			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, &ubi->puerto, sizeof(int));
+			memcpy(buffer + desplazamiento, &bloquesArchivos->puerto, sizeof(int));
 			desplazamiento += sizeof(int);
 
 			*tamanio += sizeof(int);
 			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, &ubi->ip.longitud, sizeof(int));
+			memcpy(buffer + desplazamiento, &bloquesArchivos->ip.longitud, sizeof(int));
 			desplazamiento += sizeof(int);
 
-			*tamanio += ubi->ip.longitud;
+			*tamanio += bloquesArchivos->ip.longitud;
 			buffer = realloc(buffer, *tamanio);
-			memcpy(buffer + desplazamiento, ubi->ip.cadena, ubi->ip.longitud);
-			desplazamiento += ubi->ip.longitud;
-
+			memcpy(buffer + desplazamiento, bloquesArchivos->ip.cadena, bloquesArchivos->ip.longitud);
+			desplazamiento += bloquesArchivos->ip.longitud;
 
 		}
-
-
-
 	}
 
 	return buffer;
