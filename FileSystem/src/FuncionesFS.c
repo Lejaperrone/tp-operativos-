@@ -61,9 +61,7 @@ int verificarEstado(){
 	char* pathDir;
 	int i = 0, j = 0, l = 0, k = 0;
 	int cantidadNodosConectados = list_size(nodosConectados);
-	int nodos[cantidadNodosConectados];
 	int cantBloques = 0;
-	informacionNodo info;
 	t_config* infoArchivo;
 	char** arrayInfoBloque;
 	int numeroNodo;
@@ -71,19 +69,13 @@ int verificarEstado(){
 	char* bloque;
 	int valido = 0;
 
-	for (i = 0; i < cantidadNodosConectados; ++i){
-		info = *(informacionNodo*)list_get(nodosConectados,i);
-		nodos[i] = info.numeroNodo;
-		printf("%d          -1--1-1-1-1-11-\n", info.numeroNodo);
-	}
-
 	for (i = 0; i < 100; ++i){
 
 		if(tablaDeDirectorios[i].index == -1)
 			continue;
 
 		pathDir = string_from_format("%s%d",pathDirTemplate,i);
-		printf("%s dir \n", pathDir);
+
 		if (NULL == (directorio = opendir (pathDir)))
 			{
 				continue;
@@ -108,8 +100,6 @@ int verificarEstado(){
 				}
 				free(bloque);
 
-				printf("%d----------------\n", cantidadNodosConectados);
-
 				for (j = 0; j < cantBloques; ++j){
 					bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
 					while (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,l))){
@@ -117,10 +107,14 @@ int verificarEstado(){
 						charNumeroNodo = string_substring_from(arrayInfoBloque[0], 4);
 						numeroNodo = atoi(charNumeroNodo);
 
-						for (k = 0; k < cantidadNodosConectados; ++k)
-							if (nodos[k] == numeroNodo){
+						for (k = 0; k < cantidadNodosConectados; ++k){
+							bool estaConectado(informacionNodo* nodoo){
+								return nodoo->numeroNodo == numeroNodo;
+							}
+							if (list_any_satisfy(nodosConectados,(void*)estaConectado)){
 								++valido;
 							}
+						}
 						free(bloque);
 						free(charNumeroNodo);
 						free(arrayInfoBloque);
@@ -129,7 +123,7 @@ int verificarEstado(){
 						printf("%s\n",bloque);
 					}
 					l = 0;
-					if (valido < numeroCopiasBloque){
+					if (valido < 1){
 						//free(bloque);
 						//free(charNumeroNodo);
 						free(path);
