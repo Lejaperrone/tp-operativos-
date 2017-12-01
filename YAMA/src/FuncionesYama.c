@@ -525,8 +525,7 @@ bool faltanMasTareas(int jobid,Etapa etapa){
 }
 
 void finalizarJob(job* job,int etapa,int error){
-	reducirCargaJob(job);
-	borrarEntradasDeJob(job->id);
+	//borrarEntradasDeJob(job->id);
 	int err = error;
 	empaquetar(job->socketFd,mensajeFinJob,0,&err);
 	respuesta respuestaFin;
@@ -541,23 +540,7 @@ void finalizarJob(job* job,int etapa,int error){
 	free(job);
 	pthread_exit(0);
 }
-void reducirCargaJob(job* unJob){
-	bool encontrarEnTablaEstados(registroTablaEstados* reg) {
-		return reg->job == unJob->id && reg->estado==FINALIZADO_OK;
-	}
 
-	void actualizarCarga(registroTablaEstados* reg){
-		if(encontrarEnTablaEstados(reg)){
-			infoNodo* nodo = obtenerNodo(reg->nodo);
-			if(reg->nodo == nodo->numero){
-				nodo->carga -= 1;
-			}
-		}
-	}
-	pthread_mutex_lock(&mutexTablaEstados);
-	list_iterate(tablaDeEstados, (void*)actualizarCarga);
-	pthread_mutex_unlock(&mutexTablaEstados);
-}
 void actualizarCargasNodos(int nodo){
 	pthread_mutex_lock(&mutex_NodosConectados);
 	infoNodo* nodoo = obtenerNodo(nodo);

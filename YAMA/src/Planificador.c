@@ -33,6 +33,12 @@ void planificar(job* job){
 		finalizarJob(job,TRANSFORMACION,FALLO_INGRESO);
 	}
 
+	void cargas(infoNodo* nodo){
+		log_trace(logger,"nodo %d carga %d\n",nodo->numero,nodo->carga);
+	}
+
+	list_iterate(nodosConectados,(void*)cargas);
+
 	llenarListaNodos(listaNodos,infoArchivo,job->id);
 
 	calcularDisponibilidadWorkers(listaNodos,job->id);
@@ -483,6 +489,8 @@ void enviarReduccionLocalAMaster(job* job,int nodo){
 	t_list* registrosRedLocal = list_filter(tablaDeEstados,(void*)encontrarEnTablaEstados);
 	pthread_mutex_unlock(&mutexTablaEstados);
 
+	pthread_mutex_lock(&mutex_NodosConectados);
+
 	infoNodo* infoNod = obtenerNodo(nodo);
 	char* archivo = dameUnNombreArchivoTemporal(job->id,0,RED_LOCAL,nodo);
 
@@ -523,6 +531,7 @@ void enviarReduccionLocalAMaster(job* job,int nodo){
 	//pthread_mutex_lock(&mutexTablaEstados);
 	list_iterate(registrosRedLocal,(void*)meterEnRespuestaRedLocal);
 	//pthread_mutex_unlock(&mutexTablaEstados);
+	pthread_mutex_unlock(&mutex_NodosConectados);
 
 	empaquetar(job->socketFd,mensajeRespuestaRedLocal,0,respuestaTodos);
 }
@@ -539,6 +548,7 @@ int enviarReduccionGlobalAMaster(job* job){
 	}
 	void meterEnRespuestaRedGlobal(registroTablaEstados* reg){
 		infoWorker* info = malloc(sizeof(infoWorker));
+
 		infoNodo* infoNod = obtenerNodo(reg->nodo);
 
 		bool nodoConNumero(workerDesdeYama* worker){
@@ -621,7 +631,7 @@ int calcularNodoEncargado(t_list* registrosRedGlobal){
 	infoNodo* nodo = obtenerNodo(reg->nodo);
 	numeroNodo = reg->nodo;
 	menorCarga=nodo->carga;
-	pthread_mutex_unlock(&mutex_NodosConectados);
+
 
 	int i;
 	for(i=1;i<list_size(registrosRedGlobal);i++){
@@ -633,7 +643,7 @@ int calcularNodoEncargado(t_list* registrosRedGlobal){
 			menorCarga=nodo->carga;
 		}
 	}
-
+	pthread_mutex_unlock(&mutex_NodosConectados);
 	return numeroNodo;
 
 }
@@ -660,13 +670,12 @@ void realizarAlmacenamientoFinal(job* job){
 
 	registroTablaEstados* reg = list_find(tablaDeEstados,(void*)encontrarEnTablaEstados);
 
-	pthread_mutex_unlock(&mutex_NodosConectados);
-
-
 	respuestaAlmacenamiento* respuestaAlm = malloc(sizeof(respuestaAlmacenamiento));
 	infoNodo* infoNod = obtenerNodo(reg->nodo);
 	infoNod->cantTareasHistoricas++;
 	infoNod->carga++;
+
+	pthread_mutex_unlock(&mutex_NodosConectados);
 
 	respuestaAlm->ip.longitud = infoNod->ip.longitud;
 	respuestaAlm->ip.cadena = strdup(infoNod->ip.cadena);
@@ -682,6 +691,8 @@ void realizarAlmacenamientoFinal(job* job){
 	if(almac.idMensaje == mensajeAlmacenamientoCompleto){
 		printf("\nAlmacenamiento correcto de job %d en FS\n",job->id);
 		log_trace(logger, "Almacenamiento correcto de job %d en FS",job->id);
+
+		pthread_mutex_lock(&mutex_NodosConectados);
 		infoNodo* nodo = obtenerNodo(reg->nodo);
 		nodo->carga--;
 
@@ -691,8 +702,11 @@ void realizarAlmacenamientoFinal(job* job){
 		printf("\nAlmacenamiento fallido de job %d en FS\n",job->id);
 		log_trace(logger, "Almacenamiento fallido de job %d en FS",job->id);
 
+		pthread_mutex_lock(&mutex_NodosConectados);
 		infoNodo* nodo = obtenerNodo(reg->nodo);
 		nodo->carga--;
+
+		pthread_mutex_unlock(&mutex_NodosConectados);
 
 		finalizarJob(job,ALM_FINAL,FALLO_ALMACENAMIENTO);
 	}
