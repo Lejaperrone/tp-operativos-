@@ -572,6 +572,7 @@ void* serializarRespuestaInfoNodos(void* paquete,int* tamanio){
 		buffer = realloc(buffer, *tamanio);
 		int longitud = list_size(infoWorker->ubicaciones);
 		memcpy(buffer + desplazamiento, &longitud, sizeof(int));
+
 		desplazamiento += sizeof(int);
 
 		for (i = 0; i < list_size(infoWorker->ubicaciones); ++i) {
@@ -623,42 +624,44 @@ informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio)
 	memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
 	desplazamiento += sizeof(int);
 
-	int j;
-	for (j = 0; j < longitud; ++j) {
-		infoBloque* infoBloq = malloc(sizeof(infoBloque));
+	int i,j;
+	for (i = 0; i < longitud; ++i) {
+		infoBloque* infoWorker = malloc(sizeof(infoBloque));
 
-		infoBloq->ubicaciones= list_create();
-		int longitud2 = 0;
+		memcpy(&infoWorker->bytesOcupados, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		memcpy(&infoWorker->numeroBloque, buffer + desplazamiento, sizeof(int) );
+		desplazamiento += sizeof(int);
+
+		infoWorker->ubicaciones = list_create();
+		int longitud = 0;
 		memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
-		int k;
-		for (k = 0; k < longitud2; ++k) {
-			ubicacionBloque* ubi = malloc(sizeof(infoBloque));
+		for (j = 0; j < longitud; ++j) {
+			ubicacionBloque* bloqueArchivos = malloc(sizeof(ubicacionBloque));
 
-			memcpy(&ubi->numeroBloqueEnNodo, buffer + desplazamiento, sizeof(int) );
+			memcpy(&bloqueArchivos->numeroBloqueEnNodo, buffer + desplazamiento, sizeof(int) );
 			desplazamiento += sizeof(int);
 
-			memcpy(&ubi->numeroNodo, buffer + desplazamiento, sizeof(int) );
+			memcpy(&bloqueArchivos->numeroNodo, buffer + desplazamiento, sizeof(int) );
 			desplazamiento += sizeof(int);
 
-			memcpy(&ubi->puerto, buffer + desplazamiento, sizeof(int) );
+			memcpy(&bloqueArchivos->puerto, buffer + desplazamiento, sizeof(int) );
 			desplazamiento += sizeof(int);
 
-			memcpy(&ubi->ip.longitud, buffer + desplazamiento, sizeof(int) );
+			memcpy(&bloqueArchivos->ip.longitud, buffer + desplazamiento, sizeof(int) );
 			desplazamiento += sizeof(int);
 
-			ubi->ip.cadena = calloc(1,ubi->ip.longitud+1);
-			memcpy(ubi->ip.cadena, buffer + desplazamiento, ubi->ip.longitud);
-			desplazamiento += ubi->ip.longitud;
+			bloqueArchivos->ip.cadena = calloc(1,bloqueArchivos->ip.longitud+1);
+			memcpy(bloqueArchivos->ip.cadena, buffer + desplazamiento, bloqueArchivos->ip.longitud);
+			desplazamiento += bloqueArchivos->ip.longitud;
 
-
-			list_add(infoBloq->ubicaciones,ubi);
+			list_add(infoWorker->ubicaciones, bloqueArchivos);
 		}
 
-
-
-		list_add(info->informacionBloques, infoBloq);
+		list_add(info->informacionBloques, infoWorker);
 	}
 	free(buffer);
 	return info;

@@ -728,6 +728,8 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 			printf("\nFinalizada tarea reduccion nodo %d para job %d\n", numNodo,job->id);
 			agregarBloqueTerminadoATablaEstadosRedLocal(numNodo,job->id,RED_LOCAL);
 			redLocalIncompleta= faltanMasTareas(job->id,RED_LOCAL) || faltanMasTareas(job->id,TRANSFORMACION);
+
+			mostrarTablaDeEstados();
 		}
 
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloReduccion){
