@@ -124,6 +124,7 @@ int verificarEstado(){
 						free(arrayInfoBloque);
 						++l;
 						bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
+						printf("%s\n"bloque);
 					}
 					l = 0;
 					if (valido < numeroCopiasBloque){
