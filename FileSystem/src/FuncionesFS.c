@@ -39,7 +39,6 @@ extern sem_t pedidoTerminado;
 extern pthread_mutex_t listSemMutex;
 int bla = 0;
 extern bool recuperarEstado;
-extern sem_t desconexiones;
 
 
 void establecerServidor(char* ip, int port){
@@ -355,8 +354,6 @@ char* rutaArchivoMetadataSinExtension(char* ruta){
 
 char* leerArchivo(char* rutaArchivo){
 
-	sem_wait(&desconexiones);
-
 	int index = 0, sizeArchivo, cantBloquesArchivo = 0, sizeAux = 0, i, j, k, l;
 	int cantidadNodos = list_size(nodosConectados);
 	int cargaNodos[cantidadNodos], indexNodos[cantidadNodos], peticiones[cantidadNodos];
@@ -526,7 +523,6 @@ char* leerArchivo(char* rutaArchivo){
 	free(rutaFinal);
 	fclose(informacionArchivo);
 
-	sem_post(&desconexiones);
 	return lectura;
 }
 
@@ -566,8 +562,6 @@ char* nombreArchivoSinExtension(char* nombre){
 }
 
 int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
-
-	sem_wait(&desconexiones);
 
 	int binario = strcmp(tipo, "b") == 0;
 
@@ -821,8 +815,6 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	actualizarBitmapNodos();
-
-	sem_post(&desconexiones);
 
 	return successArchivoCopiado;
 

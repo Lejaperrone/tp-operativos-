@@ -16,7 +16,6 @@ extern int bloquesLibresTotales;
 extern bool recuperarEstado;
 extern int EstadoFS;
 bool noSeConectoYama = true;
-extern sem_t desconexiones;
 
 void* levantarServidorFS(){
 	solicitudInfoNodos* solicitud;
