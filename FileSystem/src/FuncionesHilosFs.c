@@ -229,6 +229,7 @@ void* levantarServidorFS(){
 
 					list_remove_by_condition(nodosConectados,(void*)sacarDesconectar);
 
+					printf("Desconexion\n");
 					close(i);
 					FD_CLR(i, &datanodes);
 
@@ -579,7 +580,7 @@ void* consolaFS(){
 			if(validarParametros(arguments, 4)){
 				continue;
 			}
-			if (copiarBloqueANodo(comando) > 0){
+			if (copiarBloqueANodo(comando) >= 0){
 				pthread_mutex_lock(&logger_mutex);
 				log_trace(loggerFS, "Bloque copiado en el nodo");
 				pthread_mutex_unlock(&logger_mutex);
