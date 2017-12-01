@@ -1551,3 +1551,16 @@ int longitudAntesDelIgual(char* cadena){
 	return longitud;
 
 }
+
+bool noTieneHijos(int numeroTablaDirectorio){
+	int i = 0;
+
+	while (tablaDeDirectorios[i].index != -1){
+		if (tablaDeDirectorios[i].padre == numeroTablaDirectorio){
+			return false;
+		}
+		i++;
+	}
+	return true;
+
+}

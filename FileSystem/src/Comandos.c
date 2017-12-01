@@ -203,7 +203,7 @@ int eliminarDirectorio(char* comando){
 		return 3;
 	}
 
-	if (isDirectoryEmpty(rutaDirectorioMetadata)){
+	if (isDirectoryEmpty(rutaDirectorioMetadata) && noTieneHijos(numeroTablaDirectorio)){
 		tablaDeDirectorios[numeroTablaDirectorio].index = -1;
 		tablaDeDirectorios[numeroTablaDirectorio].padre = -1;
 		memset(tablaDeDirectorios[numeroTablaDirectorio].nombre,0,255);
