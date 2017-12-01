@@ -359,19 +359,26 @@ bool** llenarMatrizNodosBloques(informacionArchivoFsYama* infoArchivo,int nodos,
 	return matriz;
 }
 
-int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos,int bloques){
+int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos,int bloques,t_list* lista){
 	int i=0;
 
 	for(i=0;i<=bloques;i++){
 		matriz[replanificar->workerId][i]=false;
 	}
 
+	bool hayOtracopia = false;
+
 	for(i=0;i<=nodos;i++){
 		if(matriz[i][replanificar->bloque] && (i != replanificar->workerId)){
+			hayOtracopia=true;
 			return i;
 		}
 	}
-	return -1;
+
+	if(!hayOtracopia){
+		return -1;
+	}
+
 }
 
 void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques,int job){

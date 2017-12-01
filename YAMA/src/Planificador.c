@@ -55,7 +55,7 @@ void planificar(job* job){
 
 	list_iterate(respuestaMaster->workers,(void*)reparticion);
 
-	planificarReduccionesLocales(job,matrix,respuestaMaster,nodos,bloques);
+	planificarReduccionesLocales(job,matrix,respuestaMaster,nodos,bloques,listaNodos);
 
 	int nodoEncargado = enviarReduccionGlobalAMaster(job);
 
@@ -356,7 +356,7 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 
 }
 
-void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques,int nodos){
+void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacion* respuestaArchivo, bool** matrix,int bloques,int nodos,t_list* listaNodos){
 	respuestaSolicitudTransformacion* respuestaTransfromacion = malloc(sizeof(respuestaSolicitudTransformacion));
 	respuestaTransfromacion->workers = list_create();
 
@@ -373,7 +373,7 @@ void replanificar(int paraReplanificar,job* jobi,respuestaSolicitudTransformacio
 		nodoBloque->bloque= bloque->numBloque;
 		nodoBloque->workerId = paraReplanificar;
 
-		int nodoNuevo = nodoConOtraCopia(nodoBloque,matrix,nodos,bloques);
+		int nodoNuevo = nodoConOtraCopia(nodoBloque,matrix,nodos,bloques,listaNodos);
 
 		if(nodoNuevo == -1){
 			log_trace(logger,"Fallo en replanificar nodo %d", paraReplanificar);
@@ -681,7 +681,7 @@ void realizarAlmacenamientoFinal(job* job){
 	}
 }
 
-void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTransformacion* respuestaMaster,int nodos,int bloques){
+void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTransformacion* respuestaMaster,int nodos,int bloques,t_list* listaNodos){
 	bool redLocalIncompleta= true;
 	bloqueYNodo* bloqueNodo;
 	int numNodo;
@@ -717,7 +717,7 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 			log_trace(logger,"Entro a replanificar se desconecto un worker %d para job %d", bloqueNodo->workerId,job->id);
 			printf("\nEntro a replanificar se desconecto un worker %d para job %d\n", bloqueNodo->workerId,job->id);
 			if(nodosReplanificados[bloqueNodo->workerId]){
-				replanificar(bloqueNodo->workerId,job,respuestaMaster,matrix,bloques,nodos);
+				replanificar(bloqueNodo->workerId,job,respuestaMaster,matrix,bloques,nodos,listaNodos);
 				nodosReplanificados[bloqueNodo->workerId] = false;
 			}
 
@@ -729,7 +729,6 @@ void planificarReduccionesLocales(job* job,bool** matrix,respuestaSolicitudTrans
 			agregarBloqueTerminadoATablaEstadosRedLocal(numNodo,job->id,RED_LOCAL);
 			redLocalIncompleta= faltanMasTareas(job->id,RED_LOCAL) || faltanMasTareas(job->id,TRANSFORMACION);
 
-			mostrarTablaDeEstados();
 		}
 
 		else if(respuestaPlanificacionMaster.idMensaje == mensajeFalloReduccion){

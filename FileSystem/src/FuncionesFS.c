@@ -1375,7 +1375,7 @@ int borrarArchivosEnMetadata(){
 
 int liberarNodosConectados(){
 	int cantNodosConectados = list_size(nodosConectados);
-	int i;
+
 	int numeroNodo, sizeNodo;
 	informacionNodo* nodo;
 	int respuesta = 1;
@@ -1386,17 +1386,28 @@ int liberarNodosConectados(){
 
 	char* mkdirComando = string_from_format("mkdir %s", rutaMetadataBitmaps);
 
+	int j;
+	for(j=0;j<list_size(bitmapsNodos);j++){
+		t_bitarray* bit =list_remove(bitmapsNodos,j);
+		bitarray_destroy(bit);
+	}
+
+	int i;
 	respuesta = system(mkdirComando);
 	if (cantNodosConectados > 0){
 		for (i = 0; i < cantNodosConectados; ++i){
 			nodo = list_get(nodosConectados, i);
 			numeroNodo = nodo->numeroNodo;
 			sizeNodo = nodo->sizeNodo;
+			//system(string_from_format("rm ../metadata/Bitmaps/NODO%d.bin",numeroNodo));
 			nodo->bloquesOcupados = levantarBitmapNodo(numeroNodo, sizeNodo);
 			respuesta++;
 			printf("Nodo%d formateado.\n", numeroNodo);
 		}
 	}
+
+
+
 
 	actualizarBitmapNodos();
 
