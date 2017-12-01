@@ -81,7 +81,7 @@ void calcularNodosYBloques(informacionArchivoFsYama* info,int* nodos,int*bloques
 
 void llenarListaNodos(t_list* listaNodos,informacionArchivoFsYama* infoArchivo,int job);
 
-void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque ubicacion,int bloque);
+void agregarBloqueANodo(t_list* listaNodos,ubicacionBloque* ubicacion,int bloque);
 
 char* dameUnNombreArchivoTemporal(int jobId,int numBloque,int etapa,int nodo);
 

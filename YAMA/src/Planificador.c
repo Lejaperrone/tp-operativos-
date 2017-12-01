@@ -333,12 +333,12 @@ void agregarBloqueANodoParaEnviar(infoBloque* bloque,infoNodo* nodo,respuestaSol
 	bloquesArchivos->archivoTemporal.cadena = strdup(rutaTemporal);
 	bloquesArchivos->archivoTemporal.longitud = string_length(rutaTemporal);
 
-	if(bloque->ubicacionCopia0.numeroNodo == nodo->numero){
-		bloquesArchivos->numBloqueEnNodo = bloque->ubicacionCopia0.numeroBloqueEnNodo;
+	bool nodoEsta(ubicacionBloque* ubi){
+		return ubi->numeroNodo == nodo->numero;
 	}
-	else{
-		bloquesArchivos->numBloqueEnNodo = bloque->ubicacionCopia1.numeroBloqueEnNodo;
-	}
+
+	ubicacionBloque* subi = list_find(bloque->ubicaciones,(void*)nodoEsta);
+	bloquesArchivos->numBloqueEnNodo = subi->numeroBloqueEnNodo;
 
 	list_add(worker->bloquesConSusArchivos,bloquesArchivos);
 

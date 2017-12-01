@@ -1122,10 +1122,11 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 	informacionArchivoFsYama info;
 	info.informacionBloques = list_create();
 
+
 	char* directorio = rutaSinArchivo(rutaDatos.cadena);
 	char* rutaArchivo = buscarRutaArchivo(directorio);
 
-	if(!strcmp(ultimaParteDeRuta(rutaArchivo), "-1")) {
+	if(!strcmp(rutaArchivo, "-1")) {
 		info.tamanioTotal = 0;
 		return info;
 	}
@@ -1143,50 +1144,74 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 
 	int cantBloques = redondearHaciaArriba(info.tamanioTotal , sizeBloque);
 
-	int i;
-	for(i=0;i<cantBloques;i++){
-		char* clave = calloc(1,8);
-		string_append_with_format(&clave,"BLOQUE%d",i);
-		infoBloque* infoBloqueActual = malloc(sizeof(infoBloque));
-		char* claveCopia0 = strdup(clave);
-		char* claveCopia1 = strdup(clave);
-		char* claveBytes = strdup(clave);
+	int cantBloquesTotal = 0;
+	char* block = string_from_format("BLOQUE%dCOPIA0",cantBloquesTotal);
+	while (config_has_property(archivo, block)){
+		++cantBloquesTotal;
+		free(block);
+		block = string_from_format("BLOQUE%dCOPIA0",cantBloquesTotal);
+	}
+	free(block);
 
-		string_append(&claveCopia0,"COPIA0");
-		string_append(&claveCopia1,"COPIA1");
-		string_append(&claveBytes,"BYTES");
+
+	int i = 0, j = 0;
+	char** arrayBloques;
+	char* auxNodo;
+	for(i=0;i<cantBloquesTotal;i++){
+
+		block = string_from_format("BLOQUE%dCOPIA%d",i, j);
+		infoBloque* infoBloqueActual = malloc(sizeof(infoBloque));
+		infoBloqueActual->bytesOcupados = config_get_int_value(archivo,(string_from_format("BLOQUE%dBYTES", i)));
+
+		while(config_has_property(archivo, block)){
+			ubicacionBloque* ubi = malloc(sizeof(ubicacionBloque));
+			arrayBloques = config_get_array_value(archivo, block);
+			auxNodo = string_substring_from(arrayBloques[0],4);
+			ubi->numeroNodo = atoi(auxNodo);
+			ubi->numeroBloqueEnNodo = atoi(arrayBloques[1]);
+			obtenerInfoNodo(ubi);
+			list_add(infoBloqueActual->ubicaciones,ubi);
+
+			free(block);
+			free(arrayBloques);
+			free(auxNodo);
+
+			j++;
+			block = string_from_format("BLOQUE%dCOPIA%d",i, j);
+		}
+
 
 		infoBloqueActual->numeroBloque = i;
 
-		infoBloqueActual->bytesOcupados = config_get_int_value(archivo,claveBytes);
-		obtenerNumeroNodo(archivo,claveCopia0,&(infoBloqueActual->ubicacionCopia0));
-		obtenerInfoNodo(&infoBloqueActual->ubicacionCopia0);
+		j = 0;
 
-		obtenerNumeroNodo(archivo,claveCopia1,&(infoBloqueActual->ubicacionCopia1));
-		obtenerInfoNodo(&infoBloqueActual->ubicacionCopia1);
-		free(clave);
 		list_add(info.informacionBloques,infoBloqueActual);
 	}
 	return info;
 }
 
 void obtenerInfoNodo(ubicacionBloque* ubicacion){
-	int i;
-	informacionNodo* info = malloc(sizeof(informacionNodo));
-	for(i=0;i<list_size(nodosConectados);i++){
-		info =(informacionNodo*)list_get(nodosConectados,i);
 
-		if(info->numeroNodo == ubicacion->numeroNodo){
-			ubicacion->ip.cadena = strdup(info->ip.cadena);
-			ubicacion->ip.longitud = info->ip.longitud;
-			ubicacion->puerto = info->puerto;
-		}
+	bool esta(informacionNodo* nodo){
+		return nodo->numeroNodo == ubicacion->numeroNodo;
+	}
+
+
+	if(list_any_satisfy(nodosConectados,(void*)esta)){
+
+		informacionNodo* info=list_find(nodosConectados,(void*)esta);
+		ubicacion->ip.cadena = strdup(info->ip.cadena);
+		ubicacion->ip.longitud = string_length(info->ip.cadena);
+		ubicacion->puerto = info->puerto;
+	}
+	else{
+		ubicacion->ip.cadena = strdup("127.0.0.1");
+		ubicacion->ip.longitud = -1;
+		ubicacion->puerto = -1;
 	}
 }
 
 int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
-
-	sem_wait(&desconexiones);
 
 	int respuesta = 1, respuestaEnvio = -1;
 	int i;
@@ -1264,8 +1289,6 @@ int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
 	setearBloqueOcupadoEnBitmap(nodoElegido, paramEnvio.bloque);
 
 	free(paramEnvio.mapa);
-
-	sem_post(&desconexiones);
 
 	return paramEnvio.bloque;
 }

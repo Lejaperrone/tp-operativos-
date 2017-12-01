@@ -43,7 +43,8 @@ void* levantarServidorFS(){
 	maxDatanodes = servidorFS; // por ahora es éste
 
 
-
+	t_list* listAux;
+	int j;
 	char* buff = malloc(sizeof(int)*3);
 	int desconexion = -1;
 
@@ -173,7 +174,7 @@ void* levantarServidorFS(){
 								empaquetar(nuevoCliente,mensajeFalloAlmacenamiento,0,0);
 							}
 							free(mmap);
-							free(mmap->cadena);
+							//free(mmap->cadena);
 							free(almacenar);
 							close(nuevoCliente);
 							FD_CLR(nuevoCliente, &datanodes);
@@ -193,8 +194,21 @@ void* levantarServidorFS(){
 						}
 						else{
 							empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
-						}
 
+							void siesta(ubicacionBloque* ubi){
+								free(ubi->ip.cadena);
+								free(ubi);
+							}
+
+							void limpiar(infoBloque* info){
+								list_iterate(info->ubicaciones,(void*)siesta);
+								list_destroy(info->ubicaciones);
+								free(info);
+							}
+
+							list_iterate(infoArchivo.informacionBloques,(void*)limpiar);
+
+						}
 						break;
 
 					case mensajeDesconexion:
@@ -208,14 +222,16 @@ void* levantarServidorFS(){
 
 				}
 				if (recv(i,buff,1,MSG_PEEK | MSG_DONTWAIT) == 0){
-					sem_wait(&desconexiones);
-					desconexion = revisarNodos();
-					if (desconexion != -1){
-						close(desconexion);
-						FD_CLR(desconexion, &datanodes);
-						printf("desconexion\n");
+
+					bool sacarDesconectar(informacionNodo* info){
+						return info->socket==i;
 					}
-					sem_post(&desconexiones);
+
+					list_remove_by_condition(nodosConectados,(void*)sacarDesconectar);
+
+					close(i);
+					FD_CLR(i, &datanodes);
+
 				}
 
 

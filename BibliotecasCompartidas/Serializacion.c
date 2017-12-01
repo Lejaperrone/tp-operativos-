@@ -570,53 +570,43 @@ void* serializarRespuestaInfoNodos(void* paquete,int* tamanio){
 
 		*tamanio += sizeof(int);
 		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia0.numeroBloqueEnNodo, sizeof(int));
+		int longitud = list_size(respuesta->informacionBloques);
+		memcpy(buffer + desplazamiento, &longitud, sizeof(int));
 		desplazamiento += sizeof(int);
 
-		*tamanio += sizeof(int);
-		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia0.numeroNodo, sizeof(int));
-		desplazamiento += sizeof(int);
+		int k;
+		for (k = 0; k < list_size(infoBloq->ubicaciones); ++k) {
+			ubicacionBloque* ubi = (ubicacionBloque*)list_get(infoBloq->ubicaciones, k);
 
-		*tamanio += sizeof(int);
-		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia0.puerto, sizeof(int));
-		desplazamiento += sizeof(int);
+			*tamanio += sizeof(int);
+			buffer = realloc(buffer, *tamanio);
+			memcpy(buffer + desplazamiento, &ubi->numeroBloqueEnNodo, sizeof(int));
+			desplazamiento += sizeof(int);
 
-		*tamanio += sizeof(int);
-		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia0.ip.longitud, sizeof(int));
-		desplazamiento += sizeof(int);
+			*tamanio += sizeof(int);
+			buffer = realloc(buffer, *tamanio);
+			memcpy(buffer + desplazamiento, &ubi->numeroNodo, sizeof(int));
+			desplazamiento += sizeof(int);
 
-		*tamanio += infoBloq->ubicacionCopia0.ip.longitud;
-		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, infoBloq->ubicacionCopia0.ip.cadena, infoBloq->ubicacionCopia0.ip.longitud);
-		desplazamiento += infoBloq->ubicacionCopia0.ip.longitud;
+			*tamanio += sizeof(int);
+			buffer = realloc(buffer, *tamanio);
+			memcpy(buffer + desplazamiento, &ubi->puerto, sizeof(int));
+			desplazamiento += sizeof(int);
 
-		*tamanio += sizeof(int);
-		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia1.numeroBloqueEnNodo, sizeof(int));
-		desplazamiento += sizeof(int);
+			*tamanio += sizeof(int);
+			buffer = realloc(buffer, *tamanio);
+			memcpy(buffer + desplazamiento, &ubi->ip.longitud, sizeof(int));
+			desplazamiento += sizeof(int);
 
-		*tamanio += sizeof(int);
-		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia1.numeroNodo, sizeof(int));
-		desplazamiento += sizeof(int);
+			*tamanio += ubi->ip.longitud;
+			buffer = realloc(buffer, *tamanio);
+			memcpy(buffer + desplazamiento, ubi->ip.cadena, ubi->ip.longitud);
+			desplazamiento += ubi->ip.longitud;
 
-		*tamanio += sizeof(int);
-		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia1.puerto, sizeof(int));
-		desplazamiento += sizeof(int);
 
-		*tamanio += sizeof(int);
-		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, &infoBloq->ubicacionCopia1.ip.longitud, sizeof(int));
-		desplazamiento += sizeof(int);
+		}
 
-		*tamanio += infoBloq->ubicacionCopia1.ip.longitud;
-		buffer = realloc(buffer, *tamanio);
-		memcpy(buffer + desplazamiento, infoBloq->ubicacionCopia1.ip.cadena, infoBloq->ubicacionCopia1.ip.longitud);
-		desplazamiento += infoBloq->ubicacionCopia1.ip.longitud;
+
 
 	}
 
@@ -642,43 +632,36 @@ informacionArchivoFsYama* deserializarRespuestaInfoNodos(int socket,int tamanio)
 	for (j = 0; j < longitud; ++j) {
 		infoBloque* infoBloq = malloc(sizeof(infoBloque));
 
-		memcpy(&infoBloq->bytesOcupados, buffer + desplazamiento, sizeof(int) );
+		infoBloq->ubicaciones= list_create();
+		int longitud2 = 0;
+		memcpy(&longitud, buffer + desplazamiento, sizeof(int) );
 		desplazamiento += sizeof(int);
 
-		memcpy(&infoBloq->numeroBloque, buffer + desplazamiento, sizeof(int) );
-		desplazamiento += sizeof(int);
+		int k;
+		for (k = 0; k < longitud2; ++k) {
+			ubicacionBloque* ubi = malloc(sizeof(infoBloque));
 
-		memcpy(&infoBloq->ubicacionCopia0.numeroBloqueEnNodo, buffer + desplazamiento, sizeof(int) );
-		desplazamiento += sizeof(int);
+			memcpy(&ubi->numeroBloqueEnNodo, buffer + desplazamiento, sizeof(int) );
+			desplazamiento += sizeof(int);
 
-		memcpy(&infoBloq->ubicacionCopia0.numeroNodo, buffer + desplazamiento, sizeof(int) );
-		desplazamiento += sizeof(int);
+			memcpy(&ubi->numeroNodo, buffer + desplazamiento, sizeof(int) );
+			desplazamiento += sizeof(int);
 
-		memcpy(&infoBloq->ubicacionCopia0.puerto, buffer + desplazamiento, sizeof(int) );
-		desplazamiento += sizeof(int);
+			memcpy(&ubi->puerto, buffer + desplazamiento, sizeof(int) );
+			desplazamiento += sizeof(int);
 
-		memcpy(&infoBloq->ubicacionCopia0.ip.longitud, buffer + desplazamiento, sizeof(int) );
-		desplazamiento += sizeof(int);
+			memcpy(&ubi->ip.longitud, buffer + desplazamiento, sizeof(int) );
+			desplazamiento += sizeof(int);
 
-		infoBloq->ubicacionCopia0.ip.cadena = calloc(1,infoBloq->ubicacionCopia0.ip.longitud+1);
-		memcpy(infoBloq->ubicacionCopia0.ip.cadena, buffer + desplazamiento, infoBloq->ubicacionCopia0.ip.longitud);
-		desplazamiento += infoBloq->ubicacionCopia0.ip.longitud;
+			ubi->ip.cadena = calloc(1,ubi->ip.longitud+1);
+			memcpy(ubi->ip.cadena, buffer + desplazamiento, ubi->ip.longitud);
+			desplazamiento += ubi->ip.longitud;
 
-		memcpy(&infoBloq->ubicacionCopia1.numeroBloqueEnNodo, buffer + desplazamiento, sizeof(int) );
-		desplazamiento += sizeof(int);
 
-		memcpy(&infoBloq->ubicacionCopia1.numeroNodo, buffer + desplazamiento, sizeof(int) );
-		desplazamiento += sizeof(int);
+			list_add(infoBloq->ubicaciones,ubi);
+		}
 
-		memcpy(&infoBloq->ubicacionCopia1.puerto, buffer + desplazamiento, sizeof(int) );
-		desplazamiento += sizeof(int);
 
-		memcpy(&infoBloq->ubicacionCopia1.ip.longitud, buffer + desplazamiento, sizeof(int) );
-		desplazamiento += sizeof(int);
-
-		infoBloq->ubicacionCopia1.ip.cadena = calloc(1,infoBloq->ubicacionCopia1.ip.longitud+1);
-		memcpy(infoBloq->ubicacionCopia1.ip.cadena, buffer + desplazamiento, infoBloq->ubicacionCopia1.ip.longitud);
-		desplazamiento += infoBloq->ubicacionCopia1.ip.longitud;
 
 		list_add(info->informacionBloques, infoBloq);
 	}

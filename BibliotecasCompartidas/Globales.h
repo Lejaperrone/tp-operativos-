@@ -159,8 +159,7 @@ typedef struct{
 typedef struct {
 	int bytesOcupados;
 	int numeroBloque;
-	ubicacionBloque ubicacionCopia0;
-	ubicacionBloque ubicacionCopia1;
+	t_list* ubicaciones;
 }infoBloque;
 
 typedef struct{
