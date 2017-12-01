@@ -431,6 +431,9 @@ char* leerArchivo(char* rutaArchivo){
 	int posicionCopiaEnIndexNodo[maxCopias];
 	int copia[maxCopias];
 
+	for (i = 0; i < cantidadNodos; ++i)
+		sem_post(&pedidoFS);
+
 	char* respuestas[cantBloquesArchivo];
 	parametrosLecturaBloque params[cantBloquesArchivo];
 	pthread_t nuevoHilo[cantBloquesArchivo];
@@ -493,7 +496,7 @@ char* leerArchivo(char* rutaArchivo){
 		params[i].sem = posicionNodoAPedir;
 
 		pthread_create(&nuevoHilo[i], NULL, &leerDeDataNode,(void*) &params[i]);
-		//sem_wait(&pedidoFS);
+		sem_wait(&pedidoFS);
 
 		//printf("size bloque yay %d\n", strlen(respuestas[i]));
 
@@ -523,6 +526,9 @@ char* leerArchivo(char* rutaArchivo){
 	free(rutaFinal);
 	fclose(informacionArchivo);
 
+	for (i = 0; i < cantidadNodos; ++i)
+		sem_wait(&pedidoFS);
+
 	return lectura;
 }
 
@@ -540,6 +546,7 @@ void* leerDeDataNode(void* parametros){
 	 sem_post(semaforo);
 	 sem_post(&pedidoTerminado);
 	 free(respuesta.envio);
+	 sem_post(&pedidoFS);
 	 pthread_exit(params->contenidoBloque);//(void*)params->contenidoBloque;
 }
 
@@ -815,6 +822,9 @@ int guardarEnNodos(char* path, char* nombre, char* tipo, string* mapeoArchivo){
 	}
 
 	actualizarBitmapNodos();
+
+	for (i = 0; i < cantidadNodos; ++i)
+		sem_wait(&pedidoFS);
 
 	return successArchivoCopiado;
 
