@@ -63,7 +63,7 @@ int verificarEstado(){
 	int i = 0, j = 0, l = 0, k = 0;
 	int cantidadNodosConectados = list_size(nodosConectados);
 	int nodos[cantidadNodosConectados];
-	int sizeArchivo, cantBloques = 1;
+	int cantBloques = 0;
 	informacionNodo info;
 	t_config* infoArchivo;
 	char** arrayInfoBloque;
@@ -99,33 +99,37 @@ int verificarEstado(){
 				printf("%s \n", path);
 				infoArchivo = config_create(path);
 
-				if (config_has_property(infoArchivo, "TAMANIO")){
-					sizeArchivo = config_get_int_value(infoArchivo,"TAMANIO");
+				bloque = string_from_format("BLOQUE%dCOPIA0",j);
+				while(config_has_property(infoArchivo, bloque)){
+					++cantBloques;
+					free(bloque);
+					++j;
+					bloque = string_from_format("BLOQUE%dCOPIA0",j);
 				}
+				free(bloque);
 
-				if (sizeArchivo > mb)
-					cantBloques = redondearHaciaArriba(sizeArchivo, mb);
-				else
-					cantBloques = 1;
 
 				for (j = 0; j < cantBloques; ++j){
-					for (l = 0; l < numeroCopiasBloque; ++l){
-						bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
-						if (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,l))){
-							arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
-							charNumeroNodo = string_substring_from(arrayInfoBloque[0], 4);
-							numeroNodo = atoi(charNumeroNodo);
+					bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
+					while (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,l))){
+						arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
+						charNumeroNodo = string_substring_from(arrayInfoBloque[0], 4);
+						numeroNodo = atoi(charNumeroNodo);
 
-							for (k = 0; k < cantidadNodosConectados; ++k)
-								if (nodos[k] == numeroNodo){
-									++valido;
-								}
-						}
-
-					}
-					if (valido < numeroCopiasBloque){
+						for (k = 0; k < cantidadNodosConectados; ++k)
+							if (nodos[k] == numeroNodo){
+								++valido;
+							}
 						free(bloque);
 						free(charNumeroNodo);
+						free(arrayInfoBloque);
+						++l;
+						bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
+					}
+					l = 0;
+					if (valido < numeroCopiasBloque){
+						//free(bloque);
+						//free(charNumeroNodo);
 						free(path);
 						free(pathDir);
 						return 0;
@@ -134,7 +138,7 @@ int verificarEstado(){
 					valido = 0;
 
 					free(bloque);
-					free(charNumeroNodo);
+					//free(charNumeroNodo);
 				}
 				free(path);
 				config_destroy(infoArchivo);

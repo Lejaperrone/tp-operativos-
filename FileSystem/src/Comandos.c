@@ -545,16 +545,20 @@ int crearDirectorio(char* comando){
 		else{
 			while(tablaDeDirectorios[i].index != -1){
 				++i;
-			}
-			if (i == 100){
-				printf("Se alcanzo el limite de directorios.\n");
-				return 2;
+				if (i >= 100){
+					printf("Se alcanzo el limite de directorios.\n");
+					return 2;
+				}
 			}
 
 			success = 0;
 			tablaDeDirectorios[i].index = i;
 			tablaDeDirectorios[i].padre = indexPadre;
 			nombre = ultimaParteDeRuta(path);
+			if (strlen(nombre) > 255){
+				printf("El nombre del directorio es demasiado largo.\n");
+				return 3;
+			}
 			memcpy(tablaDeDirectorios[i].nombre, nombre, strlen(nombre));
 			guardarTablaDirectorios();
 			mkdir(string_from_format("../metadata/Archivos/%d", i),0777);
