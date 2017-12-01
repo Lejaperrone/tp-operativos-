@@ -38,7 +38,7 @@ int validarComandoEnNodos(char* path){
 	char* charNumeroNodo;
 	int estanTodos = 0;
 	int cantidadNodosConectados = list_size(nodosConectados);
-	char* bloque = string_from_format("BLOQUE%dCOPIAd%",i,j);
+	char* bloque = string_from_format("BLOQUE%dCOPIA%d",i,j);
 	char** arrayNodos;
 	informacionNodo info;
 	int nodos[cantidadNodosConectados];
@@ -65,7 +65,7 @@ int validarComandoEnNodos(char* path){
 			free(bloque);
 			free(charNumeroNodo);
 			++j;
-			bloque = string_from_format("BLOQUE%dCOPIAd%",i,j);
+			bloque = string_from_format("BLOQUE%dCOPIA%d",i,j);
 		}
 		if (estanTodos < j)
 			return 0;
@@ -74,7 +74,7 @@ int validarComandoEnNodos(char* path){
 		estanTodos = 0;
 		free(bloque);
 		j = 0;
-		bloque = string_from_format("BLOQUE%dCOPIAd%",i,j);
+		bloque = string_from_format("BLOQUE%dCOPIA%d",i,j);
 	}
 	free(bloque);
 	config_destroy(archivo);
@@ -83,11 +83,12 @@ int validarComandoEnNodos(char* path){
 
 
 int eliminarArchivo(char* comando){
-	int sizeArchivo, sizeAux, cantBloquesArchivo = 0, i, j, k, numeroNodo, bloqueNodo, respuesta;
+	int sizeArchivo, sizeAux, cantBloquesArchivo = 0, i, j = 0, k, numeroNodo, bloqueNodo, respuesta;
 	char** arrayInfoBloque;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
 	int nodoAUsar = -1;
 	informacionNodo info;
+	char* bloque;
 
 	if(list_size(nodosConectados) == 0){
 		printf("No hay nodos conectados.\n");
@@ -134,30 +135,35 @@ int eliminarArchivo(char* comando){
 
 	t_config* infoArchivo = config_create(rutaArchivoEnMetadata);
 
-	if (config_has_property(infoArchivo, "TAMANIO"))
-		sizeArchivo = config_get_int_value(infoArchivo,"TAMANIO");
-
-	sizeAux = sizeArchivo;
-
-	while(sizeAux > 0){
-		sizeAux -= mb;
+	bloque = string_from_format("BLOQUE%dCOPIA0",j);
+	while(config_has_property(infoArchivo, bloque)){
 		++cantBloquesArchivo;
+		free(bloque);
+		++j;
+		bloque = string_from_format("BLOQUE%dCOPIA0",j);
 	}
+	free(bloque);
+	j = 0;
 
 	for (i = 0; i < cantBloquesArchivo; ++i){
-		for (j = 0; j < numeroCopiasBloque; ++j){
-			if (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,j))){
-				arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,j));
-				numeroNodo = atoi(string_substring_from(arrayInfoBloque[0], 4));
-				for (k = 0; k < list_size(nodosConectados); ++k){
-					info = *(informacionNodo*)list_get(nodosConectados, k);
-					if (numeroNodo == info.numeroNodo)
-						nodoAUsar = k;
-				}
-				bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
-				setearBloqueLibreEnBitmap(nodoAUsar, bloqueNodo);
+		bloque = string_from_format("BLOQUE%dCOPIA%d",i,j);
+		while (config_has_property(infoArchivo, bloque)){
+			arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
+			numeroNodo = atoi(string_substring_from(arrayInfoBloque[0], 4));
+			for (k = 0; k < list_size(nodosConectados); ++k){
+				info = *(informacionNodo*)list_get(nodosConectados, k);
+				if (numeroNodo == info.numeroNodo)
+					nodoAUsar = k;
 			}
+			bloqueNodo = atoi(string_substring_from(arrayInfoBloque[1], 0));
+			setearBloqueLibreEnBitmap(nodoAUsar, bloqueNodo);
+			++j;
+			free(arrayInfoBloque);
+			free(bloque);
+			bloque = string_from_format("BLOQUE%dCOPIA%d",i,j);
 		}
+		free(bloque);
+		j = 0;
 	}
 
 	actualizarBitmapNodos();
