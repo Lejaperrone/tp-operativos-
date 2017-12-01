@@ -371,13 +371,24 @@ int nodoConOtraCopia(bloqueYNodo* replanificar,bool** matriz,int nodos,int bloqu
 	for(i=0;i<=nodos;i++){
 		if(matriz[i][replanificar->bloque] && (i != replanificar->workerId)){
 			hayOtracopia=true;
-			return i;
 		}
 	}
 
 	if(!hayOtracopia){
 		return -1;
 	}
+
+	infoNodo* worker = list_get(lista,0);
+
+	int nodo = obtenerProximoWorkerConBloque(lista,replanificar->bloque,worker->numero,matriz,nodos)->numero;
+
+	while(worker->numero !=nodo){
+		worker =avanzarClock(worker,lista);
+	}
+
+	worker =avanzarClock(worker,lista);
+
+	return nodo;
 
 }
 
