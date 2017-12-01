@@ -231,7 +231,7 @@ void* levantarServidorFS(){
 					printf("Desconexion\n");
 					close(i);
 					FD_CLR(i, &datanodes);
-
+					EstadoFS = verificarEstado();
 				}
 
 

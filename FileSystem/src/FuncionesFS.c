@@ -108,7 +108,7 @@ int verificarEstado(){
 				free(bloque);
 
 
-				for (j = 0; j < cantBloques; ++j){
+				for (j = 0; j < cantBloques-1; ++j){
 					bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
 					while (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,l))){
 						arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
@@ -124,6 +124,7 @@ int verificarEstado(){
 						free(arrayInfoBloque);
 						++l;
 						bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
+						printf("%s\n",bloque);
 					}
 					l = 0;
 					if (valido < numeroCopiasBloque){
