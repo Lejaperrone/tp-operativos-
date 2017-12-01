@@ -1170,8 +1170,17 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 			auxNodo = string_substring_from(arrayBloques[0],4);
 			ubi->numeroNodo = atoi(auxNodo);
 			ubi->numeroBloqueEnNodo = atoi(arrayBloques[1]);
-			obtenerInfoNodo(ubi);
-			list_add(infoBloqueActual->ubicaciones,ubi);
+			bool esta(informacionNodo* nodo){
+
+				return nodo->numeroNodo == ubi->numeroNodo;
+			}
+
+
+			if(list_any_satisfy(nodosConectados,(void*)esta)){
+				obtenerInfoNodo(ubi);
+				list_add(infoBloqueActual->ubicaciones,ubi);
+			}
+
 
 			free(block);
 			free(arrayBloques);
@@ -1198,18 +1207,12 @@ void obtenerInfoNodo(ubicacionBloque* ubicacion){
 	}
 
 
-	if(list_any_satisfy(nodosConectados,(void*)esta)){
+	informacionNodo* info=list_find(nodosConectados,(void*)esta);
+	ubicacion->ip.cadena = strdup(info->ip.cadena);
+	ubicacion->ip.longitud = string_length(info->ip.cadena);
+	ubicacion->puerto = info->puerto;
 
-		informacionNodo* info=list_find(nodosConectados,(void*)esta);
-		ubicacion->ip.cadena = strdup(info->ip.cadena);
-		ubicacion->ip.longitud = string_length(info->ip.cadena);
-		ubicacion->puerto = info->puerto;
-	}
-	else{
-		ubicacion->ip.cadena = strdup("127.0.0.1");
-		ubicacion->ip.longitud = -1;
-		ubicacion->puerto = -1;
-	}
+
 }
 
 int guardarBloqueEnNodo(int bloque, int nodo, t_config* infoArchivo){
