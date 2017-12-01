@@ -74,6 +74,7 @@ int verificarEstado(){
 	for (i = 0; i < cantidadNodosConectados; ++i){
 		info = *(informacionNodo*)list_get(nodosConectados,i);
 		nodos[i] = info.numeroNodo;
+		printf("%d          -1--1-1-1-1-11-\n", info.numeroNodo);
 	}
 
 	for (i = 0; i < 100; ++i){
@@ -107,8 +108,9 @@ int verificarEstado(){
 				}
 				free(bloque);
 
+				printf("%d----------------\n", cantidadNodosConectados);
 
-				for (j = 0; j < cantBloques-1; ++j){
+				for (j = 0; j < cantBloques; ++j){
 					bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
 					while (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,l))){
 						arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
