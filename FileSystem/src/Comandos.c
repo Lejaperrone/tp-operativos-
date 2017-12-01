@@ -11,6 +11,7 @@
 #define mb 1048576
 
 extern bool fsFormateado;
+extern int recuperarEstado;
 
 int formatearFS(int flag){
 	recuperarEstado = 0;
@@ -28,10 +29,10 @@ int formatearFS(int flag){
 	if (resultado == 3 && !flag){
 		fsFormateado = true;
 		printf("FileSystem formateado correctamente.\n");
+		recuperarEstado = 1;
 		return 0;
 	}
 
-	recuperarEstado = 1;
 
 	return 1;
 }
@@ -87,7 +88,7 @@ int validarComandoEnNodos(char* path){
 
 
 int eliminarArchivo(char* comando){
-	int sizeArchivo, sizeAux, cantBloquesArchivo = 0, i, j = 0, k, numeroNodo, bloqueNodo, respuesta;
+	int cantBloquesArchivo = 0, i, j = 0, k, numeroNodo, bloqueNodo, respuesta;
 	char** arrayInfoBloque;
 	char* rutaArchivoYamafs = devolverRuta(comando,1);
 	int nodoAUsar = -1;

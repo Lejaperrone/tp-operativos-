@@ -224,7 +224,13 @@ int obtenerDisponibilidadWorker(infoNodo* worker){//getter
 
 uint32_t calcularPWL(infoNodo* worker){
 	if(esClock() != 0){
-		return workLoadMaxima() - worker->carga;
+		pthread_mutex_lock(&mutex_NodosConectados);
+		infoNodo* nodo = obtenerNodo(worker->numero);
+		int carga = nodo->carga;
+		pthread_mutex_unlock(&mutex_NodosConectados);
+
+
+		return workLoadMaxima() - carga;
 	}
 	else{
 		return 0;
@@ -234,12 +240,23 @@ uint32_t calcularPWL(infoNodo* worker){
 void calcularWorkLoadMaxima(t_list* nodos){
 	infoNodo* worker = malloc(sizeof(infoNodo));
 	bool mayorCarga(infoNodo* nodoMasCarga, infoNodo* nodo){
-		return nodoMasCarga->carga > nodo->carga;
+		pthread_mutex_lock(&mutex_NodosConectados);
+		infoNodo* nodoMas = obtenerNodo(nodoMasCarga->numero);
+		infoNodo* nodoMenos = obtenerNodo(nodo->numero);
+		int mas = nodoMas->carga;
+		int menos = nodoMenos->carga;
+		pthread_mutex_unlock(&mutex_NodosConectados);
+
+		return mas > menos;
 	}
 	list_sort(nodos,(void*)mayorCarga);
 
 	worker = list_get(nodos, 0);
-	wlMax = worker->carga;
+
+	pthread_mutex_lock(&mutex_NodosConectados);
+	infoNodo* nodoMax = obtenerNodo(worker->numero);
+	wlMax = nodoMax->carga;
+	pthread_mutex_unlock(&mutex_NodosConectados);
 }
 
 uint32_t workLoadMaxima(){//getter
