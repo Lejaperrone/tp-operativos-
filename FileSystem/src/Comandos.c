@@ -13,6 +13,8 @@
 extern bool fsFormateado;
 
 int formatearFS(int flag){
+	recuperarEstado = 0;
+
 	int resultado = 0;
 
 	resultado += borrarDirectorios();
@@ -28,6 +30,8 @@ int formatearFS(int flag){
 		printf("FileSystem formateado correctamente.\n");
 		return 0;
 	}
+
+	recuperarEstado = 1;
 
 	return 1;
 }
