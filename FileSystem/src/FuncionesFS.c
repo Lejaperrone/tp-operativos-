@@ -1391,6 +1391,8 @@ int liberarNodosConectados(){
 		t_bitarray* bit =list_remove(bitmapsNodos,j);
 		bitarray_destroy(bit);
 	}
+	list_destroy(bitmapsNodos);
+	bitmapsNodos = list_create();
 
 	int i;
 	respuesta = system(mkdirComando);
