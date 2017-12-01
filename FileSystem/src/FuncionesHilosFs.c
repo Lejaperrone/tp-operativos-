@@ -534,6 +534,29 @@ void* consolaFS(){
 				}
 			}
 		}
+		else if (strcmp(arguments[0], "mkdir100") == 0) {
+			int i;
+			for (i = 0; i < 99; ++i) {
+				char* command = string_from_format("mkdir yamafs:/directorios/%d", i);
+				resultado = crearDirectorio(command);
+				if (resultado == 0){
+					pthread_mutex_lock(&logger_mutex);
+					log_trace(loggerFS, "Directorio yamafs:/directorios/%d creado", i);
+					pthread_mutex_unlock(&logger_mutex);
+				}else{
+					if (resultado == 1){
+						pthread_mutex_lock(&logger_mutex);
+						log_error(loggerFS, "El directorio ya existe");
+						pthread_mutex_unlock(&logger_mutex);
+					}else{
+						pthread_mutex_lock(&logger_mutex);
+						log_error(loggerFS, "No se pudo crear el directorio");
+						pthread_mutex_unlock(&logger_mutex);
+					}
+				}
+				usleep(100000);
+			}
+		}
 		else if (strcmp(arguments[0], "cpfrom") == 0) {
 			if(validarParametros(arguments, 3)){
 				continue;
