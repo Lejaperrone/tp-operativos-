@@ -355,6 +355,7 @@ void* consolaFS(){
 		}
 		else if (strcmp(arguments[0],"status") == 0) {
 			if (list_size(nodosConectados) == 0)
+				printf("Estado del File system: Inestable\n");
 				printf("No hay nodos conectados\n");
 			else{
 				if (EstadoFS)
@@ -678,6 +679,7 @@ int validarParametros(char** arguments, int cantidadParametros){
 	for (i = 0; i < cantidadParametros; ++i){
 		if(arguments[i] == NULL){
 			log_error(loggerFS, "comando invalido, faltan parametros");
+			printf("comando invalido, faltan parametros\n");
 			return 1;
 		}
 	}
