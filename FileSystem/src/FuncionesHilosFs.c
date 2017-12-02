@@ -78,7 +78,7 @@ void* levantarServidorFS(){
 						if (*(int*)conexionNueva.envio == idDataNodes){
 							paqueteInfoNodo = desempaquetar(nuevoCliente);
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
-							revisarNodos();
+							//revisarNodos();
 							if (nodoRepetido(info) == 0 && nodoDeEstadoAnterior(info)){
 								pthread_mutex_lock(&logger_mutex);
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
@@ -128,12 +128,14 @@ void* levantarServidorFS(){
 							}
 							clienteYama = nuevoCliente;
 							log_trace(loggerFS, "Nueva Conexion de Yama");
+							printf("Nueva Conexion de Yama\n");
 							empaquetar(nuevoCliente,mensajeOk,0,0);
 							noSeConectoYama=false;
 						}
 						else if (*(int*)conexionNueva.envio == idWorker){
 							empaquetar(nuevoCliente,mensajeOk,0,0);
 							log_trace(loggerFS, "Nueva Conexion de Worker");
+							printf("Nueva Conexion de Worker\n");
 							respuestaWorker=desempaquetar(nuevoCliente);
 							almacenar= respuestaWorker.envio;
 

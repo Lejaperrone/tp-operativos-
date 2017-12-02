@@ -1047,7 +1047,6 @@ int levantarBitmapNodo(int numeroNodo, int sizeNodo) { //levanta el bitmap y a l
 		++posicion;
 		fread(currentChar, 1, 1, bitmapFile);
 	}
-	printf("ocupados %d\n", BloquesOcupados);
 
 	free(pathParticular);
 	fclose(bitmapFile);
@@ -1152,17 +1151,12 @@ informacionArchivoFsYama obtenerInfoArchivo(solicitudInfoNodos* solicitud){
 	char* directorioResul = rutaSinArchivo(solicitud->rutaResultado.cadena);
 	char* rutaArchivoResul = buscarRutaArchivo(directorioResul);
 
+
 	if(!strcmp(rutaArchivoResul, "-1")) {
 		info.tamanioTotal = 0;
 		return info;
 	}
 
-	char* rutaMetadataResul = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivoResul), ultimaParteDeRuta(solicitud->rutaResultado.cadena));
-
-	if (!validarArchivo(rutaMetadataResul)){
-		info.tamanioTotal = 0;
-		return info;
-	}
 
 
 	char* directorio = rutaSinArchivo(solicitud->rutaDatos.cadena);
