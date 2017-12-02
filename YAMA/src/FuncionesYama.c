@@ -173,6 +173,8 @@ void validarCambiosConfig(){
 
 	string_append(&pathArchConfig, "/YAMA.cfg");     // Le concateno el archivo de configuración
 
+	pathArchConfig = strdup("../../Yama.cfg");
+	
 	t_config *archivoConfig = config_create(pathArchConfig);
 
 	if (archivoConfig == NULL) {
