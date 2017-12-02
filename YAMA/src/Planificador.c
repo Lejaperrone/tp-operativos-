@@ -30,7 +30,7 @@ void planificar(job* job){
 	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);
 
 	if(infoArchivo->tamanioTotal==-1){
-		printf("\nFallo de ingreso de ruta datos o ruta resultado\n");
+		printf("\nFallo de ingreso de ruta datos o ruta resultado en job %d\n",job->id);
 		finalizarJob(job,TRANSFORMACION,FALLO_INGRESO);
 	}
 
