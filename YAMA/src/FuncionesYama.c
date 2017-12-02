@@ -213,7 +213,7 @@ void validarCambiosConfig(){
 		}
 		else{
 			log_trace(logger,"[Inotify] RETARDO_PLANIFICACION modificado. Anterior: %d || Actual: %d\n", config.RETARDO_PLANIFICACION, nuevoRetardo);
-			printf("RETARDO_PLANIFICACION modificado. Anterior: %d || Actual: %d\n", config.RETARDO_PLANIFICACION, nuevoRetardo);
+			printf("\nRETARDO_PLANIFICACION modificado. Anterior: %d || Actual: %d\n", config.RETARDO_PLANIFICACION, nuevoRetardo);
 			config.RETARDO_PLANIFICACION = nuevoRetardo;
 		}
 	}
