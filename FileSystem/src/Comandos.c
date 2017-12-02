@@ -26,6 +26,8 @@ int formatearFS(int flag){
 
 	//resultado += formatearDataBins(); NO VA
 
+	mkdir("../metadata/Archivos/0",0777);
+
 	if (resultado == 3 && !flag){
 		fsFormateado = true;
 		printf("FileSystem formateado correctamente.\n");

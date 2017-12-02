@@ -51,7 +51,6 @@ void establecerServidor(char* ip, int port){
 
 void verificarEstadoAnterior(){
 	recuperarEstado = validarArchivo(pathArchivoNodos);
-	printf("rec %d\n", recuperarEstado);
 }
 int verificarEstado(){
     DIR* directorio;
@@ -68,6 +67,7 @@ int verificarEstado(){
 	char* charNumeroNodo;
 	char* bloque;
 	int valido = 0;
+	int entre = 0;
 
 	for (i = 0; i < 100; ++i){
 
@@ -88,7 +88,6 @@ int verificarEstado(){
 					continue;
 
 				path = string_from_format("%s/%s",pathDir,in_file->d_name);
-				printf("%s \n", path);
 				infoArchivo = config_create(path);
 
 				bloque = string_from_format("BLOQUE%dCOPIA0",j);
@@ -103,6 +102,7 @@ int verificarEstado(){
 				for (j = 0; j < cantBloques; ++j){
 					bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
 					while (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,l))){
+						entre = 1;
 						arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
 						charNumeroNodo = string_substring_from(arrayInfoBloque[0], 4);
 						numeroNodo = atoi(charNumeroNodo);
@@ -120,17 +120,17 @@ int verificarEstado(){
 						free(arrayInfoBloque);
 						++l;
 						bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
-						printf("%s\n",bloque);
 					}
 					l = 0;
-					if (valido < 1){
+					if (valido < 1 && entre == 1){
 						//free(bloque);
 						//free(charNumeroNodo);
+						printf("lallal\n");
 						free(path);
 						free(pathDir);
 						return 0;
 					}
-
+					entre = 0;
 					valido = 0;
 
 					free(bloque);

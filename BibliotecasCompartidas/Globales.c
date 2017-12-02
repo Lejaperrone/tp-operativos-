@@ -52,12 +52,10 @@ bool validarDirectorio(char* path){
 	DIR* dir = opendir(path);
 	if (dir)
 	{
-	    printf("Exite el directorio %s en el FileSystem\n", path);
 	    return true;
 	}
 	else if (ENOENT == errno)
 	{
-	    printf("No existe el archivo %s en el FileSystem\n", path);
 	    return false;
 	}
 	else
