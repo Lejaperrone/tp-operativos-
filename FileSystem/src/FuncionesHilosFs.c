@@ -96,7 +96,6 @@ void* levantarServidorFS(){
 								sem_init(&semaforo,1,1);
 								list_add(pedidosFS, &semaforo);
 								EstadoFS = verificarEstado();
-								printf("estado fs %d\n", EstadoFS);
 								/*if (!recuperarEstado){
 									informacionNodo* nodo = (informacionNodo*) paqueteInfoNodo.envio;
 							 		empaquetar(nodo->socket, mensajeBorraDataBin, 0, 0);
