@@ -30,11 +30,12 @@ void planificar(job* job){
 	informacionArchivoFsYama* infoArchivo = recibirInfoArchivo(job);
 
 	if(infoArchivo->tamanioTotal==-1){
+		printf("\nFallo de ingreso de ruta datos o ruta resultado\n");
 		finalizarJob(job,TRANSFORMACION,FALLO_INGRESO);
 	}
 
 	void cargas(infoNodo* nodo){
-		log_trace(logger,"nodo %d carga %d\n",nodo->numero,nodo->carga);
+		log_trace(logger,"Nodo %d Carga %d",nodo->numero,nodo->carga);
 	}
 
 	list_iterate(nodosConectados,(void*)cargas);
