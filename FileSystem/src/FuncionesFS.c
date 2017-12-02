@@ -90,6 +90,11 @@ int verificarEstado(){
 				path = string_from_format("%s/%s",pathDir,in_file->d_name);
 				infoArchivo = config_create(path);
 
+				if(!config_has_property(infoArchivo,"TAMANIO")){
+					system(string_from_format("rm %s", path));
+					continue;
+				}
+				
 				bloque = string_from_format("BLOQUE%dCOPIA0",j);
 				while(config_has_property(infoArchivo, bloque)){
 					++cantBloques;
