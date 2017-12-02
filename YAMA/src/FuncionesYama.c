@@ -208,8 +208,8 @@ void validarCambiosConfig(){
 
 	if (config.RETARDO_PLANIFICACION != nuevoRetardo) {
 		if (nuevoRetardo<= 0) {
-			printf("El RETARDO_PLANIFICACION no puede ser < = 0. Se deja el anterior: %d.", config.RETARDO_PLANIFICACION);
-			log_error(logger, "El RETARDO_PLANIFICACION no puede ser < = 0. Se deja el anterior: %d.", config.RETARDO_PLANIFICACION);
+			printf("\nEl RETARDO_PLANIFICACION no puede ser < = 0. Se deja el anterior: %d.\n", config.RETARDO_PLANIFICACION);
+			log_error(logger, "El RETARDO_PLANIFICACION no puede ser < = 0. Se deja el anterior: %d.\n", config.RETARDO_PLANIFICACION);
 		}
 		else{
 			log_trace(logger,"[Inotify] RETARDO_PLANIFICACION modificado. Anterior: %d || Actual: %d\n", config.RETARDO_PLANIFICACION, nuevoRetardo);
@@ -222,19 +222,19 @@ void validarCambiosConfig(){
 		
 
 		if (nuevaDisponibilidad<= 0) {
-			printf("La DISPONIBILIDAD_BASE no puede ser < = 0. Se deja la anterior: %d.", config.DISPONIBILIDAD_BASE);
+			printf("\nLa DISPONIBILIDAD_BASE no puede ser < = 0. Se deja la anterior: %d.\n", config.DISPONIBILIDAD_BASE);
 			log_error(logger, "La DISPONIBILIDAD_BASE no puede ser < = 0. Se deja la anterior: %d.", config.DISPONIBILIDAD_BASE);
 		}
 		else{
 			log_trace(logger,"[Inotify] DISPONIBILIDAD_BASE modificada. Anterior: %d || Actual: %d\n", config.DISPONIBILIDAD_BASE, nuevaDisponibilidad);
-			printf("DISPONIBILIDAD_BASE modificada. Anterior: %d || Actual: %d\n", config.DISPONIBILIDAD_BASE, nuevaDisponibilidad);
+			printf("\nDISPONIBILIDAD_BASE modificada. Anterior: %d || Actual: %d\n", config.DISPONIBILIDAD_BASE, nuevaDisponibilidad);
 			config.DISPONIBILIDAD_BASE = nuevaDisponibilidad;
 		}
 	}
 
 	if (strcmp(config.ALGORITMO_BALANCEO ,nuevoAlgoritmo)) {
 		if (!string_equals_ignore_case(nuevoAlgoritmo,"WCLOCK") && !string_equals_ignore_case(nuevoAlgoritmo,"CLOCK")) {
-			printf("El ALGORITMO_BALANCEO no puede ser diferente a CLOCK o WCLOCK. Se deja el anterior: %s.", config.ALGORITMO_BALANCEO);
+			printf("\nEl ALGORITMO_BALANCEO no puede ser diferente a CLOCK o WCLOCK. Se deja el anterior: %s.\n", config.ALGORITMO_BALANCEO);
 			log_error(logger, "El ALGORITMO_BALANCEO no puede ser diferente a CLOCK o WCLOCK. Se deja el anterior: %s.", config.ALGORITMO_BALANCEO);
 		}
 		else{
