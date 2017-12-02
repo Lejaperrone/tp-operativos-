@@ -10,7 +10,7 @@ struct configuracionNodo  config;
 int main(int argc, char *argv[]) {
 	limpiarPantalla();
 	cargarConfiguracionNodo(&config,argv[1]);
-	logger = log_create("logWorker", "Worker.c", 1, LOG_LEVEL_TRACE);
+	logger = log_create("logDataNode", "Datanode.c", 1, LOG_LEVEL_TRACE);
 	inicializarDataBin();
 	conectarseConFs();
 	return EXIT_SUCCESS;
