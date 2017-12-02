@@ -339,6 +339,8 @@ void* consolaFS(){
 		pthread_mutex_lock(&logger_mutex);
 		log_trace(loggerFS, "El usuario ingreso: %s", comando);
 		pthread_mutex_unlock(&logger_mutex);
+		
+		verificarEstadoAnterior();
 
 		if (strcmp(arguments[0], "format") == 0) {
 			if (formatearFS(0) == 0){
