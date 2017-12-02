@@ -130,7 +130,6 @@ int verificarEstado(){
 					if (valido < 1 && entre == 1){
 						//free(bloque);
 						//free(charNumeroNodo);
-						printf("lallal\n");
 						free(path);
 						free(pathDir);
 						return 0;
