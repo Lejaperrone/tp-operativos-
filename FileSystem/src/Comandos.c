@@ -366,13 +366,13 @@ int cambiarNombre(char* comando){
 	memcpy(rutaNuevaDefinitiva + strlen(rutaNombreViejoReverse) + strlen(slash), nombreNuevo, strlen(nombreNuevo) + 1);
 
 	char* nuevo = string_from_format("%s/%s", ruta, nombreNuevo);
+	char* nombreViejo = string_from_format("%s/%s", ruta, nombre);
 
-	if (!validarArchivo(nuevo)){
+	if (!validarArchivo(nombreViejo)){
 		printf("El archivo no existe.\n");
 		return 0;
 	}
 
-	char* nombreViejo = string_from_format("%s/%s", ruta, nombre);
 
 	t_config* c = config_create(nombreViejo);
 	config_set_value(c, "RUTA", string_from_format("%s%s", rutaSinNombre, nombre));
