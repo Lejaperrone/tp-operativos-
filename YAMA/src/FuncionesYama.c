@@ -173,8 +173,6 @@ void validarCambiosConfig(){
 
 	string_append(&pathArchConfig, "/YAMA.cfg");     // Le concateno el archivo de configuración
 
-	pathArchConfig = strdup("../../Yama.cfg");
-	
 	t_config *archivoConfig = config_create(pathArchConfig);
 
 	if (archivoConfig == NULL) {
@@ -186,7 +184,7 @@ void validarCambiosConfig(){
 		nuevoRetardo= config_get_int_value(archivoConfig, "RETARDO_PLANIFICACION");
 	}
 	else{
-		log_info(logger, "<inotify> RETARDO PLANIFICACION retorno NULL.");
+		log_trace(logger, "<inotify> RETARDO PLANIFICACION retorno NULL.");
 		return;
 	}
 
@@ -194,7 +192,7 @@ void validarCambiosConfig(){
 		nuevaDisponibilidad= config_get_int_value(archivoConfig, "DISPONIBILIDAD_BASE");
 	}
 	else{
-		log_info(logger, "<inotify> DISPONIBILIDAD_BASE retorno NULL.");
+		log_trace(logger, "<inotify> DISPONIBILIDAD_BASE retorno NULL.");
 		return;
 	}
 
@@ -202,44 +200,43 @@ void validarCambiosConfig(){
 		nuevoAlgoritmo= config_get_string_value(archivoConfig, "ALGORITMO_BALANCEO");
 	}
 	else{
-		log_info(logger, "<inotify> ALGORITMO_BALANCEO retorno NULL.");
+		log_trace(logger, "<inotify> ALGORITMO_BALANCEO retorno NULL.");
 		return;
 	}
 
 	//config_destroy(archivoConfig);
 
 	if (config.RETARDO_PLANIFICACION != nuevoRetardo) {
-		log_info(logger, "<inotify> RETARDO_PLANIFICACION modificado. Anterior: %d || Actual: %d", config.RETARDO_PLANIFICACION , nuevoRetardo);
-
 		if (nuevoRetardo<= 0) {
 			log_error(logger, "El RETARDO_PLANIFICACION no puede ser < = 0. Se deja el anterior: %d.", config.RETARDO_PLANIFICACION);
 		}
 		else{
 			log_trace(logger,"[Inotify] RETARDO_PLANIFICACION modificado. Anterior: %d || Actual: %d\n", config.RETARDO_PLANIFICACION, nuevoRetardo);
+			printf("RETARDO_PLANIFICACION modificado. Anterior: %d || Actual: %d\n", config.RETARDO_PLANIFICACION, nuevoRetardo);
 			config.RETARDO_PLANIFICACION = nuevoRetardo;
 		}
 	}
 
 	if (config.DISPONIBILIDAD_BASE != nuevaDisponibilidad) {
-		log_info(logger, "<inotify> DISPONIBILIDAD_BASE modificada. Anterior: %d || Actual: %d", config.DISPONIBILIDAD_BASE , nuevaDisponibilidad);
+		
 
 		if (nuevoRetardo<= 0) {
 			log_error(logger, "La DISPONIBILIDAD_BASE no puede ser < = 0. Se deja la anterior: %d.", config.DISPONIBILIDAD_BASE);
 		}
 		else{
 			log_trace(logger,"[Inotify] DISPONIBILIDAD_BASE modificada. Anterior: %d || Actual: %d\n", config.DISPONIBILIDAD_BASE, nuevaDisponibilidad);
+			printf("DISPONIBILIDAD_BASE modificada. Anterior: %d || Actual: %d\n", config.DISPONIBILIDAD_BASE, nuevaDisponibilidad);
 			config.DISPONIBILIDAD_BASE = nuevoRetardo;
 		}
 	}
 
 	if (strcmp(config.ALGORITMO_BALANCEO ,nuevoAlgoritmo)) {
-		log_info(logger, "<inotify> ALGORITMO_BALANCEO modificada. Anterior: %s || Actual: %s", config.ALGORITMO_BALANCEO , nuevoAlgoritmo);
-
 		if (!string_equals_ignore_case(nuevoAlgoritmo,"WCLOCK") && !string_equals_ignore_case(nuevoAlgoritmo,"CLOCK")) {
 			log_error(logger, "El ALGORITMO_BALANCEO no puede ser diferente a CLOCK o WCLOCK. Se deja el anterior: %s.", config.ALGORITMO_BALANCEO);
 		}
 		else{
 			log_trace(logger,"[Inotify] ALGORITMO_BALANCEO modificada. Anterior: %s || Actual: %s\n", config.ALGORITMO_BALANCEO, nuevoAlgoritmo);
+			printf("ALGORITMO_BALANCEO modificada. Anterior: %s || Actual: %s\n", config.ALGORITMO_BALANCEO, nuevoAlgoritmo);
 			config.ALGORITMO_BALANCEO = strdup(nuevoAlgoritmo);
 		}
 	}
