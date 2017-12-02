@@ -354,9 +354,10 @@ void* consolaFS(){
 			}
 		}
 		else if (strcmp(arguments[0],"status") == 0) {
-			if (list_size(nodosConectados) == 0)
+			if (list_size(nodosConectados) == 0){
 				printf("Estado del File system: Inestable\n");
 				printf("No hay nodos conectados\n");
+			}
 			else{
 				if (EstadoFS)
 					printf("Estado del File system: Estable\n");
