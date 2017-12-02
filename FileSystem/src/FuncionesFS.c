@@ -51,7 +51,6 @@ void establecerServidor(char* ip, int port){
 
 void verificarEstadoAnterior(){
 	recuperarEstado = validarArchivo(pathArchivoNodos);
-	printf("rec %d\n", recuperarEstado);
 }
 int verificarEstado(){
     DIR* directorio;
@@ -68,6 +67,7 @@ int verificarEstado(){
 	char* charNumeroNodo;
 	char* bloque;
 	int valido = 0;
+	int entre = 0;
 
 	for (i = 0; i < 100; ++i){
 
@@ -88,7 +88,6 @@ int verificarEstado(){
 					continue;
 
 				path = string_from_format("%s/%s",pathDir,in_file->d_name);
-				printf("%s \n", path);
 				infoArchivo = config_create(path);
 
 				bloque = string_from_format("BLOQUE%dCOPIA0",j);
@@ -103,6 +102,7 @@ int verificarEstado(){
 				for (j = 0; j < cantBloques; ++j){
 					bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
 					while (config_has_property(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",j,l))){
+						entre = 1;
 						arrayInfoBloque = config_get_array_value(infoArchivo, bloque);
 						charNumeroNodo = string_substring_from(arrayInfoBloque[0], 4);
 						numeroNodo = atoi(charNumeroNodo);
@@ -120,17 +120,17 @@ int verificarEstado(){
 						free(arrayInfoBloque);
 						++l;
 						bloque = string_from_format("BLOQUE%dCOPIA%d",j,l);
-						printf("%s\n",bloque);
 					}
 					l = 0;
-					if (valido < 1){
+					if (valido < 1 && entre == 1){
 						//free(bloque);
 						//free(charNumeroNodo);
+						printf("lallal\n");
 						free(path);
 						free(pathDir);
 						return 0;
 					}
-
+					entre = 0;
 					valido = 0;
 
 					free(bloque);
@@ -452,8 +452,13 @@ char* leerArchivo(char* rutaArchivo){
 			free(arrayInfoBloque);
 		}
 	}
-
+//cpfrom /home/utnso/Escritorio/SO-Nombres-Dataset/nombres.csv yamafs:/
+	int cont = 0;
+	int inicial = 0;
 	for (i = 0; i < cantBloquesArchivo; ++i){
+		for (l = 0; l < cantidadCopiasBloque[i]; ++l)
+			posicionCopiaEnIndexNodo[l] = -1;
+
 		for (l = 0; l < cantidadCopiasBloque[i]; ++l){
 			arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,l));
 			copia[l] = atoi(arrayInfoBloque[1]);
@@ -464,20 +469,34 @@ char* leerArchivo(char* rutaArchivo){
 				}
 			free(arrayInfoBloque);
 		}
-		posicionNodoAPedir = posicionCopiaEnIndexNodo[0];
-		copiaUsada = copia[0];
-		for (l = 0; l < cantidadCopiasBloque[i]; ++l){
-			if (peticiones[posicionCopiaEnIndexNodo[l]] < peticiones[posicionNodoAPedir]){
-				posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
-				copiaUsada = copia[l];
-			}
-			else if (peticiones[posicionCopiaEnIndexNodo[l]] == peticiones[posicionNodoAPedir])
-				if(cargaNodos[posicionCopiaEnIndexNodo[l]] < cargaNodos[posicionNodoAPedir]){
-					posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
-					copiaUsada = copia[l];
-				}
-		}
 
+		while (posicionCopiaEnIndexNodo[inicial] == -1)
+			++inicial;
+
+		posicionNodoAPedir = posicionCopiaEnIndexNodo[inicial];
+		copiaUsada = copia[inicial];
+		for (l = 0; l < cantidadCopiasBloque[i]; ++l){
+
+			if (cont >= cantidadCopiasBloque[i])
+				cont = 0;
+			while (posicionCopiaEnIndexNodo[cont] == -1){
+				++cont;
+				if (cont >= cantidadCopiasBloque[i])
+					cont = 0;
+			}
+			if (peticiones[posicionCopiaEnIndexNodo[cont]] < peticiones[posicionNodoAPedir]){
+				posicionNodoAPedir = posicionCopiaEnIndexNodo[cont];
+				copiaUsada = copia[cont];
+			}
+			else if (peticiones[posicionCopiaEnIndexNodo[cont]] == peticiones[posicionNodoAPedir])
+				if(cargaNodos[posicionCopiaEnIndexNodo[cont]] < cargaNodos[posicionNodoAPedir]){
+					posicionNodoAPedir = posicionCopiaEnIndexNodo[cont];
+					copiaUsada = copia[cont];
+				}
+			++cont;
+		}
+		inicial = 0;
+		cont = 0;
 		info = *(informacionNodo*)list_get(nodosConectados,posicionNodoAPedir);
 		++peticiones[posicionNodoAPedir];
 		numeroBloqueDataBin = copiaUsada;

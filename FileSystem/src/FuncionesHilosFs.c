@@ -79,7 +79,7 @@ void* levantarServidorFS(){
 							paqueteInfoNodo = desempaquetar(nuevoCliente);
 							info = *(informacionNodo*)paqueteInfoNodo.envio;
 							revisarNodos();
-							if (nodoRepetido(info) == 0 && nodoDeEstadoAnterior(info) && !fsFormateado){
+							if (nodoRepetido(info) == 0 && nodoDeEstadoAnterior(info)){
 								pthread_mutex_lock(&logger_mutex);
 								log_trace(loggerFS, "Conexion de DataNode %d\n", info.numeroNodo);
 								pthread_mutex_unlock(&logger_mutex);
