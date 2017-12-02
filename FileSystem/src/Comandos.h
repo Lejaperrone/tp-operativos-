@@ -55,4 +55,8 @@ int listarArchivos(char* comando);//ls
 
 int informacion(char* comando);//info
 
+int validarComandoEnNodosAny(char* path);
+
+int validarComandoEnNodos(char* path);
+
 #endif /* FILESYSTEM_COMANDOS_H_ */

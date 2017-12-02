@@ -86,6 +86,55 @@ int validarComandoEnNodos(char* path){
 	return 1;
 }
 
+int validarComandoEnNodosAny(char* path){
+	int i = 0, j = 0, k = 0;
+	int numeroNodo;
+	char* charNumeroNodo;
+	int estanTodos = 0;
+	int cantidadNodosConectados = list_size(nodosConectados);
+	char* bloque = string_from_format("BLOQUE%dCOPIA%d",i,j);
+	char** arrayNodos;
+	informacionNodo info;
+	int nodos[cantidadNodosConectados];
+
+
+	for (i = 0; i < cantidadNodosConectados; ++i){
+		info = *(informacionNodo*)list_get(nodosConectados,i);
+		nodos[i] = info.numeroNodo;
+	}
+
+	i = 0;
+	t_config* archivo = config_create(path);
+	while (config_has_property(archivo,bloque)){
+		while (config_has_property(archivo,bloque)){
+			arrayNodos = config_get_array_value(archivo,bloque);
+			charNumeroNodo = string_substring_from(arrayNodos[0], 4);
+			numeroNodo = atoi(charNumeroNodo);
+
+			for (k = 0; k < cantidadNodosConectados; ++k)
+				if (nodos[k] == numeroNodo){
+					++estanTodos;
+				}
+
+			free(bloque);
+			free(charNumeroNodo);
+			++j;
+			bloque = string_from_format("BLOQUE%dCOPIA%d",i,j);
+		}
+		if (estanTodos < 1)
+			return 0;
+
+		++i;
+		estanTodos = 0;
+		free(bloque);
+		j = 0;
+		bloque = string_from_format("BLOQUE%dCOPIA%d",i,j);
+	}
+	free(bloque);
+	config_destroy(archivo);
+	return 1;
+}
+
 
 int eliminarArchivo(char* comando){
 	int cantBloquesArchivo = 0, i, j = 0, k, numeroNodo, bloqueNodo, respuesta;
@@ -508,8 +557,16 @@ int mostrarArchivo(char* comando){
 		return respuesta;
 	}
 
-	if (!validarArchivo(string_from_format("%s/%s", rutaMetadata, ultimaParteDeRuta(rutaArchivoYamafs)))){
+	char* arch = string_from_format("%s/%s", rutaMetadata, ultimaParteDeRuta(rutaArchivoYamafs));
+	if (!validarArchivo(arch)){
+		free(arch);
 		printf("No existe el archivo.\n");
+		return 1;
+	}
+
+	if (!validarComandoEnNodosAny(arch)){
+		free(arch);
+		printf("No hay ningun nodo con el que se pueda obtener la informacion del archivo.\n");
 		return 1;
 	}
 
@@ -517,6 +574,7 @@ int mostrarArchivo(char* comando){
 	printf("%s\n", contenido);
 	respuesta = 0;
 	printf("Archivo mostrado correctamente.\n");
+	free(arch);
 	free(contenido);
 
 	return respuesta;
@@ -686,8 +744,16 @@ int copiarArchivoAFs(char* comando){
 		return respuesta;
 	}
 
-	if(!validarArchivo(string_from_format("%s/%s", rutaMetadata,ultimaParteDeRuta(rutaArchivoYamafs)))){
+	char* arch = string_from_format("%s/%s", rutaMetadata,ultimaParteDeRuta(rutaArchivoYamafs));
+	if(!validarArchivo(arch)){
+		free(arch);
 		printf("El archivo no existe.\n");
+		return 1;
+	}
+
+	if (!validarComandoEnNodosAny(arch)){
+		free(arch);
+		printf("No hay ningun nodo con el que se pueda obtener la informacion del archivo.\n");
 		return 1;
 	}
 
@@ -705,6 +771,7 @@ int copiarArchivoAFs(char* comando){
 	free(rutaFinal);
 	respuesta = 0;
 
+	free(arch);
 	printf("Archivo copiado correctamente.\n");
 
 	return respuesta;
@@ -787,6 +854,12 @@ int generarArchivoMD5(char* comando){
 	if (!validarArchivo(rutaArchivoMetadata)){
 		printf("No existe el archivo.\n");
 		return respuesta;
+	}
+
+	if (!validarComandoEnNodosAny(rutaArchivoMetadata)){
+		free(rutaArchivoMetadata);
+		printf("No hay ningun nodo con el que se pueda obtener la informacion del archivo.\n");
+		return 1;
 	}
 
 	char* contenido = leerArchivo(rutaArchivoYamafs);

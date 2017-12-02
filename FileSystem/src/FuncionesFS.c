@@ -452,8 +452,13 @@ char* leerArchivo(char* rutaArchivo){
 			free(arrayInfoBloque);
 		}
 	}
-
+//cpfrom /home/utnso/Escritorio/SO-Nombres-Dataset/nombres.csv yamafs:/
+	int cont = 0;
+	int inicial = 0;
 	for (i = 0; i < cantBloquesArchivo; ++i){
+		for (l = 0; l < cantidadCopiasBloque[i]; ++l)
+			posicionCopiaEnIndexNodo[l] = -1;
+
 		for (l = 0; l < cantidadCopiasBloque[i]; ++l){
 			arrayInfoBloque = config_get_array_value(infoArchivo, string_from_format("BLOQUE%dCOPIA%d",i,l));
 			copia[l] = atoi(arrayInfoBloque[1]);
@@ -464,20 +469,34 @@ char* leerArchivo(char* rutaArchivo){
 				}
 			free(arrayInfoBloque);
 		}
-		posicionNodoAPedir = posicionCopiaEnIndexNodo[0];
-		copiaUsada = copia[0];
-		for (l = 0; l < cantidadCopiasBloque[i]; ++l){
-			if (peticiones[posicionCopiaEnIndexNodo[l]] < peticiones[posicionNodoAPedir]){
-				posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
-				copiaUsada = copia[l];
-			}
-			else if (peticiones[posicionCopiaEnIndexNodo[l]] == peticiones[posicionNodoAPedir])
-				if(cargaNodos[posicionCopiaEnIndexNodo[l]] < cargaNodos[posicionNodoAPedir]){
-					posicionNodoAPedir = posicionCopiaEnIndexNodo[l];
-					copiaUsada = copia[l];
-				}
-		}
 
+		while (posicionCopiaEnIndexNodo[inicial] == -1)
+			++inicial;
+
+		posicionNodoAPedir = posicionCopiaEnIndexNodo[inicial];
+		copiaUsada = copia[inicial];
+		for (l = 0; l < cantidadCopiasBloque[i]; ++l){
+
+			if (cont >= cantidadCopiasBloque[i])
+				cont = 0;
+			while (posicionCopiaEnIndexNodo[cont] == -1){
+				++cont;
+				if (cont >= cantidadCopiasBloque[i])
+					cont = 0;
+			}
+			if (peticiones[posicionCopiaEnIndexNodo[cont]] < peticiones[posicionNodoAPedir]){
+				posicionNodoAPedir = posicionCopiaEnIndexNodo[cont];
+				copiaUsada = copia[cont];
+			}
+			else if (peticiones[posicionCopiaEnIndexNodo[cont]] == peticiones[posicionNodoAPedir])
+				if(cargaNodos[posicionCopiaEnIndexNodo[cont]] < cargaNodos[posicionNodoAPedir]){
+					posicionNodoAPedir = posicionCopiaEnIndexNodo[cont];
+					copiaUsada = copia[cont];
+				}
+			++cont;
+		}
+		inicial = 0;
+		cont = 0;
 		info = *(informacionNodo*)list_get(nodosConectados,posicionNodoAPedir);
 		++peticiones[posicionNodoAPedir];
 		numeroBloqueDataBin = copiaUsada;
