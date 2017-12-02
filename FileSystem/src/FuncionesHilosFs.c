@@ -326,7 +326,7 @@ void* consolaFS(){
 
 		char** arguments = string_split(comando, " ");
 
-		revisarNodos();
+		//revisarNodos();
 
 		if(validarParametros(arguments, 1)){
 			continue;
@@ -341,7 +341,7 @@ void* consolaFS(){
 		log_trace(loggerFS, "El usuario ingreso: %s", comando);
 		pthread_mutex_unlock(&logger_mutex);
 		
-		verificarEstadoAnterior();
+		EstadoFS = verificarEstado();
 
 		if (strcmp(arguments[0], "format") == 0) {
 			if (formatearFS(0) == 0){
