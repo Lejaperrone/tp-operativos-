@@ -611,7 +611,7 @@ int crearDirectorio(char* comando){
 		indexPadre = getIndexDirectorio(rutaSinPrefijoYama(rutaPadre));
 		if (indexPadre == -1){
 			printf("No existe ruta %s.\n", rutaPadre);
-			return 1;
+			return 2;
 		}
 		else{
 			while(tablaDeDirectorios[i].index != -1){
