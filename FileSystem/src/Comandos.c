@@ -905,7 +905,7 @@ int listarArchivos(char* comando){
 	}
 
 	char* rutaFsLocal = buscarRutaArchivo(rutaYamafs);
-	if (!strcmp(rutaFsLocal,"-1"))){
+	if (!strcmp(rutaFsLocal,"-1")){
 		printf("El directorio no existe.\n");
 		return respuesta;
 	}
