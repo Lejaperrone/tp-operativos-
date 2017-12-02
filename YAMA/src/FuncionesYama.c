@@ -208,6 +208,7 @@ void validarCambiosConfig(){
 
 	if (config.RETARDO_PLANIFICACION != nuevoRetardo) {
 		if (nuevoRetardo<= 0) {
+			printf("El RETARDO_PLANIFICACION no puede ser < = 0. Se deja el anterior: %d.", config.RETARDO_PLANIFICACION);
 			log_error(logger, "El RETARDO_PLANIFICACION no puede ser < = 0. Se deja el anterior: %d.", config.RETARDO_PLANIFICACION);
 		}
 		else{
@@ -220,7 +221,8 @@ void validarCambiosConfig(){
 	if (config.DISPONIBILIDAD_BASE != nuevaDisponibilidad) {
 		
 
-		if (nuevoRetardo<= 0) {
+		if (nuevaDisponibilidad<= 0) {
+			printf("La DISPONIBILIDAD_BASE no puede ser < = 0. Se deja la anterior: %d.", config.DISPONIBILIDAD_BASE);
 			log_error(logger, "La DISPONIBILIDAD_BASE no puede ser < = 0. Se deja la anterior: %d.", config.DISPONIBILIDAD_BASE);
 		}
 		else{
@@ -232,6 +234,7 @@ void validarCambiosConfig(){
 
 	if (strcmp(config.ALGORITMO_BALANCEO ,nuevoAlgoritmo)) {
 		if (!string_equals_ignore_case(nuevoAlgoritmo,"WCLOCK") && !string_equals_ignore_case(nuevoAlgoritmo,"CLOCK")) {
+			printf("El ALGORITMO_BALANCEO no puede ser diferente a CLOCK o WCLOCK. Se deja el anterior: %s.", config.ALGORITMO_BALANCEO);
 			log_error(logger, "El ALGORITMO_BALANCEO no puede ser diferente a CLOCK o WCLOCK. Se deja el anterior: %s.", config.ALGORITMO_BALANCEO);
 		}
 		else{
