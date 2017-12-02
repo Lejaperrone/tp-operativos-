@@ -226,7 +226,7 @@ void validarCambiosConfig(){
 		else{
 			log_trace(logger,"[Inotify] DISPONIBILIDAD_BASE modificada. Anterior: %d || Actual: %d\n", config.DISPONIBILIDAD_BASE, nuevaDisponibilidad);
 			printf("DISPONIBILIDAD_BASE modificada. Anterior: %d || Actual: %d\n", config.DISPONIBILIDAD_BASE, nuevaDisponibilidad);
-			config.DISPONIBILIDAD_BASE = nuevoRetardo;
+			config.DISPONIBILIDAD_BASE = nuevaDisponibilidad;
 		}
 	}
 
