@@ -175,7 +175,7 @@ infoNodo* posicionarClock(t_list* listaWorkers,int job){
 
 	workerDesignado = list_get(listaWorkers, 0);
 
-	log_trace(logger,"Posiciono clock en worker %d para job %d",workerDesignado->numero,job);
+	log_trace(logger,"Posiciono clock en worker %d para job %d",workerDesignado->numero,job,workerDesignado->cantTareasHistoricas);
 
 
 	int i=0;
