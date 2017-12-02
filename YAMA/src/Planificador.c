@@ -17,7 +17,6 @@ infoNodo* inicializarWorker(){
 	worker->carga = 0;
 	worker->disponibilidad = 0;
 	worker->cantTareasHistoricas = 0;
-	wlMax = 0;
 	return worker;
 }
 void planificar(job* job){
@@ -215,12 +214,14 @@ bool estaActivo(infoNodo* worker){
 }
 
 void calcularDisponibilidadWorkers(t_list* nodos,int job){
+	int max = calcularWorkLoadMaxima(nodos);
+
 	void calcularDisponibilidadWorker(infoNodo* worker){
-		worker->disponibilidad = getDisponibilidadBase() + calcularPWL(worker);
+		worker->disponibilidad = getDisponibilidadBase() + calcularPWL(worker,max);
 		log_trace(logger,"Disponibilidad %d para %d worker job %d",worker->disponibilidad,worker->numero,job);
 	}
 
-	calcularWorkLoadMaxima(nodos);
+
 	list_iterate(nodos, (void*)calcularDisponibilidadWorker);
 	log_trace(logger,"Disponibilidad calculada para job %d",job);
 }
@@ -229,7 +230,7 @@ int obtenerDisponibilidadWorker(infoNodo* worker){//getter
 	return worker->disponibilidad;
 }
 
-uint32_t calcularPWL(infoNodo* worker){
+uint32_t calcularPWL(infoNodo* worker,int max){
 	if(esClock() != 0){
 		pthread_mutex_lock(&mutex_NodosConectados);
 		infoNodo* nodo = obtenerNodo(worker->numero);
@@ -237,14 +238,14 @@ uint32_t calcularPWL(infoNodo* worker){
 		pthread_mutex_unlock(&mutex_NodosConectados);
 
 
-		return workLoadMaxima() - carga;
+		return max - carga;
 	}
 	else{
 		return 0;
 	}
 }
 
-void calcularWorkLoadMaxima(t_list* nodos){
+int calcularWorkLoadMaxima(t_list* nodos){
 	infoNodo* worker = malloc(sizeof(infoNodo));
 	bool mayorCarga(infoNodo* nodoMasCarga, infoNodo* nodo){
 		pthread_mutex_lock(&mutex_NodosConectados);
@@ -262,13 +263,11 @@ void calcularWorkLoadMaxima(t_list* nodos){
 
 	pthread_mutex_lock(&mutex_NodosConectados);
 	infoNodo* nodoMax = obtenerNodo(worker->numero);
-	wlMax = nodoMax->carga;
+	int wlMax = nodoMax->carga;
 	pthread_mutex_unlock(&mutex_NodosConectados);
-}
-
-uint32_t workLoadMaxima(){//getter
 	return wlMax;
 }
+
 void agregarJobAPlanificar(job* jobAPlanificar){
 	list_add(jobsAPlanificar,jobAPlanificar);
 }

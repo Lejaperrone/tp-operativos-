@@ -16,9 +16,6 @@
 
 t_list* jobsAPlanificar;
 
-pthread_mutex_t cantTareasHistoricas_mutex;
-uint32_t wlMax;
-
 void planificar(job* job);
 infoNodo* inicializarWorker();
 void verificarDisponibilidades(t_list* listaNodos);
@@ -26,9 +23,9 @@ void iniciarListasPlanificacion();
 void seleccionarWorker(infoNodo* worker, infoBloque bloque);
 bool mayorDisponibilidad(infoNodo* worker, infoNodo* workerMasDisp);
 infoNodo* buscarNodo(t_list* nodos, int numNodo);
-uint32_t calcularPWL(infoNodo* worker);
-uint32_t workLoadMaxima();
-void calcularWorkLoadMaxima(t_list* nodos);
+uint32_t calcularPWL(infoNodo* worker,int max);
+
+int calcularWorkLoadMaxima(t_list* nodos);
 void calcularDisponibilidadWorkers(t_list* nodos,int job);
 void calcularDisponibilidadWorker(infoNodo* worker);
 int obtenerDisponibilidadWorker(infoNodo* worker);
