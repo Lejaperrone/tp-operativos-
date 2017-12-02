@@ -399,6 +399,7 @@ void levantarServidorWorker(char* ip, int port) {
 				log_trace(logger, "Conexion con Master establecida");
 				if ((pid = fork()) == 0) {
 					log_trace(logger, "Esperando instruccion de Master");
+					prctl(PR_SET_PDEATHSIG, SIGHUP);
 					handlerMaster(clientSocket, process_getpid());
 				} else if (pid > 0) {
 					log_trace(logger, "Proceso Padre sigue escuchando conexiones");

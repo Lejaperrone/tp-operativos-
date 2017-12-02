@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include "Globales.h"
 #include <commons/process.h>
+#include <sys/prctl.h>
 
 #define mb 1048576
 #define idWorker 100
