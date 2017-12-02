@@ -182,7 +182,7 @@ infoNodo* posicionarClock(t_list* listaWorkers,int job){
 
 	void ordenar(infoNodo* worker){
 		i++;
-		log_trace(logger,"Worker %d orden %d",worker->numero,i);
+		log_trace(logger,"Worker %d orden %d tareas %d",worker->numero,i,worker->cantTareasHistoricas);
 	}
 
 	list_iterate(listaWorkers,(void*)ordenar);
