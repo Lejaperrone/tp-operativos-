@@ -31,7 +31,7 @@
 
 int cantBloques = 10;
 int sizeBloque = 1048576; // 1mb
-int mostrarLoggerPorPantalla = 1;
+int mostrarLoggerPorPantalla = 0;
 
 char* rutaBitmaps = "../metadata/Bitmaps/";
 char* rutaArchivos = "../metadata/Archivos/";
