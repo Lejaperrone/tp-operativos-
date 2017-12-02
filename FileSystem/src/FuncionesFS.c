@@ -1144,12 +1144,28 @@ informacionNodo* informacionNodosConectados(){
 	return listaInfoNodos;
 }
 
-informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
+informacionArchivoFsYama obtenerInfoArchivo(solicitudInfoNodos* solicitud){
 	informacionArchivoFsYama info;
 	info.informacionBloques = list_create();
 
 
-	char* directorio = rutaSinArchivo(rutaDatos.cadena);
+	char* directorioResul = rutaSinArchivo(solicitud->rutaResultado.cadena);
+	char* rutaArchivoResul = buscarRutaArchivo(directorioResul);
+
+	if(!strcmp(rutaArchivoResul, "-1")) {
+		info.tamanioTotal = 0;
+		return info;
+	}
+
+	char* rutaMetadataResul = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivoResul), ultimaParteDeRuta(solicitud->rutaResultado.cadena));
+
+	if (!validarArchivo(rutaMetadataResul)){
+		info.tamanioTotal = 0;
+		return info;
+	}
+
+
+	char* directorio = rutaSinArchivo(solicitud->rutaDatos.cadena);
 	char* rutaArchivo = buscarRutaArchivo(directorio);
 
 	if(!strcmp(rutaArchivo, "-1")) {
@@ -1157,7 +1173,7 @@ informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos){
 		return info;
 	}
 
-	char* rutaMetadata = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivo), ultimaParteDeRuta(rutaDatos.cadena));
+	char* rutaMetadata = string_from_format("%s/%s", rutaSinPrefijoYama(rutaArchivo), ultimaParteDeRuta(solicitud->rutaDatos.cadena));
 
 	if (!validarArchivo(rutaMetadata)){
 		info.tamanioTotal = 0;

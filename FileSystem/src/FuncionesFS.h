@@ -101,7 +101,7 @@ void establecerServidor(char* ip, int port);
 
 int recibirConexionYama();
 
-informacionArchivoFsYama obtenerInfoArchivo(string rutaDatos);
+informacionArchivoFsYama obtenerInfoArchivo(solicitudInfoNodos* solicitud);
 
 void obtenerInfoNodo(ubicacionBloque* ubicacion);
 

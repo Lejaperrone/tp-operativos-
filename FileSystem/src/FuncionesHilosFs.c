@@ -186,7 +186,7 @@ void* levantarServidorFS(){
 
 					case mensajeSolicitudInfoNodos:
 						solicitud = (solicitudInfoNodos*)conexionNueva.envio;
-						informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
+						informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud);
 						if(infoArchivo.tamanioTotal==0){
 							empaquetar(clienteYama,mensajeRespuestaInfoFallida,0,0);
 						}
@@ -697,7 +697,7 @@ void* manejarConexionYama(){
 
 		case mensajeSolicitudInfoNodos:
 			solicitud = (solicitudInfoNodos*)respuestaYama.envio;
-			informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud->rutaDatos);
+			informacionArchivoFsYama infoArchivo = obtenerInfoArchivo(solicitud);
 			empaquetar(clienteYama,mensajeRespuestaInfoNodos,0,&infoArchivo);
 			break;
 		}
